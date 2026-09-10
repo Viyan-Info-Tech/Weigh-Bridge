@@ -101,7 +101,11 @@ class HomePage extends StatelessWidget {
                     style: const TextStyle(color: Colors.white, fontSize: 14),
                   ),
                   trailing: IconButton(
-                    icon: const Icon(Icons.logout, color: Colors.white70, size: 20),
+                    icon: const Icon(
+                      Icons.logout,
+                      color: Colors.white70,
+                      size: 20,
+                    ),
                     tooltip: 'Logout',
                     onPressed: () {
                       context.read<AuthBloc>().add(const LogoutRequested());

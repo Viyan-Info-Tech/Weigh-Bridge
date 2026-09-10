@@ -65,8 +65,9 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
     final vehicleNo = _getVehicleNumber(bill.vehicleId);
     final partyName = _getPartyName(bill.partyId);
     final materialName = _getMaterialName(bill.materialId);
-    final dateFormatted =
-        DateFormat('dd MMM yyyy, hh:mm a').format(bill.createdAt);
+    final dateFormatted = DateFormat(
+      'dd MMM yyyy, hh:mm a',
+    ).format(bill.createdAt);
 
     showDialog(
       context: context,
@@ -83,8 +84,11 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                 color: const Color(0xFF0D3B82).withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.receipt_long_rounded,
-                  color: Color(0xFF0D3B82), size: 24),
+              child: const Icon(
+                Icons.receipt_long_rounded,
+                color: Color(0xFF0D3B82),
+                size: 24,
+              ),
             ),
             const SizedBox(width: 12),
             Column(
@@ -125,13 +129,20 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
               _buildSlipRow('Entry Type', bill.entryType.toUpperCase()),
               _buildSlipRow('Payment Mode', bill.paymentMode.toUpperCase()),
               const Divider(height: 20),
-              _buildSlipRow('1st Weight (Gross/Tare)',
-                  '${bill.firstWeightKg.toStringAsFixed(0)} kg'),
-              _buildSlipRow('2nd Weight (Tare/Gross)',
-                  '${bill.secondWeightKg.toStringAsFixed(0)} kg'),
+              _buildSlipRow(
+                '1st Weight (Gross/Tare)',
+                '${bill.firstWeightKg.toStringAsFixed(0)} kg',
+              ),
+              _buildSlipRow(
+                '2nd Weight (Tare/Gross)',
+                '${bill.secondWeightKg.toStringAsFixed(0)} kg',
+              ),
               const SizedBox(height: 6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(8),
@@ -164,9 +175,16 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                 ),
               ),
               const SizedBox(height: 10),
-              _buildSlipRow('Rate per Ton', '₹ ${bill.ratePerTon.toStringAsFixed(2)}'),
-              _buildSlipRow('Total Charges', '₹ ${bill.amount.toStringAsFixed(2)}',
-                  isBold: true, textColor: const Color(0xFF16A34A)),
+              _buildSlipRow(
+                'Rate per Ton',
+                '₹ ${bill.ratePerTon.toStringAsFixed(2)}',
+              ),
+              _buildSlipRow(
+                'Total Charges',
+                '₹ ${bill.amount.toStringAsFixed(2)}',
+                isBold: true,
+                textColor: const Color(0xFF16A34A),
+              ),
               if (bill.remarks != null && bill.remarks!.isNotEmpty) ...[
                 const SizedBox(height: 6),
                 _buildSlipRow('Remarks', bill.remarks!),
@@ -199,7 +217,8 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
               backgroundColor: const Color(0xFF0D3B82),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
         ],
@@ -207,8 +226,12 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
     );
   }
 
-  Widget _buildSlipRow(String label, String value,
-      {bool isBold = false, Color? textColor}) {
+  Widget _buildSlipRow(
+    String label,
+    String value, {
+    bool isBold = false,
+    Color? textColor,
+  }) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
@@ -249,7 +272,8 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
       final billNo = bill.billNumber.toLowerCase();
       final query = _searchQuery.toLowerCase();
 
-      final matchesSearch = query.isEmpty ||
+      final matchesSearch =
+          query.isEmpty ||
           vehicleNo.contains(query) ||
           partyName.contains(query) ||
           billNo.contains(query);
@@ -267,9 +291,11 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
     // Calculate summary statistics
     final totalNetWeightTon =
         widget.recentBills.fold<double>(0, (sum, b) => sum + b.netWeightKg) /
-            1000;
-    final totalRevenue =
-        widget.recentBills.fold<double>(0, (sum, b) => sum + b.amount);
+        1000;
+    final totalRevenue = widget.recentBills.fold<double>(
+      0,
+      (sum, b) => sum + b.amount,
+    );
 
     return Container(
       decoration: BoxDecoration(
@@ -334,7 +360,9 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                     const Spacer(),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 5),
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF1F5F9),
                         borderRadius: BorderRadius.circular(20),
@@ -433,8 +461,10 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                             ),
                             suffixIcon: _searchQuery.isNotEmpty
                                 ? IconButton(
-                                    icon: const Icon(Icons.clear_rounded,
-                                        size: 16),
+                                    icon: const Icon(
+                                      Icons.clear_rounded,
+                                      size: 16,
+                                    ),
                                     onPressed: () {
                                       _searchController.clear();
                                       setState(() {
@@ -446,21 +476,26 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                             filled: true,
                             fillColor: const Color(0xFFF8FAFC),
                             contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 12, vertical: 0),
+                              horizontal: 12,
+                              vertical: 0,
+                            ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide:
-                                  const BorderSide(color: Color(0xFFE2E8F0)),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE2E8F0),
+                              ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide:
-                                  const BorderSide(color: Color(0xFFE2E8F0)),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE2E8F0),
+                              ),
                             ),
                             focusedBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(8),
-                              borderSide:
-                                  const BorderSide(color: Color(0xFF0D3B82)),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF0D3B82),
+                              ),
                             ),
                           ),
                         ),
@@ -500,7 +535,11 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
   }
 
   Widget _buildMetricTile(
-      String label, String value, Color accentColor, IconData icon) {
+    String label,
+    String value,
+    Color accentColor,
+    IconData icon,
+  ) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
@@ -622,8 +661,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
               ),
               const SizedBox(width: 8),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: isCompleted
                       ? const Color(0xFFDCFCE7)
@@ -661,8 +699,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
             children: [
               // Styled Vehicle Plate
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFFBEB),
                   borderRadius: BorderRadius.circular(4),
@@ -671,8 +708,11 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.local_shipping_outlined,
-                        size: 14, color: Color(0xFFB45309)),
+                    const Icon(
+                      Icons.local_shipping_outlined,
+                      size: 14,
+                      color: Color(0xFFB45309),
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       vehicleNo,
@@ -703,8 +743,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
               ),
               const SizedBox(width: 6),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(4),
@@ -732,7 +771,10 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
             ),
             child: Row(
               children: [
-                _buildWeightCell('1st Wt', '${bill.firstWeightKg.toStringAsFixed(0)} kg'),
+                _buildWeightCell(
+                  '1st Wt',
+                  '${bill.firstWeightKg.toStringAsFixed(0)} kg',
+                ),
                 _buildVerticalLine(),
                 _buildWeightCell(
                   '2nd Wt',
@@ -767,8 +809,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
               ),
               const SizedBox(width: 8),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE0E7FF),
                   borderRadius: BorderRadius.circular(4),
@@ -785,8 +826,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
               ),
               const SizedBox(width: 6),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(4),
@@ -818,8 +858,12 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
     );
   }
 
-  Widget _buildWeightCell(String label, String value,
-      {bool isBold = false, Color? textColor}) {
+  Widget _buildWeightCell(
+    String label,
+    String value, {
+    bool isBold = false,
+    Color? textColor,
+  }) {
     return Expanded(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
