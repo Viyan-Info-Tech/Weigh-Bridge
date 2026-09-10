@@ -17,14 +17,6 @@ class RecentBillsPanel extends StatelessWidget {
     required this.vehicles,
   });
 
-  String _getPartyName(int partyId) {
-    try {
-      return parties.firstWhere((p) => p.id == partyId).name;
-    } catch (_) {
-      return 'Unknown';
-    }
-  }
-
   String _getVehicleNumber(int vehicleId) {
     try {
       return vehicles.firstWhere((v) => v.id == vehicleId).vehicleNumber;
@@ -115,7 +107,7 @@ class RecentBillsPanel extends StatelessWidget {
       height: 200,
       child: ListView.separated(
         itemCount: recentBills.length,
-        separatorBuilder: (_, __) => const Divider(height: 1),
+        separatorBuilder: (context, index) => const Divider(height: 1),
         itemBuilder: (context, index) {
           final bill = recentBills[index];
           final dateStr = DateFormat('dd MMM yy').format(bill.createdAt);
