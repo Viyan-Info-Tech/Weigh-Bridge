@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 
-/// Interactive Truck-Style Digital Weighbridge Scale Display
-/// Matching the hardware terminal aesthetic with:
-/// - Stylized semi-truck silhouette with orange cab and green scale icon
-/// - Vertical LED level indicator bar graph
-/// - 7-segment green digital LED trailer display with ghost background segments
-/// - Triple tandem wheels and realistic chassis details
+/// Modern Commercial Semi-Trailer Truck Digital Weighbridge Scale Display
+/// Features:
+/// - Photorealistic European white cab-over commercial semi-truck on weighbridge platform
+/// - Integrated high-tech digital scale display inside the cargo container body
+/// - Neon 7-segment digital LED readout with ghost background segments
+/// - Scale status indicator LEDs (STABLE, ZERO, NET WT)
+/// - Sub-metric weight summary breakdown (1st, 2nd, Net)
 /// - Quick action pill buttons on the right: FIRST, SECOND, TARE
 class WeightDisplay extends StatelessWidget {
   final double netWeightTon;
@@ -32,9 +33,10 @@ class WeightDisplay extends StatelessWidget {
         ? netWeightTon
         : (firstWeight > 0 ? (firstWeight / 1000) : 2.000);
     final String weightString = activeWeight.toStringAsFixed(3);
+    final double netKg = (netWeightTon > 0 ? netWeightTon : activeWeight) * 1000;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -55,7 +57,7 @@ class WeightDisplay extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _buildTruckScaleArea(weightString),
+                _buildModernTruckScale(weightString, netKg),
                 const SizedBox(height: 12),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -72,9 +74,9 @@ class WeightDisplay extends StatelessWidget {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Truck Digital Scale Readout Display
+              // Modern Commercial Semi-Trailer Truck with Embedded Container Digital Display
               Expanded(
-                child: _buildTruckScaleArea(weightString),
+                child: _buildModernTruckScale(weightString, netKg),
               ),
               const SizedBox(width: 14),
               // Action Buttons Column: FIRST, SECOND, TARE
@@ -95,78 +97,206 @@ class WeightDisplay extends StatelessWidget {
     );
   }
 
-  Widget _buildTruckScaleArea(String weightString) {
-    return AspectRatio(
-      aspectRatio: 3.55,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final w = constraints.maxWidth;
-          final h = constraints.maxHeight;
+  Widget _buildModernTruckScale(String weightString, double netKg) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(12),
+      child: AspectRatio(
+        aspectRatio: 2.65,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final w = constraints.maxWidth;
+            final h = constraints.maxHeight;
 
-          // Trailer display region boundaries
-          final trailerLeft = w * 0.20;
-          final trailerTop = h * 0.08;
-          final trailerWidth = w * 0.76;
-          final trailerHeight = h * 0.72;
+            // Container overlay coordinates matching the trailer in modern_truck_scale.jpg
+            final containerLeft = w * 0.252;
+            final containerTop = h * 0.220;
+            final containerWidth = w * 0.680;
+            final containerHeight = h * 0.485;
 
-          return Stack(
-            children: [
-              // 1. Truck Body & Hardware Custom Painter
-              Positioned.fill(
-                child: CustomPaint(
-                  painter: _TruckSilhouettePainter(),
+            return Stack(
+              fit: StackFit.expand,
+              children: [
+                // 1. Photorealistic Modern Commercial Truck Image Asset (transparent background)
+                Image.asset(
+                  'assets/images/modern_truck_scale.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                      CustomPaint(painter: _FallbackModernTruckPainter()),
                 ),
-              ),
 
-              // 2. LED 7-Segment Digital Readout overlay on the trailer
-              Positioned(
-                left: trailerLeft,
-                top: trailerTop,
-                width: trailerWidth,
-                height: trailerHeight,
-                child: Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: trailerWidth * 0.04,
-                    vertical: trailerHeight * 0.08,
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Faint ghost "88" unlit segments on the left
-                      _buildGhostDigit(trailerHeight * 0.65),
-                      const SizedBox(width: 4),
-                      _buildGhostDigit(trailerHeight * 0.65),
-                      const SizedBox(width: 8),
+                // 2. High-Tech Digital Scale Console embedded on the Container surface
+                Positioned(
+                  left: containerLeft + (containerWidth * 0.02),
+                  top: containerTop + (containerHeight * 0.03),
+                  width: containerWidth * 0.96,
+                  height: containerHeight * 0.94,
+                  child: Container(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: containerWidth * 0.03,
+                      vertical: containerHeight * 0.05,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xE6081426), // Deep tinted digital glass
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: const Color(0xFF38BDF8).withValues(alpha: 0.35),
+                        width: 1.2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // Top Bar: Terminal ID & Status LEDs
+                        Row(
+                          children: [
+                            Container(
+                              width: 6,
+                              height: 6,
+                              decoration: const BoxDecoration(
+                                color: Color(0xFF22C55E),
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            const Text(
+                              'SCALE 01',
+                              style: TextStyle(
+                                fontFamily: 'PlusJakartaSans',
+                                fontSize: 9,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF94A3B8),
+                                letterSpacing: 0.8,
+                              ),
+                            ),
+                            const Spacer(),
+                            _buildStatusTag('STABLE', const Color(0xFF22C55E)),
+                            const SizedBox(width: 5),
+                            _buildStatusTag('ZERO', const Color(0xFF38BDF8)),
+                            const SizedBox(width: 5),
+                            _buildStatusTag('NET', const Color(0xFFF59E0B)),
+                          ],
+                        ),
 
-                      // Active 7-Segment digits for the weight value (e.g. "2.000")
-                      ..._buildDigitalString(
-                          weightString, trailerHeight * 0.68),
+                        // Center: Prominent Glowing 7-Segment Digital Weight Readout
+                        Expanded(
+                          child: Center(
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  // Faint ghost "88" unlit segments
+                                  _buildGhostDigit(containerHeight * 0.44),
+                                  const SizedBox(width: 3),
+                                  _buildGhostDigit(containerHeight * 0.44),
+                                  const SizedBox(width: 6),
 
-                      const SizedBox(width: 8),
+                                  // Active 7-Segment digits for the weight (e.g. "2.000")
+                                  ..._buildDigitalString(
+                                      weightString, containerHeight * 0.48),
 
-                      // Unit "ton" label in green
-                      Padding(
-                        padding: EdgeInsets.only(top: trailerHeight * 0.22),
-                        child: Text(
-                          'ton',
-                          style: TextStyle(
-                            fontFamily: 'PlusJakartaSans',
-                            fontSize: (trailerHeight * 0.32).clamp(12, 26),
-                            fontWeight: FontWeight.w700,
-                            color: const Color(0xFF00FF44),
-                            letterSpacing: 0.5,
+                                  const SizedBox(width: 8),
+
+                                  // Unit "ton" label in matching electric green
+                                  Padding(
+                                    padding: EdgeInsets.only(
+                                        top: containerHeight * 0.16),
+                                    child: const Text(
+                                      'ton',
+                                      style: TextStyle(
+                                        fontFamily: 'PlusJakartaSans',
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w800,
+                                        color: Color(0xFF00FF44),
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                      SizedBox(width: trailerWidth * 0.04),
-                    ],
+
+                        // Bottom Strip: 1st, 2nd, Net Weight Summary
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '1ST: ${firstWeight.toStringAsFixed(0)} kg',
+                                style: const TextStyle(
+                                  fontFamily: 'PlusJakartaSans',
+                                  fontSize: 8.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF94A3B8),
+                                ),
+                              ),
+                              Text(
+                                '2ND: ${secondWeight.toStringAsFixed(0)} kg',
+                                style: const TextStyle(
+                                  fontFamily: 'PlusJakartaSans',
+                                  fontSize: 8.5,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF94A3B8),
+                                ),
+                              ),
+                              Text(
+                                'NET: ${netKg.toStringAsFixed(0)} kg',
+                                style: const TextStyle(
+                                  fontFamily: 'PlusJakartaSans',
+                                  fontSize: 8.5,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF38BDF8),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusTag(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(3),
+        border: Border.all(color: color.withValues(alpha: 0.4), width: 0.6),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontFamily: 'PlusJakartaSans',
+          fontSize: 7.5,
+          fontWeight: FontWeight.w700,
+          color: color,
+          letterSpacing: 0.3,
+        ),
       ),
     );
   }
@@ -180,19 +310,19 @@ class WeightDisplay extends StatelessWidget {
       final nextIsDot = (i + 1 < text.length) && text[i + 1] == '.';
 
       if (char == '.') {
-        continue; // Handled as decimal point on preceding digit
+        continue;
       }
 
       widgets.add(
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2),
+          padding: const EdgeInsets.symmetric(horizontal: 1.5),
           child: CustomPaint(
             size: Size(digitWidth, digitHeight),
             painter: _SevenSegmentPainter(
               char: char,
               hasDot: nextIsDot,
               litColor: const Color(0xFF00FF44),
-              unlitColor: const Color(0x1600FF44),
+              unlitColor: const Color(0x1800FF44),
             ),
           ),
         ),
@@ -209,7 +339,7 @@ class WeightDisplay extends StatelessWidget {
         char: ' ',
         hasDot: false,
         litColor: Color(0xFF00FF44),
-        unlitColor: Color(0x1200FF44), // Very faint 888 pattern
+        unlitColor: Color(0x1400FF44),
         drawAllAsGhost: true,
       ),
     );
@@ -264,252 +394,67 @@ class WeightDisplay extends StatelessWidget {
   }
 }
 
-/// Custom painter for the complete truck silhouette:
-/// - Green balance scale icon
-/// - Orange cabin with window, roof deflector & bumper
-/// - Vertical LED level indicator meter
-/// - Solid black trailer scale box with chassis beam
-/// - Front wheel and triple tandem rear wheels with white rims
-class _TruckSilhouettePainter extends CustomPainter {
+/// Fallback vector painter rendering a modern European white-cab semi-truck
+/// Used automatically in headless test environments or missing asset fallbacks
+class _FallbackModernTruckPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
 
-    // Ground line near the bottom
-    final groundY = h * 0.94;
-    final wheelRadius = h * 0.16;
-    final wheelCenterY = groundY - wheelRadius;
+    // Soft ground contact shadow under the truck wheels
+    final shadowPaint = Paint()..color = const Color(0x25000000);
+    final shadowRect = Rect.fromLTWH(w * 0.12, h * 0.79, w * 0.78, h * 0.03);
+    canvas.drawOval(shadowRect, shadowPaint);
 
-    // Paints
-    final blackPaint = Paint()
-      ..color = Colors.black
-      ..style = PaintingStyle.fill;
-
-    final borderStroke = Paint()
-      ..color = Colors.black
+    // Blue Trailer Container Box
+    final containerPaint = Paint()..color = const Color(0xFF6BA3CC);
+    final containerBorder = Paint()
+      ..color = const Color(0xFF4A7C9E)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0;
+    final containerRect =
+        Rect.fromLTWH(w * 0.252, h * 0.220, w * 0.680, h * 0.485);
+    canvas.drawRect(containerRect, containerPaint);
+    canvas.drawRect(containerRect, containerBorder);
 
-    final orangePaint = Paint()
-      ..color = const Color(0xFFF97316)
-      ..style = PaintingStyle.fill;
-
-    final brownPaint = Paint()
-      ..color = const Color(0xFF8D6E63)
-      ..style = PaintingStyle.fill;
-
-    final windowPaint = Paint()
+    // White Modern Cab-Over Tractor
+    final cabPaint = Paint()..color = Colors.white;
+    final cabBorder = Paint()
       ..color = const Color(0xFF94A3B8)
-      ..style = PaintingStyle.fill;
-
-    // 1. Draw Balance Scale Icon above cabin (top left)
-    _drawScaleIcon(canvas, Offset(w * 0.036, h * 0.08), h * 0.16);
-
-    // 2. Draw Trailer Display Body (solid black container)
-    final trailerLeft = w * 0.19;
-    final trailerTop = h * 0.08;
-    final trailerWidth = w * 0.78;
-    final trailerHeight = h * 0.72;
-
-    final trailerRect =
-        Rect.fromLTWH(trailerLeft, trailerTop, trailerWidth, trailerHeight);
-    canvas.drawRect(trailerRect, blackPaint);
-    canvas.drawRect(trailerRect, borderStroke);
-
-    // 3. Brown Chassis Runner / Beam under the trailer and extending forward
-    final chassisRect = Rect.fromLTWH(
-        w * 0.16, trailerTop + trailerHeight - 2, w * 0.80, h * 0.04);
-    canvas.drawRect(chassisRect, brownPaint);
-    canvas.drawRect(chassisRect, borderStroke);
-
-    // 4. White vertical reflector at the rear trailer edge
-    final reflectorRect = Rect.fromLTWH(
-        trailerLeft + trailerWidth - (w * 0.012),
-        trailerTop + trailerHeight * 0.65,
-        w * 0.008,
-        trailerHeight * 0.28);
-    canvas.drawRect(reflectorRect, Paint()..color = const Color(0xFFE2E8F0));
-
-    // 5. Cabin Body (Orange Cab on the left)
-    final cabLeft = w * 0.035;
-    final cabRight = w * 0.185;
-    final cabBottom = trailerTop + trailerHeight;
-    final cabRoofY = h * 0.18;
-    final cabWindshieldTopX = cabLeft + (cabRight - cabLeft) * 0.25;
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0;
 
     final cabPath = Path()
-      ..moveTo(cabRight, cabBottom)
-      ..lineTo(cabLeft, cabBottom)
-      ..lineTo(cabLeft, h * 0.40)
-      ..lineTo(cabWindshieldTopX, cabRoofY)
-      ..lineTo(cabRight, cabRoofY)
+      ..moveTo(w * 0.25, h * 0.72)
+      ..lineTo(w * 0.08, h * 0.72)
+      ..lineTo(w * 0.08, h * 0.42)
+      ..lineTo(w * 0.14, h * 0.22)
+      ..lineTo(w * 0.25, h * 0.20)
       ..close();
+    canvas.drawPath(cabPath, cabPaint);
+    canvas.drawPath(cabPath, cabBorder);
 
-    canvas.drawPath(cabPath, orangePaint);
-    canvas.drawPath(cabPath, borderStroke);
-
-    // Orange Roof Spoiler / Air Deflector on cab
-    final spoilerPath = Path()
-      ..moveTo(cabWindshieldTopX + 2, cabRoofY)
-      ..lineTo(cabWindshieldTopX + (cabRight - cabWindshieldTopX) * 0.6, h * 0.08)
-      ..lineTo(cabRight - 2, cabRoofY)
-      ..close();
-    canvas.drawPath(spoilerPath, orangePaint);
-    canvas.drawPath(spoilerPath, borderStroke);
-
-    // Cabin Windshield / Window
-    final windowPath = Path()
-      ..moveTo(cabWindshieldTopX + 2, cabRoofY + (h * 0.06))
-      ..lineTo(cabLeft + (cabRight - cabLeft) * 0.28, h * 0.46)
-      ..lineTo(cabRight - (w * 0.015), h * 0.46)
-      ..lineTo(cabRight - (w * 0.015), cabRoofY + (h * 0.06))
-      ..close();
-    canvas.drawPath(windowPath, windowPaint);
-    canvas.drawPath(windowPath, borderStroke);
-
-    // Front Bumper Block (small brown/black bumper on front bottom)
-    final bumperRect = Rect.fromLTWH(
-        cabLeft - (w * 0.012), cabBottom - (h * 0.07), w * 0.016, h * 0.07);
-    canvas.drawRect(bumperRect, brownPaint);
-    canvas.drawRect(bumperRect, borderStroke);
-
-    // 6. Vertical LED Level Indicator Meter (between cab and trailer)
-    _drawLedLevelMeter(
-      canvas,
-      Rect.fromLTWH(
-        cabRight + 1,
-        trailerTop + (h * 0.04),
-        (trailerLeft - cabRight - 2).clamp(6.0, 16.0),
-        trailerHeight - (h * 0.08),
+    // Windshield & Grille
+    final darkDetail = Paint()..color = const Color(0xFF1E293B);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(w * 0.09, h * 0.35, w * 0.11, h * 0.16),
+        const Radius.circular(4),
       ),
+      darkDetail,
     );
 
-    // 7. Wheels
-    // Front Wheel (under cabin)
-    final frontWheelX = cabLeft + (cabRight - cabLeft) * 0.58;
-    _drawWheel(canvas, Offset(frontWheelX, wheelCenterY), wheelRadius);
-
-    // Three Tandem Rear Wheels (under trailer right side)
-    final wheelSpacing = wheelRadius * 1.85;
-    final rearWheel3X = trailerLeft + trailerWidth - (wheelRadius * 1.6);
-    final rearWheel2X = rearWheel3X - wheelSpacing;
-    final rearWheel1X = rearWheel2X - wheelSpacing;
-
-    _drawWheel(canvas, Offset(rearWheel1X, wheelCenterY), wheelRadius);
-    _drawWheel(canvas, Offset(rearWheel2X, wheelCenterY), wheelRadius);
-    _drawWheel(canvas, Offset(rearWheel3X, wheelCenterY), wheelRadius);
-  }
-
-  void _drawScaleIcon(Canvas canvas, Offset center, double size) {
-    final paint = Paint()
-      ..color = const Color(0xFF22C55E)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8
-      ..strokeCap = StrokeCap.round;
-
-    final fillPaint = Paint()
-      ..color = const Color(0xFF22C55E)
-      ..style = PaintingStyle.fill;
-
-    final cx = center.dx;
-    final cy = center.dy;
-    final halfW = size * 0.45;
-    final halfH = size * 0.45;
-
-    // Central pillar
-    canvas.drawLine(Offset(cx, cy - halfH), Offset(cx, cy + halfH), paint);
-    // Base
-    canvas.drawLine(
-        Offset(cx - halfW * 0.5, cy + halfH), Offset(cx + halfW * 0.5, cy + halfH), paint);
-    // Crossbar
-    canvas.drawLine(Offset(cx - halfW, cy - halfH * 0.5),
-        Offset(cx + halfW, cy - halfH * 0.5), paint);
-
-    // Left pan
-    final leftPanX = cx - halfW;
-    final panTopY = cy - halfH * 0.5;
-    final panBottomY = cy + halfH * 0.35;
-    canvas.drawLine(Offset(leftPanX, panTopY), Offset(leftPanX - 4, panBottomY), paint);
-    canvas.drawLine(Offset(leftPanX, panTopY), Offset(leftPanX + 4, panBottomY), paint);
-    canvas.drawArc(
-      Rect.fromCenter(
-          center: Offset(leftPanX, panBottomY), width: 12, height: 6),
-      0,
-      3.14159,
-      true,
-      fillPaint,
-    );
-
-    // Right pan
-    final rightPanX = cx + halfW;
-    canvas.drawLine(Offset(rightPanX, panTopY), Offset(rightPanX - 4, panBottomY), paint);
-    canvas.drawLine(Offset(rightPanX, panTopY), Offset(rightPanX + 4, panBottomY), paint);
-    canvas.drawArc(
-      Rect.fromCenter(
-          center: Offset(rightPanX, panBottomY), width: 12, height: 6),
-      0,
-      3.14159,
-      true,
-      fillPaint,
-    );
-  }
-
-  void _drawLedLevelMeter(Canvas canvas, Rect rect) {
-    const int totalBars = 10;
-    final barHeight = rect.height / (totalBars * 1.5);
-    final barGap = barHeight * 0.5;
-
-    final bgPaint = Paint()..color = const Color(0xFF0F172A);
-    canvas.drawRect(rect, bgPaint);
-
-    for (int i = 0; i < totalBars; i++) {
-      // Inverted index: 0 is top (Red), totalBars-1 is bottom (Green)
-      Color barColor;
-      if (i < 2) {
-        barColor = const Color(0xFFEF4444); // Red
-      } else if (i < 5) {
-        barColor = const Color(0xFFFBBF24); // Amber
-      } else {
-        barColor = const Color(0xFF22C55E); // Green
-      }
-
-      // 6 bars lit from bottom upward
-      final isLit = i >= 4;
-      final paint = Paint()
-        ..color = isLit ? barColor : barColor.withValues(alpha: 0.15)
-        ..style = PaintingStyle.fill;
-
-      final y = rect.top + i * (barHeight + barGap);
-      final barRect =
-          Rect.fromLTWH(rect.left + 1, y, rect.width - 2, barHeight);
-      canvas.drawRect(barRect, paint);
-    }
-  }
-
-  void _drawWheel(Canvas canvas, Offset center, double radius) {
-    // 1. Outer Dark Rubber Tire
+    // Wheels
     final tirePaint = Paint()..color = const Color(0xFF262626);
-    canvas.drawCircle(center, radius, tirePaint);
+    final rimPaint = Paint()..color = const Color(0xFFE2E8F0);
+    final wheelY = h * 0.74;
+    final r = h * 0.07;
 
-    // Tire border
-    final borderPaint = Paint()
-      ..color = Colors.black
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-    canvas.drawCircle(center, radius, borderPaint);
-
-    // 2. White/Light Silver Wheel Rim with border
-    final rimRadius = radius * 0.62;
-    final rimPaint = Paint()..color = Colors.white;
-    canvas.drawCircle(center, rimRadius, rimPaint);
-    canvas.drawCircle(center, rimRadius, borderPaint);
-
-    // 3. Grey Center Hub
-    final hubRadius = radius * 0.32;
-    final hubPaint = Paint()..color = const Color(0xFF737373);
-    canvas.drawCircle(center, hubRadius, hubPaint);
-    canvas.drawCircle(center, hubRadius, borderPaint);
+    for (final wx in [w * 0.16, w * 0.38, w * 0.64, w * 0.73, w * 0.82]) {
+      canvas.drawCircle(Offset(wx, wheelY), r, tirePaint);
+      canvas.drawCircle(Offset(wx, wheelY), r * 0.55, rimPaint);
+    }
   }
 
   @override
@@ -517,7 +462,6 @@ class _TruckSilhouettePainter extends CustomPainter {
 }
 
 /// Precise 7-Segment Digital Digit Painter
-/// Generates authentic LED display segments with bevels and optional decimal dot
 class _SevenSegmentPainter extends CustomPainter {
   final String char;
   final bool hasDot;
@@ -537,13 +481,11 @@ class _SevenSegmentPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
-    final t = w * 0.18; // Segment thickness
-    final g = t * 0.18; // Gap between segments
+    final t = w * 0.18;
+    final g = t * 0.18;
 
-    // Segment activation map
     final segments = _getSegments(drawAllAsGhost ? '8' : char);
 
-    // Paints
     final litPaint = Paint()
       ..color = drawAllAsGhost ? unlitColor : litColor
       ..style = PaintingStyle.fill;
@@ -628,7 +570,6 @@ class _SevenSegmentPainter extends CustomPainter {
     }
   }
 
-  /// Returns [A, B, C, D, E, F, G] boolean flags for each segment
   List<bool> _getSegments(String c) {
     switch (c) {
       case '0':
