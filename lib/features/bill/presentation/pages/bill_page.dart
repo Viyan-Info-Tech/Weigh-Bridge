@@ -30,40 +30,154 @@ class _BillPageState extends State<BillPage> {
         if (state.status == BillScreenStatus.saved) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Bill ${state.currentBillNumber} saved successfully'),
-              backgroundColor: Colors.green.shade700,
+              content: Row(
+                children: [
+                  const Icon(Icons.check_circle_rounded,
+                      color: Colors.white, size: 20),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Bill ${state.currentBillNumber} saved successfully!',
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: const Color(0xFF16A34A),
               behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
           );
         }
-        if (state.status == BillScreenStatus.error && state.errorMessage != null) {
+        if (state.status == BillScreenStatus.error &&
+            state.errorMessage != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.errorMessage!),
+              content: Row(
+                children: [
+                  const Icon(Icons.error_outline_rounded,
+                      color: Colors.white, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      state.errorMessage!,
+                      style: const TextStyle(fontFamily: 'PlusJakartaSans'),
+                    ),
+                  ),
+                ],
+              ),
               backgroundColor: Colors.red.shade700,
               behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
           );
         }
       },
       builder: (context, state) {
         return Scaffold(
-          backgroundColor: const Color(0xFFF5F7FA),
+          backgroundColor: const Color(0xFFF8FAFC),
           body: SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildHeader(state),
-                  const SizedBox(height: 24),
-                  _buildTopSection(state),
-                  const SizedBox(height: 24),
-                  _buildBillForm(state),
-                  const SizedBox(height: 24),
-                  _buildActionButtons(state),
-                ],
-              ),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                // Desktop Widescreen Layout: Left Form + Right Fully Recent Billings
+                if (constraints.maxWidth >= 1000) {
+                  return Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        _buildTopHeader(state),
+                        const SizedBox(height: 16),
+                        Expanded(
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // LEFT SIDE: Form & Live Scale Controls (57%)
+                              Expanded(
+                                flex: 57,
+                                child: SingleChildScrollView(
+                                  padding: const EdgeInsets.only(right: 12),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      WeightDisplay(
+                                        netWeightTon: state.netWeightTon,
+                                        firstWeight: state.firstWeightKg,
+                                        secondWeight: state.secondWeightKg,
+                                      ),
+                                      const SizedBox(height: 16),
+                                      _buildBillForm(state),
+                                      const SizedBox(height: 16),
+                                      _buildActionButtons(state),
+                                      const SizedBox(height: 24),
+                                    ],
+                                  ),
+                                ),
+                              ),
+
+                              // Subtle Vertical Divider
+                              Container(
+                                width: 1,
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 4),
+                                color: const Color(0xFFE2E8F0),
+                              ),
+
+                              // RIGHT SIDE: Fully Recent Billings (43%)
+                              Expanded(
+                                flex: 43,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 12),
+                                  child: RecentBillsPanel(
+                                    recentBills: state.recentBills,
+                                    parties: state.parties,
+                                    vehicles: state.vehicles,
+                                    materials: state.materials,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                // Compact Window Layout: Stacked Scrollable View
+                return SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildTopHeader(state),
+                      const SizedBox(height: 16),
+                      WeightDisplay(
+                        netWeightTon: state.netWeightTon,
+                        firstWeight: state.firstWeightKg,
+                        secondWeight: state.secondWeightKg,
+                      ),
+                      const SizedBox(height: 16),
+                      _buildBillForm(state),
+                      const SizedBox(height: 16),
+                      _buildActionButtons(state),
+                      const SizedBox(height: 24),
+                      SizedBox(
+                        height: 500,
+                        child: RecentBillsPanel(
+                          recentBills: state.recentBills,
+                          parties: state.parties,
+                          vehicles: state.vehicles,
+                          materials: state.materials,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
           ),
         );
@@ -71,86 +185,101 @@ class _BillPageState extends State<BillPage> {
     );
   }
 
-  Widget _buildHeader(BillState state) {
+  Widget _buildTopHeader(BillState state) {
     final now = DateTime.now();
-    final dateStr = DateFormat('EEE, dd MMM yyyy').format(now);
+    final dateStr = DateFormat('EEEE, dd MMMM yyyy').format(now);
     final timeStr = DateFormat('hh:mm a').format(now);
 
-    return Row(
-      children: [
-        Expanded(
-          child: Column(
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0F52BA).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(Icons.scale_rounded,
+                color: Color(0xFF0F52BA), size: 20),
+          ),
+          const SizedBox(width: 12),
+          const Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Create Bill',
+                'Weighbridge Billing Terminal',
                 style: TextStyle(
                   fontFamily: 'PlusJakartaSans',
-                  fontSize: 24,
+                  fontSize: 16,
                   fontWeight: FontWeight.w800,
-                  color: Colors.grey.shade900,
+                  color: Color(0xFF0F172A),
+                  letterSpacing: -0.3,
                 ),
               ),
-              const SizedBox(height: 4),
               Text(
-                'Capture weighment details and generate bill',
+                'Operator scale console • Ticket generation',
                 style: TextStyle(
                   fontFamily: 'PlusJakartaSans',
-                  fontSize: 14,
-                  color: Colors.grey.shade500,
+                  fontSize: 12,
+                  color: Color(0xFF64748B),
                 ),
               ),
             ],
           ),
-        ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              dateStr,
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade700,
-              ),
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(8),
             ),
-            Text(
-              timeStr,
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 12,
-                color: Colors.grey.shade500,
-              ),
+            child: Row(
+              children: [
+                const Icon(Icons.calendar_today_outlined,
+                    size: 14, color: Color(0xFF64748B)),
+                const SizedBox(width: 6),
+                Text(
+                  dateStr,
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF334155),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Container(width: 1, height: 12, color: const Color(0xFFCBD5E1)),
+                const SizedBox(width: 10),
+                const Icon(Icons.access_time_rounded,
+                    size: 14, color: Color(0xFF64748B)),
+                const SizedBox(width: 4),
+                Text(
+                  timeStr,
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0F52BA),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTopSection(BillState state) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          flex: 5,
-          child: WeightDisplay(
-            netWeightTon: state.netWeightTon,
-            firstWeight: state.firstWeightKg,
-            secondWeight: state.secondWeightKg,
           ),
-        ),
-        const SizedBox(width: 24),
-        Expanded(
-          flex: 4,
-          child: RecentBillsPanel(
-            recentBills: state.recentBills,
-            parties: state.parties,
-            vehicles: state.vehicles,
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -171,92 +300,107 @@ class _BillPageState extends State<BillPage> {
       netWeightKg: state.netWeightKg,
       amount: state.amount,
       remarksText: state.remarksText,
-      onPartyChanged: (party) => context.read<BillBloc>().add(PartySelected(party)),
-      onVehicleChanged: (vehicle) => context.read<BillBloc>().add(VehicleSelected(vehicle)),
-      onMaterialChanged: (material) => context.read<BillBloc>().add(MaterialSelected(material)),
-      onFirstWeightChanged: (v) => context.read<BillBloc>().add(FirstWeightChanged(v)),
-      onSecondWeightChanged: (v) => context.read<BillBloc>().add(SecondWeightChanged(v)),
+      onPartyChanged: (party) =>
+          context.read<BillBloc>().add(PartySelected(party)),
+      onVehicleChanged: (vehicle) =>
+          context.read<BillBloc>().add(VehicleSelected(vehicle)),
+      onMaterialChanged: (material) =>
+          context.read<BillBloc>().add(MaterialSelected(material)),
+      onFirstWeightChanged: (v) =>
+          context.read<BillBloc>().add(FirstWeightChanged(v)),
+      onSecondWeightChanged: (v) =>
+          context.read<BillBloc>().add(SecondWeightChanged(v)),
       onRateChanged: (v) => context.read<BillBloc>().add(RateChanged(v)),
       onRemarksChanged: (v) => context.read<BillBloc>().add(RemarksChanged(v)),
-      onEntryTypeChanged: (v) => context.read<BillBloc>().add(EntryTypeChanged(v)),
-      onPaymentModeChanged: (v) => context.read<BillBloc>().add(PaymentModeChanged(v)),
+      onEntryTypeChanged: (v) =>
+          context.read<BillBloc>().add(EntryTypeChanged(v)),
+      onPaymentModeChanged: (v) =>
+          context.read<BillBloc>().add(PaymentModeChanged(v)),
     );
   }
 
   Widget _buildActionButtons(BillState state) {
     final isSaving = state.status == BillScreenStatus.saving;
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        OutlinedButton(
-          onPressed: isSaving ? null : () => context.read<BillBloc>().add(const ClearBillRequested()),
-          style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-            side: BorderSide(color: Colors.grey.shade400),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-          child: Text(
-            'Clear',
-            style: TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade700,
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Wrap(
+        alignment: WrapAlignment.end,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 12,
+        runSpacing: 10,
+        children: [
+          OutlinedButton.icon(
+            onPressed: isSaving
+                ? null
+                : () => context
+                    .read<BillBloc>()
+                    .add(const ClearBillRequested()),
+            icon: const Icon(Icons.refresh_rounded, size: 16),
+            label: const Text('Clear Form'),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+              foregroundColor: const Color(0xFF64748B),
+              side: const BorderSide(color: Color(0xFFCBD5E1)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
             ),
           ),
-        ),
-        const SizedBox(width: 12),
-        ElevatedButton(
-          onPressed: isSaving ? null : () => context.read<BillBloc>().add(const SaveBillRequested()),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF0D3B82),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            elevation: 0,
+          ElevatedButton.icon(
+            onPressed: isSaving
+                ? null
+                : () => context.read<BillBloc>().add(const SaveBillRequested()),
+            icon: isSaving
+                ? const SizedBox.shrink()
+                : const Icon(Icons.save_outlined, size: 16),
+            label: isSaving
+                ? const SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white),
+                  )
+                : const Text('Save Ticket'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0D3B82),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+              elevation: 0,
+            ),
           ),
-          child: isSaving
-              ? const SizedBox(
-                  height: 18,
-                  width: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                )
-              : Text(
-                  'Save',
-                  style: TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-        ),
-        const SizedBox(width: 12),
-        ElevatedButton(
-          onPressed: isSaving ? null : () => context.read<BillBloc>().add(const SaveBillRequested()),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF1B7A3D),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            elevation: 0,
+          ElevatedButton.icon(
+            onPressed: isSaving
+                ? null
+                : () => context.read<BillBloc>().add(const SaveBillRequested()),
+            icon: isSaving
+                ? const SizedBox.shrink()
+                : const Icon(Icons.print_rounded, size: 16),
+            label: isSaving
+                ? const SizedBox(
+                    height: 18,
+                    width: 18,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white),
+                  )
+                : const Text('Save & Print Slip'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF16A34A),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8)),
+              elevation: 0,
+            ),
           ),
-          child: isSaving
-              ? const SizedBox(
-                  height: 18,
-                  width: 18,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                )
-              : Text(
-                  'Save & Print',
-                  style: TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
