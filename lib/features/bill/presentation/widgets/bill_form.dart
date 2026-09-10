@@ -72,31 +72,19 @@ class BillForm extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Row 1: Bill No | Entry Type | Payment Mode
           Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0D3B82).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  billNumber,
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF0D3B82),
-                  ),
-                ),
-              ),
-              const Spacer(),
-              _buildEntryTypeDropdown(),
+              _buildBillNumberBadge(),
+              const SizedBox(width: 16),
+              Expanded(child: _buildEntryTypeDropdown()),
               const SizedBox(width: 12),
-              _buildPaymentModeDropdown(),
+              Expanded(child: _buildPaymentModeDropdown()),
             ],
           ),
           const SizedBox(height: 20),
+
+          // Row 2: Party Name | Vehicle Number
           Row(
             children: [
               Expanded(child: _buildPartyDropdown()),
@@ -105,6 +93,8 @@ class BillForm extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 16),
+
+          // Row 3: Material | Remarks
           Row(
             children: [
               Expanded(child: _buildMaterialDropdown()),
@@ -112,30 +102,58 @@ class BillForm extends StatelessWidget {
               Expanded(child: _buildRemarksField()),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
+
+          // Row 4: First Weight | Second Weight (PROMINENT)
           Row(
             children: [
-              Expanded(child: _buildWeightField('First Weight (kg)', firstWeightText, onFirstWeightChanged)),
+              Expanded(child: _buildProminentWeightField('First Weight (kg) *', firstWeightText, onFirstWeightChanged)),
               const SizedBox(width: 16),
-              Expanded(child: _buildWeightField('Second Weight (kg)', secondWeightText, onSecondWeightChanged)),
+              Expanded(child: _buildProminentWeightField('Second Weight (kg) *', secondWeightText, onSecondWeightChanged)),
             ],
           ),
           const SizedBox(height: 16),
+
+          // Row 5: Net Weight (Auto) | Rate
           Row(
             children: [
-              Expanded(child: _buildCalculatedField('Net Weight (kg)', netWeightKg.toStringAsFixed(0))),
+              Expanded(child: _buildAutoField('Net Weight (kg)', '${netWeightKg.toStringAsFixed(0)} kg')),
               const SizedBox(width: 16),
               Expanded(child: _buildWeightField('Rate (₹/ton)', rateText, onRateChanged)),
             ],
           ),
           const SizedBox(height: 16),
+
+          // Row 6: Amount (Auto)
           Row(
             children: [
-              Expanded(child: _buildCalculatedField('Amount (₹)', amount.toStringAsFixed(2))),
+              Expanded(child: _buildAutoField('Amount (₹)', '₹${amount.toStringAsFixed(2)}')),
               const Spacer(),
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBillNumberBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0D3B82).withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: const Color(0xFF0D3B82).withValues(alpha: 0.2),
+        ),
+      ),
+      child: Text(
+        billNumber,
+        style: const TextStyle(
+          fontFamily: 'PlusJakartaSans',
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF0D3B82),
+        ),
       ),
     );
   }
@@ -291,100 +309,148 @@ class BillForm extends StatelessWidget {
   }
 
   Widget _buildEntryTypeDropdown() {
-    return SizedBox(
-      width: 150,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Entry Type *',
-            style: TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade600,
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Entry Type *',
+          style: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey.shade600,
           ),
-          const SizedBox(height: 6),
-          DropdownButtonFormField<String>(
-            initialValue: entryType,
-            isExpanded: true,
-            decoration: InputDecoration(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFF0D3B82)),
-              ),
-              isDense: true,
+        ),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<String>(
+          initialValue: entryType,
+          isExpanded: true,
+          decoration: InputDecoration(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
             ),
-            items: const [
-              DropdownMenuItem(value: 'Inbound', child: Text('Inbound (Purchase)', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-              DropdownMenuItem(value: 'Outbound', child: Text('Outbound (Sale)', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-            ],
-            onChanged: (v) {
-              if (v != null) onEntryTypeChanged(v);
-            },
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFF0D3B82)),
+            ),
+            isDense: true,
           ),
-        ],
-      ),
+          items: const [
+            DropdownMenuItem(value: 'Inbound', child: Text('Inbound (Purchase)', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
+            DropdownMenuItem(value: 'Outbound', child: Text('Outbound (Sale)', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
+          ],
+          onChanged: (v) {
+            if (v != null) onEntryTypeChanged(v);
+          },
+        ),
+      ],
     );
   }
 
   Widget _buildPaymentModeDropdown() {
-    return SizedBox(
-      width: 150,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Payment Mode',
-            style: TextStyle(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Payment Mode',
+          style: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey.shade600,
+          ),
+        ),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<String>(
+          initialValue: paymentMode,
+          isExpanded: true,
+          decoration: InputDecoration(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFF0D3B82)),
+            ),
+            isDense: true,
+          ),
+          items: const [
+            DropdownMenuItem(value: 'Cash', child: Text('Cash', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
+            DropdownMenuItem(value: 'Credit', child: Text('Credit', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
+            DropdownMenuItem(value: 'UPI', child: Text('UPI', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
+            DropdownMenuItem(value: 'Bank Transfer', child: Text('Bank Transfer', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
+          ],
+          onChanged: (v) {
+            if (v != null) onPaymentModeChanged(v);
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProminentWeightField(String label, String value, ValueChanged<String> onChanged) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: Colors.grey.shade700,
+          ),
+        ),
+        const SizedBox(height: 6),
+        TextFormField(
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,3}')),
+          ],
+          initialValue: value.isNotEmpty ? value : null,
+          onChanged: onChanged,
+          style: const TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+          decoration: InputDecoration(
+            hintText: '0.000',
+            hintStyle: TextStyle(
               fontFamily: 'PlusJakartaSans',
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade600,
+              fontSize: 16,
+              color: Colors.grey.shade300,
             ),
-          ),
-          const SizedBox(height: 6),
-          DropdownButtonFormField<String>(
-            initialValue: paymentMode,
-            isExpanded: true,
-            decoration: InputDecoration(
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFF0D3B82)),
-              ),
-              isDense: true,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
             ),
-            items: const [
-              DropdownMenuItem(value: 'Cash', child: Text('Cash', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-              DropdownMenuItem(value: 'Credit', child: Text('Credit', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-              DropdownMenuItem(value: 'UPI', child: Text('UPI', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-              DropdownMenuItem(value: 'Bank Transfer', child: Text('Bank Transfer', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-            ],
-            onChanged: (v) {
-              if (v != null) onPaymentModeChanged(v);
-            },
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFF0D3B82), width: 2),
+            ),
+            filled: true,
+            fillColor: Colors.white,
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -440,35 +506,57 @@ class BillForm extends StatelessWidget {
     );
   }
 
-  Widget _buildCalculatedField(String label, String value) {
+  Widget _buildAutoField(String label, String value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey.shade600,
-          ),
+        Row(
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFF16A34A).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(3),
+              ),
+              child: const Text(
+                'Auto',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF16A34A),
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 6),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
+            color: const Color(0xFFF1F5F9),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade200),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
           ),
           child: Text(
             value,
-            style: TextStyle(
+            style: const TextStyle(
               fontFamily: 'PlusJakartaSans',
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade800,
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF0F172A),
             ),
           ),
         ),

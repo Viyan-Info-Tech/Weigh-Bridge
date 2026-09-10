@@ -112,7 +112,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
           ],
         ),
         content: SizedBox(
-          width: 380,
+          width: 420,
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -143,17 +143,21 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                       'Net Weight',
                       style: TextStyle(
                         fontFamily: 'PlusJakartaSans',
-                        fontSize: 14,
+                        fontSize: 13,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-                    Text(
-                      '${bill.netWeightKg.toStringAsFixed(0)} kg (${(bill.netWeightKg / 1000).toStringAsFixed(3)} T)',
-                      style: const TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF0D3B82),
+                    const SizedBox(width: 8),
+                    Flexible(
+                      child: Text(
+                        '${bill.netWeightKg.toStringAsFixed(0)} kg (${(bill.netWeightKg / 1000).toStringAsFixed(3)} T)',
+                        textAlign: TextAlign.end,
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0D3B82),
+                        ),
                       ),
                     ),
                   ],
@@ -218,13 +222,17 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
               color: Color(0xFF64748B),
             ),
           ),
-          Text(
-            value,
-            style: TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 12,
-              fontWeight: isBold ? FontWeight.w800 : FontWeight.w600,
-              color: textColor ?? const Color(0xFF0F172A),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.end,
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
+                color: textColor ?? const Color(0xFF0F172A),
+              ),
             ),
           ),
         ],

@@ -188,7 +188,6 @@ class _BillPageState extends State<BillPage> {
   Widget _buildTopHeader(BillState state) {
     final now = DateTime.now();
     final dateStr = DateFormat('EEEE, dd MMMM yyyy').format(now);
-    final timeStr = DateFormat('hh:mm a').format(now);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
@@ -212,7 +211,7 @@ class _BillPageState extends State<BillPage> {
               color: const Color(0xFF0F52BA).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.scale_rounded,
+            child: const Icon(Icons.receipt_long_rounded,
                 color: Color(0xFF0F52BA), size: 20),
           ),
           const SizedBox(width: 12),
@@ -220,7 +219,7 @@ class _BillPageState extends State<BillPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Weighbridge Billing Terminal',
+                'Viyan Weighbridge',
                 style: TextStyle(
                   fontFamily: 'PlusJakartaSans',
                   fontSize: 16,
@@ -230,7 +229,7 @@ class _BillPageState extends State<BillPage> {
                 ),
               ),
               Text(
-                'Operator scale console • Ticket generation',
+                'Billing & Ticket Management',
                 style: TextStyle(
                   fontFamily: 'PlusJakartaSans',
                   fontSize: 12,
@@ -258,21 +257,6 @@ class _BillPageState extends State<BillPage> {
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF334155),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Container(width: 1, height: 12, color: const Color(0xFFCBD5E1)),
-                const SizedBox(width: 10),
-                const Icon(Icons.access_time_rounded,
-                    size: 14, color: Color(0xFF64748B)),
-                const SizedBox(width: 4),
-                Text(
-                  timeStr,
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF0F52BA),
                   ),
                 ),
               ],

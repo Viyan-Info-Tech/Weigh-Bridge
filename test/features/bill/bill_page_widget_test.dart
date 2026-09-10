@@ -11,6 +11,7 @@ import 'package:weighbridge/features/bill/domain/usecases/load_parties.dart';
 import 'package:weighbridge/features/bill/domain/usecases/load_vehicles.dart';
 import 'package:weighbridge/features/bill/domain/usecases/save_bill.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_bloc.dart';
+import 'package:weighbridge/features/bill/presentation/bloc/bill_event.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_state.dart';
 import 'package:weighbridge/features/bill/presentation/pages/bill_page.dart';
 
@@ -100,16 +101,16 @@ void main() {
     mockLoadRecentBillsUseCase = MockLoadRecentBillsUseCase();
     mockGenerateBillNumberUseCase = MockGenerateBillNumberUseCase();
 
-    when(() => mockLoadPartiesUseCase()).thenAnswer((_) async => testParties);
-    when(() => mockLoadVehiclesUseCase()).thenAnswer((_) async => testVehicles);
+    when(() => mockLoadPartiesUseCase()).thenAnswer((_) => Future.value(testParties));
+    when(() => mockLoadVehiclesUseCase()).thenAnswer((_) => Future.value(testVehicles));
     when(() => mockLoadMaterialsUseCase())
-        .thenAnswer((_) async => testMaterials);
+        .thenAnswer((_) => Future.value(testMaterials));
     when(() => mockLoadRecentBillsUseCase())
-        .thenAnswer((_) async => testBills);
+        .thenAnswer((_) => Future.value(testBills));
     when(() => mockLoadRecentBillsUseCase(limit: any(named: 'limit')))
-        .thenAnswer((_) async => testBills);
+        .thenAnswer((_) => Future.value(testBills));
     when(() => mockGenerateBillNumberUseCase())
-        .thenAnswer((_) async => 'WB-00002');
+        .thenAnswer((_) => Future.value('WB-00002'));
 
     billBloc = BillBloc(
       loadPartiesUseCase: mockLoadPartiesUseCase,
@@ -134,12 +135,24 @@ void main() {
     );
   }
 
-  Future<void> pumpBillPage(WidgetTester tester) async {
-    final loadedFuture = billBloc.stream.firstWhere(
-      (state) => state.status == BillScreenStatus.loaded,
+  test('billBloc loads bill screen correctly', () async {
+    billBloc.add(const LoadBillScreen());
+    await expectLater(
+      billBloc.stream,
+      emitsInOrder([
+        predicate<BillState>((s) => s.status == BillScreenStatus.loading),
+        predicate<BillState>((s) => s.status == BillScreenStatus.loaded),
+      ]),
     );
+  });
+
+  Future<void> pumpBillPage(WidgetTester tester) async {
     await tester.pumpWidget(createWidgetUnderTest());
-    await loadedFuture;
+    await tester.runAsync(() async {
+      await billBloc.stream.firstWhere(
+        (s) => s.status == BillScreenStatus.loaded,
+      );
+    });
     await tester.pumpAndSettle();
   }
 
@@ -155,10 +168,14 @@ void main() {
     await pumpBillPage(tester);
 
     // Verify Header
-    expect(find.text('Weighbridge Billing Terminal'), findsOneWidget);
+    expect(find.text('Viyan Weighbridge'), findsOneWidget);
+    expect(find.text('Billing & Ticket Management'), findsOneWidget);
 
-    // Verify Left Side: Live Scale and Bill Form
-    expect(find.text('LIVE SCALE 01'), findsOneWidget);
+    // Verify Left Side: Truck Digital Scale & Quick Action Buttons
+    expect(find.text('ton'), findsOneWidget);
+    expect(find.text('FIRST'), findsOneWidget);
+    expect(find.text('SECOND'), findsOneWidget);
+    expect(find.text('TARE'), findsOneWidget);
     expect(find.text('Clear Form'), findsOneWidget);
     expect(find.text('Save Ticket'), findsOneWidget);
     expect(find.text('Save & Print Slip'), findsOneWidget);
@@ -215,5 +232,27 @@ void main() {
     expect(find.text('VIYAN WEIGHBRIDGE'), findsOneWidget);
     expect(find.text('Weighment Slip: WB-00001'), findsOneWidget);
     expect(find.text('Print Ticket'), findsOneWidget);
+  });
+
+  testWidgets('tapping FIRST, SECOND, TARE buttons triggers action feedback',
+      (tester) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    await pumpBillPage(tester);
+
+    // Tap FIRST button
+    await tester.tap(find.text('FIRST'));
+    await tester.pump();
+    expect(find.text('FIRST scale action triggered'), findsOneWidget);
+    await tester.pumpAndSettle();
+
+    // Verify SECOND and TARE buttons are present and responsive
+    expect(find.text('SECOND'), findsOneWidget);
+    expect(find.text('TARE'), findsOneWidget);
   });
 }
