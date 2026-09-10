@@ -1,0 +1,67 @@
+name: weighbridge
+description: "Weighbridge Management System - Desktop Application"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # State Management
+  flutter_bloc: ^9.1.1
+  equatable: ^2.0.7
+
+  # Routing
+  go_router: ^14.8.1
+
+  # Database
+  drift: ^2.22.1
+  sqlite3_flutter_libs: ^0.5.28
+  path_provider: ^2.1.5
+  path: ^1.9.1
+
+  # Functional Programming
+  dartz: ^0.10.1
+
+  # Security / Password Hashing
+  pointycastle: ^4.0.0
+
+  # Session
+  shared_preferences: ^2.5.3
+
+  # Date formatting
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+  drift_dev: ^2.22.1
+  build_runner: ^2.4.15
+  mocktail: ^1.0.4
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/
+  fonts:
+    - family: PlusJakartaSans
+      fonts:
+        - asset: fonts/PlusJakartaSans-Regular.ttf
+          weight: 400
+        - asset: fonts/PlusJakartaSans-Medium.ttf
+          weight: 500
+        - asset: fonts/PlusJakartaSans-SemiBold.ttf
+          weight: 600
+        - asset: fonts/PlusJakartaSans-ExtraBold.ttf
+          weight: 800
+    - family: Caveat
+      fonts:
+        - asset: fonts/Caveat-SemiBold.ttf
+          weight: 600

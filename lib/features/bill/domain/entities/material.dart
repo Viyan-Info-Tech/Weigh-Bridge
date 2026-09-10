@@ -1,0 +1,24 @@
+import 'package:equatable/equatable.dart';
+
+class Material extends Equatable {
+  final int id;
+  final String name;
+  final String unit;
+  final double defaultRate;
+  final bool isActive;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  const Material({
+    required this.id,
+    required this.name,
+    this.unit = 'ton',
+    this.defaultRate = 0,
+    this.isActive = true,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  @override
+  List<Object?> get props => [id, name, unit, defaultRate, isActive];
+}
