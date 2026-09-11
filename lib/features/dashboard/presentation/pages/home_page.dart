@@ -6,7 +6,7 @@ import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../bill/presentation/pages/bill_page.dart';
 import '../../../party/presentation/pages/party_list_page.dart';
-import '../../../vehicle/presentation/pages/vehicle_list_page.dart';
+import '../../../vehicle/presentation/pages/vehicles_merged_page.dart';
 import '../../../material/presentation/pages/material_list_page.dart';
 import 'about_page.dart';
 
@@ -23,9 +23,8 @@ class _HomePageState extends State<HomePage> {
 
   final List<Widget> _pages = [
     const BillPage(),
-    const _ComingSoonPage(title: 'Vendor'),
     const PartyListPage(),
-    const VehicleListPage(),
+    const VehiclesMergedPage(),
     const MaterialListPage(),
     const _ComingSoonPage(title: 'Pending'),
     const _ComingSoonPage(title: 'Report'),
@@ -77,36 +76,30 @@ class _HomePageState extends State<HomePage> {
                   isSelected: _selectedIndex == 0,
                   onTap: () => setState(() => _selectedIndex = 0),
                 ),
-                _SidebarItem(
-                  icon: Icons.store_outlined,
-                  label: 'Vendor',
-                  isSelected: _selectedIndex == 1,
-                  onTap: () => setState(() => _selectedIndex = 1),
-                ),
                 _buildMastersSection(),
                 _SidebarItem(
                   icon: Icons.pending_outlined,
                   label: 'Pending',
-                  isSelected: _selectedIndex == 5,
-                  onTap: () => setState(() => _selectedIndex = 5),
+                  isSelected: _selectedIndex == 4,
+                  onTap: () => setState(() => _selectedIndex = 4),
                 ),
                 _SidebarItem(
                   icon: Icons.report_outlined,
                   label: 'Report',
-                  isSelected: _selectedIndex == 6,
-                  onTap: () => setState(() => _selectedIndex = 6),
+                  isSelected: _selectedIndex == 5,
+                  onTap: () => setState(() => _selectedIndex = 5),
                 ),
                 _SidebarItem(
                   icon: Icons.settings_outlined,
                   label: 'Settings',
-                  isSelected: _selectedIndex == 7,
-                  onTap: () => setState(() => _selectedIndex = 7),
+                  isSelected: _selectedIndex == 6,
+                  onTap: () => setState(() => _selectedIndex = 6),
                 ),
                 _SidebarItem(
                   icon: Icons.info_outlined,
                   label: 'About',
-                  isSelected: _selectedIndex == 8,
-                  onTap: () => setState(() => _selectedIndex = 8),
+                  isSelected: _selectedIndex == 7,
+                  onTap: () => setState(() => _selectedIndex = 7),
                 ),
               ],
             ),
@@ -184,24 +177,24 @@ class _HomePageState extends State<HomePage> {
           onTap: () => setState(() => _isMastersExpanded = !_isMastersExpanded),
         ),
         if (_isMastersExpanded) ...[
-          _SidebarSubItem(
-            icon: Icons.people_outline,
-            label: 'Parties',
-            isSelected: _selectedIndex == 2,
-            onTap: () => setState(() => _selectedIndex = 2),
-          ),
-          _SidebarSubItem(
-            icon: Icons.local_shipping_outlined,
-            label: 'Vehicles',
-            isSelected: _selectedIndex == 3,
-            onTap: () => setState(() => _selectedIndex = 3),
-          ),
-          _SidebarSubItem(
-            icon: Icons.category_outlined,
-            label: 'Materials',
-            isSelected: _selectedIndex == 4,
-            onTap: () => setState(() => _selectedIndex = 4),
-          ),
+                _SidebarSubItem(
+                  icon: Icons.people_outline,
+                  label: 'Parties',
+                  isSelected: _selectedIndex == 1,
+                  onTap: () => setState(() => _selectedIndex = 1),
+                ),
+                _SidebarSubItem(
+                  icon: Icons.local_shipping_outlined,
+                  label: 'Vehicles',
+                  isSelected: _selectedIndex == 2,
+                  onTap: () => setState(() => _selectedIndex = 2),
+                ),
+                _SidebarSubItem(
+                  icon: Icons.inventory_2_outlined,
+                  label: 'Materials',
+                  isSelected: _selectedIndex == 3,
+                  onTap: () => setState(() => _selectedIndex = 3),
+                ),
         ],
       ],
     );

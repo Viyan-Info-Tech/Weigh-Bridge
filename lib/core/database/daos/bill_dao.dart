@@ -13,10 +13,21 @@ class BillDao extends DatabaseAccessor<AppDatabase> with _$BillDaoMixin {
     return into(weighments).insert(entry);
   }
 
+  Future<int> updateWeighment(int id, WeighmentsCompanion entry) async {
+    return (update(weighments)..where((w) => w.id.equals(id))).write(entry);
+  }
+
   Future<List<Weighment>> getRecentBills({int limit = 20}) async {
     final query = select(weighments)
       ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
       ..limit(limit);
+    return query.get();
+  }
+
+  Future<List<Weighment>> getPendingBills() async {
+    final query = select(weighments)
+      ..where((w) => w.status.equals('pending'))
+      ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]);
     return query.get();
   }
 
@@ -30,16 +41,12 @@ class BillDao extends DatabaseAccessor<AppDatabase> with _$BillDaoMixin {
     return query.getSingleOrNull();
   }
 
-  Future<int> getWeighmentCount() async {
-    final count = weighments.id.count();
-    final query = selectOnly(weighments)..addColumns([count]);
-    final result = await query.getSingle();
-    return result.read(count) ?? 0;
-  }
-
   Future<String> generateNextBillNumber() async {
-    final count = await getWeighmentCount();
-    final nextNumber = count + 1;
+    final maxBill = await customSelect(
+      "SELECT MAX(CAST(SUBSTR(bill_number, 4) AS INTEGER)) as max_num FROM weighments",
+    ).getSingleOrNull();
+    final maxNum = maxBill?.data['max_num'] as int? ?? 0;
+    final nextNumber = maxNum + 1;
     return 'WB-${nextNumber.toString().padLeft(5, '0')}';
   }
 

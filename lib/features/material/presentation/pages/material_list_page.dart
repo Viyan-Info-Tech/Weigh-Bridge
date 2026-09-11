@@ -220,7 +220,7 @@ class _MaterialListPageState extends State<MaterialListPage> {
             DataCell(Text(material.name, style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, fontWeight: FontWeight.w600))),
             DataCell(Text(material.category ?? '-', style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
             DataCell(Text(material.unit, style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-            DataCell(Text('₹${material.defaultRate.toStringAsFixed(2)}', style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
+            DataCell(Text('-', style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
             DataCell(_buildStatusBadge(material.isActive)),
             DataCell(Row(
               children: [

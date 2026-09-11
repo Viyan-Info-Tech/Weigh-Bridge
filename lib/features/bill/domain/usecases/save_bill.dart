@@ -9,6 +9,14 @@ class SaveBillUseCase {
   Future<int> call(Weighment weighment) async {
     return _repository.saveWeighment(weighment);
   }
+
+  Future<void> updateWeighment(int id, Weighment weighment) async {
+    return _repository.updateWeighment(id, weighment);
+  }
+
+  Future<Weighment?> getWeighmentById(int id) async {
+    return _repository.getWeighmentById(id);
+  }
 }
 
 class LoadRecentBillsUseCase {

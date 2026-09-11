@@ -32,13 +32,11 @@ class MaterialItemLocalDataSource {
     required String name,
     String? category,
     String unit = 'ton',
-    double defaultRate = 0,
   }) async {
     return _database.materialDao.insertMaterial(MaterialsCompanion(
       name: Value(name),
       category: Value(category),
       unit: Value(unit),
-      defaultRate: Value(defaultRate),
     ));
   }
 
@@ -47,14 +45,12 @@ class MaterialItemLocalDataSource {
     required String name,
     String? category,
     String unit = 'ton',
-    double defaultRate = 0,
   }) async {
     return _database.materialDao.updateMaterial(MaterialsCompanion(
       id: Value(id),
       name: Value(name),
       category: Value(category),
       unit: Value(unit),
-      defaultRate: Value(defaultRate),
       updatedAt: Value(DateTime.now()),
     ));
   }
@@ -74,7 +70,6 @@ class MaterialItemLocalDataSource {
       name: record.name,
       category: record.category,
       unit: record.unit,
-      defaultRate: record.defaultRate,
       isActive: record.isActive,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,

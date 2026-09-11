@@ -14,6 +14,11 @@ class BillRepositoryImpl implements BillRepository {
   }
 
   @override
+  Future<void> updateWeighment(int id, Weighment weighment) async {
+    return _localDataSource.updateWeighment(id, weighment);
+  }
+
+  @override
   Future<List<Weighment>> getRecentBills({int limit = 20}) async {
     return _localDataSource.getRecentBills(limit: limit);
   }

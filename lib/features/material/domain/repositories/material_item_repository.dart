@@ -9,14 +9,12 @@ abstract class MaterialItemRepository {
     required String name,
     String? category,
     String unit = 'ton',
-    double defaultRate = 0,
   });
   Future<bool> updateMaterial({
     required int id,
     required String name,
     String? category,
     String unit = 'ton',
-    double defaultRate = 0,
   });
   Future<void> deactivateMaterial(int id);
   Future<List<MaterialItem>> searchMaterials(String query);

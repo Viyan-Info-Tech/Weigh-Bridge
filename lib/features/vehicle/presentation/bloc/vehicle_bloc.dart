@@ -33,7 +33,6 @@ class VehicleBloc extends Bloc<VehicleEvent, VehicleState> {
     try {
       final vehicles = await _loadVehiclesUseCase(
         isActive: event.filterActive,
-        partyId: event.filterPartyId,
       );
       emit(state.copyWith(status: VehicleStatus.loaded, vehicles: vehicles));
     } catch (e) {
@@ -56,11 +55,9 @@ class VehicleBloc extends Bloc<VehicleEvent, VehicleState> {
     try {
       await _createVehicleUseCase(
         vehicleNumber: event.vehicleNumber,
-        partyId: event.partyId,
-        vehicleType: event.vehicleType,
+        vehicleTypeId: event.vehicleTypeId,
         driverName: event.driverName,
         driverPhone: event.driverPhone,
-        tareWeight: event.tareWeight,
       );
       emit(state.copyWith(status: VehicleStatus.success, successMessage: 'Vehicle created successfully'));
       add(const LoadVehicles());
@@ -75,11 +72,9 @@ class VehicleBloc extends Bloc<VehicleEvent, VehicleState> {
       await _vehicleRepository.updateVehicle(
         id: event.id,
         vehicleNumber: event.vehicleNumber,
-        partyId: event.partyId,
-        vehicleType: event.vehicleType,
+        vehicleTypeId: event.vehicleTypeId,
         driverName: event.driverName,
         driverPhone: event.driverPhone,
-        tareWeight: event.tareWeight,
       );
       emit(state.copyWith(status: VehicleStatus.success, successMessage: 'Vehicle updated successfully'));
       add(const LoadVehicles());

@@ -7,11 +7,9 @@ class CreateVehicleUseCase {
 
   Future<int> call({
     required String vehicleNumber,
-    required int partyId,
-    String? vehicleType,
+    required int vehicleTypeId,
     String? driverName,
     String? driverPhone,
-    double? tareWeight,
   }) async {
     final existing = await _repository.getVehicleByNumber(vehicleNumber);
     if (existing != null) {
@@ -19,11 +17,9 @@ class CreateVehicleUseCase {
     }
     return _repository.createVehicle(
       vehicleNumber: vehicleNumber,
-      partyId: partyId,
-      vehicleType: vehicleType,
+      vehicleTypeId: vehicleTypeId,
       driverName: driverName,
       driverPhone: driverPhone,
-      tareWeight: tareWeight,
     );
   }
 }

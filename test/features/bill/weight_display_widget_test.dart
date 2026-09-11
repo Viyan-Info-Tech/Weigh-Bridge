@@ -4,12 +4,9 @@ import 'package:weighbridge/features/bill/presentation/widgets/weight_display.da
 
 void main() {
   Widget buildTestWidget({
-    double netWeightTon = 2.000,
+    double netWeightTon = 0,
     double firstWeight = 0,
     double secondWeight = 0,
-    VoidCallback? onFirstPressed,
-    VoidCallback? onSecondPressed,
-    VoidCallback? onTarePressed,
   }) {
     return MaterialApp(
       home: Scaffold(
@@ -21,9 +18,6 @@ void main() {
               netWeightTon: netWeightTon,
               firstWeight: firstWeight,
               secondWeight: secondWeight,
-              onFirstPressed: onFirstPressed,
-              onSecondPressed: onSecondPressed,
-              onTarePressed: onTarePressed,
             ),
           ),
         ),
@@ -37,48 +31,37 @@ void main() {
       await tester.pumpWidget(buildTestWidget());
       await tester.pumpAndSettle();
 
-      // Ensure SCALE 01, STABLE, ZERO are removed
       expect(find.text('SCALE 01'), findsNothing);
       expect(find.text('STABLE'), findsNothing);
       expect(find.text('ZERO'), findsNothing);
-
-      // Ensure standalone NET indicator is removed (only the summary breakdown NET: 2000 kg remains)
       expect(find.text('NET'), findsNothing);
 
-      // Ensure unit and summary breakdown are present
       expect(find.text('ton'), findsOneWidget);
-      expect(find.text('NET: 2000 kg'), findsOneWidget);
+      expect(find.text('NET: 0 kg'), findsOneWidget);
       expect(find.text('1ST: 0 kg'), findsOneWidget);
       expect(find.text('2ND: 0 kg'), findsOneWidget);
-
-      // Ensure action buttons are present
-      expect(find.text('FIRST'), findsOneWidget);
-      expect(find.text('SECOND'), findsOneWidget);
-      expect(find.text('TARE'), findsOneWidget);
     });
 
-    testWidgets('triggers callback buttons when pressed', (tester) async {
-      bool firstTapped = false;
-      bool secondTapped = false;
-      bool tareTapped = false;
-
-      await tester.pumpWidget(
-        buildTestWidget(
-          onFirstPressed: () => firstTapped = true,
-          onSecondPressed: () => secondTapped = true,
-          onTarePressed: () => tareTapped = true,
-        ),
-      );
+    testWidgets('displays correct weight values when provided', (tester) async {
+      await tester.pumpWidget(buildTestWidget(
+        netWeightTon: 5.0,
+        firstWeight: 3000,
+        secondWeight: 8000,
+      ));
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('FIRST'));
-      expect(firstTapped, isTrue);
+      expect(find.text('NET: 5000 kg'), findsOneWidget);
+      expect(find.text('1ST: 3000 kg'), findsOneWidget);
+      expect(find.text('2ND: 8000 kg'), findsOneWidget);
+    });
 
-      await tester.tap(find.text('SECOND'));
-      expect(secondTapped, isTrue);
+    testWidgets('does not render FIRST, SECOND, or TARE buttons', (tester) async {
+      await tester.pumpWidget(buildTestWidget());
+      await tester.pumpAndSettle();
 
-      await tester.tap(find.text('TARE'));
-      expect(tareTapped, isTrue);
+      expect(find.text('FIRST'), findsNothing);
+      expect(find.text('SECOND'), findsNothing);
+      expect(find.text('TARE'), findsNothing);
     });
   });
 }

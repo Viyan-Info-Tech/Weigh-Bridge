@@ -22,7 +22,7 @@ class _VehicleListPageState extends State<VehicleListPage> {
   @override
   void initState() {
     super.initState();
-    context.read<VehicleBloc>().add(LoadVehicles(filterPartyId: widget.partyId));
+    context.read<VehicleBloc>().add(const LoadVehicles());
   }
 
   @override
@@ -216,8 +216,8 @@ class _VehicleListPageState extends State<VehicleListPage> {
         rows: vehicles.map((vehicle) {
           return DataRow(cells: [
             DataCell(Text(vehicle.vehicleNumber, style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, fontWeight: FontWeight.w600))),
-            DataCell(Text(vehicle.vendorName ?? '-', style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-            DataCell(Text(vehicle.vehicleType ?? '-', style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
+            DataCell(Text('-', style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
+            DataCell(Text('-', style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
             DataCell(Text(vehicle.driverName ?? '-', style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
             DataCell(_buildStatusBadge(vehicle.isActive)),
             DataCell(Row(
@@ -260,6 +260,6 @@ class _VehicleListPageState extends State<VehicleListPage> {
   }
 
   void _navigateToForm(BuildContext context, {int? vehicleId}) {
-    form.VehicleFormDialog.show(context, vehicleId: vehicleId, partyId: widget.partyId);
+    form.VehicleFormDialog.show(context, vehicleId: vehicleId);
   }
 }

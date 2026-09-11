@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:weighbridge/features/bill/domain/entities/party.dart';
-import 'package:weighbridge/features/bill/domain/entities/vehicle.dart';
+import 'package:weighbridge/features/party/domain/entities/party.dart';
+import 'package:weighbridge/features/vehicle/domain/entities/vehicle.dart';
+import 'package:weighbridge/features/vehicle_type/domain/entities/vehicle_type.dart';
 import 'package:weighbridge/features/bill/domain/entities/weighment.dart';
 import 'package:weighbridge/features/bill/presentation/widgets/weighment_slip_dialog.dart';
 
@@ -9,6 +10,7 @@ void main() {
   group('WeighmentSlipDialog Widget Tests', () {
     late Weighment testBill;
     late Vehicle testVehicle;
+    late VehicleType testVehicleType;
     late Party testParty;
 
     setUp(() {
@@ -22,11 +24,10 @@ void main() {
         firstWeightKg: 100000.0,
         secondWeightKg: 200000.0,
         netWeightKg: 100000.0,
-        ratePerTon: 10000.0,
-        amount: 1000000.0,
+        vehicleCharge: 10000.0,
+        amount: 10000.0,
         paymentMode: 'Cash',
         status: 'completed',
-        entryType: 'inbound',
         remarks: 'Direct delivery to site',
         createdAt: now,
         updatedAt: now,
@@ -35,9 +36,15 @@ void main() {
       testVehicle = Vehicle(
         id: 10,
         vehicleNumber: 'TN31CM2026',
-        partyId: 20,
-        vehicleType: '10 Wheeler Commercial',
-        tareWeight: 100000.0,
+        vehicleTypeId: 1,
+        createdAt: now,
+        updatedAt: now,
+      );
+
+      testVehicleType = VehicleType(
+        id: 1,
+        name: '10 Wheeler Commercial',
+        loadPrice: 10000.0,
         createdAt: now,
         updatedAt: now,
       );
@@ -68,6 +75,7 @@ void main() {
               bill: testBill,
               vehicle: testVehicle,
               party: testParty,
+              vehicleTypes: [testVehicleType],
               materialName: 'Sand',
             ),
           ),
@@ -87,7 +95,7 @@ void main() {
       expect(find.text('ORIGINAL COPY'), findsOneWidget);
 
       // 3. Status Stamp
-      expect(find.text('PAID'), findsOneWidget);
+      expect(find.text('COMPLETED'), findsOneWidget);
 
       // 4. Vehicle & Party Meta Grid
       expect(find.text('TN31CM2026'), findsOneWidget);
@@ -95,7 +103,6 @@ void main() {
       expect(find.text('BTC Construction Ltd'), findsOneWidget);
       expect(find.text('Ph: 9876543210'), findsOneWidget);
       expect(find.text('Sand'), findsOneWidget);
-      expect(find.text('INBOUND'), findsOneWidget);
 
       // 5. Weight Table
       expect(find.text('1st Weight (Gross/Tare)'), findsOneWidget);
@@ -106,8 +113,8 @@ void main() {
       expect(find.text('100.000 Metric Tons'), findsOneWidget);
 
       // 6. Charges and Amount in Words
-      expect(find.text('Rate per Ton: ₹ 10000.00'), findsOneWidget);
-      expect(find.text('₹ 1000000.00'), findsOneWidget);
+      expect(find.text('Vehicle Charge: ₹ 10000.00'), findsOneWidget);
+      expect(find.text('₹ 10000.00'), findsWidgets);
       expect(find.textContaining('AMOUNT IN WORDS:'), findsOneWidget);
 
       // 7. Remarks
@@ -134,6 +141,7 @@ void main() {
                   bill: testBill,
                   vehicle: testVehicle,
                   party: testParty,
+                  vehicleTypes: [testVehicleType],
                   materialName: 'Sand',
                 ),
               ),

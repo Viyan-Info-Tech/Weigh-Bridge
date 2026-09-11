@@ -6,12 +6,11 @@ class Weighment extends Equatable {
   final int partyId;
   final int vehicleId;
   final int materialId;
-  final String entryType;
   final String paymentMode;
   final double firstWeightKg;
-  final double secondWeightKg;
-  final double netWeightKg;
-  final double ratePerTon;
+  final double? secondWeightKg;
+  final double? netWeightKg;
+  final double vehicleCharge;
   final double amount;
   final String? remarks;
   final String status;
@@ -24,21 +23,21 @@ class Weighment extends Equatable {
     required this.partyId,
     required this.vehicleId,
     required this.materialId,
-    required this.entryType,
     required this.paymentMode,
     required this.firstWeightKg,
-    required this.secondWeightKg,
-    required this.netWeightKg,
-    required this.ratePerTon,
+    this.secondWeightKg,
+    this.netWeightKg,
+    required this.vehicleCharge,
     required this.amount,
     this.remarks,
-    this.status = 'completed',
+    this.status = 'pending',
     required this.createdAt,
     required this.updatedAt,
   });
 
-  double get netWeightTon => netWeightKg / 1000;
+  bool get isPending => status == 'pending';
+  bool get isCompleted => status == 'completed';
 
   @override
-  List<Object?> get props => [id, billNumber, partyId, vehicleId, materialId, netWeightKg, amount];
+  List<Object?> get props => [id, billNumber, partyId, vehicleId, materialId, firstWeightKg, secondWeightKg, netWeightKg, vehicleCharge, amount, status];
 }

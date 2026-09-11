@@ -2,11 +2,10 @@ import 'package:drift/drift.dart';
 
 import '../app_database.dart';
 import '../tables/parties_table.dart';
-import '../tables/vehicles_table.dart';
 
 part 'party_dao.g.dart';
 
-@DriftAccessor(tables: [Parties, Vehicles])
+@DriftAccessor(tables: [Parties])
 class PartyDao extends DatabaseAccessor<AppDatabase> with _$PartyDaoMixin {
   PartyDao(super.db);
 
@@ -76,15 +75,6 @@ class PartyDao extends DatabaseAccessor<AppDatabase> with _$PartyDaoMixin {
           p.gstNumber.like('%$query%'))
       ..limit(20);
     return q.get();
-  }
-
-  Future<int> partyVehicleCount(int partyId) async {
-    final count = vehicles.id.count();
-    final query = selectOnly(vehicles)
-      ..addColumns([count])
-      ..where(vehicles.partyId.equals(partyId) & vehicles.isActive.equals(true));
-    final result = await query.getSingle();
-    return result.read(count) ?? 0;
   }
 
   Future<void> deactivateParty(int id) async {

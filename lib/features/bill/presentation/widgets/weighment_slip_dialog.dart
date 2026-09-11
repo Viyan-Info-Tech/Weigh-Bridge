@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart' hide Material;
 import 'package:intl/intl.dart';
 
-import '../../domain/entities/party.dart';
-import '../../domain/entities/vehicle.dart';
+import '../../../party/domain/entities/party.dart';
+import '../../../vehicle/domain/entities/vehicle.dart';
+import '../../../vehicle_type/domain/entities/vehicle_type.dart';
 import '../../domain/entities/weighment.dart';
 
 /// Authentic Commercial Computerized Weighbridge Bill Slip Dialog
@@ -10,6 +11,7 @@ class WeighmentSlipDialog extends StatelessWidget {
   final Weighment bill;
   final Vehicle? vehicle;
   final Party? party;
+  final List<VehicleType> vehicleTypes;
   final String materialName;
 
   const WeighmentSlipDialog({
@@ -17,13 +19,19 @@ class WeighmentSlipDialog extends StatelessWidget {
     required this.bill,
     this.vehicle,
     this.party,
+    this.vehicleTypes = const [],
     required this.materialName,
   });
 
   @override
   Widget build(BuildContext context) {
     final vehicleNo = vehicle?.vehicleNumber ?? 'TN 31 CM 2026';
-    final vehicleType = vehicle?.vehicleType ?? 'Commercial Vehicle';
+    String vehicleTypeName = 'Commercial Vehicle';
+    if (vehicle != null) {
+      try {
+        vehicleTypeName = vehicleTypes.firstWhere((vt) => vt.id == vehicle!.vehicleTypeId).name;
+      } catch (_) {}
+    }
     final partyName = party?.name ?? 'General Party';
     final partyPhone = party?.mobile ?? '';
     final dateFormatted =
@@ -87,7 +95,7 @@ class WeighmentSlipDialog extends StatelessWidget {
                         _buildMetaGrid(
                           dateFormatted: dateFormatted,
                           vehicleNo: vehicleNo,
-                          vehicleType: vehicleType,
+                          vehicleType: vehicleTypeName,
                           partyName: partyName,
                           partyPhone: partyPhone,
                         ),
@@ -233,7 +241,7 @@ class WeighmentSlipDialog extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    isPaid ? 'PAID' : 'PENDING',
+                    isPaid ? 'COMPLETED' : 'DRAFT',
                     style: TextStyle(
                       fontFamily: 'PlusJakartaSans',
                       fontSize: 11,
@@ -388,17 +396,9 @@ class WeighmentSlipDialog extends StatelessWidget {
 
           const Divider(height: 1, thickness: 1, color: Color(0xFF0F172A)),
 
-          // Grid Row 3: Entry Type | Vehicle Type & Mode
+          // Grid Row 3: Vehicle Type & Payment Mode
           Row(
             children: [
-              Expanded(
-                child: _buildGridCell(
-                  label: 'ENTRY TYPE',
-                  value: bill.entryType.toUpperCase(),
-                  isChip: true,
-                ),
-              ),
-              Container(width: 1, height: 38, color: const Color(0xFF0F172A)),
               Expanded(
                 child: _buildGridCell(
                   label: 'VEHICLE TYPE',
@@ -616,7 +616,7 @@ class WeighmentSlipDialog extends StatelessWidget {
           _buildWeightRow(
             stage: '2nd Weight (Tare/Gross)',
             date: dateFormatted,
-            weight: '${bill.secondWeightKg.toStringAsFixed(0)} kg',
+            weight: '${bill.secondWeightKg?.toStringAsFixed(0) ?? '—'} kg',
           ),
 
           const Divider(height: 1, thickness: 1.5, color: Color(0xFF0F172A)),
@@ -656,7 +656,7 @@ class WeighmentSlipDialog extends StatelessWidget {
                 Expanded(
                   flex: 5,
                   child: Text(
-                    '${(bill.netWeightKg / 1000).toStringAsFixed(3)} Metric Tons',
+                    '${((bill.netWeightKg ?? 0) / 1000).toStringAsFixed(3)} Metric Tons',
                     style: const TextStyle(
                       fontFamily: 'PlusJakartaSans',
                       fontSize: 11,
@@ -668,7 +668,7 @@ class WeighmentSlipDialog extends StatelessWidget {
                 Expanded(
                   flex: 4,
                   child: Text(
-                    '${bill.netWeightKg.toStringAsFixed(0)} kg',
+                    '${(bill.netWeightKg ?? 0).toStringAsFixed(0)} kg',
                     textAlign: TextAlign.end,
                     style: const TextStyle(
                       fontFamily: 'PlusJakartaSans',
@@ -753,7 +753,7 @@ class WeighmentSlipDialog extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Rate per Ton: ₹ ${bill.ratePerTon.toStringAsFixed(2)}',
+                  'Vehicle Charge: ₹ ${bill.vehicleCharge.toStringAsFixed(2)}',
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontFamily: 'PlusJakartaSans',

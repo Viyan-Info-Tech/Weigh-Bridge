@@ -22,44 +22,33 @@ class VehicleRepositoryImpl implements VehicleRepository {
   Future<Vehicle?> getVehicleByNumber(String number) => _localDataSource.getVehicleByNumber(number);
 
   @override
-  Future<List<Vehicle>> getVehiclesByPartyId(int partyId) => _localDataSource.getVehiclesByPartyId(partyId);
-
-  @override
   Future<int> createVehicle({
     required String vehicleNumber,
-    required int partyId,
-    String? vehicleType,
+    required int vehicleTypeId,
     String? driverName,
     String? driverPhone,
-    double? tareWeight,
   }) =>
       _localDataSource.insertVehicle(
         vehicleNumber: vehicleNumber,
-        partyId: partyId,
-        vehicleType: vehicleType,
+        vehicleTypeId: vehicleTypeId,
         driverName: driverName,
         driverPhone: driverPhone,
-        tareWeight: tareWeight,
       );
 
   @override
   Future<bool> updateVehicle({
     required int id,
     required String vehicleNumber,
-    required int partyId,
-    String? vehicleType,
+    required int vehicleTypeId,
     String? driverName,
     String? driverPhone,
-    double? tareWeight,
   }) =>
       _localDataSource.updateVehicle(
         id: id,
         vehicleNumber: vehicleNumber,
-        partyId: partyId,
-        vehicleType: vehicleType,
+        vehicleTypeId: vehicleTypeId,
         driverName: driverName,
         driverPhone: driverPhone,
-        tareWeight: tareWeight,
       );
 
   @override

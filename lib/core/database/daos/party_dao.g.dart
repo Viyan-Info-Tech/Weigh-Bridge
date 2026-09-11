@@ -5,7 +5,6 @@ part of 'party_dao.dart';
 // ignore_for_file: type=lint
 mixin _$PartyDaoMixin on DatabaseAccessor<AppDatabase> {
   $PartiesTable get parties => attachedDatabase.parties;
-  $VehiclesTable get vehicles => attachedDatabase.vehicles;
   PartyDaoManager get managers => PartyDaoManager(this);
 }
 
@@ -14,6 +13,4 @@ class PartyDaoManager {
   PartyDaoManager(this._db);
   $$PartiesTableTableManager get parties =>
       $$PartiesTableTableManager(_db.attachedDatabase, _db.parties);
-  $$VehiclesTableTableManager get vehicles =>
-      $$VehiclesTableTableManager(_db.attachedDatabase, _db.vehicles);
 }

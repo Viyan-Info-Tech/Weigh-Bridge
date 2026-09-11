@@ -6,10 +6,7 @@ class LoadVehiclesUseCase {
 
   LoadVehiclesUseCase(this._repository);
 
-  Future<List<Vehicle>> call({bool? isActive, int? partyId}) async {
-    if (partyId != null) {
-      return _repository.getVehiclesByPartyId(partyId);
-    }
+  Future<List<Vehicle>> call({bool? isActive}) async {
     if (isActive != null) {
       return _repository.getVehiclesByStatus(isActive: isActive);
     }

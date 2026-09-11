@@ -3,25 +3,30 @@ import 'package:intl/intl.dart';
 
 import 'weighment_slip_dialog.dart';
 
-import '../../domain/entities/party.dart';
-import '../../domain/entities/vehicle.dart';
-import '../../domain/entities/material.dart' as domain;
+import '../../../party/domain/entities/party.dart';
+import '../../../vehicle/domain/entities/vehicle.dart';
+import '../../../vehicle_type/domain/entities/vehicle_type.dart';
+import '../../../material/domain/entities/material_item.dart' as domain;
 import '../../domain/entities/weighment.dart';
 
 class RecentBillsPanel extends StatefulWidget {
   final List<Weighment> recentBills;
   final List<Party> parties;
   final List<Vehicle> vehicles;
-  final List<domain.Material> materials;
+  final List<VehicleType> vehicleTypes;
+  final List<domain.MaterialItem> materials;
   final ValueChanged<Weighment>? onBillSelected;
+  final ValueChanged<int>? onLoadPendingBill;
 
   const RecentBillsPanel({
     super.key,
     required this.recentBills,
     required this.parties,
     required this.vehicles,
+    this.vehicleTypes = const [],
     this.materials = const [],
     this.onBillSelected,
+    this.onLoadPendingBill,
   });
 
   @override
@@ -79,6 +84,10 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
     }
   }
 
+  void _onLoadPendingBill(Weighment bill) {
+    widget.onLoadPendingBill?.call(bill.id);
+  }
+
   void _showBillSlipDialog(Weighment bill) {
     final vehicle = _getVehicle(bill.vehicleId);
     final party = _getParty(bill.partyId);
@@ -90,6 +99,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
         bill: bill,
         vehicle: vehicle,
         party: party,
+        vehicleTypes: widget.vehicleTypes,
         materialName: materialName,
       ),
     );
@@ -113,16 +123,16 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
       if (!matchesSearch) return false;
 
       if (_filterType == 'COMPLETED') {
-        return bill.secondWeightKg > 0;
+        return bill.status.toLowerCase() == 'completed';
       } else if (_filterType == 'PENDING') {
-        return bill.secondWeightKg <= 0;
+        return bill.status.toLowerCase() == 'draft';
       }
       return true;
     }).toList();
 
     // Calculate summary statistics
     final totalNetWeightTon =
-        widget.recentBills.fold<double>(0, (sum, b) => sum + b.netWeightKg) /
+        widget.recentBills.fold<double>(0, (sum, b) => sum + (b.netWeightKg ?? 0)) /
         1000;
     final totalRevenue = widget.recentBills.fold<double>(
       0,
@@ -450,7 +460,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
     final vehicleNo = _getVehicleNumber(bill.vehicleId);
     final partyName = _getPartyName(bill.partyId);
     final materialName = _getMaterialName(bill.materialId);
-    final isCompleted = bill.secondWeightKg > 0;
+        final isCompleted = bill.status.toLowerCase() == 'completed';
     final timeStr = DateFormat('hh:mm a').format(bill.createdAt);
     final dateStr = DateFormat('dd MMM').format(bill.createdAt);
 
@@ -615,14 +625,14 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                 _buildWeightCell(
                   '2nd Wt',
                   isCompleted
-                      ? '${bill.secondWeightKg.toStringAsFixed(0)} kg'
+                      ? '${bill.secondWeightKg?.toStringAsFixed(0) ?? '—'} kg'
                       : 'Waiting...',
                   textColor: isCompleted ? null : const Color(0xFFD97706),
                 ),
                 _buildVerticalLine(),
                 _buildWeightCell(
                   'Net Weight',
-                  '${bill.netWeightKg.toStringAsFixed(0)} kg',
+                  '${(bill.netWeightKg ?? 0).toStringAsFixed(0)} kg',
                   isBold: true,
                   textColor: const Color(0xFF0D3B82),
                 ),
@@ -660,33 +670,27 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                   ),
                 ),
               ),
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  bill.entryType.toUpperCase(),
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF64748B),
-                  ),
-                ),
-              ),
               const Spacer(),
-              // View / Print Slip Button
-              IconButton(
-                key: Key('print_slip_button_${bill.billNumber}'),
-                icon: const Icon(Icons.print_outlined, size: 18),
-                color: const Color(0xFF0D3B82),
-                tooltip: 'View & Print Slip',
-                visualDensity: VisualDensity.compact,
-                onPressed: () => _showBillSlipDialog(bill),
-              ),
+              if (!isCompleted)
+                TextButton.icon(
+                  key: Key('continue_bill_button_${bill.billNumber}'),
+                  onPressed: () => _onLoadPendingBill(bill),
+                  icon: const Icon(Icons.arrow_forward_rounded, size: 16),
+                  label: const Text('Continue'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: const Color(0xFFD97706),
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  ),
+                )
+              else
+                IconButton(
+                  key: Key('print_slip_button_${bill.billNumber}'),
+                  icon: const Icon(Icons.print_outlined, size: 18),
+                  color: const Color(0xFF0D3B82),
+                  tooltip: 'View & Print Slip',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => _showBillSlipDialog(bill),
+                ),
             ],
           ),
         ],

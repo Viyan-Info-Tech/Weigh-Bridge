@@ -15,21 +15,40 @@ class BillLocalDataSource {
         partyId: weighment.partyId,
         vehicleId: weighment.vehicleId,
         materialId: weighment.materialId,
-        entryType: weighment.entryType,
         paymentMode: weighment.paymentMode,
         firstWeightKg: weighment.firstWeightKg,
-        secondWeightKg: weighment.secondWeightKg,
-        netWeightKg: weighment.netWeightKg,
-        ratePerTon: weighment.ratePerTon,
-        amount: weighment.amount,
+        secondWeightKg: Value(weighment.secondWeightKg),
+        netWeightKg: Value(weighment.netWeightKg),
+        vehicleCharge: Value(weighment.vehicleCharge),
+        amount: Value(weighment.amount),
         remarks: Value(weighment.remarks),
         status: Value(weighment.status),
       ),
     );
   }
 
+  Future<void> updateWeighment(int id, Weighment weighment) async {
+    await _database.billDao.updateWeighment(
+      id,
+      WeighmentsCompanion(
+        secondWeightKg: Value(weighment.secondWeightKg),
+        netWeightKg: Value(weighment.netWeightKg),
+        vehicleCharge: Value(weighment.vehicleCharge),
+        amount: Value(weighment.amount),
+        status: Value(weighment.status),
+        remarks: Value(weighment.remarks),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+  }
+
   Future<List<Weighment>> getRecentBills({int limit = 20}) async {
     final records = await _database.billDao.getRecentBills(limit: limit);
+    return records.map(_toEntity).toList();
+  }
+
+  Future<List<Weighment>> getPendingBills() async {
+    final records = await _database.billDao.getPendingBills();
     return records.map(_toEntity).toList();
   }
 
@@ -54,12 +73,11 @@ class BillLocalDataSource {
       partyId: record.partyId,
       vehicleId: record.vehicleId,
       materialId: record.materialId,
-      entryType: record.entryType,
       paymentMode: record.paymentMode,
       firstWeightKg: record.firstWeightKg,
       secondWeightKg: record.secondWeightKg,
       netWeightKg: record.netWeightKg,
-      ratePerTon: record.ratePerTon,
+      vehicleCharge: record.vehicleCharge,
       amount: record.amount,
       remarks: record.remarks,
       status: record.status,

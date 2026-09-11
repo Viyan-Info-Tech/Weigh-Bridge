@@ -65,7 +65,6 @@ class PartyLocalDataSource {
   Future<domain.Party?> getPartyById(int id) async {
     final record = await _database.partyDao.getPartyById(id);
     if (record == null) return null;
-    final vehicleCount = await _database.partyDao.partyVehicleCount(id);
     return domain.Party(
       id: record.id,
       name: record.name,
@@ -77,7 +76,6 @@ class PartyLocalDataSource {
       city: record.city,
       state: record.state,
       isActive: record.isActive,
-      vehicleCount: vehicleCount,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     );

@@ -10,56 +10,47 @@ abstract class VehicleEvent extends Equatable {
 class LoadVehicles extends VehicleEvent {
   final String? searchQuery;
   final bool? filterActive;
-  final int? filterPartyId;
 
-  const LoadVehicles({this.searchQuery, this.filterActive, this.filterPartyId});
+  const LoadVehicles({this.searchQuery, this.filterActive});
 
   @override
-  List<Object?> get props => [searchQuery, filterActive, filterPartyId];
+  List<Object?> get props => [searchQuery, filterActive];
 }
 
 class CreateVehicleRequested extends VehicleEvent {
   final String vehicleNumber;
-  final int partyId;
-  final String? vehicleType;
+  final int vehicleTypeId;
   final String? driverName;
   final String? driverPhone;
-  final double? tareWeight;
 
   const CreateVehicleRequested({
     required this.vehicleNumber,
-    required this.partyId,
-    this.vehicleType,
+    required this.vehicleTypeId,
     this.driverName,
     this.driverPhone,
-    this.tareWeight,
   });
 
   @override
-  List<Object?> get props => [vehicleNumber, partyId, vehicleType, driverName, driverPhone, tareWeight];
+  List<Object?> get props => [vehicleNumber, vehicleTypeId, driverName, driverPhone];
 }
 
 class UpdateVehicleRequested extends VehicleEvent {
   final int id;
   final String vehicleNumber;
-  final int partyId;
-  final String? vehicleType;
+  final int vehicleTypeId;
   final String? driverName;
   final String? driverPhone;
-  final double? tareWeight;
 
   const UpdateVehicleRequested({
     required this.id,
     required this.vehicleNumber,
-    required this.partyId,
-    this.vehicleType,
+    required this.vehicleTypeId,
     this.driverName,
     this.driverPhone,
-    this.tareWeight,
   });
 
   @override
-  List<Object?> get props => [id, vehicleNumber, partyId, vehicleType, driverName, driverPhone, tareWeight];
+  List<Object?> get props => [id, vehicleNumber, vehicleTypeId, driverName, driverPhone];
 }
 
 class DeactivateVehicleRequested extends VehicleEvent {

@@ -27,13 +27,11 @@ class MaterialItemRepositoryImpl implements MaterialItemRepository {
     required String name,
     String? category,
     String unit = 'ton',
-    double defaultRate = 0,
   }) =>
       _localDataSource.insertMaterial(
         name: name,
         category: category,
         unit: unit,
-        defaultRate: defaultRate,
       );
 
   @override
@@ -42,14 +40,12 @@ class MaterialItemRepositoryImpl implements MaterialItemRepository {
     required String name,
     String? category,
     String unit = 'ton',
-    double defaultRate = 0,
   }) =>
       _localDataSource.updateMaterial(
         id: id,
         name: name,
         category: category,
         unit: unit,
-        defaultRate: defaultRate,
       );
 
   @override

@@ -2,24 +2,28 @@ import 'package:flutter/material.dart' hide Material;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:weighbridge/features/bill/domain/entities/material.dart' as domain;
-import 'package:weighbridge/features/bill/domain/entities/party.dart';
-import 'package:weighbridge/features/bill/domain/entities/vehicle.dart';
+import 'package:weighbridge/features/party/domain/entities/party.dart';
+import 'package:weighbridge/features/party/domain/repositories/party_repository.dart';
+import 'package:weighbridge/features/vehicle/domain/entities/vehicle.dart';
+import 'package:weighbridge/features/vehicle/domain/repositories/vehicle_repository.dart';
+import 'package:weighbridge/features/vehicle_type/domain/entities/vehicle_type.dart';
+import 'package:weighbridge/features/vehicle_type/domain/repositories/vehicle_type_repository.dart';
+import 'package:weighbridge/features/material/domain/entities/material_item.dart';
+import 'package:weighbridge/features/material/domain/repositories/material_item_repository.dart';
 import 'package:weighbridge/features/bill/domain/entities/weighment.dart';
-import 'package:weighbridge/features/bill/domain/usecases/load_materials.dart';
-import 'package:weighbridge/features/bill/domain/usecases/load_parties.dart';
-import 'package:weighbridge/features/bill/domain/usecases/load_vehicles.dart';
 import 'package:weighbridge/features/bill/domain/usecases/save_bill.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_bloc.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_event.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_state.dart';
 import 'package:weighbridge/features/bill/presentation/pages/bill_page.dart';
 
-class MockLoadPartiesUseCase extends Mock implements LoadPartiesUseCase {}
+class MockPartyRepository extends Mock implements PartyRepository {}
 
-class MockLoadVehiclesUseCase extends Mock implements LoadVehiclesUseCase {}
+class MockVehicleRepository extends Mock implements VehicleRepository {}
 
-class MockLoadMaterialsUseCase extends Mock implements LoadMaterialsUseCase {}
+class MockVehicleTypeRepository extends Mock implements VehicleTypeRepository {}
+
+class MockMaterialRepository extends Mock implements MaterialItemRepository {}
 
 class MockSaveBillUseCase extends Mock implements SaveBillUseCase {}
 
@@ -30,9 +34,10 @@ class MockGenerateBillNumberUseCase extends Mock
 
 void main() {
   late BillBloc billBloc;
-  late MockLoadPartiesUseCase mockLoadPartiesUseCase;
-  late MockLoadVehiclesUseCase mockLoadVehiclesUseCase;
-  late MockLoadMaterialsUseCase mockLoadMaterialsUseCase;
+  late MockPartyRepository mockPartyRepository;
+  late MockVehicleRepository mockVehicleRepository;
+  late MockVehicleTypeRepository mockVehicleTypeRepository;
+  late MockMaterialRepository mockMaterialRepository;
   late MockSaveBillUseCase mockSaveBillUseCase;
   late MockLoadRecentBillsUseCase mockLoadRecentBillsUseCase;
   late MockGenerateBillNumberUseCase mockGenerateBillNumberUseCase;
@@ -54,20 +59,28 @@ void main() {
     Vehicle(
       id: 1,
       vehicleNumber: 'MH 12 AB 1234',
-      partyId: 1,
-      vehicleType: '10 Wheeler',
+      vehicleTypeId: 1,
       isActive: true,
       createdAt: DateTime(2025),
       updatedAt: DateTime(2025),
     ),
   ];
 
+  final testVehicleTypes = [
+    VehicleType(
+      id: 1,
+      name: '10 Wheeler',
+      loadPrice: 500,
+      createdAt: DateTime(2025),
+      updatedAt: DateTime(2025),
+    ),
+  ];
+
   final testMaterials = [
-    domain.Material(
+    MaterialItem(
       id: 1,
       name: 'Sand',
       unit: 'ton',
-      defaultRate: 500,
       isActive: true,
       createdAt: DateTime(2025),
       updatedAt: DateTime(2025),
@@ -81,29 +94,34 @@ void main() {
       partyId: 1,
       vehicleId: 1,
       materialId: 1,
-      entryType: 'inbound',
-      paymentMode: 'cash',
+      paymentMode: 'Cash',
       firstWeightKg: 25000,
       secondWeightKg: 10000,
       netWeightKg: 15000,
-      ratePerTon: 500,
-      amount: 7500,
+      vehicleCharge: 500,
+      amount: 500,
+      status: 'completed',
       createdAt: DateTime(2025),
       updatedAt: DateTime(2025),
     ),
   ];
 
   setUp(() {
-    mockLoadPartiesUseCase = MockLoadPartiesUseCase();
-    mockLoadVehiclesUseCase = MockLoadVehiclesUseCase();
-    mockLoadMaterialsUseCase = MockLoadMaterialsUseCase();
+    mockPartyRepository = MockPartyRepository();
+    mockVehicleRepository = MockVehicleRepository();
+    mockVehicleTypeRepository = MockVehicleTypeRepository();
+    mockMaterialRepository = MockMaterialRepository();
     mockSaveBillUseCase = MockSaveBillUseCase();
     mockLoadRecentBillsUseCase = MockLoadRecentBillsUseCase();
     mockGenerateBillNumberUseCase = MockGenerateBillNumberUseCase();
 
-    when(() => mockLoadPartiesUseCase()).thenAnswer((_) => Future.value(testParties));
-    when(() => mockLoadVehiclesUseCase()).thenAnswer((_) => Future.value(testVehicles));
-    when(() => mockLoadMaterialsUseCase())
+    when(() => mockPartyRepository.getAllActiveParties())
+        .thenAnswer((_) => Future.value(testParties));
+    when(() => mockVehicleRepository.getVehiclesByStatus(isActive: true))
+        .thenAnswer((_) => Future.value(testVehicles));
+    when(() => mockVehicleTypeRepository.getVehicleTypesByStatus(isActive: true))
+        .thenAnswer((_) => Future.value(testVehicleTypes));
+    when(() => mockMaterialRepository.getMaterialsByStatus(isActive: true))
         .thenAnswer((_) => Future.value(testMaterials));
     when(() => mockLoadRecentBillsUseCase())
         .thenAnswer((_) => Future.value(testBills));
@@ -113,9 +131,10 @@ void main() {
         .thenAnswer((_) => Future.value('WB-00002'));
 
     billBloc = BillBloc(
-      loadPartiesUseCase: mockLoadPartiesUseCase,
-      loadVehiclesUseCase: mockLoadVehiclesUseCase,
-      loadMaterialsUseCase: mockLoadMaterialsUseCase,
+      partyRepository: mockPartyRepository,
+      vehicleRepository: mockVehicleRepository,
+      vehicleTypeRepository: mockVehicleTypeRepository,
+      materialRepository: mockMaterialRepository,
       saveBillUseCase: mockSaveBillUseCase,
       loadRecentBillsUseCase: mockLoadRecentBillsUseCase,
       generateBillNumberUseCase: mockGenerateBillNumberUseCase,
@@ -173,9 +192,6 @@ void main() {
 
     // Verify Left Side: Truck Digital Scale & Quick Action Buttons
     expect(find.text('ton'), findsOneWidget);
-    expect(find.text('FIRST'), findsOneWidget);
-    expect(find.text('SECOND'), findsOneWidget);
-    expect(find.text('TARE'), findsOneWidget);
     expect(find.text('Clear Form'), findsOneWidget);
     expect(find.text('Save Ticket'), findsOneWidget);
     expect(find.text('Save & Print Slip'), findsOneWidget);
@@ -232,27 +248,5 @@ void main() {
     expect(find.text('VIYAN WEIGHBRIDGE'), findsOneWidget);
     expect(find.text('Weighment Slip: WB-00001'), findsOneWidget);
     expect(find.text('Print Ticket'), findsOneWidget);
-  });
-
-  testWidgets('tapping FIRST, SECOND, TARE buttons triggers action feedback',
-      (tester) async {
-    tester.view.physicalSize = const Size(1400, 900);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(() {
-      tester.view.resetPhysicalSize();
-      tester.view.resetDevicePixelRatio();
-    });
-
-    await pumpBillPage(tester);
-
-    // Tap FIRST button
-    await tester.tap(find.text('FIRST'));
-    await tester.pump();
-    expect(find.text('FIRST scale action triggered'), findsOneWidget);
-    await tester.pumpAndSettle();
-
-    // Verify SECOND and TARE buttons are present and responsive
-    expect(find.text('SECOND'), findsOneWidget);
-    expect(find.text('TARE'), findsOneWidget);
   });
 }

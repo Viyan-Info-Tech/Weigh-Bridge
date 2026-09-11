@@ -12,7 +12,6 @@ class VehicleState extends Equatable {
   final String? successMessage;
   final String? searchQuery;
   final bool? filterActive;
-  final int? filterPartyId;
 
   const VehicleState({
     this.status = VehicleStatus.initial,
@@ -22,7 +21,6 @@ class VehicleState extends Equatable {
     this.successMessage,
     this.searchQuery,
     this.filterActive,
-    this.filterPartyId,
   });
 
   VehicleState copyWith({
@@ -33,7 +31,6 @@ class VehicleState extends Equatable {
     String? successMessage,
     String? searchQuery,
     bool? filterActive,
-    int? filterPartyId,
   }) {
     return VehicleState(
       status: status ?? this.status,
@@ -43,10 +40,9 @@ class VehicleState extends Equatable {
       successMessage: successMessage,
       searchQuery: searchQuery ?? this.searchQuery,
       filterActive: filterActive ?? this.filterActive,
-      filterPartyId: filterPartyId ?? this.filterPartyId,
     );
   }
 
   @override
-  List<Object?> get props => [status, vehicles, selectedVehicle, errorMessage, successMessage, searchQuery, filterActive, filterPartyId];
+  List<Object?> get props => [status, vehicles, selectedVehicle, errorMessage, successMessage, searchQuery, filterActive];
 }

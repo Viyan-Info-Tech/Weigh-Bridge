@@ -58,7 +58,6 @@ class MaterialBloc extends Bloc<MaterialEvent, MaterialState> {
         name: event.name,
         category: event.category,
         unit: event.unit,
-        defaultRate: event.defaultRate,
       );
       emit(state.copyWith(status: AppMaterialStatus.success, successMessage: 'Material created successfully'));
       add(const LoadMaterials());
@@ -75,7 +74,6 @@ class MaterialBloc extends Bloc<MaterialEvent, MaterialState> {
         name: event.name,
         category: event.category,
         unit: event.unit,
-        defaultRate: event.defaultRate,
       );
       emit(state.copyWith(status: AppMaterialStatus.success, successMessage: 'Material updated successfully'));
       add(const LoadMaterials());

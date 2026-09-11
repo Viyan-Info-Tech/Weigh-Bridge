@@ -1,8 +1,8 @@
 import 'package:equatable/equatable.dart';
 
-import '../../domain/entities/party.dart';
-import '../../domain/entities/vehicle.dart';
-import '../../domain/entities/material.dart';
+import '../../../party/domain/entities/party.dart';
+import '../../../vehicle/domain/entities/vehicle.dart';
+import '../../../material/domain/entities/material_item.dart';
 
 abstract class BillEvent extends Equatable {
   const BillEvent();
@@ -32,7 +32,7 @@ class VehicleSelected extends BillEvent {
 }
 
 class MaterialSelected extends BillEvent {
-  final Material material;
+  final MaterialItem material;
   const MaterialSelected(this.material);
 
   @override
@@ -55,25 +55,9 @@ class SecondWeightChanged extends BillEvent {
   List<Object?> get props => [value];
 }
 
-class RateChanged extends BillEvent {
-  final String value;
-  const RateChanged(this.value);
-
-  @override
-  List<Object?> get props => [value];
-}
-
 class RemarksChanged extends BillEvent {
   final String value;
   const RemarksChanged(this.value);
-
-  @override
-  List<Object?> get props => [value];
-}
-
-class EntryTypeChanged extends BillEvent {
-  final String value;
-  const EntryTypeChanged(this.value);
 
   @override
   List<Object?> get props => [value];
@@ -91,10 +75,50 @@ class SaveBillRequested extends BillEvent {
   const SaveBillRequested();
 }
 
+class SaveAndPrintBillRequested extends BillEvent {
+  const SaveAndPrintBillRequested();
+}
+
+class LoadPendingBill extends BillEvent {
+  final int billId;
+  const LoadPendingBill(this.billId);
+
+  @override
+  List<Object?> get props => [billId];
+}
+
 class ClearBillRequested extends BillEvent {
   const ClearBillRequested();
 }
 
 class LoadRecentBills extends BillEvent {
   const LoadRecentBills();
+}
+
+class PartyQuickAddRequested extends BillEvent {
+  final String name;
+  final String? contactPerson;
+  const PartyQuickAddRequested({required this.name, this.contactPerson});
+
+  @override
+  List<Object?> get props => [name, contactPerson];
+}
+
+class VehicleQuickAddRequested extends BillEvent {
+  final String vehicleNumber;
+  final int vehicleTypeId;
+  const VehicleQuickAddRequested({required this.vehicleNumber, required this.vehicleTypeId});
+
+  @override
+  List<Object?> get props => [vehicleNumber, vehicleTypeId];
+}
+
+class VehicleTypeQuickAddRequested extends BillEvent {
+  final String name;
+  final double emptyPrice;
+  final double loadPrice;
+  const VehicleTypeQuickAddRequested({required this.name, this.emptyPrice = 0, this.loadPrice = 0});
+
+  @override
+  List<Object?> get props => [name, emptyPrice, loadPrice];
 }

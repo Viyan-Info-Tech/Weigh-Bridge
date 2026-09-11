@@ -1,11 +1,12 @@
 import 'package:equatable/equatable.dart';
 
-import '../../domain/entities/party.dart';
-import '../../domain/entities/vehicle.dart';
-import '../../domain/entities/material.dart';
+import '../../../party/domain/entities/party.dart';
+import '../../../vehicle/domain/entities/vehicle.dart';
+import '../../../vehicle_type/domain/entities/vehicle_type.dart';
+import '../../../material/domain/entities/material_item.dart';
 import '../../domain/entities/weighment.dart';
 
-enum BillScreenStatus { initial, loading, loaded, saving, saved, error }
+enum BillScreenStatus { initial, loading, loaded, saving, saved, printing, error }
 
 class BillState extends Equatable {
   final BillScreenStatus status;
@@ -13,54 +14,60 @@ class BillState extends Equatable {
 
   final List<Party> parties;
   final List<Vehicle> vehicles;
-  final List<Material> materials;
+  final List<VehicleType> vehicleTypes;
+  final List<MaterialItem> materials;
   final List<Weighment> recentBills;
+  final List<Weighment> pendingBills;
 
   final Party? selectedParty;
   final Vehicle? selectedVehicle;
-  final Material? selectedMaterial;
+  final VehicleType? selectedVehicleType;
+  final MaterialItem? selectedMaterial;
 
-  final String entryType;
   final String paymentMode;
 
   final String firstWeightText;
   final String secondWeightText;
-  final String rateText;
   final String remarksText;
 
   final double firstWeightKg;
   final double secondWeightKg;
   final double netWeightKg;
-  final double netWeightTon;
-  final double ratePerTon;
+  final double vehicleCharge;
   final double amount;
 
   final String currentBillNumber;
+  final int? editingBillId;
 
   const BillState({
     this.status = BillScreenStatus.initial,
     this.errorMessage,
     this.parties = const [],
     this.vehicles = const [],
+    this.vehicleTypes = const [],
     this.materials = const [],
     this.recentBills = const [],
+    this.pendingBills = const [],
     this.selectedParty,
     this.selectedVehicle,
+    this.selectedVehicleType,
     this.selectedMaterial,
-    this.entryType = 'Inbound',
     this.paymentMode = 'Cash',
     this.firstWeightText = '',
     this.secondWeightText = '',
-    this.rateText = '',
     this.remarksText = '',
     this.firstWeightKg = 0,
     this.secondWeightKg = 0,
     this.netWeightKg = 0,
-    this.netWeightTon = 0,
-    this.ratePerTon = 0,
+    this.vehicleCharge = 0,
     this.amount = 0,
     this.currentBillNumber = 'WB-00001',
+    this.editingBillId,
   });
+
+  bool get isEditing => editingBillId != null;
+  bool get isPending => secondWeightKg <= 0;
+  bool get isCompleted => secondWeightKg > 0;
 
   BillState copyWith({
     BillScreenStatus? status,
@@ -68,51 +75,55 @@ class BillState extends Equatable {
     bool clearError = false,
     List<Party>? parties,
     List<Vehicle>? vehicles,
-    List<Material>? materials,
+    List<VehicleType>? vehicleTypes,
+    List<MaterialItem>? materials,
     List<Weighment>? recentBills,
+    List<Weighment>? pendingBills,
     Party? selectedParty,
     bool clearParty = false,
     Vehicle? selectedVehicle,
     bool clearVehicle = false,
-    Material? selectedMaterial,
+    VehicleType? selectedVehicleType,
+    bool clearVehicleType = false,
+    MaterialItem? selectedMaterial,
     bool clearMaterial = false,
-    String? entryType,
     String? paymentMode,
     String? firstWeightText,
     String? secondWeightText,
-    String? rateText,
     String? remarksText,
     double? firstWeightKg,
     double? secondWeightKg,
     double? netWeightKg,
-    double? netWeightTon,
-    double? ratePerTon,
+    double? vehicleCharge,
     double? amount,
     String? currentBillNumber,
+    int? editingBillId,
+    bool clearEditingBillId = false,
   }) {
     return BillState(
       status: status ?? this.status,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       parties: parties ?? this.parties,
       vehicles: vehicles ?? this.vehicles,
+      vehicleTypes: vehicleTypes ?? this.vehicleTypes,
       materials: materials ?? this.materials,
       recentBills: recentBills ?? this.recentBills,
+      pendingBills: pendingBills ?? this.pendingBills,
       selectedParty: clearParty ? null : (selectedParty ?? this.selectedParty),
       selectedVehicle: clearVehicle ? null : (selectedVehicle ?? this.selectedVehicle),
+      selectedVehicleType: clearVehicleType ? null : (selectedVehicleType ?? this.selectedVehicleType),
       selectedMaterial: clearMaterial ? null : (selectedMaterial ?? this.selectedMaterial),
-      entryType: entryType ?? this.entryType,
       paymentMode: paymentMode ?? this.paymentMode,
       firstWeightText: firstWeightText ?? this.firstWeightText,
       secondWeightText: secondWeightText ?? this.secondWeightText,
-      rateText: rateText ?? this.rateText,
       remarksText: remarksText ?? this.remarksText,
       firstWeightKg: firstWeightKg ?? this.firstWeightKg,
       secondWeightKg: secondWeightKg ?? this.secondWeightKg,
       netWeightKg: netWeightKg ?? this.netWeightKg,
-      netWeightTon: netWeightTon ?? this.netWeightTon,
-      ratePerTon: ratePerTon ?? this.ratePerTon,
+      vehicleCharge: vehicleCharge ?? this.vehicleCharge,
       amount: amount ?? this.amount,
       currentBillNumber: currentBillNumber ?? this.currentBillNumber,
+      editingBillId: clearEditingBillId ? null : (editingBillId ?? this.editingBillId),
     );
   }
 
@@ -122,23 +133,24 @@ class BillState extends Equatable {
         errorMessage,
         parties,
         vehicles,
+        vehicleTypes,
         materials,
         recentBills,
+        pendingBills,
         selectedParty,
         selectedVehicle,
+        selectedVehicleType,
         selectedMaterial,
-        entryType,
         paymentMode,
         firstWeightText,
         secondWeightText,
-        rateText,
         remarksText,
         firstWeightKg,
         secondWeightKg,
         netWeightKg,
-        netWeightTon,
-        ratePerTon,
+        vehicleCharge,
         amount,
         currentBillNumber,
+        editingBillId,
       ];
 }

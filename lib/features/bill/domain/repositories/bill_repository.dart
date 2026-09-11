@@ -2,6 +2,7 @@ import '../entities/weighment.dart';
 
 abstract class BillRepository {
   Future<int> saveWeighment(Weighment weighment);
+  Future<void> updateWeighment(int id, Weighment weighment);
   Future<List<Weighment>> getRecentBills({int limit = 20});
   Future<Weighment?> getWeighmentById(int id);
   Future<Weighment?> getWeighmentByBillNumber(String billNumber);

@@ -22,17 +22,15 @@ class CreateMaterialRequested extends MaterialEvent {
   final String name;
   final String? category;
   final String unit;
-  final double defaultRate;
 
   const CreateMaterialRequested({
     required this.name,
     this.category,
     this.unit = 'ton',
-    this.defaultRate = 0,
   });
 
   @override
-  List<Object?> get props => [name, category, unit, defaultRate];
+  List<Object?> get props => [name, category, unit];
 }
 
 class UpdateMaterialRequested extends MaterialEvent {
@@ -40,18 +38,16 @@ class UpdateMaterialRequested extends MaterialEvent {
   final String name;
   final String? category;
   final String unit;
-  final double defaultRate;
 
   const UpdateMaterialRequested({
     required this.id,
     required this.name,
     this.category,
     this.unit = 'ton',
-    this.defaultRate = 0,
   });
 
   @override
-  List<Object?> get props => [id, name, category, unit, defaultRate];
+  List<Object?> get props => [id, name, category, unit];
 }
 
 class DeactivateMaterialRequested extends MaterialEvent {

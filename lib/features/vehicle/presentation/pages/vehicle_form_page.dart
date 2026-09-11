@@ -4,58 +4,48 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/vehicle_bloc.dart';
 import '../bloc/vehicle_event.dart';
 import '../bloc/vehicle_state.dart';
-import '../../../party/presentation/bloc/party_bloc.dart';
-import '../../../party/presentation/bloc/party_event.dart';
-import '../../../party/presentation/bloc/party_state.dart';
+import '../../../vehicle_type/presentation/bloc/vehicle_type_bloc.dart';
+import '../../../vehicle_type/presentation/bloc/vehicle_type_state.dart';
 import '../../../../core/presentation/widgets/form_dialog.dart';
 
 class VehicleFormDialog extends StatefulWidget {
   final int? vehicleId;
-  final int? partyId;
 
-  const VehicleFormDialog({super.key, this.vehicleId, this.partyId});
+  const VehicleFormDialog({super.key, this.vehicleId});
 
   @override
   State<VehicleFormDialog> createState() => _VehicleFormDialogState();
 
-  static Future<void> show(BuildContext context, {int? vehicleId, int? partyId}) {
+  static Future<void> show(BuildContext context, {int? vehicleId}) {
     return showDialog(
       context: context,
-      builder: (_) => VehicleFormDialog(vehicleId: vehicleId, partyId: partyId),
+      builder: (_) => VehicleFormDialog(vehicleId: vehicleId),
     );
   }
 }
 
 class _VehicleFormDialogState extends State<VehicleFormDialog> {
   final _vehicleNumberController = TextEditingController();
-  final _vehicleTypeController = TextEditingController();
   final _driverNameController = TextEditingController();
   final _driverPhoneController = TextEditingController();
-  final _tareWeightController = TextEditingController();
 
-  int? _selectedPartyId;
+  int? _selectedVehicleTypeId;
   bool get isEditing => widget.vehicleId != null;
   bool _isLoading = false;
 
   @override
   void initState() {
     super.initState();
-    context.read<PartyBloc>().add(const LoadParties());
     if (isEditing) {
       context.read<VehicleBloc>().add(LoadVehicleById(widget.vehicleId!));
-    }
-    if (widget.partyId != null) {
-      _selectedPartyId = widget.partyId;
     }
   }
 
   @override
   void dispose() {
     _vehicleNumberController.dispose();
-    _vehicleTypeController.dispose();
     _driverNameController.dispose();
     _driverPhoneController.dispose();
-    _tareWeightController.dispose();
     super.dispose();
   }
 
@@ -93,15 +83,9 @@ class _VehicleFormDialogState extends State<VehicleFormDialog> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Expanded(child: FormDialogTextField(label: 'Vehicle Number', controller: _vehicleNumberController, isRequired: true)),
-                  const SizedBox(width: 16),
-                  Expanded(child: FormDialogTextField(label: 'Vehicle Type', controller: _vehicleTypeController, isRequired: true)),
-                ],
-              ),
+              FormDialogTextField(label: 'Vehicle Number', controller: _vehicleNumberController, isRequired: true),
               const SizedBox(height: 16),
-              _buildPartyDropdown(),
+              _buildVehicleTypeDropdown(),
               const SizedBox(height: 16),
               Row(
                 children: [
@@ -110,8 +94,6 @@ class _VehicleFormDialogState extends State<VehicleFormDialog> {
                   Expanded(child: FormDialogTextField(label: 'Driver Phone', controller: _driverPhoneController)),
                 ],
               ),
-              const SizedBox(height: 16),
-              FormDialogTextField(label: 'Tare Weight (kg)', controller: _tareWeightController, isNumeric: true),
               const SizedBox(height: 24),
               FormDialogActions(
                 submitLabel: isEditing ? 'Update Vehicle' : 'Save Vehicle',
@@ -125,33 +107,33 @@ class _VehicleFormDialogState extends State<VehicleFormDialog> {
     );
   }
 
-  Widget _buildPartyDropdown() {
+  Widget _buildVehicleTypeDropdown() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Text('Party', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+            Text('Vehicle Type', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
             const SizedBox(width: 2),
             Text('*', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600, color: Colors.red.shade400)),
           ],
         ),
         const SizedBox(height: 6),
-        BlocBuilder<PartyBloc, PartyState>(
-          builder: (context, partyState) {
-            final parties = partyState.parties;
+        BlocBuilder<VehicleTypeBloc, VehicleTypeState>(
+          builder: (context, vtState) {
+            final vehicleTypes = vtState.vehicleTypes;
             return DropdownButton<int>(
-              value: _selectedPartyId,
+              value: _selectedVehicleTypeId,
               isExpanded: true,
               underline: const SizedBox(),
-              hint: Text('Select party', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, color: Colors.grey.shade400)),
-              items: parties.map((p) {
+              hint: Text('Select vehicle type', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, color: Colors.grey.shade400)),
+              items: vehicleTypes.map((vt) {
                 return DropdownMenuItem<int>(
-                  value: p.id,
-                  child: Text(p.name, style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13)),
+                  value: vt.id,
+                  child: Text(vt.name, style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13)),
                 );
               }).toList(),
-              onChanged: (v) => setState(() => _selectedPartyId = v),
+              onChanged: (v) => setState(() => _selectedVehicleTypeId = v),
             );
           },
         ),
@@ -161,12 +143,10 @@ class _VehicleFormDialogState extends State<VehicleFormDialog> {
 
   void _populateForm(dynamic vehicle) {
     _vehicleNumberController.text = vehicle.vehicleNumber;
-    _vehicleTypeController.text = vehicle.vehicleType ?? '';
     _driverNameController.text = vehicle.driverName ?? '';
     _driverPhoneController.text = vehicle.driverPhone ?? '';
-    _tareWeightController.text = vehicle.tareWeight?.toString() ?? '';
     setState(() {
-      _selectedPartyId = vehicle.partyId;
+      _selectedVehicleTypeId = vehicle.vehicleTypeId;
     });
   }
 
@@ -177,41 +157,29 @@ class _VehicleFormDialogState extends State<VehicleFormDialog> {
       );
       return;
     }
-    if (_vehicleTypeController.text.isEmpty) {
+    if (_selectedVehicleTypeId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Vehicle type is required'), backgroundColor: Colors.red),
-      );
-      return;
-    }
-    if (_selectedPartyId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Party is required'), backgroundColor: Colors.red),
       );
       return;
     }
 
     setState(() => _isLoading = true);
 
-    final tareWeight = double.tryParse(_tareWeightController.text);
-
     if (isEditing) {
       context.read<VehicleBloc>().add(UpdateVehicleRequested(
         id: widget.vehicleId!,
         vehicleNumber: _vehicleNumberController.text,
-        partyId: _selectedPartyId!,
-        vehicleType: _vehicleTypeController.text,
+        vehicleTypeId: _selectedVehicleTypeId!,
         driverName: _driverNameController.text.isNotEmpty ? _driverNameController.text : null,
         driverPhone: _driverPhoneController.text.isNotEmpty ? _driverPhoneController.text : null,
-        tareWeight: tareWeight,
       ));
     } else {
       context.read<VehicleBloc>().add(CreateVehicleRequested(
         vehicleNumber: _vehicleNumberController.text,
-        partyId: _selectedPartyId!,
-        vehicleType: _vehicleTypeController.text,
+        vehicleTypeId: _selectedVehicleTypeId!,
         driverName: _driverNameController.text.isNotEmpty ? _driverNameController.text : null,
         driverPhone: _driverPhoneController.text.isNotEmpty ? _driverPhoneController.text : null,
-        tareWeight: tareWeight,
       ));
     }
   }

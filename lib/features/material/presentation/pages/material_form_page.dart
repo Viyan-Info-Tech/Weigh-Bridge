@@ -26,7 +26,6 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
   final _nameController = TextEditingController();
   final _categoryController = TextEditingController();
   final _unitController = TextEditingController(text: 'ton');
-  final _rateController = TextEditingController();
 
   bool get isEditing => widget.materialId != null;
   bool _isLoading = false;
@@ -44,7 +43,6 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
     _nameController.dispose();
     _categoryController.dispose();
     _unitController.dispose();
-    _rateController.dispose();
     super.dispose();
   }
 
@@ -91,13 +89,7 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
                 ],
               ),
               const SizedBox(height: 16),
-              Row(
-                children: [
-                  Expanded(child: FormDialogTextField(label: 'Unit', controller: _unitController, isRequired: true)),
-                  const SizedBox(width: 16),
-                  Expanded(child: FormDialogTextField(label: 'Rate (\u20B9/ton)', controller: _rateController, isNumeric: true)),
-                ],
-              ),
+              FormDialogTextField(label: 'Unit', controller: _unitController, isRequired: true),
               const SizedBox(height: 24),
               FormDialogActions(
                 submitLabel: isEditing ? 'Update Material' : 'Save Material',
@@ -115,7 +107,6 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
     _nameController.text = material.name;
     _categoryController.text = material.category ?? '';
     _unitController.text = material.unit;
-    _rateController.text = material.defaultRate > 0 ? material.defaultRate.toString() : '';
   }
 
   void _saveMaterial() {
@@ -140,22 +131,18 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
 
     setState(() => _isLoading = true);
 
-    final rate = double.tryParse(_rateController.text) ?? 0;
-
     if (isEditing) {
       context.read<MaterialBloc>().add(UpdateMaterialRequested(
         id: widget.materialId!,
         name: _nameController.text,
         category: _categoryController.text,
         unit: _unitController.text,
-        defaultRate: rate,
       ));
     } else {
       context.read<MaterialBloc>().add(CreateMaterialRequested(
         name: _nameController.text,
         category: _categoryController.text,
         unit: _unitController.text,
-        defaultRate: rate,
       ));
     }
   }

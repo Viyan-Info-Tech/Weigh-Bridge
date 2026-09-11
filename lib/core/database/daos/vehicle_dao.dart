@@ -2,11 +2,11 @@ import 'package:drift/drift.dart';
 
 import '../app_database.dart';
 import '../tables/vehicles_table.dart';
-import '../tables/parties_table.dart';
+import '../tables/vehicle_types_table.dart';
 
 part 'vehicle_dao.g.dart';
 
-@DriftAccessor(tables: [Vehicles, Parties])
+@DriftAccessor(tables: [Vehicles, VehicleTypes])
 class VehicleDao extends DatabaseAccessor<AppDatabase> with _$VehicleDaoMixin {
   VehicleDao(super.db);
 
@@ -51,21 +51,11 @@ class VehicleDao extends DatabaseAccessor<AppDatabase> with _$VehicleDaoMixin {
     return q.get();
   }
 
-  Future<List<Vehicle>> getVehiclesByPartyId(int partyId) async {
+  Future<List<Vehicle>> getVehiclesByType(int vehicleTypeId) async {
     final query = select(vehicles)
-      ..where((v) => v.partyId.equals(partyId) & v.isActive.equals(true));
-    return query.get();
-  }
-
-  Future<List<Vehicle>> getVehiclesByPartyIdAll(int partyId) async {
-    final query = select(vehicles)
-      ..where((v) => v.partyId.equals(partyId));
-    return query.get();
-  }
-
-  Future<List<Vehicle>> getVehiclesByType(String vehicleType) async {
-    final query = select(vehicles)
-      ..where((v) => v.vehicleType.equals(vehicleType) & v.isActive.equals(true));
+      ..where((v) =>
+          v.vehicleTypeId.equals(vehicleTypeId) &
+          v.isActive.equals(true));
     return query.get();
   }
 

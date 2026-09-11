@@ -7,6 +7,9 @@ import '../bloc/bill_event.dart';
 import '../bloc/bill_state.dart';
 import '../widgets/weight_display.dart';
 import '../widgets/bill_form.dart';
+import '../widgets/quick_add_party_dialog.dart';
+import '../widgets/quick_add_vehicle_dialog.dart';
+import '../widgets/quick_add_vehicle_type_dialog.dart';
 import '../widgets/recent_bills_panel.dart';
 
 class BillPage extends StatefulWidget {
@@ -17,17 +20,45 @@ class BillPage extends StatefulWidget {
 }
 
 class _BillPageState extends State<BillPage> {
+  late final TextEditingController _firstWeightController;
+  late final TextEditingController _secondWeightController;
+  late final TextEditingController _remarksController;
+
   @override
   void initState() {
     super.initState();
-    context.read<BillBloc>().add(const LoadBillScreen());
+    _firstWeightController = TextEditingController();
+    _secondWeightController = TextEditingController();
+    _remarksController = TextEditingController();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        context.read<BillBloc>().add(const LoadBillScreen());
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _firstWeightController.dispose();
+    _secondWeightController.dispose();
+    _remarksController.dispose();
+    super.dispose();
+  }
+
+  void _syncControllersAfterReset() {
+    _firstWeightController.clear();
+    _secondWeightController.clear();
+    _remarksController.clear();
   }
 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<BillBloc, BillState>(
+      listenWhen: (prev, curr) =>
+          prev.status != curr.status || prev.editingBillId != curr.editingBillId,
       listener: (context, state) {
         if (state.status == BillScreenStatus.saved) {
+          _syncControllersAfterReset();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Row(
@@ -75,6 +106,11 @@ class _BillPageState extends State<BillPage> {
             ),
           );
         }
+        if (state.editingBillId != null && state.firstWeightText.isNotEmpty) {
+          _firstWeightController.text = state.firstWeightText;
+          _secondWeightController.text = state.secondWeightText;
+          _remarksController.text = state.remarksText;
+        }
       },
       builder: (context, state) {
         return Scaffold(
@@ -82,7 +118,6 @@ class _BillPageState extends State<BillPage> {
           body: SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                // Desktop Widescreen Layout: Left Form + Right Fully Recent Billings
                 if (constraints.maxWidth >= 1000) {
                   return Padding(
                     padding: const EdgeInsets.all(20),
@@ -94,7 +129,6 @@ class _BillPageState extends State<BillPage> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              // LEFT SIDE: Form & Live Scale Controls (57%)
                               Expanded(
                                 flex: 57,
                                 child: SingleChildScrollView(
@@ -104,7 +138,7 @@ class _BillPageState extends State<BillPage> {
                                         CrossAxisAlignment.stretch,
                                     children: [
                                       WeightDisplay(
-                                        netWeightTon: state.netWeightTon,
+                                        netWeightTon: state.netWeightKg / 1000,
                                         firstWeight: state.firstWeightKg,
                                         secondWeight: state.secondWeightKg,
                                       ),
@@ -117,16 +151,12 @@ class _BillPageState extends State<BillPage> {
                                   ),
                                 ),
                               ),
-
-                              // Subtle Vertical Divider
                               Container(
                                 width: 1,
                                 margin:
                                     const EdgeInsets.symmetric(horizontal: 4),
                                 color: const Color(0xFFE2E8F0),
                               ),
-
-                              // RIGHT SIDE: Fully Recent Billings (43%)
                               Expanded(
                                 flex: 43,
                                 child: Padding(
@@ -135,7 +165,11 @@ class _BillPageState extends State<BillPage> {
                                     recentBills: state.recentBills,
                                     parties: state.parties,
                                     vehicles: state.vehicles,
+                                    vehicleTypes: state.vehicleTypes,
                                     materials: state.materials,
+                                    onLoadPendingBill: (billId) {
+                                      context.read<BillBloc>().add(LoadPendingBill(billId));
+                                    },
                                   ),
                                 ),
                               ),
@@ -147,7 +181,6 @@ class _BillPageState extends State<BillPage> {
                   );
                 }
 
-                // Compact Window Layout: Stacked Scrollable View
                 return SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
                   child: Column(
@@ -156,7 +189,7 @@ class _BillPageState extends State<BillPage> {
                       _buildTopHeader(state),
                       const SizedBox(height: 16),
                       WeightDisplay(
-                        netWeightTon: state.netWeightTon,
+                        netWeightTon: state.netWeightKg / 1000,
                         firstWeight: state.firstWeightKg,
                         secondWeight: state.secondWeightKg,
                       ),
@@ -171,7 +204,11 @@ class _BillPageState extends State<BillPage> {
                           recentBills: state.recentBills,
                           parties: state.parties,
                           vehicles: state.vehicles,
+                          vehicleTypes: state.vehicleTypes,
                           materials: state.materials,
+                          onLoadPendingBill: (billId) {
+                            context.read<BillBloc>().add(LoadPendingBill(billId));
+                          },
                         ),
                       ),
                     ],
@@ -275,15 +312,16 @@ class _BillPageState extends State<BillPage> {
       materials: state.materials,
       selectedParty: state.selectedParty,
       selectedVehicle: state.selectedVehicle,
+      selectedVehicleType: state.selectedVehicleType,
       selectedMaterial: state.selectedMaterial,
-      entryType: state.entryType,
       paymentMode: state.paymentMode,
-      firstWeightText: state.firstWeightText,
-      secondWeightText: state.secondWeightText,
-      rateText: state.rateText,
+      isEditing: state.isEditing,
+      firstWeightController: _firstWeightController,
+      secondWeightController: _secondWeightController,
+      remarksController: _remarksController,
       netWeightKg: state.netWeightKg,
+      vehicleCharge: state.vehicleCharge,
       amount: state.amount,
-      remarksText: state.remarksText,
       onPartyChanged: (party) =>
           context.read<BillBloc>().add(PartySelected(party)),
       onVehicleChanged: (vehicle) =>
@@ -294,17 +332,46 @@ class _BillPageState extends State<BillPage> {
           context.read<BillBloc>().add(FirstWeightChanged(v)),
       onSecondWeightChanged: (v) =>
           context.read<BillBloc>().add(SecondWeightChanged(v)),
-      onRateChanged: (v) => context.read<BillBloc>().add(RateChanged(v)),
-      onRemarksChanged: (v) => context.read<BillBloc>().add(RemarksChanged(v)),
-      onEntryTypeChanged: (v) =>
-          context.read<BillBloc>().add(EntryTypeChanged(v)),
+      onRemarksChanged: (v) =>
+          context.read<BillBloc>().add(RemarksChanged(v)),
       onPaymentModeChanged: (v) =>
           context.read<BillBloc>().add(PaymentModeChanged(v)),
+      onAddParty: () {
+        QuickAddPartyDialog.show(
+          context,
+          onSave: (name, contactPerson) {
+            context.read<BillBloc>().add(PartyQuickAddRequested(
+              name: name,
+              contactPerson: contactPerson,
+            ));
+          },
+        );
+      },
+      onAddVehicle: () {
+        final state = context.read<BillBloc>().state;
+        QuickAddVehicleDialog.show(
+          context: context,
+          vehicleTypes: state.vehicleTypes,
+          onSave: (vehicleNumber, vehicleTypeId) {
+            context.read<BillBloc>().add(VehicleQuickAddRequested(
+              vehicleNumber: vehicleNumber,
+              vehicleTypeId: vehicleTypeId,
+            ));
+          },
+          onAddVehicleType: (name, emptyPrice, loadPrice) {
+            context.read<BillBloc>().add(VehicleTypeQuickAddRequested(
+              name: name,
+              emptyPrice: emptyPrice,
+              loadPrice: loadPrice,
+            ));
+          },
+        );
+      },
     );
   }
 
   Widget _buildActionButtons(BillState state) {
-    final isSaving = state.status == BillScreenStatus.saving;
+    final isSaving = state.status == BillScreenStatus.saving || state.status == BillScreenStatus.printing;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -337,7 +404,7 @@ class _BillPageState extends State<BillPage> {
                 : () => context.read<BillBloc>().add(const SaveBillRequested()),
             icon: isSaving
                 ? const SizedBox.shrink()
-                : const Icon(Icons.save_outlined, size: 16),
+                : Icon(state.isEditing ? Icons.check_circle_outline : Icons.save_outlined, size: 16),
             label: isSaving
                 ? const SizedBox(
                     height: 18,
@@ -345,7 +412,7 @@ class _BillPageState extends State<BillPage> {
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white),
                   )
-                : const Text('Save Ticket'),
+                : Text(state.isEditing ? 'Complete Weighment' : 'Save Ticket'),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF0D3B82),
               foregroundColor: Colors.white,
@@ -358,10 +425,10 @@ class _BillPageState extends State<BillPage> {
           ElevatedButton.icon(
             onPressed: isSaving
                 ? null
-                : () => context.read<BillBloc>().add(const SaveBillRequested()),
+                : () => context.read<BillBloc>().add(const SaveAndPrintBillRequested()),
             icon: isSaving
                 ? const SizedBox.shrink()
-                : const Icon(Icons.print_rounded, size: 16),
+                : Icon(state.isEditing ? Icons.print_rounded : Icons.print_rounded, size: 16),
             label: isSaving
                 ? const SizedBox(
                     height: 18,
@@ -369,7 +436,7 @@ class _BillPageState extends State<BillPage> {
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white),
                   )
-                : const Text('Save & Print Slip'),
+                : Text(state.isEditing ? 'Complete & Print Slip' : 'Save & Print Slip'),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF16A34A),
               foregroundColor: Colors.white,
@@ -394,6 +461,7 @@ class _BillPageState extends State<BillPage> {
 
     if (!hasData) {
       context.read<BillBloc>().add(const ClearBillRequested());
+      _syncControllersAfterReset();
       return;
     }
 
@@ -417,6 +485,7 @@ class _BillPageState extends State<BillPage> {
             onPressed: () {
               Navigator.pop(dialogContext);
               context.read<BillBloc>().add(const ClearBillRequested());
+              _syncControllersAfterReset();
             },
             child: const Text('Clear Form', style: TextStyle(fontFamily: 'PlusJakartaSans', color: Color(0xFFDC2626), fontWeight: FontWeight.w600)),
           ),

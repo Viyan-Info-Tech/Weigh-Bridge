@@ -7,33 +7,24 @@ import 'truck_image_asset.dart';
 /// - Integrated high-tech digital scale display inside the cargo container body
 /// - Neon 7-segment digital LED readout with ghost background segments
 /// - Sub-metric weight summary breakdown (1st, 2nd, Net)
-/// - Quick action pill buttons on the right: FIRST, SECOND, TARE
 class WeightDisplay extends StatelessWidget {
   final double netWeightTon;
   final double firstWeight;
   final double secondWeight;
-  final VoidCallback? onFirstPressed;
-  final VoidCallback? onSecondPressed;
-  final VoidCallback? onTarePressed;
 
   const WeightDisplay({
     super.key,
     required this.netWeightTon,
     required this.firstWeight,
     required this.secondWeight,
-    this.onFirstPressed,
-    this.onSecondPressed,
-    this.onTarePressed,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Format display tonnage (defaults to 2.000 if weight is 0 for initial UI preview)
-    final double activeWeight = netWeightTon > 0
-        ? netWeightTon
-        : (firstWeight > 0 ? (firstWeight / 1000) : 2.000);
+    // Format display tonnage from actual BillState
+    final double activeWeight = netWeightTon;
     final String weightString = activeWeight.toStringAsFixed(3);
-    final double netKg = (netWeightTon > 0 ? netWeightTon : activeWeight) * 1000;
+    final double netKg = netWeightTon * 1000;
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -54,44 +45,10 @@ class WeightDisplay extends StatelessWidget {
           final isCompact = constraints.maxWidth < 580;
 
           if (isCompact) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildModernTruckScale(weightString, netKg),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _buildPillButton(context, 'FIRST', onFirstPressed),
-                    _buildPillButton(context, 'SECOND', onSecondPressed),
-                    _buildPillButton(context, 'TARE', onTarePressed),
-                  ],
-                ),
-              ],
-            );
+            return _buildModernTruckScale(weightString, netKg);
           }
 
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Modern Commercial Semi-Trailer Truck with Embedded Container Digital Display
-              Expanded(
-                child: _buildModernTruckScale(weightString, netKg),
-              ),
-              const SizedBox(width: 14),
-              // Action Buttons Column: FIRST, SECOND, TARE
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildPillButton(context, 'FIRST', onFirstPressed),
-                  const SizedBox(height: 10),
-                  _buildPillButton(context, 'SECOND', onSecondPressed),
-                  const SizedBox(height: 10),
-                  _buildPillButton(context, 'TARE', onTarePressed),
-                ],
-              ),
-            ],
-          );
+          return _buildModernTruckScale(weightString, netKg);
         },
       ),
     );
@@ -295,54 +252,6 @@ class WeightDisplay extends StatelessWidget {
         litColor: Color(0xFF00FF44),
         unlitColor: Color(0x1400FF44),
         drawAllAsGhost: true,
-      ),
-    );
-  }
-
-  Widget _buildPillButton(
-      BuildContext context, String label, VoidCallback? onPressed) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed ??
-            () {
-              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('$label scale action triggered'),
-                  duration: const Duration(seconds: 1),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-        borderRadius: BorderRadius.circular(24),
-        child: Container(
-          width: 96,
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            border: Border.all(color: const Color(0xFF94A3B8), width: 1.5),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.03),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF0284C7),
-              letterSpacing: 0.8,
-            ),
-          ),
-        ),
       ),
     );
   }
