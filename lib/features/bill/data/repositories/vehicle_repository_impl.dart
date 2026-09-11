@@ -10,7 +10,7 @@ class VehicleRepositoryImpl implements VehicleRepository {
 
   @override
   Future<List<Vehicle>> getActiveVehicles() async {
-    return _localDataSource.getActiveVehicles();
+    return _localDataSource.getAllActiveVehicles();
   }
 
   @override

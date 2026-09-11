@@ -2,15 +2,25 @@ import 'package:drift/drift.dart';
 
 import '../app_database.dart';
 import '../tables/vehicles_table.dart';
+import '../tables/parties_table.dart';
 
 part 'vehicle_dao.g.dart';
 
-@DriftAccessor(tables: [Vehicles])
+@DriftAccessor(tables: [Vehicles, Parties])
 class VehicleDao extends DatabaseAccessor<AppDatabase> with _$VehicleDaoMixin {
   VehicleDao(super.db);
 
   Future<List<Vehicle>> getAllActiveVehicles() async {
     final query = select(vehicles)..where((v) => v.isActive.equals(true));
+    return query.get();
+  }
+
+  Future<List<Vehicle>> getAllVehicles() async {
+    return select(vehicles).get();
+  }
+
+  Future<List<Vehicle>> getVehiclesByStatus({required bool isActive}) async {
+    final query = select(vehicles)..where((v) => v.isActive.equals(isActive));
     return query.get();
   }
 
@@ -34,7 +44,9 @@ class VehicleDao extends DatabaseAccessor<AppDatabase> with _$VehicleDaoMixin {
 
   Future<List<Vehicle>> searchVehicles(String query) async {
     final q = select(vehicles)
-      ..where((v) => v.vehicleNumber.like('%$query%') & v.isActive.equals(true))
+      ..where((v) =>
+          v.vehicleNumber.like('%$query%') |
+          v.driverName.like('%$query%'))
       ..limit(20);
     return q.get();
   }
@@ -43,5 +55,26 @@ class VehicleDao extends DatabaseAccessor<AppDatabase> with _$VehicleDaoMixin {
     final query = select(vehicles)
       ..where((v) => v.partyId.equals(partyId) & v.isActive.equals(true));
     return query.get();
+  }
+
+  Future<List<Vehicle>> getVehiclesByPartyIdAll(int partyId) async {
+    final query = select(vehicles)
+      ..where((v) => v.partyId.equals(partyId));
+    return query.get();
+  }
+
+  Future<List<Vehicle>> getVehiclesByType(String vehicleType) async {
+    final query = select(vehicles)
+      ..where((v) => v.vehicleType.equals(vehicleType) & v.isActive.equals(true));
+    return query.get();
+  }
+
+  Future<void> deactivateVehicle(int id) async {
+    final now = DateTime.now();
+    await (update(vehicles)..where((v) => v.id.equals(id)))
+        .write(VehiclesCompanion(
+      isActive: const Value(false),
+      updatedAt: Value(now),
+    ));
   }
 }

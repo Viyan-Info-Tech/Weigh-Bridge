@@ -10,7 +10,7 @@ class MaterialRepositoryImpl implements MaterialRepository {
 
   @override
   Future<List<Material>> getActiveMaterials() async {
-    return _localDataSource.getActiveMaterials();
+    return _localDataSource.getAllActiveMaterials();
   }
 
   @override

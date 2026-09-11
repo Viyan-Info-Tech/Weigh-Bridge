@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'truck_image_asset.dart';
 
 /// Modern Commercial Semi-Trailer Truck Digital Weighbridge Scale Display
 /// Features:
 /// - Photorealistic European white cab-over commercial semi-truck on weighbridge platform
 /// - Integrated high-tech digital scale display inside the cargo container body
 /// - Neon 7-segment digital LED readout with ghost background segments
-/// - Scale status indicator LEDs (STABLE, ZERO, NET WT)
 /// - Sub-metric weight summary breakdown (1st, 2nd, Net)
 /// - Quick action pill buttons on the right: FIRST, SECOND, TARE
 class WeightDisplay extends StatelessWidget {
@@ -101,35 +101,39 @@ class WeightDisplay extends StatelessWidget {
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: AspectRatio(
-        aspectRatio: 2.65,
+        aspectRatio: 3.0,
         child: LayoutBuilder(
           builder: (context, constraints) {
             final w = constraints.maxWidth;
             final h = constraints.maxHeight;
 
-            // Container overlay coordinates matching the trailer in modern_truck_scale.jpg
-            final containerLeft = w * 0.252;
-            final containerTop = h * 0.220;
-            final containerWidth = w * 0.680;
-            final containerHeight = h * 0.485;
+            // Coordinates for digital display console on the container surface
+            final containerLeft = w * 0.206;
+            final containerTop = h * 0.055;
+            final containerWidth = w * 0.788;
+            final containerHeight = h * 0.637;
 
             return Stack(
               fit: StackFit.expand,
               children: [
-                // 1. Photorealistic Modern Commercial Truck Image Asset (transparent background)
+                // 1. Complete Photorealistic Modern Commercial Semi-Truck
                 Image.asset(
-                  'assets/images/modern_truck_scale.png',
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      CustomPaint(painter: _FallbackModernTruckPainter()),
+                  'assets/images/photorealistic_truck_scale.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => Image.memory(
+                    photorealisticTruckBytes,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) =>
+                        CustomPaint(painter: _FallbackModernTruckPainter()),
+                  ),
                 ),
 
                 // 2. High-Tech Digital Scale Console embedded on the Container surface
                 Positioned(
-                  left: containerLeft + (containerWidth * 0.02),
-                  top: containerTop + (containerHeight * 0.03),
-                  width: containerWidth * 0.96,
-                  height: containerHeight * 0.94,
+                  left: containerLeft + (containerWidth * 0.015),
+                  top: containerTop + (containerHeight * 0.04),
+                  width: containerWidth * 0.97,
+                  height: containerHeight * 0.92,
                   child: Container(
                     padding: EdgeInsets.symmetric(
                       horizontal: containerWidth * 0.03,
@@ -154,36 +158,6 @@ class WeightDisplay extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        // Top Bar: Terminal ID & Status LEDs
-                        Row(
-                          children: [
-                            Container(
-                              width: 6,
-                              height: 6,
-                              decoration: const BoxDecoration(
-                                color: Color(0xFF22C55E),
-                                shape: BoxShape.circle,
-                              ),
-                            ),
-                            const SizedBox(width: 5),
-                            const Text(
-                              'SCALE 01',
-                              style: TextStyle(
-                                fontFamily: 'PlusJakartaSans',
-                                fontSize: 9,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF94A3B8),
-                                letterSpacing: 0.8,
-                              ),
-                            ),
-                            const Spacer(),
-                            _buildStatusTag('STABLE', const Color(0xFF22C55E)),
-                            const SizedBox(width: 5),
-                            _buildStatusTag('ZERO', const Color(0xFF38BDF8)),
-                            const SizedBox(width: 5),
-                            _buildStatusTag('NET', const Color(0xFFF59E0B)),
-                          ],
-                        ),
 
                         // Center: Prominent Glowing 7-Segment Digital Weight Readout
                         Expanded(
@@ -280,26 +254,6 @@ class WeightDisplay extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusTag(String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(3),
-        border: Border.all(color: color.withValues(alpha: 0.4), width: 0.6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontFamily: 'PlusJakartaSans',
-          fontSize: 7.5,
-          fontWeight: FontWeight.w700,
-          color: color,
-          letterSpacing: 0.3,
-        ),
-      ),
-    );
-  }
 
   List<Widget> _buildDigitalString(String text, double digitHeight) {
     final widgets = <Widget>[];
@@ -394,17 +348,17 @@ class WeightDisplay extends StatelessWidget {
   }
 }
 
-/// Fallback vector painter rendering a modern European white-cab semi-truck
-/// Used automatically in headless test environments or missing asset fallbacks
+/// Fallback vector painter rendering the complete modern European truck
+/// Used in headless test environments or when images cannot be decoded
 class _FallbackModernTruckPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
 
-    // Soft ground contact shadow under the truck wheels
+    // Soft ground contact shadow
     final shadowPaint = Paint()..color = const Color(0x25000000);
-    final shadowRect = Rect.fromLTWH(w * 0.12, h * 0.79, w * 0.78, h * 0.03);
+    final shadowRect = Rect.fromLTWH(w * 0.04, h * 0.88, w * 0.94, h * 0.04);
     canvas.drawOval(shadowRect, shadowPaint);
 
     // Blue Trailer Container Box
@@ -414,44 +368,44 @@ class _FallbackModernTruckPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0;
     final containerRect =
-        Rect.fromLTWH(w * 0.252, h * 0.220, w * 0.680, h * 0.485);
+        Rect.fromLTWH(w * 0.206, h * 0.055, w * 0.788, h * 0.637);
     canvas.drawRect(containerRect, containerPaint);
     canvas.drawRect(containerRect, containerBorder);
 
-    // White Modern Cab-Over Tractor
+    // White Modern Cab-Over Tractor Body
     final cabPaint = Paint()..color = Colors.white;
     final cabBorder = Paint()
       ..color = const Color(0xFF94A3B8)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
+      ..strokeWidth = 1.5;
 
     final cabPath = Path()
-      ..moveTo(w * 0.25, h * 0.72)
-      ..lineTo(w * 0.08, h * 0.72)
-      ..lineTo(w * 0.08, h * 0.42)
-      ..lineTo(w * 0.14, h * 0.22)
-      ..lineTo(w * 0.25, h * 0.20)
+      ..moveTo(w * 0.206, h * 0.82)
+      ..lineTo(w * 0.05, h * 0.82)
+      ..lineTo(w * 0.05, h * 0.50)
+      ..lineTo(w * 0.11, h * 0.12)
+      ..lineTo(w * 0.206, h * 0.04)
       ..close();
     canvas.drawPath(cabPath, cabPaint);
     canvas.drawPath(cabPath, cabBorder);
 
-    // Windshield & Grille
-    final darkDetail = Paint()..color = const Color(0xFF1E293B);
+    // Windshield
+    final darkWindow = Paint()..color = const Color(0xFF1E293B);
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromLTWH(w * 0.09, h * 0.35, w * 0.11, h * 0.16),
+        Rect.fromLTWH(w * 0.065, h * 0.25, w * 0.09, h * 0.22),
         const Radius.circular(4),
       ),
-      darkDetail,
+      darkWindow,
     );
 
     // Wheels
     final tirePaint = Paint()..color = const Color(0xFF262626);
     final rimPaint = Paint()..color = const Color(0xFFE2E8F0);
-    final wheelY = h * 0.74;
-    final r = h * 0.07;
+    final wheelY = h * 0.85;
+    final r = h * 0.09;
 
-    for (final wx in [w * 0.16, w * 0.38, w * 0.64, w * 0.73, w * 0.82]) {
+    for (final wx in [w * 0.12, w * 0.35, w * 0.65, w * 0.76, w * 0.87]) {
       canvas.drawCircle(Offset(wx, wheelY), r, tirePaint);
       canvas.drawCircle(Offset(wx, wheelY), r * 0.55, rimPaint);
     }

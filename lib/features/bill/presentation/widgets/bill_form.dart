@@ -248,7 +248,10 @@ class BillForm extends StatelessWidget {
             isDense: true,
           ),
           items: vehicles.map((v) {
-            return DropdownMenuItem(value: v, child: Text(v.vehicleNumber, style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13)));
+            final label = v.vehicleType != null && v.vehicleType!.isNotEmpty
+                ? '${v.vehicleNumber} - ${v.vehicleType}'
+                : v.vehicleNumber;
+            return DropdownMenuItem(value: v, child: Text(label, style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13)));
           }).toList(),
           onChanged: (v) {
             if (v != null) onVehicleChanged(v);
@@ -415,6 +418,7 @@ class BillForm extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         TextFormField(
+          key: ValueKey('$label-$value'),
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,3}')),
@@ -469,6 +473,7 @@ class BillForm extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         TextFormField(
+          key: ValueKey('$label-$value'),
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,3}')),
@@ -579,6 +584,7 @@ class BillForm extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         TextFormField(
+          key: ValueKey('remarks-$remarksText'),
           initialValue: remarksText.isNotEmpty ? remarksText : null,
           onChanged: onRemarksChanged,
           maxLines: 1,

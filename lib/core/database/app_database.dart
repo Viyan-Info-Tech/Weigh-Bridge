@@ -40,7 +40,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -53,6 +53,19 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(vehicles);
             await m.createTable(materials);
             await m.createTable(weighments);
+          }
+          if (from < 3) {
+            // Add new columns to parties table
+            await m.addColumn(parties, parties.contactPerson);
+            await m.addColumn(parties, parties.email);
+            await m.addColumn(parties, parties.city);
+            await m.addColumn(parties, parties.state);
+            // Add new columns to vehicles table
+            await m.addColumn(vehicles, vehicles.driverName);
+            await m.addColumn(vehicles, vehicles.driverPhone);
+            await m.addColumn(vehicles, vehicles.tareWeight);
+            // Add new column to materials table
+            await m.addColumn(materials, materials.category);
           }
         },
       );

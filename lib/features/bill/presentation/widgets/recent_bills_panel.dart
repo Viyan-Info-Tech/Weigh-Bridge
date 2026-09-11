@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart' hide Material;
 import 'package:intl/intl.dart';
 
+import 'weighment_slip_dialog.dart';
+
 import '../../domain/entities/party.dart';
 import '../../domain/entities/vehicle.dart';
 import '../../domain/entities/material.dart' as domain;
@@ -61,204 +63,34 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
     }
   }
 
+  Vehicle? _getVehicle(int vehicleId) {
+    try {
+      return widget.vehicles.firstWhere((v) => v.id == vehicleId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Party? _getParty(int partyId) {
+    try {
+      return widget.parties.firstWhere((p) => p.id == partyId);
+    } catch (_) {
+      return null;
+    }
+  }
+
   void _showBillSlipDialog(Weighment bill) {
-    final vehicleNo = _getVehicleNumber(bill.vehicleId);
-    final partyName = _getPartyName(bill.partyId);
+    final vehicle = _getVehicle(bill.vehicleId);
+    final party = _getParty(bill.partyId);
     final materialName = _getMaterialName(bill.materialId);
-    final dateFormatted = DateFormat(
-      'dd MMM yyyy, hh:mm a',
-    ).format(bill.createdAt);
 
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 12),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-        actionsPadding: const EdgeInsets.all(16),
-        title: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0D3B82).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: const Icon(
-                Icons.receipt_long_rounded,
-                color: Color(0xFF0D3B82),
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'VIYAN WEIGHBRIDGE',
-                  style: TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                Text(
-                  'Weighment Slip: ${bill.billNumber}',
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 12,
-                    color: Color(0xFF64748B),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        content: SizedBox(
-          width: 420,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Divider(height: 20),
-              _buildSlipRow('Date & Time', dateFormatted),
-              _buildSlipRow('Vehicle No', vehicleNo, isBold: true),
-              _buildSlipRow('Party', partyName),
-              _buildSlipRow('Material', materialName),
-              _buildSlipRow('Entry Type', bill.entryType.toUpperCase()),
-              _buildSlipRow('Payment Mode', bill.paymentMode.toUpperCase()),
-              const Divider(height: 20),
-              _buildSlipRow(
-                '1st Weight (Gross/Tare)',
-                '${bill.firstWeightKg.toStringAsFixed(0)} kg',
-              ),
-              _buildSlipRow(
-                '2nd Weight (Tare/Gross)',
-                '${bill.secondWeightKg.toStringAsFixed(0)} kg',
-              ),
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Net Weight',
-                      style: TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w800,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(
-                        '${bill.netWeightKg.toStringAsFixed(0)} kg (${(bill.netWeightKg / 1000).toStringAsFixed(3)} T)',
-                        textAlign: TextAlign.end,
-                        style: const TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF0D3B82),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 10),
-              _buildSlipRow(
-                'Rate per Ton',
-                '₹ ${bill.ratePerTon.toStringAsFixed(2)}',
-              ),
-              _buildSlipRow(
-                'Total Charges',
-                '₹ ${bill.amount.toStringAsFixed(2)}',
-                isBold: true,
-                textColor: const Color(0xFF16A34A),
-              ),
-              if (bill.remarks != null && bill.remarks!.isNotEmpty) ...[
-                const SizedBox(height: 6),
-                _buildSlipRow('Remarks', bill.remarks!),
-              ],
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text(
-              'Close',
-              style: TextStyle(fontFamily: 'PlusJakartaSans'),
-            ),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Print job sent for ${bill.billNumber}'),
-                  backgroundColor: const Color(0xFF16A34A),
-                  behavior: SnackBarBehavior.floating,
-                ),
-              );
-            },
-            icon: const Icon(Icons.print_rounded, size: 16),
-            label: const Text('Print Ticket'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0D3B82),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSlipRow(
-    String label,
-    String value, {
-    bool isBold = false,
-    Color? textColor,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 12,
-              color: Color(0xFF64748B),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.end,
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 12,
-                fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
-                color: textColor ?? const Color(0xFF0F172A),
-              ),
-            ),
-          ),
-        ],
+      builder: (context) => WeighmentSlipDialog(
+        bill: bill,
+        vehicle: vehicle,
+        party: party,
+        materialName: materialName,
       ),
     );
   }

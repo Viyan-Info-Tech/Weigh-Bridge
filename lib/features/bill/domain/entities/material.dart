@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 class Material extends Equatable {
   final int id;
   final String name;
+  final String? category;
   final String unit;
   final double defaultRate;
   final bool isActive;
@@ -12,6 +13,7 @@ class Material extends Equatable {
   const Material({
     required this.id,
     required this.name,
+    this.category,
     this.unit = 'ton',
     this.defaultRate = 0,
     this.isActive = true,
@@ -20,5 +22,5 @@ class Material extends Equatable {
   });
 
   @override
-  List<Object?> get props => [id, name, unit, defaultRate, isActive];
+  List<Object?> get props => [id, name, category, unit, defaultRate, isActive];
 }

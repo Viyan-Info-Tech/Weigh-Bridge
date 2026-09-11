@@ -253,9 +253,9 @@ class BillBloc extends Bloc<BillEvent, BillState> {
 
   void _onClearBillRequested(ClearBillRequested event, Emitter<BillState> emit) {
     emit(state.copyWith(
-      selectedParty: null,
-      selectedVehicle: null,
-      selectedMaterial: null,
+      clearParty: true,
+      clearVehicle: true,
+      clearMaterial: true,
       firstWeightText: '',
       secondWeightText: '',
       rateText: '',

@@ -10,7 +10,7 @@ class PartyRepositoryImpl implements PartyRepository {
 
   @override
   Future<List<Party>> getActiveParties() async {
-    return _localDataSource.getActiveParties();
+    return _localDataSource.getAllActiveParties();
   }
 
   @override

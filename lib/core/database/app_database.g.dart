@@ -494,6 +494,21 @@ class $PartiesTable extends Parties with TableInfo<$PartiesTable, Party> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _contactPersonMeta = const VerificationMeta(
+    'contactPerson',
+  );
+  @override
+  late final GeneratedColumn<String> contactPerson = GeneratedColumn<String>(
+    'contact_person',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 0,
+      maxTextLength: 100,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _mobileMeta = const VerificationMeta('mobile');
   @override
   late final GeneratedColumn<String> mobile = GeneratedColumn<String>(
@@ -503,6 +518,19 @@ class $PartiesTable extends Parties with TableInfo<$PartiesTable, Party> {
     additionalChecks: GeneratedColumn.checkTextLength(
       minTextLength: 0,
       maxTextLength: 20,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  @override
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+    'email',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 0,
+      maxTextLength: 100,
     ),
     type: DriftSqlType.string,
     requiredDuringInsert: false,
@@ -528,6 +556,32 @@ class $PartiesTable extends Parties with TableInfo<$PartiesTable, Party> {
   @override
   late final GeneratedColumn<String> gstNumber = GeneratedColumn<String>(
     'gst_number',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 0,
+      maxTextLength: 50,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _cityMeta = const VerificationMeta('city');
+  @override
+  late final GeneratedColumn<String> city = GeneratedColumn<String>(
+    'city',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 0,
+      maxTextLength: 50,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _stateMeta = const VerificationMeta('state');
+  @override
+  late final GeneratedColumn<String> state = GeneratedColumn<String>(
+    'state',
     aliasedName,
     true,
     additionalChecks: GeneratedColumn.checkTextLength(
@@ -580,9 +634,13 @@ class $PartiesTable extends Parties with TableInfo<$PartiesTable, Party> {
   List<GeneratedColumn> get $columns => [
     id,
     name,
+    contactPerson,
     mobile,
+    email,
     address,
     gstNumber,
+    city,
+    state,
     isActive,
     createdAt,
     updatedAt,
@@ -610,10 +668,25 @@ class $PartiesTable extends Parties with TableInfo<$PartiesTable, Party> {
     } else if (isInserting) {
       context.missing(_nameMeta);
     }
+    if (data.containsKey('contact_person')) {
+      context.handle(
+        _contactPersonMeta,
+        contactPerson.isAcceptableOrUnknown(
+          data['contact_person']!,
+          _contactPersonMeta,
+        ),
+      );
+    }
     if (data.containsKey('mobile')) {
       context.handle(
         _mobileMeta,
         mobile.isAcceptableOrUnknown(data['mobile']!, _mobileMeta),
+      );
+    }
+    if (data.containsKey('email')) {
+      context.handle(
+        _emailMeta,
+        email.isAcceptableOrUnknown(data['email']!, _emailMeta),
       );
     }
     if (data.containsKey('address')) {
@@ -626,6 +699,18 @@ class $PartiesTable extends Parties with TableInfo<$PartiesTable, Party> {
       context.handle(
         _gstNumberMeta,
         gstNumber.isAcceptableOrUnknown(data['gst_number']!, _gstNumberMeta),
+      );
+    }
+    if (data.containsKey('city')) {
+      context.handle(
+        _cityMeta,
+        city.isAcceptableOrUnknown(data['city']!, _cityMeta),
+      );
+    }
+    if (data.containsKey('state')) {
+      context.handle(
+        _stateMeta,
+        state.isAcceptableOrUnknown(data['state']!, _stateMeta),
       );
     }
     if (data.containsKey('is_active')) {
@@ -663,9 +748,17 @@ class $PartiesTable extends Parties with TableInfo<$PartiesTable, Party> {
         DriftSqlType.string,
         data['${effectivePrefix}name'],
       )!,
+      contactPerson: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}contact_person'],
+      ),
       mobile: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}mobile'],
+      ),
+      email: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}email'],
       ),
       address: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -674,6 +767,14 @@ class $PartiesTable extends Parties with TableInfo<$PartiesTable, Party> {
       gstNumber: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}gst_number'],
+      ),
+      city: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}city'],
+      ),
+      state: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}state'],
       ),
       isActive: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
@@ -699,18 +800,26 @@ class $PartiesTable extends Parties with TableInfo<$PartiesTable, Party> {
 class Party extends DataClass implements Insertable<Party> {
   final int id;
   final String name;
+  final String? contactPerson;
   final String? mobile;
+  final String? email;
   final String? address;
   final String? gstNumber;
+  final String? city;
+  final String? state;
   final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Party({
     required this.id,
     required this.name,
+    this.contactPerson,
     this.mobile,
+    this.email,
     this.address,
     this.gstNumber,
+    this.city,
+    this.state,
     required this.isActive,
     required this.createdAt,
     required this.updatedAt,
@@ -720,14 +829,26 @@ class Party extends DataClass implements Insertable<Party> {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['name'] = Variable<String>(name);
+    if (!nullToAbsent || contactPerson != null) {
+      map['contact_person'] = Variable<String>(contactPerson);
+    }
     if (!nullToAbsent || mobile != null) {
       map['mobile'] = Variable<String>(mobile);
+    }
+    if (!nullToAbsent || email != null) {
+      map['email'] = Variable<String>(email);
     }
     if (!nullToAbsent || address != null) {
       map['address'] = Variable<String>(address);
     }
     if (!nullToAbsent || gstNumber != null) {
       map['gst_number'] = Variable<String>(gstNumber);
+    }
+    if (!nullToAbsent || city != null) {
+      map['city'] = Variable<String>(city);
+    }
+    if (!nullToAbsent || state != null) {
+      map['state'] = Variable<String>(state);
     }
     map['is_active'] = Variable<bool>(isActive);
     map['created_at'] = Variable<DateTime>(createdAt);
@@ -739,15 +860,25 @@ class Party extends DataClass implements Insertable<Party> {
     return PartiesCompanion(
       id: Value(id),
       name: Value(name),
+      contactPerson: contactPerson == null && nullToAbsent
+          ? const Value.absent()
+          : Value(contactPerson),
       mobile: mobile == null && nullToAbsent
           ? const Value.absent()
           : Value(mobile),
+      email: email == null && nullToAbsent
+          ? const Value.absent()
+          : Value(email),
       address: address == null && nullToAbsent
           ? const Value.absent()
           : Value(address),
       gstNumber: gstNumber == null && nullToAbsent
           ? const Value.absent()
           : Value(gstNumber),
+      city: city == null && nullToAbsent ? const Value.absent() : Value(city),
+      state: state == null && nullToAbsent
+          ? const Value.absent()
+          : Value(state),
       isActive: Value(isActive),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -762,9 +893,13 @@ class Party extends DataClass implements Insertable<Party> {
     return Party(
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
+      contactPerson: serializer.fromJson<String?>(json['contactPerson']),
       mobile: serializer.fromJson<String?>(json['mobile']),
+      email: serializer.fromJson<String?>(json['email']),
       address: serializer.fromJson<String?>(json['address']),
       gstNumber: serializer.fromJson<String?>(json['gstNumber']),
+      city: serializer.fromJson<String?>(json['city']),
+      state: serializer.fromJson<String?>(json['state']),
       isActive: serializer.fromJson<bool>(json['isActive']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -776,9 +911,13 @@ class Party extends DataClass implements Insertable<Party> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'name': serializer.toJson<String>(name),
+      'contactPerson': serializer.toJson<String?>(contactPerson),
       'mobile': serializer.toJson<String?>(mobile),
+      'email': serializer.toJson<String?>(email),
       'address': serializer.toJson<String?>(address),
       'gstNumber': serializer.toJson<String?>(gstNumber),
+      'city': serializer.toJson<String?>(city),
+      'state': serializer.toJson<String?>(state),
       'isActive': serializer.toJson<bool>(isActive),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -788,18 +927,28 @@ class Party extends DataClass implements Insertable<Party> {
   Party copyWith({
     int? id,
     String? name,
+    Value<String?> contactPerson = const Value.absent(),
     Value<String?> mobile = const Value.absent(),
+    Value<String?> email = const Value.absent(),
     Value<String?> address = const Value.absent(),
     Value<String?> gstNumber = const Value.absent(),
+    Value<String?> city = const Value.absent(),
+    Value<String?> state = const Value.absent(),
     bool? isActive,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => Party(
     id: id ?? this.id,
     name: name ?? this.name,
+    contactPerson: contactPerson.present
+        ? contactPerson.value
+        : this.contactPerson,
     mobile: mobile.present ? mobile.value : this.mobile,
+    email: email.present ? email.value : this.email,
     address: address.present ? address.value : this.address,
     gstNumber: gstNumber.present ? gstNumber.value : this.gstNumber,
+    city: city.present ? city.value : this.city,
+    state: state.present ? state.value : this.state,
     isActive: isActive ?? this.isActive,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -808,9 +957,15 @@ class Party extends DataClass implements Insertable<Party> {
     return Party(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
+      contactPerson: data.contactPerson.present
+          ? data.contactPerson.value
+          : this.contactPerson,
       mobile: data.mobile.present ? data.mobile.value : this.mobile,
+      email: data.email.present ? data.email.value : this.email,
       address: data.address.present ? data.address.value : this.address,
       gstNumber: data.gstNumber.present ? data.gstNumber.value : this.gstNumber,
+      city: data.city.present ? data.city.value : this.city,
+      state: data.state.present ? data.state.value : this.state,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -822,9 +977,13 @@ class Party extends DataClass implements Insertable<Party> {
     return (StringBuffer('Party(')
           ..write('id: $id, ')
           ..write('name: $name, ')
+          ..write('contactPerson: $contactPerson, ')
           ..write('mobile: $mobile, ')
+          ..write('email: $email, ')
           ..write('address: $address, ')
           ..write('gstNumber: $gstNumber, ')
+          ..write('city: $city, ')
+          ..write('state: $state, ')
           ..write('isActive: $isActive, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -836,9 +995,13 @@ class Party extends DataClass implements Insertable<Party> {
   int get hashCode => Object.hash(
     id,
     name,
+    contactPerson,
     mobile,
+    email,
     address,
     gstNumber,
+    city,
+    state,
     isActive,
     createdAt,
     updatedAt,
@@ -849,9 +1012,13 @@ class Party extends DataClass implements Insertable<Party> {
       (other is Party &&
           other.id == this.id &&
           other.name == this.name &&
+          other.contactPerson == this.contactPerson &&
           other.mobile == this.mobile &&
+          other.email == this.email &&
           other.address == this.address &&
           other.gstNumber == this.gstNumber &&
+          other.city == this.city &&
+          other.state == this.state &&
           other.isActive == this.isActive &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
@@ -860,18 +1027,26 @@ class Party extends DataClass implements Insertable<Party> {
 class PartiesCompanion extends UpdateCompanion<Party> {
   final Value<int> id;
   final Value<String> name;
+  final Value<String?> contactPerson;
   final Value<String?> mobile;
+  final Value<String?> email;
   final Value<String?> address;
   final Value<String?> gstNumber;
+  final Value<String?> city;
+  final Value<String?> state;
   final Value<bool> isActive;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   const PartiesCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
+    this.contactPerson = const Value.absent(),
     this.mobile = const Value.absent(),
+    this.email = const Value.absent(),
     this.address = const Value.absent(),
     this.gstNumber = const Value.absent(),
+    this.city = const Value.absent(),
+    this.state = const Value.absent(),
     this.isActive = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -879,9 +1054,13 @@ class PartiesCompanion extends UpdateCompanion<Party> {
   PartiesCompanion.insert({
     this.id = const Value.absent(),
     required String name,
+    this.contactPerson = const Value.absent(),
     this.mobile = const Value.absent(),
+    this.email = const Value.absent(),
     this.address = const Value.absent(),
     this.gstNumber = const Value.absent(),
+    this.city = const Value.absent(),
+    this.state = const Value.absent(),
     this.isActive = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -889,9 +1068,13 @@ class PartiesCompanion extends UpdateCompanion<Party> {
   static Insertable<Party> custom({
     Expression<int>? id,
     Expression<String>? name,
+    Expression<String>? contactPerson,
     Expression<String>? mobile,
+    Expression<String>? email,
     Expression<String>? address,
     Expression<String>? gstNumber,
+    Expression<String>? city,
+    Expression<String>? state,
     Expression<bool>? isActive,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -899,9 +1082,13 @@ class PartiesCompanion extends UpdateCompanion<Party> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
+      if (contactPerson != null) 'contact_person': contactPerson,
       if (mobile != null) 'mobile': mobile,
+      if (email != null) 'email': email,
       if (address != null) 'address': address,
       if (gstNumber != null) 'gst_number': gstNumber,
+      if (city != null) 'city': city,
+      if (state != null) 'state': state,
       if (isActive != null) 'is_active': isActive,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -911,9 +1098,13 @@ class PartiesCompanion extends UpdateCompanion<Party> {
   PartiesCompanion copyWith({
     Value<int>? id,
     Value<String>? name,
+    Value<String?>? contactPerson,
     Value<String?>? mobile,
+    Value<String?>? email,
     Value<String?>? address,
     Value<String?>? gstNumber,
+    Value<String?>? city,
+    Value<String?>? state,
     Value<bool>? isActive,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -921,9 +1112,13 @@ class PartiesCompanion extends UpdateCompanion<Party> {
     return PartiesCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
+      contactPerson: contactPerson ?? this.contactPerson,
       mobile: mobile ?? this.mobile,
+      email: email ?? this.email,
       address: address ?? this.address,
       gstNumber: gstNumber ?? this.gstNumber,
+      city: city ?? this.city,
+      state: state ?? this.state,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -939,14 +1134,26 @@ class PartiesCompanion extends UpdateCompanion<Party> {
     if (name.present) {
       map['name'] = Variable<String>(name.value);
     }
+    if (contactPerson.present) {
+      map['contact_person'] = Variable<String>(contactPerson.value);
+    }
     if (mobile.present) {
       map['mobile'] = Variable<String>(mobile.value);
+    }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
     }
     if (address.present) {
       map['address'] = Variable<String>(address.value);
     }
     if (gstNumber.present) {
       map['gst_number'] = Variable<String>(gstNumber.value);
+    }
+    if (city.present) {
+      map['city'] = Variable<String>(city.value);
+    }
+    if (state.present) {
+      map['state'] = Variable<String>(state.value);
     }
     if (isActive.present) {
       map['is_active'] = Variable<bool>(isActive.value);
@@ -965,9 +1172,13 @@ class PartiesCompanion extends UpdateCompanion<Party> {
     return (StringBuffer('PartiesCompanion(')
           ..write('id: $id, ')
           ..write('name: $name, ')
+          ..write('contactPerson: $contactPerson, ')
           ..write('mobile: $mobile, ')
+          ..write('email: $email, ')
           ..write('address: $address, ')
           ..write('gstNumber: $gstNumber, ')
+          ..write('city: $city, ')
+          ..write('state: $state, ')
           ..write('isActive: $isActive, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -1020,6 +1231,9 @@ class $VehiclesTable extends Vehicles with TableInfo<$VehiclesTable, Vehicle> {
     false,
     type: DriftSqlType.int,
     requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES parties (id)',
+    ),
   );
   static const VerificationMeta _vehicleTypeMeta = const VerificationMeta(
     'vehicleType',
@@ -1034,6 +1248,47 @@ class $VehiclesTable extends Vehicles with TableInfo<$VehiclesTable, Vehicle> {
       maxTextLength: 50,
     ),
     type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _driverNameMeta = const VerificationMeta(
+    'driverName',
+  );
+  @override
+  late final GeneratedColumn<String> driverName = GeneratedColumn<String>(
+    'driver_name',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 0,
+      maxTextLength: 100,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _driverPhoneMeta = const VerificationMeta(
+    'driverPhone',
+  );
+  @override
+  late final GeneratedColumn<String> driverPhone = GeneratedColumn<String>(
+    'driver_phone',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 0,
+      maxTextLength: 20,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tareWeightMeta = const VerificationMeta(
+    'tareWeight',
+  );
+  @override
+  late final GeneratedColumn<double> tareWeight = GeneratedColumn<double>(
+    'tare_weight',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
   static const VerificationMeta _isActiveMeta = const VerificationMeta(
@@ -1081,6 +1336,9 @@ class $VehiclesTable extends Vehicles with TableInfo<$VehiclesTable, Vehicle> {
     vehicleNumber,
     partyId,
     vehicleType,
+    driverName,
+    driverPhone,
+    tareWeight,
     isActive,
     createdAt,
     updatedAt,
@@ -1128,6 +1386,27 @@ class $VehiclesTable extends Vehicles with TableInfo<$VehiclesTable, Vehicle> {
         ),
       );
     }
+    if (data.containsKey('driver_name')) {
+      context.handle(
+        _driverNameMeta,
+        driverName.isAcceptableOrUnknown(data['driver_name']!, _driverNameMeta),
+      );
+    }
+    if (data.containsKey('driver_phone')) {
+      context.handle(
+        _driverPhoneMeta,
+        driverPhone.isAcceptableOrUnknown(
+          data['driver_phone']!,
+          _driverPhoneMeta,
+        ),
+      );
+    }
+    if (data.containsKey('tare_weight')) {
+      context.handle(
+        _tareWeightMeta,
+        tareWeight.isAcceptableOrUnknown(data['tare_weight']!, _tareWeightMeta),
+      );
+    }
     if (data.containsKey('is_active')) {
       context.handle(
         _isActiveMeta,
@@ -1171,6 +1450,18 @@ class $VehiclesTable extends Vehicles with TableInfo<$VehiclesTable, Vehicle> {
         DriftSqlType.string,
         data['${effectivePrefix}vehicle_type'],
       ),
+      driverName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}driver_name'],
+      ),
+      driverPhone: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}driver_phone'],
+      ),
+      tareWeight: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}tare_weight'],
+      ),
       isActive: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_active'],
@@ -1197,6 +1488,9 @@ class Vehicle extends DataClass implements Insertable<Vehicle> {
   final String vehicleNumber;
   final int partyId;
   final String? vehicleType;
+  final String? driverName;
+  final String? driverPhone;
+  final double? tareWeight;
   final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -1205,6 +1499,9 @@ class Vehicle extends DataClass implements Insertable<Vehicle> {
     required this.vehicleNumber,
     required this.partyId,
     this.vehicleType,
+    this.driverName,
+    this.driverPhone,
+    this.tareWeight,
     required this.isActive,
     required this.createdAt,
     required this.updatedAt,
@@ -1217,6 +1514,15 @@ class Vehicle extends DataClass implements Insertable<Vehicle> {
     map['party_id'] = Variable<int>(partyId);
     if (!nullToAbsent || vehicleType != null) {
       map['vehicle_type'] = Variable<String>(vehicleType);
+    }
+    if (!nullToAbsent || driverName != null) {
+      map['driver_name'] = Variable<String>(driverName);
+    }
+    if (!nullToAbsent || driverPhone != null) {
+      map['driver_phone'] = Variable<String>(driverPhone);
+    }
+    if (!nullToAbsent || tareWeight != null) {
+      map['tare_weight'] = Variable<double>(tareWeight);
     }
     map['is_active'] = Variable<bool>(isActive);
     map['created_at'] = Variable<DateTime>(createdAt);
@@ -1232,6 +1538,15 @@ class Vehicle extends DataClass implements Insertable<Vehicle> {
       vehicleType: vehicleType == null && nullToAbsent
           ? const Value.absent()
           : Value(vehicleType),
+      driverName: driverName == null && nullToAbsent
+          ? const Value.absent()
+          : Value(driverName),
+      driverPhone: driverPhone == null && nullToAbsent
+          ? const Value.absent()
+          : Value(driverPhone),
+      tareWeight: tareWeight == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tareWeight),
       isActive: Value(isActive),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -1248,6 +1563,9 @@ class Vehicle extends DataClass implements Insertable<Vehicle> {
       vehicleNumber: serializer.fromJson<String>(json['vehicleNumber']),
       partyId: serializer.fromJson<int>(json['partyId']),
       vehicleType: serializer.fromJson<String?>(json['vehicleType']),
+      driverName: serializer.fromJson<String?>(json['driverName']),
+      driverPhone: serializer.fromJson<String?>(json['driverPhone']),
+      tareWeight: serializer.fromJson<double?>(json['tareWeight']),
       isActive: serializer.fromJson<bool>(json['isActive']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -1261,6 +1579,9 @@ class Vehicle extends DataClass implements Insertable<Vehicle> {
       'vehicleNumber': serializer.toJson<String>(vehicleNumber),
       'partyId': serializer.toJson<int>(partyId),
       'vehicleType': serializer.toJson<String?>(vehicleType),
+      'driverName': serializer.toJson<String?>(driverName),
+      'driverPhone': serializer.toJson<String?>(driverPhone),
+      'tareWeight': serializer.toJson<double?>(tareWeight),
       'isActive': serializer.toJson<bool>(isActive),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -1272,6 +1593,9 @@ class Vehicle extends DataClass implements Insertable<Vehicle> {
     String? vehicleNumber,
     int? partyId,
     Value<String?> vehicleType = const Value.absent(),
+    Value<String?> driverName = const Value.absent(),
+    Value<String?> driverPhone = const Value.absent(),
+    Value<double?> tareWeight = const Value.absent(),
     bool? isActive,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -1280,6 +1604,9 @@ class Vehicle extends DataClass implements Insertable<Vehicle> {
     vehicleNumber: vehicleNumber ?? this.vehicleNumber,
     partyId: partyId ?? this.partyId,
     vehicleType: vehicleType.present ? vehicleType.value : this.vehicleType,
+    driverName: driverName.present ? driverName.value : this.driverName,
+    driverPhone: driverPhone.present ? driverPhone.value : this.driverPhone,
+    tareWeight: tareWeight.present ? tareWeight.value : this.tareWeight,
     isActive: isActive ?? this.isActive,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -1294,6 +1621,15 @@ class Vehicle extends DataClass implements Insertable<Vehicle> {
       vehicleType: data.vehicleType.present
           ? data.vehicleType.value
           : this.vehicleType,
+      driverName: data.driverName.present
+          ? data.driverName.value
+          : this.driverName,
+      driverPhone: data.driverPhone.present
+          ? data.driverPhone.value
+          : this.driverPhone,
+      tareWeight: data.tareWeight.present
+          ? data.tareWeight.value
+          : this.tareWeight,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -1307,6 +1643,9 @@ class Vehicle extends DataClass implements Insertable<Vehicle> {
           ..write('vehicleNumber: $vehicleNumber, ')
           ..write('partyId: $partyId, ')
           ..write('vehicleType: $vehicleType, ')
+          ..write('driverName: $driverName, ')
+          ..write('driverPhone: $driverPhone, ')
+          ..write('tareWeight: $tareWeight, ')
           ..write('isActive: $isActive, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -1320,6 +1659,9 @@ class Vehicle extends DataClass implements Insertable<Vehicle> {
     vehicleNumber,
     partyId,
     vehicleType,
+    driverName,
+    driverPhone,
+    tareWeight,
     isActive,
     createdAt,
     updatedAt,
@@ -1332,6 +1674,9 @@ class Vehicle extends DataClass implements Insertable<Vehicle> {
           other.vehicleNumber == this.vehicleNumber &&
           other.partyId == this.partyId &&
           other.vehicleType == this.vehicleType &&
+          other.driverName == this.driverName &&
+          other.driverPhone == this.driverPhone &&
+          other.tareWeight == this.tareWeight &&
           other.isActive == this.isActive &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
@@ -1342,6 +1687,9 @@ class VehiclesCompanion extends UpdateCompanion<Vehicle> {
   final Value<String> vehicleNumber;
   final Value<int> partyId;
   final Value<String?> vehicleType;
+  final Value<String?> driverName;
+  final Value<String?> driverPhone;
+  final Value<double?> tareWeight;
   final Value<bool> isActive;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -1350,6 +1698,9 @@ class VehiclesCompanion extends UpdateCompanion<Vehicle> {
     this.vehicleNumber = const Value.absent(),
     this.partyId = const Value.absent(),
     this.vehicleType = const Value.absent(),
+    this.driverName = const Value.absent(),
+    this.driverPhone = const Value.absent(),
+    this.tareWeight = const Value.absent(),
     this.isActive = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -1359,6 +1710,9 @@ class VehiclesCompanion extends UpdateCompanion<Vehicle> {
     required String vehicleNumber,
     required int partyId,
     this.vehicleType = const Value.absent(),
+    this.driverName = const Value.absent(),
+    this.driverPhone = const Value.absent(),
+    this.tareWeight = const Value.absent(),
     this.isActive = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -1369,6 +1723,9 @@ class VehiclesCompanion extends UpdateCompanion<Vehicle> {
     Expression<String>? vehicleNumber,
     Expression<int>? partyId,
     Expression<String>? vehicleType,
+    Expression<String>? driverName,
+    Expression<String>? driverPhone,
+    Expression<double>? tareWeight,
     Expression<bool>? isActive,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -1378,6 +1735,9 @@ class VehiclesCompanion extends UpdateCompanion<Vehicle> {
       if (vehicleNumber != null) 'vehicle_number': vehicleNumber,
       if (partyId != null) 'party_id': partyId,
       if (vehicleType != null) 'vehicle_type': vehicleType,
+      if (driverName != null) 'driver_name': driverName,
+      if (driverPhone != null) 'driver_phone': driverPhone,
+      if (tareWeight != null) 'tare_weight': tareWeight,
       if (isActive != null) 'is_active': isActive,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -1389,6 +1749,9 @@ class VehiclesCompanion extends UpdateCompanion<Vehicle> {
     Value<String>? vehicleNumber,
     Value<int>? partyId,
     Value<String?>? vehicleType,
+    Value<String?>? driverName,
+    Value<String?>? driverPhone,
+    Value<double?>? tareWeight,
     Value<bool>? isActive,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -1398,6 +1761,9 @@ class VehiclesCompanion extends UpdateCompanion<Vehicle> {
       vehicleNumber: vehicleNumber ?? this.vehicleNumber,
       partyId: partyId ?? this.partyId,
       vehicleType: vehicleType ?? this.vehicleType,
+      driverName: driverName ?? this.driverName,
+      driverPhone: driverPhone ?? this.driverPhone,
+      tareWeight: tareWeight ?? this.tareWeight,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -1419,6 +1785,15 @@ class VehiclesCompanion extends UpdateCompanion<Vehicle> {
     if (vehicleType.present) {
       map['vehicle_type'] = Variable<String>(vehicleType.value);
     }
+    if (driverName.present) {
+      map['driver_name'] = Variable<String>(driverName.value);
+    }
+    if (driverPhone.present) {
+      map['driver_phone'] = Variable<String>(driverPhone.value);
+    }
+    if (tareWeight.present) {
+      map['tare_weight'] = Variable<double>(tareWeight.value);
+    }
     if (isActive.present) {
       map['is_active'] = Variable<bool>(isActive.value);
     }
@@ -1438,6 +1813,9 @@ class VehiclesCompanion extends UpdateCompanion<Vehicle> {
           ..write('vehicleNumber: $vehicleNumber, ')
           ..write('partyId: $partyId, ')
           ..write('vehicleType: $vehicleType, ')
+          ..write('driverName: $driverName, ')
+          ..write('driverPhone: $driverPhone, ')
+          ..write('tareWeight: $tareWeight, ')
           ..write('isActive: $isActive, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -1477,6 +1855,21 @@ class $MaterialsTable extends Materials
     ),
     type: DriftSqlType.string,
     requiredDuringInsert: true,
+  );
+  static const VerificationMeta _categoryMeta = const VerificationMeta(
+    'category',
+  );
+  @override
+  late final GeneratedColumn<String> category = GeneratedColumn<String>(
+    'category',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 0,
+      maxTextLength: 50,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
   );
   static const VerificationMeta _unitMeta = const VerificationMeta('unit');
   @override
@@ -1547,6 +1940,7 @@ class $MaterialsTable extends Materials
   List<GeneratedColumn> get $columns => [
     id,
     name,
+    category,
     unit,
     defaultRate,
     isActive,
@@ -1575,6 +1969,12 @@ class $MaterialsTable extends Materials
       );
     } else if (isInserting) {
       context.missing(_nameMeta);
+    }
+    if (data.containsKey('category')) {
+      context.handle(
+        _categoryMeta,
+        category.isAcceptableOrUnknown(data['category']!, _categoryMeta),
+      );
     }
     if (data.containsKey('unit')) {
       context.handle(
@@ -1626,6 +2026,10 @@ class $MaterialsTable extends Materials
         DriftSqlType.string,
         data['${effectivePrefix}name'],
       )!,
+      category: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}category'],
+      ),
       unit: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}unit'],
@@ -1658,6 +2062,7 @@ class $MaterialsTable extends Materials
 class Material extends DataClass implements Insertable<Material> {
   final int id;
   final String name;
+  final String? category;
   final String unit;
   final double defaultRate;
   final bool isActive;
@@ -1666,6 +2071,7 @@ class Material extends DataClass implements Insertable<Material> {
   const Material({
     required this.id,
     required this.name,
+    this.category,
     required this.unit,
     required this.defaultRate,
     required this.isActive,
@@ -1677,6 +2083,9 @@ class Material extends DataClass implements Insertable<Material> {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['name'] = Variable<String>(name);
+    if (!nullToAbsent || category != null) {
+      map['category'] = Variable<String>(category);
+    }
     map['unit'] = Variable<String>(unit);
     map['default_rate'] = Variable<double>(defaultRate);
     map['is_active'] = Variable<bool>(isActive);
@@ -1689,6 +2098,9 @@ class Material extends DataClass implements Insertable<Material> {
     return MaterialsCompanion(
       id: Value(id),
       name: Value(name),
+      category: category == null && nullToAbsent
+          ? const Value.absent()
+          : Value(category),
       unit: Value(unit),
       defaultRate: Value(defaultRate),
       isActive: Value(isActive),
@@ -1705,6 +2117,7 @@ class Material extends DataClass implements Insertable<Material> {
     return Material(
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
+      category: serializer.fromJson<String?>(json['category']),
       unit: serializer.fromJson<String>(json['unit']),
       defaultRate: serializer.fromJson<double>(json['defaultRate']),
       isActive: serializer.fromJson<bool>(json['isActive']),
@@ -1718,6 +2131,7 @@ class Material extends DataClass implements Insertable<Material> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'name': serializer.toJson<String>(name),
+      'category': serializer.toJson<String?>(category),
       'unit': serializer.toJson<String>(unit),
       'defaultRate': serializer.toJson<double>(defaultRate),
       'isActive': serializer.toJson<bool>(isActive),
@@ -1729,6 +2143,7 @@ class Material extends DataClass implements Insertable<Material> {
   Material copyWith({
     int? id,
     String? name,
+    Value<String?> category = const Value.absent(),
     String? unit,
     double? defaultRate,
     bool? isActive,
@@ -1737,6 +2152,7 @@ class Material extends DataClass implements Insertable<Material> {
   }) => Material(
     id: id ?? this.id,
     name: name ?? this.name,
+    category: category.present ? category.value : this.category,
     unit: unit ?? this.unit,
     defaultRate: defaultRate ?? this.defaultRate,
     isActive: isActive ?? this.isActive,
@@ -1747,6 +2163,7 @@ class Material extends DataClass implements Insertable<Material> {
     return Material(
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
+      category: data.category.present ? data.category.value : this.category,
       unit: data.unit.present ? data.unit.value : this.unit,
       defaultRate: data.defaultRate.present
           ? data.defaultRate.value
@@ -1762,6 +2179,7 @@ class Material extends DataClass implements Insertable<Material> {
     return (StringBuffer('Material(')
           ..write('id: $id, ')
           ..write('name: $name, ')
+          ..write('category: $category, ')
           ..write('unit: $unit, ')
           ..write('defaultRate: $defaultRate, ')
           ..write('isActive: $isActive, ')
@@ -1772,14 +2190,23 @@ class Material extends DataClass implements Insertable<Material> {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, name, unit, defaultRate, isActive, createdAt, updatedAt);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    category,
+    unit,
+    defaultRate,
+    isActive,
+    createdAt,
+    updatedAt,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is Material &&
           other.id == this.id &&
           other.name == this.name &&
+          other.category == this.category &&
           other.unit == this.unit &&
           other.defaultRate == this.defaultRate &&
           other.isActive == this.isActive &&
@@ -1790,6 +2217,7 @@ class Material extends DataClass implements Insertable<Material> {
 class MaterialsCompanion extends UpdateCompanion<Material> {
   final Value<int> id;
   final Value<String> name;
+  final Value<String?> category;
   final Value<String> unit;
   final Value<double> defaultRate;
   final Value<bool> isActive;
@@ -1798,6 +2226,7 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
   const MaterialsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
+    this.category = const Value.absent(),
     this.unit = const Value.absent(),
     this.defaultRate = const Value.absent(),
     this.isActive = const Value.absent(),
@@ -1807,6 +2236,7 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
   MaterialsCompanion.insert({
     this.id = const Value.absent(),
     required String name,
+    this.category = const Value.absent(),
     this.unit = const Value.absent(),
     this.defaultRate = const Value.absent(),
     this.isActive = const Value.absent(),
@@ -1816,6 +2246,7 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
   static Insertable<Material> custom({
     Expression<int>? id,
     Expression<String>? name,
+    Expression<String>? category,
     Expression<String>? unit,
     Expression<double>? defaultRate,
     Expression<bool>? isActive,
@@ -1825,6 +2256,7 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
+      if (category != null) 'category': category,
       if (unit != null) 'unit': unit,
       if (defaultRate != null) 'default_rate': defaultRate,
       if (isActive != null) 'is_active': isActive,
@@ -1836,6 +2268,7 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
   MaterialsCompanion copyWith({
     Value<int>? id,
     Value<String>? name,
+    Value<String?>? category,
     Value<String>? unit,
     Value<double>? defaultRate,
     Value<bool>? isActive,
@@ -1845,6 +2278,7 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
     return MaterialsCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
+      category: category ?? this.category,
       unit: unit ?? this.unit,
       defaultRate: defaultRate ?? this.defaultRate,
       isActive: isActive ?? this.isActive,
@@ -1861,6 +2295,9 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
+    }
+    if (category.present) {
+      map['category'] = Variable<String>(category.value);
     }
     if (unit.present) {
       map['unit'] = Variable<String>(unit.value);
@@ -1885,6 +2322,7 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
     return (StringBuffer('MaterialsCompanion(')
           ..write('id: $id, ')
           ..write('name: $name, ')
+          ..write('category: $category, ')
           ..write('unit: $unit, ')
           ..write('defaultRate: $defaultRate, ')
           ..write('isActive: $isActive, ')
@@ -3088,9 +3526,13 @@ typedef $$PartiesTableCreateCompanionBuilder =
     PartiesCompanion Function({
       Value<int> id,
       required String name,
+      Value<String?> contactPerson,
       Value<String?> mobile,
+      Value<String?> email,
       Value<String?> address,
       Value<String?> gstNumber,
+      Value<String?> city,
+      Value<String?> state,
       Value<bool> isActive,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -3099,9 +3541,13 @@ typedef $$PartiesTableUpdateCompanionBuilder =
     PartiesCompanion Function({
       Value<int> id,
       Value<String> name,
+      Value<String?> contactPerson,
       Value<String?> mobile,
+      Value<String?> email,
       Value<String?> address,
       Value<String?> gstNumber,
+      Value<String?> city,
+      Value<String?> state,
       Value<bool> isActive,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -3110,6 +3556,25 @@ typedef $$PartiesTableUpdateCompanionBuilder =
 final class $$PartiesTableReferences
     extends BaseReferences<_$AppDatabase, $PartiesTable, Party> {
   $$PartiesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static MultiTypedResultKey<$VehiclesTable, List<Vehicle>> _vehiclesRefsTable(
+    _$AppDatabase db,
+  ) => MultiTypedResultKey.fromTable(
+    db.vehicles,
+    aliasName: 'parties__id__vehicles__party_id',
+  );
+
+  $$VehiclesTableProcessedTableManager get vehiclesRefs {
+    final manager = $$VehiclesTableTableManager(
+      $_db,
+      $_db.vehicles,
+    ).filter((f) => f.partyId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_vehiclesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
 
   static MultiTypedResultKey<$WeighmentsTable, List<Weighment>>
   _weighmentsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
@@ -3149,8 +3614,18 @@ class $$PartiesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get contactPerson => $composableBuilder(
+    column: $table.contactPerson,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get mobile => $composableBuilder(
     column: $table.mobile,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get email => $composableBuilder(
+    column: $table.email,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3161,6 +3636,16 @@ class $$PartiesTableFilterComposer
 
   ColumnFilters<String> get gstNumber => $composableBuilder(
     column: $table.gstNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get city => $composableBuilder(
+    column: $table.city,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get state => $composableBuilder(
+    column: $table.state,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3178,6 +3663,31 @@ class $$PartiesTableFilterComposer
     column: $table.updatedAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  Expression<bool> vehiclesRefs(
+    Expression<bool> Function($$VehiclesTableFilterComposer f) f,
+  ) {
+    final $$VehiclesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.vehicles,
+      getReferencedColumn: (t) => t.partyId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$VehiclesTableFilterComposer(
+            $db: $db,
+            $table: $db.vehicles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 
   Expression<bool> weighmentsRefs(
     Expression<bool> Function($$WeighmentsTableFilterComposer f) f,
@@ -3224,8 +3734,18 @@ class $$PartiesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get contactPerson => $composableBuilder(
+    column: $table.contactPerson,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get mobile => $composableBuilder(
     column: $table.mobile,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get email => $composableBuilder(
+    column: $table.email,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -3236,6 +3756,16 @@ class $$PartiesTableOrderingComposer
 
   ColumnOrderings<String> get gstNumber => $composableBuilder(
     column: $table.gstNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get city => $composableBuilder(
+    column: $table.city,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get state => $composableBuilder(
+    column: $table.state,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -3270,14 +3800,28 @@ class $$PartiesTableAnnotationComposer
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
 
+  GeneratedColumn<String> get contactPerson => $composableBuilder(
+    column: $table.contactPerson,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get mobile =>
       $composableBuilder(column: $table.mobile, builder: (column) => column);
+
+  GeneratedColumn<String> get email =>
+      $composableBuilder(column: $table.email, builder: (column) => column);
 
   GeneratedColumn<String> get address =>
       $composableBuilder(column: $table.address, builder: (column) => column);
 
   GeneratedColumn<String> get gstNumber =>
       $composableBuilder(column: $table.gstNumber, builder: (column) => column);
+
+  GeneratedColumn<String> get city =>
+      $composableBuilder(column: $table.city, builder: (column) => column);
+
+  GeneratedColumn<String> get state =>
+      $composableBuilder(column: $table.state, builder: (column) => column);
 
   GeneratedColumn<bool> get isActive =>
       $composableBuilder(column: $table.isActive, builder: (column) => column);
@@ -3287,6 +3831,31 @@ class $$PartiesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  Expression<T> vehiclesRefs<T extends Object>(
+    Expression<T> Function($$VehiclesTableAnnotationComposer a) f,
+  ) {
+    final $$VehiclesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.vehicles,
+      getReferencedColumn: (t) => t.partyId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$VehiclesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.vehicles,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 
   Expression<T> weighmentsRefs<T extends Object>(
     Expression<T> Function($$WeighmentsTableAnnotationComposer a) f,
@@ -3327,7 +3896,7 @@ class $$PartiesTableTableManager
           $$PartiesTableUpdateCompanionBuilder,
           (Party, $$PartiesTableReferences),
           Party,
-          PrefetchHooks Function({bool weighmentsRefs})
+          PrefetchHooks Function({bool vehiclesRefs, bool weighmentsRefs})
         > {
   $$PartiesTableTableManager(_$AppDatabase db, $PartiesTable table)
     : super(
@@ -3344,18 +3913,26 @@ class $$PartiesTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
+                Value<String?> contactPerson = const Value.absent(),
                 Value<String?> mobile = const Value.absent(),
+                Value<String?> email = const Value.absent(),
                 Value<String?> address = const Value.absent(),
                 Value<String?> gstNumber = const Value.absent(),
+                Value<String?> city = const Value.absent(),
+                Value<String?> state = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => PartiesCompanion(
                 id: id,
                 name: name,
+                contactPerson: contactPerson,
                 mobile: mobile,
+                email: email,
                 address: address,
                 gstNumber: gstNumber,
+                city: city,
+                state: state,
                 isActive: isActive,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -3364,18 +3941,26 @@ class $$PartiesTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 required String name,
+                Value<String?> contactPerson = const Value.absent(),
                 Value<String?> mobile = const Value.absent(),
+                Value<String?> email = const Value.absent(),
                 Value<String?> address = const Value.absent(),
                 Value<String?> gstNumber = const Value.absent(),
+                Value<String?> city = const Value.absent(),
+                Value<String?> state = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => PartiesCompanion.insert(
                 id: id,
                 name: name,
+                contactPerson: contactPerson,
                 mobile: mobile,
+                email: email,
                 address: address,
                 gstNumber: gstNumber,
+                city: city,
+                state: state,
                 isActive: isActive,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -3388,31 +3973,63 @@ class $$PartiesTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({weighmentsRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [if (weighmentsRefs) db.weighments],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (weighmentsRefs)
-                    await $_getPrefetchedData<Party, $PartiesTable, Weighment>(
-                      currentTable: table,
-                      referencedTable: $$PartiesTableReferences
-                          ._weighmentsRefsTable(db),
-                      managerFromTypedResult: (p0) => $$PartiesTableReferences(
-                        db,
-                        table,
-                        p0,
-                      ).weighmentsRefs,
-                      referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where((e) => e.partyId == item.id),
-                      typedResults: items,
-                    ),
-                ];
+          prefetchHooksCallback:
+              ({vehiclesRefs = false, weighmentsRefs = false}) {
+                return PrefetchHooks(
+                  db: db,
+                  explicitlyWatchedTables: [
+                    if (vehiclesRefs) db.vehicles,
+                    if (weighmentsRefs) db.weighments,
+                  ],
+                  addJoins: null,
+                  getPrefetchedDataCallback: (items) async {
+                    return [
+                      if (vehiclesRefs)
+                        await $_getPrefetchedData<
+                          Party,
+                          $PartiesTable,
+                          Vehicle
+                        >(
+                          currentTable: table,
+                          referencedTable: $$PartiesTableReferences
+                              ._vehiclesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$PartiesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).vehiclesRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.partyId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                      if (weighmentsRefs)
+                        await $_getPrefetchedData<
+                          Party,
+                          $PartiesTable,
+                          Weighment
+                        >(
+                          currentTable: table,
+                          referencedTable: $$PartiesTableReferences
+                              ._weighmentsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$PartiesTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).weighmentsRefs,
+                          referencedItemsForCurrentItem:
+                              (item, referencedItems) => referencedItems.where(
+                                (e) => e.partyId == item.id,
+                              ),
+                          typedResults: items,
+                        ),
+                    ];
+                  },
+                );
               },
-            );
-          },
         ),
       );
 }
@@ -3429,7 +4046,7 @@ typedef $$PartiesTableProcessedTableManager =
       $$PartiesTableUpdateCompanionBuilder,
       (Party, $$PartiesTableReferences),
       Party,
-      PrefetchHooks Function({bool weighmentsRefs})
+      PrefetchHooks Function({bool vehiclesRefs, bool weighmentsRefs})
     >;
 typedef $$VehiclesTableCreateCompanionBuilder =
     VehiclesCompanion Function({
@@ -3437,6 +4054,9 @@ typedef $$VehiclesTableCreateCompanionBuilder =
       required String vehicleNumber,
       required int partyId,
       Value<String?> vehicleType,
+      Value<String?> driverName,
+      Value<String?> driverPhone,
+      Value<double?> tareWeight,
       Value<bool> isActive,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -3447,6 +4067,9 @@ typedef $$VehiclesTableUpdateCompanionBuilder =
       Value<String> vehicleNumber,
       Value<int> partyId,
       Value<String?> vehicleType,
+      Value<String?> driverName,
+      Value<String?> driverPhone,
+      Value<double?> tareWeight,
       Value<bool> isActive,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -3455,6 +4078,23 @@ typedef $$VehiclesTableUpdateCompanionBuilder =
 final class $$VehiclesTableReferences
     extends BaseReferences<_$AppDatabase, $VehiclesTable, Vehicle> {
   $$VehiclesTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $PartiesTable _partyIdTable(_$AppDatabase db) =>
+      db.parties.createAlias('vehicles__party_id__parties__id');
+
+  $$PartiesTableProcessedTableManager get partyId {
+    final $_column = $_itemColumn<int>('party_id')!;
+
+    final manager = $$PartiesTableTableManager(
+      $_db,
+      $_db.parties,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_partyIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
 
   static MultiTypedResultKey<$WeighmentsTable, List<Weighment>>
   _weighmentsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
@@ -3494,13 +4134,23 @@ class $$VehiclesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<int> get partyId => $composableBuilder(
-    column: $table.partyId,
+  ColumnFilters<String> get vehicleType => $composableBuilder(
+    column: $table.vehicleType,
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get vehicleType => $composableBuilder(
-    column: $table.vehicleType,
+  ColumnFilters<String> get driverName => $composableBuilder(
+    column: $table.driverName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get driverPhone => $composableBuilder(
+    column: $table.driverPhone,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get tareWeight => $composableBuilder(
+    column: $table.tareWeight,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3518,6 +4168,29 @@ class $$VehiclesTableFilterComposer
     column: $table.updatedAt,
     builder: (column) => ColumnFilters(column),
   );
+
+  $$PartiesTableFilterComposer get partyId {
+    final $$PartiesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.partyId,
+      referencedTable: $db.parties,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PartiesTableFilterComposer(
+            $db: $db,
+            $table: $db.parties,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 
   Expression<bool> weighmentsRefs(
     Expression<bool> Function($$WeighmentsTableFilterComposer f) f,
@@ -3564,13 +4237,23 @@ class $$VehiclesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<int> get partyId => $composableBuilder(
-    column: $table.partyId,
+  ColumnOrderings<String> get vehicleType => $composableBuilder(
+    column: $table.vehicleType,
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get vehicleType => $composableBuilder(
-    column: $table.vehicleType,
+  ColumnOrderings<String> get driverName => $composableBuilder(
+    column: $table.driverName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get driverPhone => $composableBuilder(
+    column: $table.driverPhone,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get tareWeight => $composableBuilder(
+    column: $table.tareWeight,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -3588,6 +4271,29 @@ class $$VehiclesTableOrderingComposer
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  $$PartiesTableOrderingComposer get partyId {
+    final $$PartiesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.partyId,
+      referencedTable: $db.parties,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PartiesTableOrderingComposer(
+            $db: $db,
+            $table: $db.parties,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 }
 
 class $$VehiclesTableAnnotationComposer
@@ -3607,11 +4313,23 @@ class $$VehiclesTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<int> get partyId =>
-      $composableBuilder(column: $table.partyId, builder: (column) => column);
-
   GeneratedColumn<String> get vehicleType => $composableBuilder(
     column: $table.vehicleType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get driverName => $composableBuilder(
+    column: $table.driverName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get driverPhone => $composableBuilder(
+    column: $table.driverPhone,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get tareWeight => $composableBuilder(
+    column: $table.tareWeight,
     builder: (column) => column,
   );
 
@@ -3623,6 +4341,29 @@ class $$VehiclesTableAnnotationComposer
 
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  $$PartiesTableAnnotationComposer get partyId {
+    final $$PartiesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.partyId,
+      referencedTable: $db.parties,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$PartiesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.parties,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
 
   Expression<T> weighmentsRefs<T extends Object>(
     Expression<T> Function($$WeighmentsTableAnnotationComposer a) f,
@@ -3663,7 +4404,7 @@ class $$VehiclesTableTableManager
           $$VehiclesTableUpdateCompanionBuilder,
           (Vehicle, $$VehiclesTableReferences),
           Vehicle,
-          PrefetchHooks Function({bool weighmentsRefs})
+          PrefetchHooks Function({bool partyId, bool weighmentsRefs})
         > {
   $$VehiclesTableTableManager(_$AppDatabase db, $VehiclesTable table)
     : super(
@@ -3682,6 +4423,9 @@ class $$VehiclesTableTableManager
                 Value<String> vehicleNumber = const Value.absent(),
                 Value<int> partyId = const Value.absent(),
                 Value<String?> vehicleType = const Value.absent(),
+                Value<String?> driverName = const Value.absent(),
+                Value<String?> driverPhone = const Value.absent(),
+                Value<double?> tareWeight = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -3690,6 +4434,9 @@ class $$VehiclesTableTableManager
                 vehicleNumber: vehicleNumber,
                 partyId: partyId,
                 vehicleType: vehicleType,
+                driverName: driverName,
+                driverPhone: driverPhone,
+                tareWeight: tareWeight,
                 isActive: isActive,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -3700,6 +4447,9 @@ class $$VehiclesTableTableManager
                 required String vehicleNumber,
                 required int partyId,
                 Value<String?> vehicleType = const Value.absent(),
+                Value<String?> driverName = const Value.absent(),
+                Value<String?> driverPhone = const Value.absent(),
+                Value<double?> tareWeight = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -3708,6 +4458,9 @@ class $$VehiclesTableTableManager
                 vehicleNumber: vehicleNumber,
                 partyId: partyId,
                 vehicleType: vehicleType,
+                driverName: driverName,
+                driverPhone: driverPhone,
+                tareWeight: tareWeight,
                 isActive: isActive,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -3720,11 +4473,42 @@ class $$VehiclesTableTableManager
                 ),
               )
               .toList(),
-          prefetchHooksCallback: ({weighmentsRefs = false}) {
+          prefetchHooksCallback: ({partyId = false, weighmentsRefs = false}) {
             return PrefetchHooks(
               db: db,
               explicitlyWatchedTables: [if (weighmentsRefs) db.weighments],
-              addJoins: null,
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (partyId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.partyId,
+                                referencedTable: $$VehiclesTableReferences
+                                    ._partyIdTable(db),
+                                referencedColumn: $$VehiclesTableReferences
+                                    ._partyIdTable(db)
+                                    .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
               getPrefetchedDataCallback: (items) async {
                 return [
                   if (weighmentsRefs)
@@ -3765,12 +4549,13 @@ typedef $$VehiclesTableProcessedTableManager =
       $$VehiclesTableUpdateCompanionBuilder,
       (Vehicle, $$VehiclesTableReferences),
       Vehicle,
-      PrefetchHooks Function({bool weighmentsRefs})
+      PrefetchHooks Function({bool partyId, bool weighmentsRefs})
     >;
 typedef $$MaterialsTableCreateCompanionBuilder =
     MaterialsCompanion Function({
       Value<int> id,
       required String name,
+      Value<String?> category,
       Value<String> unit,
       Value<double> defaultRate,
       Value<bool> isActive,
@@ -3781,6 +4566,7 @@ typedef $$MaterialsTableUpdateCompanionBuilder =
     MaterialsCompanion Function({
       Value<int> id,
       Value<String> name,
+      Value<String?> category,
       Value<String> unit,
       Value<double> defaultRate,
       Value<bool> isActive,
@@ -3827,6 +4613,11 @@ class $$MaterialsTableFilterComposer
 
   ColumnFilters<String> get name => $composableBuilder(
     column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get category => $composableBuilder(
+    column: $table.category,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -3900,6 +4691,11 @@ class $$MaterialsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get unit => $composableBuilder(
     column: $table.unit,
     builder: (column) => ColumnOrderings(column),
@@ -3940,6 +4736,9 @@ class $$MaterialsTableAnnotationComposer
 
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get category =>
+      $composableBuilder(column: $table.category, builder: (column) => column);
 
   GeneratedColumn<String> get unit =>
       $composableBuilder(column: $table.unit, builder: (column) => column);
@@ -4014,6 +4813,7 @@ class $$MaterialsTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
+                Value<String?> category = const Value.absent(),
                 Value<String> unit = const Value.absent(),
                 Value<double> defaultRate = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
@@ -4022,6 +4822,7 @@ class $$MaterialsTableTableManager
               }) => MaterialsCompanion(
                 id: id,
                 name: name,
+                category: category,
                 unit: unit,
                 defaultRate: defaultRate,
                 isActive: isActive,
@@ -4032,6 +4833,7 @@ class $$MaterialsTableTableManager
               ({
                 Value<int> id = const Value.absent(),
                 required String name,
+                Value<String?> category = const Value.absent(),
                 Value<String> unit = const Value.absent(),
                 Value<double> defaultRate = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
@@ -4040,6 +4842,7 @@ class $$MaterialsTableTableManager
               }) => MaterialsCompanion.insert(
                 id: id,
                 name: name,
+                category: category,
                 unit: unit,
                 defaultRate: defaultRate,
                 isActive: isActive,

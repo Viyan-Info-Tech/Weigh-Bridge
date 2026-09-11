@@ -14,8 +14,28 @@ class MaterialDao extends DatabaseAccessor<AppDatabase> with _$MaterialDaoMixin 
     return query.get();
   }
 
+  Future<List<Material>> getAllMaterials() async {
+    return select(materials).get();
+  }
+
+  Future<List<Material>> getMaterialsByStatus({required bool isActive}) async {
+    final query = select(materials)..where((m) => m.isActive.equals(isActive));
+    return query.get();
+  }
+
+  Future<List<Material>> getMaterialsByCategory(String category) async {
+    final query = select(materials)
+      ..where((m) => m.category.equals(category) & m.isActive.equals(true));
+    return query.get();
+  }
+
   Future<Material?> getMaterialById(int id) async {
     final query = select(materials)..where((m) => m.id.equals(id));
+    return query.getSingleOrNull();
+  }
+
+  Future<Material?> getMaterialByName(String name) async {
+    final query = select(materials)..where((m) => m.name.equals(name));
     return query.getSingleOrNull();
   }
 
@@ -29,8 +49,19 @@ class MaterialDao extends DatabaseAccessor<AppDatabase> with _$MaterialDaoMixin 
 
   Future<List<Material>> searchMaterials(String query) async {
     final q = select(materials)
-      ..where((m) => m.name.like('%$query%') & m.isActive.equals(true))
+      ..where((m) =>
+          m.name.like('%$query%') |
+          m.category.like('%$query%'))
       ..limit(20);
     return q.get();
+  }
+
+  Future<void> deactivateMaterial(int id) async {
+    final now = DateTime.now();
+    await (update(materials)..where((m) => m.id.equals(id)))
+        .write(MaterialsCompanion(
+      isActive: const Value(false),
+      updatedAt: Value(now),
+    ));
   }
 }

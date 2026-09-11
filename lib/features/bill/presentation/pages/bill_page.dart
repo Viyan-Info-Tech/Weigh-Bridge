@@ -320,11 +320,7 @@ class _BillPageState extends State<BillPage> {
         runSpacing: 10,
         children: [
           OutlinedButton.icon(
-            onPressed: isSaving
-                ? null
-                : () => context
-                    .read<BillBloc>()
-                    .add(const ClearBillRequested()),
+            onPressed: isSaving ? null : () => _onClearFormPressed(context, state),
             icon: const Icon(Icons.refresh_rounded, size: 16),
             label: const Text('Clear Form'),
             style: OutlinedButton.styleFrom(
@@ -382,6 +378,47 @@ class _BillPageState extends State<BillPage> {
                   borderRadius: BorderRadius.circular(8)),
               elevation: 0,
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _onClearFormPressed(BuildContext context, BillState state) {
+    final hasData = state.selectedParty != null ||
+        state.selectedVehicle != null ||
+        state.selectedMaterial != null ||
+        state.firstWeightText.isNotEmpty && state.firstWeightText != '0' ||
+        state.secondWeightText.isNotEmpty && state.secondWeightText != '0' ||
+        state.remarksText.isNotEmpty;
+
+    if (!hasData) {
+      context.read<BillBloc>().add(const ClearBillRequested());
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text(
+          'Clear Form?',
+          style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w700),
+        ),
+        content: const Text(
+          'All unsaved information entered in this ticket will be cleared.',
+          style: TextStyle(fontFamily: 'PlusJakartaSans'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel', style: TextStyle(fontFamily: 'PlusJakartaSans', color: Color(0xFF64748B))),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              context.read<BillBloc>().add(const ClearBillRequested());
+            },
+            child: const Text('Clear Form', style: TextStyle(fontFamily: 'PlusJakartaSans', color: Color(0xFFDC2626), fontWeight: FontWeight.w600)),
           ),
         ],
       ),

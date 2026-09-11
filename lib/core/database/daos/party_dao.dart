@@ -2,15 +2,25 @@ import 'package:drift/drift.dart';
 
 import '../app_database.dart';
 import '../tables/parties_table.dart';
+import '../tables/vehicles_table.dart';
 
 part 'party_dao.g.dart';
 
-@DriftAccessor(tables: [Parties])
+@DriftAccessor(tables: [Parties, Vehicles])
 class PartyDao extends DatabaseAccessor<AppDatabase> with _$PartyDaoMixin {
   PartyDao(super.db);
 
   Future<List<Party>> getAllActiveParties() async {
     final query = select(parties)..where((p) => p.isActive.equals(true));
+    return query.get();
+  }
+
+  Future<List<Party>> getAllParties() async {
+    return select(parties).get();
+  }
+
+  Future<List<Party>> getPartiesByStatus({required bool isActive}) async {
+    final query = select(parties)..where((p) => p.isActive.equals(isActive));
     return query.get();
   }
 
@@ -39,10 +49,50 @@ class PartyDao extends DatabaseAccessor<AppDatabase> with _$PartyDaoMixin {
     return result.read(count) ?? 0;
   }
 
+  Future<int> activePartyCount() async {
+    final count = parties.id.count();
+    final query = selectOnly(parties)
+      ..addColumns([count])
+      ..where(parties.isActive.equals(true));
+    final result = await query.getSingle();
+    return result.read(count) ?? 0;
+  }
+
+  Future<int> inactivePartyCount() async {
+    final count = parties.id.count();
+    final query = selectOnly(parties)
+      ..addColumns([count])
+      ..where(parties.isActive.equals(false));
+    final result = await query.getSingle();
+    return result.read(count) ?? 0;
+  }
+
   Future<List<Party>> searchParties(String query) async {
     final q = select(parties)
-      ..where((p) => p.name.like('%$query%') & p.isActive.equals(true))
+      ..where((p) =>
+          p.name.like('%$query%') |
+          p.mobile.like('%$query%') |
+          p.contactPerson.like('%$query%') |
+          p.gstNumber.like('%$query%'))
       ..limit(20);
     return q.get();
+  }
+
+  Future<int> partyVehicleCount(int partyId) async {
+    final count = vehicles.id.count();
+    final query = selectOnly(vehicles)
+      ..addColumns([count])
+      ..where(vehicles.partyId.equals(partyId) & vehicles.isActive.equals(true));
+    final result = await query.getSingle();
+    return result.read(count) ?? 0;
+  }
+
+  Future<void> deactivateParty(int id) async {
+    final now = DateTime.now();
+    await (update(parties)..where((p) => p.id.equals(id)))
+        .write(PartiesCompanion(
+      isActive: const Value(false),
+      updatedAt: Value(now),
+    ));
   }
 }
