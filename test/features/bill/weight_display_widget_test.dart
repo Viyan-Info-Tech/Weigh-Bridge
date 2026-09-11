@@ -7,6 +7,7 @@ void main() {
     double netWeightTon = 0,
     double firstWeight = 0,
     double secondWeight = 0,
+    String weightUnit = 'kg',
   }) {
     return MaterialApp(
       home: Scaffold(
@@ -18,6 +19,7 @@ void main() {
               netWeightTon: netWeightTon,
               firstWeight: firstWeight,
               secondWeight: secondWeight,
+              weightUnit: weightUnit,
             ),
           ),
         ),
@@ -36,7 +38,7 @@ void main() {
       expect(find.text('ZERO'), findsNothing);
       expect(find.text('NET'), findsNothing);
 
-      expect(find.text('ton'), findsOneWidget);
+      expect(find.text('kg'), findsOneWidget);
       expect(find.text('NET: 0 kg'), findsOneWidget);
       expect(find.text('1ST: 0 kg'), findsOneWidget);
       expect(find.text('2ND: 0 kg'), findsOneWidget);

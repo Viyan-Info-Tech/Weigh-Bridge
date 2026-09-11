@@ -43,7 +43,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -207,6 +207,25 @@ class AppDatabase extends _$AppDatabase {
             if (hasAmountColumn == null) {
               await m.addColumn(weighments, weighments.amount);
             }
+          }
+
+          if (from < 9) {
+            await customStatement('''
+              CREATE TABLE materials_new (
+                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                category TEXT,
+                is_active INTEGER NOT NULL DEFAULT 1,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL
+              )
+            ''');
+            await customStatement(
+              "INSERT INTO materials_new (id, name, category, is_active, created_at, updated_at) "
+              "SELECT id, name, category, is_active, created_at, updated_at FROM materials",
+            );
+            await customStatement('DROP TABLE materials');
+            await customStatement('ALTER TABLE materials_new RENAME TO materials');
           }
         },
       );

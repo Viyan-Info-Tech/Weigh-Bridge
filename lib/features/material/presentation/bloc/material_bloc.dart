@@ -57,7 +57,6 @@ class MaterialBloc extends Bloc<MaterialEvent, MaterialState> {
       await _createMaterialUseCase(
         name: event.name,
         category: event.category,
-        unit: event.unit,
       );
       emit(state.copyWith(status: AppMaterialStatus.success, successMessage: 'Material created successfully'));
       add(const LoadMaterials());
@@ -73,7 +72,6 @@ class MaterialBloc extends Bloc<MaterialEvent, MaterialState> {
         id: event.id,
         name: event.name,
         category: event.category,
-        unit: event.unit,
       );
       emit(state.copyWith(status: AppMaterialStatus.success, successMessage: 'Material updated successfully'));
       add(const LoadMaterials());

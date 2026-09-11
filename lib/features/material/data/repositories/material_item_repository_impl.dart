@@ -26,12 +26,10 @@ class MaterialItemRepositoryImpl implements MaterialItemRepository {
   Future<int> createMaterial({
     required String name,
     String? category,
-    String unit = 'ton',
   }) =>
       _localDataSource.insertMaterial(
         name: name,
         category: category,
-        unit: unit,
       );
 
   @override
@@ -39,13 +37,11 @@ class MaterialItemRepositoryImpl implements MaterialItemRepository {
     required int id,
     required String name,
     String? category,
-    String unit = 'ton',
   }) =>
       _localDataSource.updateMaterial(
         id: id,
         name: name,
         category: category,
-        unit: unit,
       );
 
   @override

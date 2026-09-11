@@ -11,12 +11,14 @@ class WeightDisplay extends StatelessWidget {
   final double netWeightTon;
   final double firstWeight;
   final double secondWeight;
+  final String weightUnit;
 
   const WeightDisplay({
     super.key,
     required this.netWeightTon,
     required this.firstWeight,
     required this.secondWeight,
+    this.weightUnit = 'kg',
   });
 
   @override
@@ -137,13 +139,13 @@ class WeightDisplay extends StatelessWidget {
 
                                   const SizedBox(width: 8),
 
-                                  // Unit "ton" label in matching electric green
+                                  // Unit label in matching electric green
                                   Padding(
                                     padding: EdgeInsets.only(
                                         top: containerHeight * 0.16),
-                                    child: const Text(
-                                      'ton',
-                                      style: TextStyle(
+                                    child: Text(
+                                      weightUnit,
+                                      style: const TextStyle(
                                         fontFamily: 'PlusJakartaSans',
                                         fontSize: 20,
                                         fontWeight: FontWeight.w800,
@@ -170,7 +172,7 @@ class WeightDisplay extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                '1ST: ${firstWeight.toStringAsFixed(0)} kg',
+                                '1ST: ${firstWeight.toStringAsFixed(0)} $weightUnit',
                                 style: const TextStyle(
                                   fontFamily: 'PlusJakartaSans',
                                   fontSize: 8.5,
@@ -179,7 +181,7 @@ class WeightDisplay extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                '2ND: ${secondWeight.toStringAsFixed(0)} kg',
+                                '2ND: ${secondWeight.toStringAsFixed(0)} $weightUnit',
                                 style: const TextStyle(
                                   fontFamily: 'PlusJakartaSans',
                                   fontSize: 8.5,
@@ -188,7 +190,7 @@ class WeightDisplay extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                'NET: ${netKg.toStringAsFixed(0)} kg',
+                                'NET: ${netKg.toStringAsFixed(0)} $weightUnit',
                                 style: const TextStyle(
                                   fontFamily: 'PlusJakartaSans',
                                   fontSize: 8.5,

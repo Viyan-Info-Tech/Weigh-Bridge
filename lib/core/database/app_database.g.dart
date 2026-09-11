@@ -2219,20 +2219,6 @@ class $MaterialsTable extends Materials
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _unitMeta = const VerificationMeta('unit');
-  @override
-  late final GeneratedColumn<String> unit = GeneratedColumn<String>(
-    'unit',
-    aliasedName,
-    false,
-    additionalChecks: GeneratedColumn.checkTextLength(
-      minTextLength: 1,
-      maxTextLength: 20,
-    ),
-    type: DriftSqlType.string,
-    requiredDuringInsert: false,
-    defaultValue: const Constant('ton'),
-  );
   static const VerificationMeta _isActiveMeta = const VerificationMeta(
     'isActive',
   );
@@ -2277,7 +2263,6 @@ class $MaterialsTable extends Materials
     id,
     name,
     category,
-    unit,
     isActive,
     createdAt,
     updatedAt,
@@ -2309,12 +2294,6 @@ class $MaterialsTable extends Materials
       context.handle(
         _categoryMeta,
         category.isAcceptableOrUnknown(data['category']!, _categoryMeta),
-      );
-    }
-    if (data.containsKey('unit')) {
-      context.handle(
-        _unitMeta,
-        unit.isAcceptableOrUnknown(data['unit']!, _unitMeta),
       );
     }
     if (data.containsKey('is_active')) {
@@ -2356,10 +2335,6 @@ class $MaterialsTable extends Materials
         DriftSqlType.string,
         data['${effectivePrefix}category'],
       ),
-      unit: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}unit'],
-      )!,
       isActive: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}is_active'],
@@ -2385,7 +2360,6 @@ class Material extends DataClass implements Insertable<Material> {
   final int id;
   final String name;
   final String? category;
-  final String unit;
   final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -2393,7 +2367,6 @@ class Material extends DataClass implements Insertable<Material> {
     required this.id,
     required this.name,
     this.category,
-    required this.unit,
     required this.isActive,
     required this.createdAt,
     required this.updatedAt,
@@ -2406,7 +2379,6 @@ class Material extends DataClass implements Insertable<Material> {
     if (!nullToAbsent || category != null) {
       map['category'] = Variable<String>(category);
     }
-    map['unit'] = Variable<String>(unit);
     map['is_active'] = Variable<bool>(isActive);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -2420,7 +2392,6 @@ class Material extends DataClass implements Insertable<Material> {
       category: category == null && nullToAbsent
           ? const Value.absent()
           : Value(category),
-      unit: Value(unit),
       isActive: Value(isActive),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -2436,7 +2407,6 @@ class Material extends DataClass implements Insertable<Material> {
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       category: serializer.fromJson<String?>(json['category']),
-      unit: serializer.fromJson<String>(json['unit']),
       isActive: serializer.fromJson<bool>(json['isActive']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -2449,7 +2419,6 @@ class Material extends DataClass implements Insertable<Material> {
       'id': serializer.toJson<int>(id),
       'name': serializer.toJson<String>(name),
       'category': serializer.toJson<String?>(category),
-      'unit': serializer.toJson<String>(unit),
       'isActive': serializer.toJson<bool>(isActive),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -2460,7 +2429,6 @@ class Material extends DataClass implements Insertable<Material> {
     int? id,
     String? name,
     Value<String?> category = const Value.absent(),
-    String? unit,
     bool? isActive,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -2468,7 +2436,6 @@ class Material extends DataClass implements Insertable<Material> {
     id: id ?? this.id,
     name: name ?? this.name,
     category: category.present ? category.value : this.category,
-    unit: unit ?? this.unit,
     isActive: isActive ?? this.isActive,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -2478,7 +2445,6 @@ class Material extends DataClass implements Insertable<Material> {
       id: data.id.present ? data.id.value : this.id,
       name: data.name.present ? data.name.value : this.name,
       category: data.category.present ? data.category.value : this.category,
-      unit: data.unit.present ? data.unit.value : this.unit,
       isActive: data.isActive.present ? data.isActive.value : this.isActive,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
@@ -2491,7 +2457,6 @@ class Material extends DataClass implements Insertable<Material> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('category: $category, ')
-          ..write('unit: $unit, ')
           ..write('isActive: $isActive, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -2501,7 +2466,7 @@ class Material extends DataClass implements Insertable<Material> {
 
   @override
   int get hashCode =>
-      Object.hash(id, name, category, unit, isActive, createdAt, updatedAt);
+      Object.hash(id, name, category, isActive, createdAt, updatedAt);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -2509,7 +2474,6 @@ class Material extends DataClass implements Insertable<Material> {
           other.id == this.id &&
           other.name == this.name &&
           other.category == this.category &&
-          other.unit == this.unit &&
           other.isActive == this.isActive &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
@@ -2519,7 +2483,6 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
   final Value<int> id;
   final Value<String> name;
   final Value<String?> category;
-  final Value<String> unit;
   final Value<bool> isActive;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -2527,7 +2490,6 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.category = const Value.absent(),
-    this.unit = const Value.absent(),
     this.isActive = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -2536,7 +2498,6 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
     this.id = const Value.absent(),
     required String name,
     this.category = const Value.absent(),
-    this.unit = const Value.absent(),
     this.isActive = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -2545,7 +2506,6 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
     Expression<int>? id,
     Expression<String>? name,
     Expression<String>? category,
-    Expression<String>? unit,
     Expression<bool>? isActive,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -2554,7 +2514,6 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (category != null) 'category': category,
-      if (unit != null) 'unit': unit,
       if (isActive != null) 'is_active': isActive,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -2565,7 +2524,6 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
     Value<int>? id,
     Value<String>? name,
     Value<String?>? category,
-    Value<String>? unit,
     Value<bool>? isActive,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -2574,7 +2532,6 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
       id: id ?? this.id,
       name: name ?? this.name,
       category: category ?? this.category,
-      unit: unit ?? this.unit,
       isActive: isActive ?? this.isActive,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -2592,9 +2549,6 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
     }
     if (category.present) {
       map['category'] = Variable<String>(category.value);
-    }
-    if (unit.present) {
-      map['unit'] = Variable<String>(unit.value);
     }
     if (isActive.present) {
       map['is_active'] = Variable<bool>(isActive.value);
@@ -2614,7 +2568,6 @@ class MaterialsCompanion extends UpdateCompanion<Material> {
           ..write('id: $id, ')
           ..write('name: $name, ')
           ..write('category: $category, ')
-          ..write('unit: $unit, ')
           ..write('isActive: $isActive, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -4999,7 +4952,6 @@ typedef $$MaterialsTableCreateCompanionBuilder =
       Value<int> id,
       required String name,
       Value<String?> category,
-      Value<String> unit,
       Value<bool> isActive,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -5009,7 +4961,6 @@ typedef $$MaterialsTableUpdateCompanionBuilder =
       Value<int> id,
       Value<String> name,
       Value<String?> category,
-      Value<String> unit,
       Value<bool> isActive,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -5059,11 +5010,6 @@ class $$MaterialsTableFilterComposer
 
   ColumnFilters<String> get category => $composableBuilder(
     column: $table.category,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get unit => $composableBuilder(
-    column: $table.unit,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5132,11 +5078,6 @@ class $$MaterialsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get unit => $composableBuilder(
-    column: $table.unit,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<bool> get isActive => $composableBuilder(
     column: $table.isActive,
     builder: (column) => ColumnOrderings(column),
@@ -5170,9 +5111,6 @@ class $$MaterialsTableAnnotationComposer
 
   GeneratedColumn<String> get category =>
       $composableBuilder(column: $table.category, builder: (column) => column);
-
-  GeneratedColumn<String> get unit =>
-      $composableBuilder(column: $table.unit, builder: (column) => column);
 
   GeneratedColumn<bool> get isActive =>
       $composableBuilder(column: $table.isActive, builder: (column) => column);
@@ -5240,7 +5178,6 @@ class $$MaterialsTableTableManager
                 Value<int> id = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<String?> category = const Value.absent(),
-                Value<String> unit = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -5248,7 +5185,6 @@ class $$MaterialsTableTableManager
                 id: id,
                 name: name,
                 category: category,
-                unit: unit,
                 isActive: isActive,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -5258,7 +5194,6 @@ class $$MaterialsTableTableManager
                 Value<int> id = const Value.absent(),
                 required String name,
                 Value<String?> category = const Value.absent(),
-                Value<String> unit = const Value.absent(),
                 Value<bool> isActive = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -5266,7 +5201,6 @@ class $$MaterialsTableTableManager
                 id: id,
                 name: name,
                 category: category,
-                unit: unit,
                 isActive: isActive,
                 createdAt: createdAt,
                 updatedAt: updatedAt,

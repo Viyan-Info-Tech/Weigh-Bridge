@@ -25,7 +25,6 @@ class MaterialFormDialog extends StatefulWidget {
 class _MaterialFormDialogState extends State<MaterialFormDialog> {
   final _nameController = TextEditingController();
   final _categoryController = TextEditingController();
-  final _unitController = TextEditingController(text: 'ton');
 
   bool get isEditing => widget.materialId != null;
   bool _isLoading = false;
@@ -42,7 +41,6 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
   void dispose() {
     _nameController.dispose();
     _categoryController.dispose();
-    _unitController.dispose();
     super.dispose();
   }
 
@@ -81,15 +79,9 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Expanded(child: FormDialogTextField(label: 'Material Name', controller: _nameController, isRequired: true)),
-                  const SizedBox(width: 16),
-                  Expanded(child: FormDialogTextField(label: 'Category', controller: _categoryController, isRequired: true)),
-                ],
-              ),
+              FormDialogTextField(label: 'Material Name', controller: _nameController, isRequired: true),
               const SizedBox(height: 16),
-              FormDialogTextField(label: 'Unit', controller: _unitController, isRequired: true),
+              FormDialogTextField(label: 'Category', controller: _categoryController),
               const SizedBox(height: 24),
               FormDialogActions(
                 submitLabel: isEditing ? 'Update Material' : 'Save Material',
@@ -106,25 +98,12 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
   void _populateForm(dynamic material) {
     _nameController.text = material.name;
     _categoryController.text = material.category ?? '';
-    _unitController.text = material.unit;
   }
 
   void _saveMaterial() {
     if (_nameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Material name is required'), backgroundColor: Colors.red),
-      );
-      return;
-    }
-    if (_categoryController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Category is required'), backgroundColor: Colors.red),
-      );
-      return;
-    }
-    if (_unitController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Unit is required'), backgroundColor: Colors.red),
       );
       return;
     }
@@ -135,14 +114,12 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
       context.read<MaterialBloc>().add(UpdateMaterialRequested(
         id: widget.materialId!,
         name: _nameController.text,
-        category: _categoryController.text,
-        unit: _unitController.text,
+        category: _categoryController.text.isNotEmpty ? _categoryController.text : null,
       ));
     } else {
       context.read<MaterialBloc>().add(CreateMaterialRequested(
         name: _nameController.text,
-        category: _categoryController.text,
-        unit: _unitController.text,
+        category: _categoryController.text.isNotEmpty ? _categoryController.text : null,
       ));
     }
   }

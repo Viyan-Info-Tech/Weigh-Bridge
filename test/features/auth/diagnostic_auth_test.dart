@@ -14,7 +14,6 @@ void main() {
     try {
       // 1. Simulate seeding
       final hash = hasher.hashPassword('Admin@123');
-      print('Generated hash: $hash');
 
       await userDao.insertUser(
         UsersCompanion.insert(
@@ -26,12 +25,10 @@ void main() {
 
       // 2. Simulate login lookup
       final user = await userDao.getUserByUsername('admin');
-      print('User found: ${user != null}');
       expect(user, isNotNull, reason: 'Admin user should exist in DB');
 
       // 3. Simulate password verification
       final isValid = hasher.verifyPassword('Admin@123', user!.passwordHash);
-      print('Password valid: $isValid');
       expect(isValid, isTrue, reason: 'Password should verify correctly');
 
       // 4. Check that the stored hash is NOT plaintext
@@ -40,7 +37,6 @@ void main() {
 
       // 5. Verify wrong password fails
       final isWrong = hasher.verifyPassword('wrongpassword', user.passwordHash);
-      print('Wrong password rejected: ${!isWrong}');
       expect(isWrong, isFalse);
     } finally {
       await database.close();

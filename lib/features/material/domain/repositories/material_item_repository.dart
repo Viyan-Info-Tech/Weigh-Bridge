@@ -8,13 +8,11 @@ abstract class MaterialItemRepository {
   Future<int> createMaterial({
     required String name,
     String? category,
-    String unit = 'ton',
   });
   Future<bool> updateMaterial({
     required int id,
     required String name,
     String? category,
-    String unit = 'ton',
   });
   Future<void> deactivateMaterial(int id);
   Future<List<MaterialItem>> searchMaterials(String query);

@@ -23,6 +23,7 @@ class BillForm extends StatefulWidget {
   final double netWeightKg;
   final double vehicleCharge;
   final double amount;
+  final String weightUnit;
 
   final ValueChanged<Party> onPartyChanged;
   final ValueChanged<Vehicle> onVehicleChanged;
@@ -53,6 +54,7 @@ class BillForm extends StatefulWidget {
     required this.netWeightKg,
     required this.vehicleCharge,
     required this.amount,
+    this.weightUnit = 'kg',
     required this.onPartyChanged,
     required this.onVehicleChanged,
     required this.onMaterialChanged,
@@ -123,17 +125,17 @@ class _BillFormState extends State<BillForm> {
           Row(
             children: [
               Expanded(child: _buildProminentWeightField(
-                  'First Weight (kg) *', widget.firstWeightController, widget.onFirstWeightChanged, enabled: !widget.isEditing)),
+                  'First Weight (${widget.weightUnit}) *', widget.firstWeightController, widget.onFirstWeightChanged, enabled: !widget.isEditing)),
               const SizedBox(width: 16),
               Expanded(child: _buildProminentWeightField(
-                  'Second Weight (kg) *', widget.secondWeightController, widget.onSecondWeightChanged)),
+                  'Second Weight (${widget.weightUnit}) *', widget.secondWeightController, widget.onSecondWeightChanged)),
             ],
           ),
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(child: _buildAutoField(
-                  'Net Weight (kg)', '${widget.netWeightKg.toStringAsFixed(0)} kg')),
+                  'Net Weight (${widget.weightUnit})', '${widget.netWeightKg.toStringAsFixed(0)} ${widget.weightUnit}')),
               const SizedBox(width: 16),
               Expanded(child: _buildAutoField(
                   'Vehicle Charge', widget.vehicleCharge > 0 ? '₹${widget.vehicleCharge.toStringAsFixed(2)}' : '₹0.00')),

@@ -8,7 +8,6 @@ class CreateMaterialUseCase {
   Future<int> call({
     required String name,
     String? category,
-    String unit = 'ton',
   }) async {
     final existing = await _repository.searchMaterials(name);
     if (existing.any((m) => m.name.toLowerCase() == name.toLowerCase())) {
@@ -17,7 +16,6 @@ class CreateMaterialUseCase {
     return _repository.createMaterial(
       name: name,
       category: category,
-      unit: unit,
     );
   }
 }

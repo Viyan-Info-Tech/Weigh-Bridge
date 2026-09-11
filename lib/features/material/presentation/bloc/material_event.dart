@@ -21,33 +21,29 @@ class LoadMaterials extends MaterialEvent {
 class CreateMaterialRequested extends MaterialEvent {
   final String name;
   final String? category;
-  final String unit;
 
   const CreateMaterialRequested({
     required this.name,
     this.category,
-    this.unit = 'ton',
   });
 
   @override
-  List<Object?> get props => [name, category, unit];
+  List<Object?> get props => [name, category];
 }
 
 class UpdateMaterialRequested extends MaterialEvent {
   final int id;
   final String name;
   final String? category;
-  final String unit;
 
   const UpdateMaterialRequested({
     required this.id,
     required this.name,
     this.category,
-    this.unit = 'ton',
   });
 
   @override
-  List<Object?> get props => [id, name, category, unit];
+  List<Object?> get props => [id, name, category];
 }
 
 class DeactivateMaterialRequested extends MaterialEvent {

@@ -4,7 +4,6 @@ class MaterialItem extends Equatable {
   final int id;
   final String name;
   final String? category;
-  final String unit;
   final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -13,12 +12,11 @@ class MaterialItem extends Equatable {
     required this.id,
     required this.name,
     this.category,
-    this.unit = 'ton',
     this.isActive = true,
     required this.createdAt,
     required this.updatedAt,
   });
 
   @override
-  List<Object?> get props => [id, name, category, unit, isActive];
+  List<Object?> get props => [id, name, category, isActive];
 }

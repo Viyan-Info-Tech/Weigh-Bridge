@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../bloc/bill_bloc.dart';
 import '../bloc/bill_event.dart';
@@ -23,6 +24,7 @@ class _BillPageState extends State<BillPage> {
   late final TextEditingController _firstWeightController;
   late final TextEditingController _secondWeightController;
   late final TextEditingController _remarksController;
+  String _weightUnit = 'kg';
 
   @override
   void initState() {
@@ -30,10 +32,18 @@ class _BillPageState extends State<BillPage> {
     _firstWeightController = TextEditingController();
     _secondWeightController = TextEditingController();
     _remarksController = TextEditingController();
+    _loadWeightUnit();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<BillBloc>().add(const LoadBillScreen());
       }
+    });
+  }
+
+  Future<void> _loadWeightUnit() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _weightUnit = prefs.getString('weightUnit') ?? 'kg';
     });
   }
 
@@ -133,28 +143,37 @@ class _BillPageState extends State<BillPage> {
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              Expanded(
-                                flex: 57,
-                                child: SingleChildScrollView(
-                                  padding: const EdgeInsets.only(right: 12),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: [
-                                      WeightDisplay(
-                                        netWeightTon: state.netWeightKg / 1000,
-                                        firstWeight: state.firstWeightKg,
-                                        secondWeight: state.secondWeightKg,
+                          Expanded(
+                            flex: 57,
+                            child: Padding(
+                              padding: const EdgeInsets.only(right: 12),
+                              child: Column(
+                                children: [
+                                   WeightDisplay(
+                                     netWeightTon: state.netWeightKg / 1000,
+                                     firstWeight: state.firstWeightKg,
+                                     secondWeight: state.secondWeightKg,
+                                     weightUnit: _weightUnit,
+                                   ),
+                                  const SizedBox(height: 16),
+                                  Expanded(
+                                    child: SingleChildScrollView(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          _buildBillForm(state),
+                                          const SizedBox(height: 16),
+                                          _buildActionButtons(state),
+                                          const SizedBox(height: 24),
+                                        ],
                                       ),
-                                      const SizedBox(height: 16),
-                                      _buildBillForm(state),
-                                      const SizedBox(height: 16),
-                                      _buildActionButtons(state),
-                                      const SizedBox(height: 24),
-                                    ],
+                                    ),
                                   ),
-                                ),
+                                ],
                               ),
+                            ),
+                          ),
                               Container(
                                 width: 1,
                                 margin:
@@ -326,6 +345,7 @@ class _BillPageState extends State<BillPage> {
       netWeightKg: state.netWeightKg,
       vehicleCharge: state.vehicleCharge,
       amount: state.amount,
+      weightUnit: _weightUnit,
       onPartyChanged: (party) =>
           context.read<BillBloc>().add(PartySelected(party)),
       onVehicleChanged: (vehicle) =>

@@ -463,7 +463,6 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       final newId = await _materialRepository.createMaterial(
         name: event.name,
         category: '',
-        unit: '',
       );
 
       final refreshedMaterials = await _materialRepository.getMaterialsByStatus(isActive: true);

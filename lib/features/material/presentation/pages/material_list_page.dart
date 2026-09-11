@@ -207,8 +207,6 @@ class _MaterialListPageState extends State<MaterialListPage> {
           DataColumn(label: Text('#', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600))),
           DataColumn(label: Text('Material', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600))),
           DataColumn(label: Text('Category', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600))),
-          DataColumn(label: Text('Unit', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600))),
-          DataColumn(label: Text('Rate', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600))),
           DataColumn(label: Text('Status', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600))),
           DataColumn(label: Text('Actions', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600))),
         ],
@@ -219,8 +217,6 @@ class _MaterialListPageState extends State<MaterialListPage> {
             DataCell(Text(index.toString(), style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
             DataCell(Text(material.name, style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, fontWeight: FontWeight.w600))),
             DataCell(Text(material.category ?? '-', style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-            DataCell(Text(material.unit, style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-            DataCell(Text('-', style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
             DataCell(_buildStatusBadge(material.isActive)),
             DataCell(Row(
               children: [

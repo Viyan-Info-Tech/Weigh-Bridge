@@ -8,6 +8,7 @@ import '../../../bill/presentation/pages/bill_page.dart';
 import '../../../party/presentation/pages/party_list_page.dart';
 import '../../../vehicle/presentation/pages/vehicles_merged_page.dart';
 import '../../../material/presentation/pages/material_list_page.dart';
+import '../../../settings/presentation/pages/settings_page.dart';
 import 'about_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -28,7 +29,7 @@ class _HomePageState extends State<HomePage> {
     const MaterialListPage(),
     const _ComingSoonPage(title: 'Pending'),
     const _ComingSoonPage(title: 'Report'),
-    const _ComingSoonPage(title: 'Settings'),
+    const SettingsPage(),
     const AboutPage(),
   ];
 

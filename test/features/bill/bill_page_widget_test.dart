@@ -80,7 +80,6 @@ void main() {
     MaterialItem(
       id: 1,
       name: 'Sand',
-      unit: 'ton',
       isActive: true,
       createdAt: DateTime(2025),
       updatedAt: DateTime(2025),
@@ -191,7 +190,7 @@ void main() {
     expect(find.text('Billing & Ticket Management'), findsOneWidget);
 
     // Verify Left Side: Truck Digital Scale & Quick Action Buttons
-    expect(find.text('ton'), findsOneWidget);
+    expect(find.text('kg'), findsOneWidget);
     expect(find.text('Clear Form'), findsOneWidget);
     expect(find.text('Save Ticket'), findsOneWidget);
     expect(find.text('Save & Print Slip'), findsOneWidget);

@@ -31,12 +31,10 @@ class MaterialItemLocalDataSource {
   Future<int> insertMaterial({
     required String name,
     String? category,
-    String unit = 'ton',
   }) async {
     return _database.materialDao.insertMaterial(MaterialsCompanion(
       name: Value(name),
       category: Value(category),
-      unit: Value(unit),
     ));
   }
 
@@ -44,13 +42,11 @@ class MaterialItemLocalDataSource {
     required int id,
     required String name,
     String? category,
-    String unit = 'ton',
   }) async {
     return _database.materialDao.updateMaterial(MaterialsCompanion(
       id: Value(id),
       name: Value(name),
       category: Value(category),
-      unit: Value(unit),
       updatedAt: Value(DateTime.now()),
     ));
   }
@@ -69,7 +65,6 @@ class MaterialItemLocalDataSource {
       id: record.id,
       name: record.name,
       category: record.category,
-      unit: record.unit,
       isActive: record.isActive,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
