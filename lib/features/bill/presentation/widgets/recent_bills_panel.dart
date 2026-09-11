@@ -125,7 +125,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
       if (_filterType == 'COMPLETED') {
         return bill.status.toLowerCase() == 'completed';
       } else if (_filterType == 'PENDING') {
-        return bill.status.toLowerCase() == 'draft';
+        return bill.status.toLowerCase() == 'pending';
       }
       return true;
     }).toList();
@@ -632,7 +632,9 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                 _buildVerticalLine(),
                 _buildWeightCell(
                   'Net Weight',
-                  '${(bill.netWeightKg ?? 0).toStringAsFixed(0)} kg',
+                  isCompleted
+                      ? '${(bill.netWeightKg ?? 0).toStringAsFixed(0)} kg'
+                      : '—',
                   isBold: true,
                   textColor: const Color(0xFF0D3B82),
                 ),
@@ -763,7 +765,11 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
             Text(
               _searchQuery.isNotEmpty
                   ? 'No matching billings'
-                  : 'No Recent Billings Yet',
+                  : _filterType == 'PENDING'
+                      ? 'No Pending Billings'
+                      : _filterType == 'COMPLETED'
+                          ? 'No Completed Billings'
+                          : 'No Recent Billings Yet',
               style: const TextStyle(
                 fontFamily: 'PlusJakartaSans',
                 fontSize: 15,
@@ -775,7 +781,11 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
             Text(
               _searchQuery.isNotEmpty
                   ? 'Try searching with a different keyword'
-                  : 'Saved weighment tickets will appear here in real time.',
+                  : _filterType == 'PENDING'
+                      ? 'All weighments are complete.'
+                      : _filterType == 'COMPLETED'
+                          ? 'No completed weighments yet.'
+                          : 'Saved weighment tickets will appear here in real time.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'PlusJakartaSans',

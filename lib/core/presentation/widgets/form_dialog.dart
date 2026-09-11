@@ -69,6 +69,7 @@ class FormDialogTextField extends StatelessWidget {
   final bool isRequired;
   final String? hintText;
   final int maxLines;
+  final List<TextInputFormatter>? inputFormatters;
 
   const FormDialogTextField({
     super.key,
@@ -78,6 +79,7 @@ class FormDialogTextField extends StatelessWidget {
     this.isRequired = false,
     this.hintText,
     this.maxLines = 1,
+    this.inputFormatters,
   });
 
   @override
@@ -99,7 +101,7 @@ class FormDialogTextField extends StatelessWidget {
           controller: controller,
           maxLines: maxLines,
           keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
-          inputFormatters: isNumeric ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))] : null,
+          inputFormatters: inputFormatters ?? (isNumeric ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))] : null),
           style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13),
           decoration: InputDecoration(
             hintText: hintText,

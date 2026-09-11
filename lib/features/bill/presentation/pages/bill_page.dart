@@ -9,7 +9,7 @@ import '../widgets/weight_display.dart';
 import '../widgets/bill_form.dart';
 import '../widgets/quick_add_party_dialog.dart';
 import '../widgets/quick_add_vehicle_dialog.dart';
-import '../widgets/quick_add_vehicle_type_dialog.dart';
+import '../widgets/quick_add_material_dialog.dart';
 import '../widgets/recent_bills_panel.dart';
 
 class BillPage extends StatefulWidget {
@@ -55,7 +55,9 @@ class _BillPageState extends State<BillPage> {
   Widget build(BuildContext context) {
     return BlocConsumer<BillBloc, BillState>(
       listenWhen: (prev, curr) =>
-          prev.status != curr.status || prev.editingBillId != curr.editingBillId,
+          prev.status != curr.status ||
+          prev.editingBillId != curr.editingBillId ||
+          prev.currentBillNumber != curr.currentBillNumber,
       listener: (context, state) {
         if (state.status == BillScreenStatus.saved) {
           _syncControllersAfterReset();
@@ -110,6 +112,8 @@ class _BillPageState extends State<BillPage> {
           _firstWeightController.text = state.firstWeightText;
           _secondWeightController.text = state.secondWeightText;
           _remarksController.text = state.remarksText;
+        } else if (state.editingBillId == null) {
+          _syncControllersAfterReset();
         }
       },
       builder: (context, state) {
@@ -364,6 +368,14 @@ class _BillPageState extends State<BillPage> {
               emptyPrice: emptyPrice,
               loadPrice: loadPrice,
             ));
+          },
+        );
+      },
+      onAddMaterial: () {
+        QuickAddMaterialDialog.show(
+          context,
+          onSave: (name) {
+            context.read<BillBloc>().add(MaterialQuickAddRequested(name: name));
           },
         );
       },

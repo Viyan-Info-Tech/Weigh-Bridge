@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/utils/text_formatters.dart';
 import '../../../vehicle_type/domain/entities/vehicle_type.dart';
 import 'quick_add_vehicle_type_dialog.dart';
 
@@ -127,12 +128,14 @@ class _QuickAddVehicleDialogState extends State<QuickAddVehicleDialog> {
     );
 
     if (result == '__add_type__') {
-      QuickAddVehicleTypeDialog.show(
-        context,
-        onSave: (name, emptyPrice, loadPrice) {
-          widget.onAddVehicleType(name, emptyPrice, loadPrice);
-        },
-      );
+      if (mounted) {
+        QuickAddVehicleTypeDialog.show(
+          context,
+          onSave: (name, emptyPrice, loadPrice) {
+            widget.onAddVehicleType(name, emptyPrice, loadPrice);
+          },
+        );
+      }
     } else if (result != null && result.startsWith('type_')) {
       final id = int.parse(result.substring(5));
       final vt = widget.vehicleTypes.firstWhere((v) => v.id == id);
@@ -205,6 +208,7 @@ class _QuickAddVehicleDialogState extends State<QuickAddVehicleDialog> {
                   controller: _numberController,
                   autofocus: true,
                   textCapitalization: TextCapitalization.characters,
+                  inputFormatters: [VehicleNumberFormatter()],
                   style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13),
                   decoration: _inputDecoration('e.g., TN31CM2026'),
                   validator: (v) => (v == null || v.trim().isEmpty) ? 'Vehicle number is required' : null,

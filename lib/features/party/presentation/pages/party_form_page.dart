@@ -5,6 +5,7 @@ import '../bloc/party_bloc.dart';
 import '../bloc/party_event.dart';
 import '../bloc/party_state.dart';
 import '../../../../core/presentation/widgets/form_dialog.dart';
+import '../../../../core/utils/text_formatters.dart';
 
 class PartyFormDialog extends StatefulWidget {
   final int? partyId;
@@ -96,7 +97,11 @@ class _PartyFormDialogState extends State<PartyFormDialog> {
                 children: [
                   Expanded(child: FormDialogTextField(label: 'Contact Person', controller: _contactPersonController)),
                   const SizedBox(width: 16),
-                  Expanded(child: FormDialogTextField(label: 'Phone Number', controller: _mobileController)),
+                  Expanded(child: FormDialogTextField(
+                    label: 'Phone Number',
+                    controller: _mobileController,
+                    inputFormatters: [PhoneNumberFormatter()],
+                  )),
                 ],
               ),
               const SizedBox(height: 16),

@@ -122,3 +122,11 @@ class VehicleTypeQuickAddRequested extends BillEvent {
   @override
   List<Object?> get props => [name, emptyPrice, loadPrice];
 }
+
+class MaterialQuickAddRequested extends BillEvent {
+  final String name;
+  const MaterialQuickAddRequested({required this.name});
+
+  @override
+  List<Object?> get props => [name];
+}

@@ -54,6 +54,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     on<PartyQuickAddRequested>(_onPartyQuickAdd);
     on<VehicleQuickAddRequested>(_onVehicleQuickAdd);
     on<VehicleTypeQuickAddRequested>(_onVehicleTypeQuickAdd);
+    on<MaterialQuickAddRequested>(_onMaterialQuickAdd);
   }
 
   Future<void> _onLoadBillScreen(LoadBillScreen event, Emitter<BillState> emit) async {
@@ -447,6 +448,34 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       ));
     } catch (e) {
       emit(state.copyWith(errorMessage: 'Failed to create vehicle type: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onMaterialQuickAdd(MaterialQuickAddRequested event, Emitter<BillState> emit) async {
+    try {
+      final materials = await _materialRepository.getMaterialsByStatus(isActive: true);
+      final duplicate = materials.where((m) => m.name.toLowerCase() == event.name.toLowerCase());
+      if (duplicate.isNotEmpty) {
+        emit(state.copyWith(errorMessage: 'Material with this name already exists'));
+        return;
+      }
+
+      final newId = await _materialRepository.createMaterial(
+        name: event.name,
+        category: '',
+        unit: '',
+      );
+
+      final refreshedMaterials = await _materialRepository.getMaterialsByStatus(isActive: true);
+      final newMaterial = refreshedMaterials.firstWhere((m) => m.id == newId);
+
+      emit(state.copyWith(
+        materials: refreshedMaterials,
+        selectedMaterial: newMaterial,
+        clearError: true,
+      ));
+    } catch (e) {
+      emit(state.copyWith(errorMessage: 'Failed to create material: ${e.toString()}'));
     }
   }
 }

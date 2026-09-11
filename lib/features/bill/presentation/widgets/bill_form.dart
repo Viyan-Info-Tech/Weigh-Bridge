@@ -33,6 +33,7 @@ class BillForm extends StatefulWidget {
   final ValueChanged<String> onPaymentModeChanged;
   final VoidCallback? onAddParty;
   final VoidCallback? onAddVehicle;
+  final VoidCallback? onAddMaterial;
 
   const BillForm({
     super.key,
@@ -61,6 +62,7 @@ class BillForm extends StatefulWidget {
     required this.onPaymentModeChanged,
     this.onAddParty,
     this.onAddVehicle,
+    this.onAddMaterial,
   });
 
   @override
@@ -70,6 +72,7 @@ class BillForm extends StatefulWidget {
 class _BillFormState extends State<BillForm> {
   final GlobalKey _dropdownKey = GlobalKey();
   final GlobalKey _vehicleDropdownKey = GlobalKey();
+  final GlobalKey _materialDropdownKey = GlobalKey();
 
   bool get isEditing => widget.isEditing;
   List<Party> get parties => widget.parties;
@@ -187,7 +190,7 @@ class _BillFormState extends State<BillForm> {
         ),
         const SizedBox(height: 6),
         DropdownButtonFormField<String>(
-          value: widget.paymentMode,
+          initialValue: widget.paymentMode,
           isExpanded: true,
           isDense: true,
           decoration: InputDecoration(
@@ -578,51 +581,140 @@ class _BillFormState extends State<BillForm> {
           ),
         ),
         const SizedBox(height: 6),
-        DropdownButtonFormField<domain.MaterialItem>(
-          value: widget.selectedMaterial,
-          isExpanded: true,
-          isDense: true,
-          decoration: InputDecoration(
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF0D3B82)),
-            ),
-            hintText: 'Select material',
-            hintStyle: TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              color: Colors.grey.shade500,
-              fontSize: 13,
-            ),
-          ),
-          items: widget.materials.map((material) {
-            return DropdownMenuItem<domain.MaterialItem>(
-              value: material,
-              child: Text(
-                material.name,
-                style: const TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 13,
-                ),
-                overflow: TextOverflow.ellipsis,
+        GestureDetector(
+          onTap: widget.isEditing ? null : _showMaterialMenu,
+          key: _materialDropdownKey,
+          child: InputDecorator(
+            decoration: InputDecoration(
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
               ),
-            );
-          }).toList(),
-          onChanged: widget.isEditing ? null : (value) {
-            if (value != null) widget.onMaterialChanged(value);
-          },
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFF0D3B82)),
+              ),
+              hintText: 'Select material',
+              hintStyle: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                color: Colors.grey.shade500,
+                fontSize: 13,
+              ),
+              suffixIcon: Icon(
+                Icons.keyboard_arrow_down_rounded,
+                color: widget.isEditing ? Colors.grey.shade300 : Colors.grey.shade600,
+                size: 20,
+              ),
+            ),
+            child: widget.selectedMaterial != null
+                ? Text(
+                    widget.selectedMaterial!.name,
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 13,
+                      color: Color(0xFF0F172A),
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  )
+                : Text(
+                    'Select material',
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 13,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+          ),
         ),
       ],
     );
+  }
+
+  void _showMaterialMenu() async {
+    final renderBox = _materialDropdownKey.currentContext!.findRenderObject() as RenderBox;
+    final size = renderBox.size;
+    final offset = renderBox.localToGlobal(Offset.zero);
+    final menuWidth = size.width;
+
+    final items = <PopupMenuEntry<String>>[];
+
+    for (final material in widget.materials) {
+      items.add(PopupMenuItem<String>(
+        value: 'material_${material.id}',
+        height: 36,
+        child: SizedBox(
+          width: menuWidth - 32,
+          child: Row(
+            children: [
+              if (widget.selectedMaterial?.id == material.id)
+                const Icon(Icons.check, size: 16, color: Color(0xFF0D3B82))
+              else
+                const SizedBox(width: 16),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  material.name,
+                  style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ));
+    }
+
+    items.add(const PopupMenuDivider(height: 1));
+
+    items.add(PopupMenuItem<String>(
+      value: '__add_material__',
+      height: 36,
+      child: SizedBox(
+        width: menuWidth - 32,
+        child: const Row(
+          children: [
+            Icon(Icons.add_circle_outline, size: 16, color: Color(0xFF0D3B82)),
+            SizedBox(width: 8),
+            Text(
+              'Add Material',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF0D3B82),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ));
+
+    final result = await showMenu<String>(
+      context: _materialDropdownKey.currentContext!,
+      position: RelativeRect.fromLTRB(
+        offset.dx,
+        offset.dy + size.height,
+        offset.dx + size.width,
+        offset.dy + size.height + 300,
+      ),
+      items: items,
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+    );
+
+    if (result == '__add_material__') {
+      widget.onAddMaterial?.call();
+    } else if (result != null && result.startsWith('material_')) {
+      final id = int.parse(result.substring(9));
+      final material = widget.materials.firstWhere((m) => m.id == id);
+      widget.onMaterialChanged(material);
+    }
   }
 
   Widget _buildProminentWeightField(

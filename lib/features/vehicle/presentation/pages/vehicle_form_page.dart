@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/utils/text_formatters.dart';
 import '../bloc/vehicle_bloc.dart';
 import '../bloc/vehicle_event.dart';
 import '../bloc/vehicle_state.dart';
@@ -83,7 +84,12 @@ class _VehicleFormDialogState extends State<VehicleFormDialog> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              FormDialogTextField(label: 'Vehicle Number', controller: _vehicleNumberController, isRequired: true),
+              FormDialogTextField(
+                label: 'Vehicle Number',
+                controller: _vehicleNumberController,
+                isRequired: true,
+                inputFormatters: [VehicleNumberFormatter()],
+              ),
               const SizedBox(height: 16),
               _buildVehicleTypeDropdown(),
               const SizedBox(height: 16),
@@ -91,7 +97,11 @@ class _VehicleFormDialogState extends State<VehicleFormDialog> {
                 children: [
                   Expanded(child: FormDialogTextField(label: 'Driver Name', controller: _driverNameController)),
                   const SizedBox(width: 16),
-                  Expanded(child: FormDialogTextField(label: 'Driver Phone', controller: _driverPhoneController)),
+                  Expanded(child: FormDialogTextField(
+                label: 'Driver Phone',
+                controller: _driverPhoneController,
+                inputFormatters: [PhoneNumberFormatter()],
+              )),
                 ],
               ),
               const SizedBox(height: 24),

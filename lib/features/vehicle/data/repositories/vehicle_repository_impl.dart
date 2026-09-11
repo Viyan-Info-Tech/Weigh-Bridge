@@ -29,7 +29,7 @@ class VehicleRepositoryImpl implements VehicleRepository {
     String? driverPhone,
   }) =>
       _localDataSource.insertVehicle(
-        vehicleNumber: vehicleNumber,
+        vehicleNumber: vehicleNumber.trim().toUpperCase(),
         vehicleTypeId: vehicleTypeId,
         driverName: driverName,
         driverPhone: driverPhone,
@@ -45,7 +45,7 @@ class VehicleRepositoryImpl implements VehicleRepository {
   }) =>
       _localDataSource.updateVehicle(
         id: id,
-        vehicleNumber: vehicleNumber,
+        vehicleNumber: vehicleNumber.trim().toUpperCase(),
         vehicleTypeId: vehicleTypeId,
         driverName: driverName,
         driverPhone: driverPhone,
