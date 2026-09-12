@@ -16,8 +16,8 @@ class BillLocalDataSource {
         vehicleId: weighment.vehicleId,
         materialId: weighment.materialId,
         paymentMode: weighment.paymentMode,
-        firstWeightKg: weighment.firstWeightKg,
-        secondWeightKg: Value(weighment.secondWeightKg),
+        firstWeightKg: weighment.grossWeightKg,
+        secondWeightKg: Value(weighment.tareWeightKg),
         netWeightKg: Value(weighment.netWeightKg),
         vehicleCharge: Value(weighment.vehicleCharge),
         amount: Value(weighment.amount),
@@ -31,7 +31,7 @@ class BillLocalDataSource {
     await _database.billDao.updateWeighment(
       id,
       WeighmentsCompanion(
-        secondWeightKg: Value(weighment.secondWeightKg),
+        secondWeightKg: Value(weighment.tareWeightKg),
         netWeightKg: Value(weighment.netWeightKg),
         vehicleCharge: Value(weighment.vehicleCharge),
         amount: Value(weighment.amount),
@@ -42,8 +42,11 @@ class BillLocalDataSource {
     );
   }
 
-  Future<List<Weighment>> getRecentBills({int limit = 20}) async {
-    final records = await _database.billDao.getRecentBills(limit: limit);
+  Future<List<Weighment>> getRecentBills({DateTime? date, int? limit}) async {
+    final records = await _database.billDao.getRecentBills(
+      date: date,
+      limit: limit,
+    );
     return records.map(_toEntity).toList();
   }
 
@@ -52,8 +55,27 @@ class BillLocalDataSource {
     return records.map(_toEntity).toList();
   }
 
+  Future<List<Weighment>> getRecentBillsByDateRange({
+    required DateTime startDate,
+    required DateTime endDate,
+    int? limit,
+  }) async {
+    final records = await _database.billDao.getRecentBillsByDateRange(
+      startDate: startDate,
+      endDate: endDate,
+      limit: limit,
+    );
+    return records.map(_toEntity).toList();
+  }
+
   Future<Weighment?> getWeighmentById(int id) async {
     final record = await _database.billDao.getWeighmentById(id);
+    if (record == null) return null;
+    return _toEntity(record);
+  }
+
+  Future<Weighment?> getWeighmentByBillNumber(String billNumber) async {
+    final record = await _database.billDao.getWeighmentByBillNumber(billNumber);
     if (record == null) return null;
     return _toEntity(record);
   }
@@ -74,8 +96,8 @@ class BillLocalDataSource {
       vehicleId: record.vehicleId,
       materialId: record.materialId,
       paymentMode: record.paymentMode,
-      firstWeightKg: record.firstWeightKg,
-      secondWeightKg: record.secondWeightKg,
+      grossWeightKg: record.firstWeightKg,
+      tareWeightKg: record.secondWeightKg,
       netWeightKg: record.netWeightKg,
       vehicleCharge: record.vehicleCharge,
       amount: record.amount,

@@ -9,15 +9,15 @@ import 'truck_image_asset.dart';
 /// - Sub-metric weight summary breakdown (1st, 2nd, Net)
 class WeightDisplay extends StatelessWidget {
   final double netWeightTon;
-  final double firstWeight;
-  final double secondWeight;
+  final double grossWeight;
+  final double tareWeight;
   final String weightUnit;
 
   const WeightDisplay({
     super.key,
     required this.netWeightTon,
-    required this.firstWeight,
-    required this.secondWeight,
+    required this.grossWeight,
+    required this.tareWeight,
     this.weightUnit = 'kg',
   });
 
@@ -172,7 +172,7 @@ class WeightDisplay extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                '1ST: ${firstWeight.toStringAsFixed(0)} $weightUnit',
+                                'GROSS: ${grossWeight.toStringAsFixed(0)} $weightUnit',
                                 style: const TextStyle(
                                   fontFamily: 'PlusJakartaSans',
                                   fontSize: 8.5,
@@ -181,7 +181,7 @@ class WeightDisplay extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                '2ND: ${secondWeight.toStringAsFixed(0)} $weightUnit',
+                                'TARE: ${tareWeight.toStringAsFixed(0)} $weightUnit',
                                 style: const TextStyle(
                                   fontFamily: 'PlusJakartaSans',
                                   fontSize: 8.5,

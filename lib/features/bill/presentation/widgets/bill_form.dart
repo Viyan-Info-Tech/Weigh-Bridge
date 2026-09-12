@@ -17,21 +17,25 @@ class BillForm extends StatefulWidget {
   final domain.MaterialItem? selectedMaterial;
   final String paymentMode;
   final bool isEditing;
-  final TextEditingController firstWeightController;
-  final TextEditingController secondWeightController;
+  final TextEditingController grossWeightController;
+  final TextEditingController tareWeightController;
   final TextEditingController remarksController;
   final double netWeightKg;
   final double vehicleCharge;
+  final double defaultVehicleCharge;
+  final bool isVehicleChargeManuallyEdited;
   final double amount;
   final String weightUnit;
 
   final ValueChanged<Party> onPartyChanged;
   final ValueChanged<Vehicle> onVehicleChanged;
   final ValueChanged<domain.MaterialItem> onMaterialChanged;
-  final ValueChanged<String> onFirstWeightChanged;
-  final ValueChanged<String> onSecondWeightChanged;
+  final ValueChanged<String> onGrossWeightChanged;
+  final ValueChanged<String> onTareWeightChanged;
   final ValueChanged<String> onRemarksChanged;
   final ValueChanged<String> onPaymentModeChanged;
+  final ValueChanged<String> onVehicleChargeChanged;
+  final VoidCallback onResetVehicleCharge;
   final VoidCallback? onAddParty;
   final VoidCallback? onAddVehicle;
   final VoidCallback? onAddMaterial;
@@ -48,20 +52,24 @@ class BillForm extends StatefulWidget {
     this.selectedMaterial,
     required this.paymentMode,
     this.isEditing = false,
-    required this.firstWeightController,
-    required this.secondWeightController,
+    required this.grossWeightController,
+    required this.tareWeightController,
     required this.remarksController,
     required this.netWeightKg,
     required this.vehicleCharge,
+    this.defaultVehicleCharge = 0,
+    this.isVehicleChargeManuallyEdited = false,
     required this.amount,
     this.weightUnit = 'kg',
     required this.onPartyChanged,
     required this.onVehicleChanged,
     required this.onMaterialChanged,
-    required this.onFirstWeightChanged,
-    required this.onSecondWeightChanged,
+    required this.onGrossWeightChanged,
+    required this.onTareWeightChanged,
     required this.onRemarksChanged,
     required this.onPaymentModeChanged,
+    required this.onVehicleChargeChanged,
+    required this.onResetVehicleCharge,
     this.onAddParty,
     this.onAddVehicle,
     this.onAddMaterial,
@@ -125,10 +133,10 @@ class _BillFormState extends State<BillForm> {
           Row(
             children: [
               Expanded(child: _buildProminentWeightField(
-                  'First Weight (${widget.weightUnit}) *', widget.firstWeightController, widget.onFirstWeightChanged, enabled: !widget.isEditing)),
+                  'Gross Weight (${widget.weightUnit}) *', widget.grossWeightController, widget.onGrossWeightChanged, enabled: !widget.isEditing)),
               const SizedBox(width: 16),
               Expanded(child: _buildProminentWeightField(
-                  'Second Weight (${widget.weightUnit}) *', widget.secondWeightController, widget.onSecondWeightChanged)),
+                  'Tare Weight (${widget.weightUnit}) *', widget.tareWeightController, widget.onTareWeightChanged)),
             ],
           ),
           const SizedBox(height: 16),
@@ -137,15 +145,14 @@ class _BillFormState extends State<BillForm> {
               Expanded(child: _buildAutoField(
                   'Net Weight (${widget.weightUnit})', '${widget.netWeightKg.toStringAsFixed(0)} ${widget.weightUnit}')),
               const SizedBox(width: 16),
-              Expanded(child: _buildAutoField(
-                  'Vehicle Charge', widget.vehicleCharge > 0 ? '₹${widget.vehicleCharge.toStringAsFixed(2)}' : '₹0.00')),
+              Expanded(child: _buildVehicleChargeField()),
             ],
           ),
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(child: _buildAutoField(
-                  'Amount (₹)', '₹${widget.amount.toStringAsFixed(2)}')),
+                  'Amount (₹)', '₹${widget.amount.toStringAsFixed(2)}', showBadge: false)),
               const Spacer(),
             ],
           ),
@@ -779,7 +786,7 @@ class _BillFormState extends State<BillForm> {
     );
   }
 
-  Widget _buildAutoField(String label, String value) {
+  Widget _buildAutoField(String label, String value, {bool showBadge = true}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -794,24 +801,26 @@ class _BillFormState extends State<BillForm> {
                 color: Colors.grey.shade600,
               ),
             ),
-            const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-              decoration: BoxDecoration(
-                color: const Color(0xFF16A34A).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(3),
-              ),
-              child: const Text(
-                'Auto',
-                style: TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF16A34A),
-                  letterSpacing: 0.3,
+            if (showBadge) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF16A34A).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                child: const Text(
+                  'Auto',
+                  style: TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF16A34A),
+                    letterSpacing: 0.3,
+                  ),
                 ),
               ),
-            ),
+            ],
           ],
         ),
         const SizedBox(height: 6),
@@ -831,6 +840,108 @@ class _BillFormState extends State<BillForm> {
               fontWeight: FontWeight.w700,
               color: Color(0xFF0F172A),
             ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildVehicleChargeField() {
+    final isManual = widget.isVehicleChargeManuallyEdited;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Vehicle Charge',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+              decoration: BoxDecoration(
+                color: isManual
+                    ? const Color(0xFF7C3AED).withValues(alpha: 0.1)
+                    : const Color(0xFF16A34A).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(3),
+              ),
+              child: Text(
+                isManual ? 'Manual' : 'Auto',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                  color: isManual
+                      ? const Color(0xFF7C3AED)
+                      : const Color(0xFF16A34A),
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        TextFormField(
+          initialValue: widget.vehicleCharge > 0
+              ? widget.vehicleCharge.toStringAsFixed(0)
+              : '',
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+          ],
+          onChanged: widget.onVehicleChargeChanged,
+          style: const TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+          decoration: InputDecoration(
+            hintText: '0',
+            hintStyle: TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 16,
+              color: Colors.grey.shade300,
+            ),
+            prefixText: '\u20B9',
+            prefixStyle: TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade600,
+            ),
+            suffixIcon: isManual
+                ? IconButton(
+                    icon: const Icon(Icons.restart_alt_rounded, size: 18),
+                    color: const Color(0xFF7C3AED),
+                    tooltip: 'Reset to default (\u20B9${widget.defaultVehicleCharge.toStringAsFixed(0)})',
+                    onPressed: widget.onResetVehicleCharge,
+                  )
+                : null,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide:
+                  BorderSide(color: Colors.grey.shade300, width: 1.5),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide:
+                  BorderSide(color: Colors.grey.shade300, width: 1.5),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide:
+                  const BorderSide(color: Color(0xFF0D3B82), width: 2),
+            ),
+            filled: true,
+            fillColor: Colors.white,
           ),
         ),
       ],

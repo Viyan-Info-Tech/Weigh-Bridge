@@ -4,7 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
+import '../../../bill/presentation/bloc/bill_bloc.dart';
+import '../../../bill/presentation/bloc/bill_state.dart';
 import '../../../bill/presentation/pages/bill_page.dart';
+import '../../../bill/presentation/pages/pending_page.dart';
 import '../../../party/presentation/pages/party_list_page.dart';
 import '../../../vehicle/presentation/pages/vehicles_merged_page.dart';
 import '../../../material/presentation/pages/material_list_page.dart';
@@ -22,16 +25,22 @@ class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   bool _isMastersExpanded = true;
 
-  final List<Widget> _pages = [
-    const BillPage(),
-    const PartyListPage(),
-    const VehiclesMergedPage(),
-    const MaterialListPage(),
-    const _ComingSoonPage(title: 'Pending'),
-    const _ComingSoonPage(title: 'Report'),
-    const SettingsPage(),
-    const AboutPage(),
-  ];
+  late final List<Widget> _pages;
+
+  @override
+  void initState() {
+    super.initState();
+    _pages = [
+      const BillPage(),
+      const PartyListPage(),
+      const VehiclesMergedPage(),
+      const MaterialListPage(),
+      PendingPage(onSwitchToBill: () => setState(() => _selectedIndex = 0)),
+      const _ComingSoonPage(title: 'Report'),
+      const SettingsPage(),
+      const AboutPage(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -83,6 +92,31 @@ class _HomePageState extends State<HomePage> {
                   label: 'Pending',
                   isSelected: _selectedIndex == 4,
                   onTap: () => setState(() => _selectedIndex = 4),
+                  trailing: BlocBuilder<BillBloc, BillState>(
+                    builder: (context, state) {
+                      final count = state.pendingBills.length;
+                      if (count == 0) return const SizedBox.shrink();
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFD97706),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '$count',
+                          style: const TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontSize: 10,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                 ),
                 _SidebarItem(
                   icon: Icons.report_outlined,
@@ -244,12 +278,14 @@ class _SidebarItem extends StatelessWidget {
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
+  final Widget? trailing;
 
   const _SidebarItem({
     required this.icon,
     required this.label,
     this.isSelected = false,
     required this.onTap,
+    this.trailing,
   });
 
   @override
@@ -268,6 +304,7 @@ class _SidebarItem extends StatelessWidget {
           fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
         ),
       ),
+      trailing: trailing,
       selected: isSelected,
       selectedTileColor: Colors.blueGrey.shade800,
       dense: true,

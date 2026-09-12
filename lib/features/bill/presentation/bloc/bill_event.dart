@@ -39,17 +39,17 @@ class MaterialSelected extends BillEvent {
   List<Object?> get props => [material];
 }
 
-class FirstWeightChanged extends BillEvent {
+class GrossWeightChanged extends BillEvent {
   final String value;
-  const FirstWeightChanged(this.value);
+  const GrossWeightChanged(this.value);
 
   @override
   List<Object?> get props => [value];
 }
 
-class SecondWeightChanged extends BillEvent {
+class TareWeightChanged extends BillEvent {
   final String value;
-  const SecondWeightChanged(this.value);
+  const TareWeightChanged(this.value);
 
   @override
   List<Object?> get props => [value];
@@ -71,6 +71,18 @@ class PaymentModeChanged extends BillEvent {
   List<Object?> get props => [value];
 }
 
+class VehicleChargeChanged extends BillEvent {
+  final String value;
+  const VehicleChargeChanged(this.value);
+
+  @override
+  List<Object?> get props => [value];
+}
+
+class ResetVehicleCharge extends BillEvent {
+  const ResetVehicleCharge();
+}
+
 class SaveBillRequested extends BillEvent {
   const SaveBillRequested();
 }
@@ -87,12 +99,22 @@ class LoadPendingBill extends BillEvent {
   List<Object?> get props => [billId];
 }
 
+class LoadPendingBills extends BillEvent {
+  const LoadPendingBills();
+}
+
 class ClearBillRequested extends BillEvent {
   const ClearBillRequested();
 }
 
 class LoadRecentBills extends BillEvent {
-  const LoadRecentBills();
+  final DateTime? date;
+  final DateTime? startDate;
+  final DateTime? endDate;
+  const LoadRecentBills({this.date, this.startDate, this.endDate});
+
+  @override
+  List<Object?> get props => [date, startDate, endDate];
 }
 
 class PartyQuickAddRequested extends BillEvent {

@@ -24,8 +24,28 @@ class LoadRecentBillsUseCase {
 
   LoadRecentBillsUseCase(this._repository);
 
-  Future<List<Weighment>> call({int limit = 20}) async {
-    return _repository.getRecentBills(limit: limit);
+  Future<List<Weighment>> call({DateTime? date}) async {
+    return _repository.getRecentBills(date: date);
+  }
+
+  Future<List<Weighment>> byDateRange({
+    required DateTime startDate,
+    required DateTime endDate,
+  }) async {
+    return _repository.getRecentBillsByDateRange(
+      startDate: startDate,
+      endDate: endDate,
+    );
+  }
+}
+
+class LoadPendingBillsUseCase {
+  final BillRepository _repository;
+
+  LoadPendingBillsUseCase(this._repository);
+
+  Future<List<Weighment>> call() async {
+    return _repository.getPendingBills();
   }
 }
 

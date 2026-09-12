@@ -34,8 +34,13 @@ class MockMaterialRepository extends Mock implements MaterialItemRepository {}
 class MockSaveBillUseCase extends Mock implements SaveBillUseCase {}
 class MockLoadRecentBillsUseCase extends Mock implements LoadRecentBillsUseCase {}
 class MockGenerateBillNumberUseCase extends Mock implements GenerateBillNumberUseCase {}
+class MockLoadPendingBillsUseCase extends Mock implements LoadPendingBillsUseCase {}
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(DateTime(2026, 9, 12));
+  });
+
   late AuthBloc authBloc;
   late BillBloc billBloc;
 
@@ -51,6 +56,7 @@ void main() {
   late MockSaveBillUseCase mockSaveBillUseCase;
   late MockLoadRecentBillsUseCase mockLoadRecentBillsUseCase;
   late MockGenerateBillNumberUseCase mockGenerateBillNumberUseCase;
+  late MockLoadPendingBillsUseCase mockLoadPendingBillsUseCase;
 
   final testUser = User(
     id: 1,
@@ -84,6 +90,7 @@ void main() {
     mockSaveBillUseCase = MockSaveBillUseCase();
     mockLoadRecentBillsUseCase = MockLoadRecentBillsUseCase();
     mockGenerateBillNumberUseCase = MockGenerateBillNumberUseCase();
+    mockLoadPendingBillsUseCase = MockLoadPendingBillsUseCase();
 
     when(() => mockPartyRepository.getAllActiveParties())
         .thenAnswer((_) => Future.value(<Party>[]));
@@ -95,10 +102,12 @@ void main() {
         .thenAnswer((_) => Future.value(<MaterialItem>[]));
     when(() => mockLoadRecentBillsUseCase())
         .thenAnswer((_) => Future.value(<Weighment>[]));
-    when(() => mockLoadRecentBillsUseCase(limit: any(named: 'limit')))
+    when(() => mockLoadRecentBillsUseCase(date: any(named: 'date')))
         .thenAnswer((_) => Future.value(<Weighment>[]));
     when(() => mockGenerateBillNumberUseCase())
         .thenAnswer((_) => Future.value('WB-00001'));
+    when(() => mockLoadPendingBillsUseCase())
+        .thenAnswer((_) => Future.value([]));
 
     billBloc = BillBloc(
       partyRepository: mockPartyRepository,
@@ -107,6 +116,7 @@ void main() {
       materialRepository: mockMaterialRepository,
       saveBillUseCase: mockSaveBillUseCase,
       loadRecentBillsUseCase: mockLoadRecentBillsUseCase,
+      loadPendingBillsUseCase: mockLoadPendingBillsUseCase,
       generateBillNumberUseCase: mockGenerateBillNumberUseCase,
     );
   });

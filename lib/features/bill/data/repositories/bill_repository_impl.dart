@@ -19,8 +19,8 @@ class BillRepositoryImpl implements BillRepository {
   }
 
   @override
-  Future<List<Weighment>> getRecentBills({int limit = 20}) async {
-    return _localDataSource.getRecentBills(limit: limit);
+  Future<List<Weighment>> getRecentBills({DateTime? date, int? limit}) async {
+    return _localDataSource.getRecentBills(date: date, limit: limit);
   }
 
   @override
@@ -30,14 +30,30 @@ class BillRepositoryImpl implements BillRepository {
 
   @override
   Future<Weighment?> getWeighmentByBillNumber(String billNumber) async {
-    return _localDataSource.getRecentBills(limit: 1).then(
-      (bills) => bills.where((b) => b.billNumber == billNumber).firstOrNull,
-    );
+    return _localDataSource.getWeighmentByBillNumber(billNumber);
   }
 
   @override
   Future<String> generateNextBillNumber() async {
     return _localDataSource.generateNextBillNumber();
+  }
+
+  @override
+  Future<List<Weighment>> getPendingBills() async {
+    return _localDataSource.getPendingBills();
+  }
+
+  @override
+  Future<List<Weighment>> getRecentBillsByDateRange({
+    required DateTime startDate,
+    required DateTime endDate,
+    int? limit,
+  }) async {
+    return _localDataSource.getRecentBillsByDateRange(
+      startDate: startDate,
+      endDate: endDate,
+      limit: limit,
+    );
   }
 
   @override

@@ -21,8 +21,8 @@ void main() {
         vehicleId: 10,
         partyId: 20,
         materialId: 30,
-        firstWeightKg: 100000.0,
-        secondWeightKg: 200000.0,
+        grossWeightKg: 100000.0,
+        tareWeightKg: 200000.0,
         netWeightKg: 100000.0,
         vehicleCharge: 10000.0,
         amount: 10000.0,
@@ -105,9 +105,9 @@ void main() {
       expect(find.text('Sand'), findsOneWidget);
 
       // 5. Weight Table
-      expect(find.text('1st Weight (Gross/Tare)'), findsOneWidget);
+      expect(find.text('Gross Weight'), findsWidgets);
       expect(find.text('100000 kg'), findsWidgets);
-      expect(find.text('2nd Weight (Tare/Gross)'), findsOneWidget);
+      expect(find.text('Tare Weight'), findsWidgets);
       expect(find.text('200000 kg'), findsOneWidget);
       expect(find.text('NET WEIGHT'), findsOneWidget);
       expect(find.text('100.000 Metric Tons'), findsOneWidget);

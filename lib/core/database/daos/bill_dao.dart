@@ -17,10 +17,23 @@ class BillDao extends DatabaseAccessor<AppDatabase> with _$BillDaoMixin {
     return (update(weighments)..where((w) => w.id.equals(id))).write(entry);
   }
 
-  Future<List<Weighment>> getRecentBills({int limit = 20}) async {
+  Future<List<Weighment>> getRecentBills({
+    DateTime? date,
+    int? limit,
+  }) async {
+    final day = date ?? DateTime.now();
+    final start = DateTime(day.year, day.month, day.day);
+    final end = start.add(const Duration(days: 1));
     final query = select(weighments)
-      ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
-      ..limit(limit);
+      ..where(
+        (w) =>
+            w.createdAt.isBiggerOrEqualValue(start) &
+            w.createdAt.isSmallerThanValue(end),
+      )
+      ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]);
+    if (limit != null) {
+      query.limit(limit);
+    }
     return query.get();
   }
 
@@ -28,6 +41,26 @@ class BillDao extends DatabaseAccessor<AppDatabase> with _$BillDaoMixin {
     final query = select(weighments)
       ..where((w) => w.status.equals('pending'))
       ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]);
+    return query.get();
+  }
+
+  Future<List<Weighment>> getRecentBillsByDateRange({
+    required DateTime startDate,
+    required DateTime endDate,
+    int? limit,
+  }) async {
+    final start = DateTime(startDate.year, startDate.month, startDate.day);
+    final end = DateTime(endDate.year, endDate.month, endDate.day, 23, 59, 59);
+    final query = select(weighments)
+      ..where(
+        (w) =>
+            w.createdAt.isBiggerOrEqualValue(start) &
+            w.createdAt.isSmallerOrEqualValue(end),
+      )
+      ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]);
+    if (limit != null) {
+      query.limit(limit);
+    }
     return query.get();
   }
 

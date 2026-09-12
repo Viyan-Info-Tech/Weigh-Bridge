@@ -156,6 +156,7 @@ class Injection {
 
     final saveBillUseCase = SaveBillUseCase(billRepository);
     final loadRecentBillsUseCase = LoadRecentBillsUseCase(billRepository);
+    final loadPendingBillsUseCase = LoadPendingBillsUseCase(billRepository);
     final generateBillNumberUseCase = GenerateBillNumberUseCase(billRepository);
 
     final billBloc = BillBloc(
@@ -165,6 +166,7 @@ class Injection {
       materialRepository: materialItemRepository,
       saveBillUseCase: saveBillUseCase,
       loadRecentBillsUseCase: loadRecentBillsUseCase,
+      loadPendingBillsUseCase: loadPendingBillsUseCase,
       generateBillNumberUseCase: generateBillNumberUseCase,
     );
 

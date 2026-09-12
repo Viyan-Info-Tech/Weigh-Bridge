@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../bloc/bill_bloc.dart';
@@ -12,6 +11,7 @@ import '../widgets/quick_add_party_dialog.dart';
 import '../widgets/quick_add_vehicle_dialog.dart';
 import '../widgets/quick_add_material_dialog.dart';
 import '../widgets/recent_bills_panel.dart';
+import '../widgets/live_date_time.dart';
 
 class BillPage extends StatefulWidget {
   const BillPage({super.key});
@@ -21,16 +21,16 @@ class BillPage extends StatefulWidget {
 }
 
 class _BillPageState extends State<BillPage> {
-  late final TextEditingController _firstWeightController;
-  late final TextEditingController _secondWeightController;
+  late final TextEditingController _grossWeightController;
+  late final TextEditingController _tareWeightController;
   late final TextEditingController _remarksController;
   String _weightUnit = 'kg';
 
   @override
   void initState() {
     super.initState();
-    _firstWeightController = TextEditingController();
-    _secondWeightController = TextEditingController();
+    _grossWeightController = TextEditingController();
+    _tareWeightController = TextEditingController();
     _remarksController = TextEditingController();
     _loadWeightUnit();
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -49,15 +49,15 @@ class _BillPageState extends State<BillPage> {
 
   @override
   void dispose() {
-    _firstWeightController.dispose();
-    _secondWeightController.dispose();
+    _grossWeightController.dispose();
+    _tareWeightController.dispose();
     _remarksController.dispose();
     super.dispose();
   }
 
   void _syncControllersAfterReset() {
-    _firstWeightController.clear();
-    _secondWeightController.clear();
+    _grossWeightController.clear();
+    _tareWeightController.clear();
     _remarksController.clear();
   }
 
@@ -118,9 +118,9 @@ class _BillPageState extends State<BillPage> {
             ),
           );
         }
-        if (state.editingBillId != null && state.firstWeightText.isNotEmpty) {
-          _firstWeightController.text = state.firstWeightText;
-          _secondWeightController.text = state.secondWeightText;
+        if (state.editingBillId != null && state.grossWeightText.isNotEmpty) {
+          _grossWeightController.text = state.grossWeightText;
+          _tareWeightController.text = state.tareWeightText;
           _remarksController.text = state.remarksText;
         } else if (state.editingBillId == null) {
           _syncControllersAfterReset();
@@ -151,8 +151,8 @@ class _BillPageState extends State<BillPage> {
                                 children: [
                                    WeightDisplay(
                                      netWeightTon: state.netWeightKg / 1000,
-                                     firstWeight: state.firstWeightKg,
-                                     secondWeight: state.secondWeightKg,
+                                     grossWeight: state.grossWeightKg,
+                                     tareWeight: state.tareWeightKg,
                                      weightUnit: _weightUnit,
                                    ),
                                   const SizedBox(height: 16),
@@ -186,12 +186,29 @@ class _BillPageState extends State<BillPage> {
                                   padding: const EdgeInsets.only(left: 12),
                                   child: RecentBillsPanel(
                                     recentBills: state.recentBills,
+                                    billsDate: state.effectiveBillsDate,
+                                    billsStartDate: state.billsStartDate,
+                                    billsEndDate: state.billsEndDate,
                                     parties: state.parties,
                                     vehicles: state.vehicles,
                                     vehicleTypes: state.vehicleTypes,
                                     materials: state.materials,
                                     onLoadPendingBill: (billId) {
                                       context.read<BillBloc>().add(LoadPendingBill(billId));
+                                    },
+                                    onDateChanged: (date) {
+                                      context.read<BillBloc>().add(LoadRecentBills(date: date));
+                                    },
+                                    onDateRangeChanged: (startDate, endDate) {
+                                      if (startDate != null && endDate != null) {
+                                        context.read<BillBloc>().add(
+                                          LoadRecentBills(startDate: startDate, endDate: endDate),
+                                        );
+                                      } else {
+                                        context.read<BillBloc>().add(
+                                          const LoadRecentBills(),
+                                        );
+                                      }
                                     },
                                   ),
                                 ),
@@ -213,8 +230,8 @@ class _BillPageState extends State<BillPage> {
                       const SizedBox(height: 16),
                       WeightDisplay(
                         netWeightTon: state.netWeightKg / 1000,
-                        firstWeight: state.firstWeightKg,
-                        secondWeight: state.secondWeightKg,
+                        grossWeight: state.grossWeightKg,
+                        tareWeight: state.tareWeightKg,
                       ),
                       const SizedBox(height: 16),
                       _buildBillForm(state),
@@ -225,12 +242,29 @@ class _BillPageState extends State<BillPage> {
                         height: 500,
                         child: RecentBillsPanel(
                           recentBills: state.recentBills,
+                          billsDate: state.effectiveBillsDate,
+                          billsStartDate: state.billsStartDate,
+                          billsEndDate: state.billsEndDate,
                           parties: state.parties,
                           vehicles: state.vehicles,
                           vehicleTypes: state.vehicleTypes,
                           materials: state.materials,
                           onLoadPendingBill: (billId) {
                             context.read<BillBloc>().add(LoadPendingBill(billId));
+                          },
+                          onDateChanged: (date) {
+                            context.read<BillBloc>().add(LoadRecentBills(date: date));
+                          },
+                          onDateRangeChanged: (startDate, endDate) {
+                            if (startDate != null && endDate != null) {
+                              context.read<BillBloc>().add(
+                                LoadRecentBills(startDate: startDate, endDate: endDate),
+                              );
+                            } else {
+                              context.read<BillBloc>().add(
+                                const LoadRecentBills(),
+                              );
+                            }
                           },
                         ),
                       ),
@@ -246,9 +280,6 @@ class _BillPageState extends State<BillPage> {
   }
 
   Widget _buildTopHeader(BillState state) {
-    final now = DateTime.now();
-    final dateStr = DateFormat('EEEE, dd MMMM yyyy').format(now);
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
       decoration: BoxDecoration(
@@ -299,29 +330,7 @@ class _BillPageState extends State<BillPage> {
             ],
           ),
           const Spacer(),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.calendar_today_outlined,
-                    size: 14, color: Color(0xFF64748B)),
-                const SizedBox(width: 6),
-                Text(
-                  dateStr,
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF334155),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          const LiveDateTime(),
         ],
       ),
     );
@@ -339,11 +348,13 @@ class _BillPageState extends State<BillPage> {
       selectedMaterial: state.selectedMaterial,
       paymentMode: state.paymentMode,
       isEditing: state.isEditing,
-      firstWeightController: _firstWeightController,
-      secondWeightController: _secondWeightController,
+      grossWeightController: _grossWeightController,
+      tareWeightController: _tareWeightController,
       remarksController: _remarksController,
       netWeightKg: state.netWeightKg,
       vehicleCharge: state.vehicleCharge,
+      defaultVehicleCharge: state.defaultVehicleCharge,
+      isVehicleChargeManuallyEdited: state.isVehicleChargeManuallyEdited,
       amount: state.amount,
       weightUnit: _weightUnit,
       onPartyChanged: (party) =>
@@ -352,14 +363,18 @@ class _BillPageState extends State<BillPage> {
           context.read<BillBloc>().add(VehicleSelected(vehicle)),
       onMaterialChanged: (material) =>
           context.read<BillBloc>().add(MaterialSelected(material)),
-      onFirstWeightChanged: (v) =>
-          context.read<BillBloc>().add(FirstWeightChanged(v)),
-      onSecondWeightChanged: (v) =>
-          context.read<BillBloc>().add(SecondWeightChanged(v)),
+      onGrossWeightChanged: (v) =>
+          context.read<BillBloc>().add(GrossWeightChanged(v)),
+      onTareWeightChanged: (v) =>
+          context.read<BillBloc>().add(TareWeightChanged(v)),
       onRemarksChanged: (v) =>
           context.read<BillBloc>().add(RemarksChanged(v)),
       onPaymentModeChanged: (v) =>
           context.read<BillBloc>().add(PaymentModeChanged(v)),
+      onVehicleChargeChanged: (v) =>
+          context.read<BillBloc>().add(VehicleChargeChanged(v)),
+      onResetVehicleCharge: () =>
+          context.read<BillBloc>().add(const ResetVehicleCharge()),
       onAddParty: () {
         QuickAddPartyDialog.show(
           context,
@@ -487,8 +502,8 @@ class _BillPageState extends State<BillPage> {
     final hasData = state.selectedParty != null ||
         state.selectedVehicle != null ||
         state.selectedMaterial != null ||
-        state.firstWeightText.isNotEmpty && state.firstWeightText != '0' ||
-        state.secondWeightText.isNotEmpty && state.secondWeightText != '0' ||
+        state.grossWeightText.isNotEmpty && state.grossWeightText != '0' ||
+        state.tareWeightText.isNotEmpty && state.tareWeightText != '0' ||
         state.remarksText.isNotEmpty;
 
     if (!hasData) {

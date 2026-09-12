@@ -7,8 +7,8 @@ class Weighment extends Equatable {
   final int vehicleId;
   final int materialId;
   final String paymentMode;
-  final double firstWeightKg;
-  final double? secondWeightKg;
+  final double grossWeightKg;
+  final double? tareWeightKg;
   final double? netWeightKg;
   final double vehicleCharge;
   final double amount;
@@ -24,8 +24,8 @@ class Weighment extends Equatable {
     required this.vehicleId,
     required this.materialId,
     required this.paymentMode,
-    required this.firstWeightKg,
-    this.secondWeightKg,
+    required this.grossWeightKg,
+    this.tareWeightKg,
     this.netWeightKg,
     required this.vehicleCharge,
     required this.amount,
@@ -39,5 +39,5 @@ class Weighment extends Equatable {
   bool get isCompleted => status == 'completed';
 
   @override
-  List<Object?> get props => [id, billNumber, partyId, vehicleId, materialId, firstWeightKg, secondWeightKg, netWeightKg, vehicleCharge, amount, status];
+  List<Object?> get props => [id, billNumber, partyId, vehicleId, materialId, grossWeightKg, tareWeightKg, netWeightKg, vehicleCharge, amount, status];
 }

@@ -20,6 +20,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
   final MaterialItemRepository _materialRepository;
   final SaveBillUseCase _saveBillUseCase;
   final LoadRecentBillsUseCase _loadRecentBillsUseCase;
+  final LoadPendingBillsUseCase _loadPendingBillsUseCase;
   final GenerateBillNumberUseCase _generateBillNumberUseCase;
 
   BillBloc({
@@ -29,6 +30,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     required MaterialItemRepository materialRepository,
     required SaveBillUseCase saveBillUseCase,
     required LoadRecentBillsUseCase loadRecentBillsUseCase,
+    required LoadPendingBillsUseCase loadPendingBillsUseCase,
     required GenerateBillNumberUseCase generateBillNumberUseCase,
   })  : _partyRepository = partyRepository,
         _vehicleRepository = vehicleRepository,
@@ -36,19 +38,23 @@ class BillBloc extends Bloc<BillEvent, BillState> {
         _materialRepository = materialRepository,
         _saveBillUseCase = saveBillUseCase,
         _loadRecentBillsUseCase = loadRecentBillsUseCase,
+        _loadPendingBillsUseCase = loadPendingBillsUseCase,
         _generateBillNumberUseCase = generateBillNumberUseCase,
         super(const BillState()) {
     on<LoadBillScreen>(_onLoadBillScreen);
     on<PartySelected>(_onPartySelected);
     on<VehicleSelected>(_onVehicleSelected);
     on<MaterialSelected>(_onMaterialSelected);
-    on<FirstWeightChanged>(_onFirstWeightChanged);
-    on<SecondWeightChanged>(_onSecondWeightChanged);
+    on<GrossWeightChanged>(_onGrossWeightChanged);
+    on<TareWeightChanged>(_onTareWeightChanged);
     on<RemarksChanged>(_onRemarksChanged);
     on<PaymentModeChanged>(_onPaymentModeChanged);
+    on<VehicleChargeChanged>(_onVehicleChargeChanged);
+    on<ResetVehicleCharge>(_onResetVehicleCharge);
     on<SaveBillRequested>(_onSaveBillRequested);
     on<SaveAndPrintBillRequested>(_onSaveAndPrintBillRequested);
     on<LoadPendingBill>(_onLoadPendingBill);
+    on<LoadPendingBills>(_onLoadPendingBills);
     on<ClearBillRequested>(_onClearBillRequested);
     on<LoadRecentBills>(_onLoadRecentBills);
     on<PartyQuickAddRequested>(_onPartyQuickAdd);
@@ -63,9 +69,10 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     try {
       final parties = await _partyRepository.getAllActiveParties();
       final vehicles = await _vehicleRepository.getVehiclesByStatus(isActive: true);
-      final vehicleTypes = await _vehicleTypeRepository.getVehicleTypesByStatus(isActive: true);
+      final vehicleTypes = await _vehicleTypeRepository.getAllVehicleTypes();
       final materials = await _materialRepository.getMaterialsByStatus(isActive: true);
-      final recentBills = await _loadRecentBillsUseCase();
+      final billsDate = _dayOnly(DateTime.now());
+      final recentBills = await _loadRecentBillsUseCase(date: billsDate);
       final billNumber = await _generateBillNumberUseCase();
 
       emit(state.copyWith(
@@ -75,6 +82,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
         vehicleTypes: vehicleTypes,
         materials: materials,
         recentBills: recentBills,
+        billsDate: billsDate,
         currentBillNumber: billNumber,
       ));
     } catch (e) {
@@ -105,6 +113,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     emit(state.copyWith(
       selectedVehicle: vehicle,
       selectedVehicleType: vehicleType,
+      clearManualCharge: true,
       clearError: true,
     ));
     _recalculate(emit);
@@ -117,21 +126,21 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     ));
   }
 
-  void _onFirstWeightChanged(FirstWeightChanged event, Emitter<BillState> emit) {
+  void _onGrossWeightChanged(GrossWeightChanged event, Emitter<BillState> emit) {
     final value = double.tryParse(event.value) ?? 0;
     emit(state.copyWith(
-      firstWeightText: event.value,
-      firstWeightKg: value,
+      grossWeightText: event.value,
+      grossWeightKg: value,
       clearError: true,
     ));
     _recalculate(emit);
   }
 
-  void _onSecondWeightChanged(SecondWeightChanged event, Emitter<BillState> emit) {
+  void _onTareWeightChanged(TareWeightChanged event, Emitter<BillState> emit) {
     final value = double.tryParse(event.value) ?? 0;
     emit(state.copyWith(
-      secondWeightText: event.value,
-      secondWeightKg: value,
+      tareWeightText: event.value,
+      tareWeightKg: value,
       clearError: true,
     ));
     _recalculate(emit);
@@ -145,27 +154,52 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     emit(state.copyWith(paymentMode: event.value));
   }
 
+  void _onVehicleChargeChanged(VehicleChargeChanged event, Emitter<BillState> emit) {
+    final value = double.tryParse(event.value) ?? 0;
+    emit(state.copyWith(
+      vehicleCharge: value,
+      isVehicleChargeManuallyEdited: true,
+      clearError: true,
+    ));
+    final amount = value;
+    emit(state.copyWith(amount: amount));
+  }
+
+  void _onResetVehicleCharge(ResetVehicleCharge event, Emitter<BillState> emit) {
+    emit(state.copyWith(
+      vehicleCharge: state.defaultVehicleCharge,
+      isVehicleChargeManuallyEdited: false,
+      clearError: true,
+    ));
+    final amount = state.defaultVehicleCharge;
+    emit(state.copyWith(amount: amount));
+  }
+
   void _recalculate(Emitter<BillState> emit) {
     final vehicleType = state.selectedVehicleType;
-    final fw = state.firstWeightKg;
-    final sw = state.secondWeightKg;
+    final fw = state.grossWeightKg;
+    final sw = state.tareWeightKg;
 
-    double vehicleCharge = 0;
+    double defaultCharge = 0;
     double netWeightKg = 0;
-    double amount = 0;
 
     if (vehicleType != null && fw > 0) {
       if (sw > 0) {
         netWeightKg = sw - fw;
-        vehicleCharge = vehicleType.loadPrice;
+        defaultCharge = vehicleType.loadPrice;
       } else {
-        vehicleCharge = vehicleType.emptyPrice;
+        defaultCharge = vehicleType.emptyPrice;
       }
-      amount = vehicleCharge;
     }
+
+    final vehicleCharge = state.isVehicleChargeManuallyEdited
+        ? state.vehicleCharge
+        : defaultCharge;
+    final amount = vehicleCharge;
 
     emit(state.copyWith(
       netWeightKg: netWeightKg,
+      defaultVehicleCharge: defaultCharge,
       vehicleCharge: vehicleCharge,
       amount: amount,
     ));
@@ -176,11 +210,11 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     if (state.selectedVehicle == null) return 'Please select a vehicle';
     if (state.selectedVehicleType == null) return 'Vehicle type is missing';
     if (state.selectedMaterial == null) return 'Please select a material';
-    if (state.firstWeightKg <= 0) return 'Please enter first weight';
+    if (state.grossWeightKg <= 0) return 'Please enter gross weight';
 
-    if (state.secondWeightKg > 0) {
-      if (state.secondWeightKg <= state.firstWeightKg) {
-        return 'Second weight must be greater than first weight';
+    if (state.tareWeightKg > 0) {
+      if (state.tareWeightKg <= state.grossWeightKg) {
+        return 'Tare weight must be greater than gross weight';
       }
       if (state.netWeightKg <= 0) return 'Net weight must be positive';
     }
@@ -199,7 +233,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
 
     try {
       await _saveOrUpdateBill(emit);
-      final bills = await _loadRecentBillsUseCase();
+      final bills = await _loadBillsFor(state.effectiveBillsDate);
       emit(state.copyWith(
         status: BillScreenStatus.saved,
         recentBills: bills,
@@ -223,7 +257,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
 
     try {
       await _saveOrUpdateBill(emit);
-      final bills = await _loadRecentBillsUseCase();
+      final bills = await _loadBillsFor(state.effectiveBillsDate);
       emit(state.copyWith(
         status: BillScreenStatus.saved,
         recentBills: bills,
@@ -237,7 +271,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
   }
 
   Future<void> _saveOrUpdateBill(Emitter<BillState> emit) async {
-    final isCompleted = state.secondWeightKg > 0;
+    final isCompleted = state.tareWeightKg > 0;
     final status = isCompleted ? 'completed' : 'pending';
 
     final weighment = Weighment(
@@ -247,8 +281,8 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       vehicleId: state.selectedVehicle!.id,
       materialId: state.selectedMaterial!.id,
       paymentMode: state.paymentMode,
-      firstWeightKg: state.firstWeightKg,
-      secondWeightKg: isCompleted ? state.secondWeightKg : null,
+      grossWeightKg: state.grossWeightKg,
+      tareWeightKg: isCompleted ? state.tareWeightKg : null,
       netWeightKg: isCompleted ? state.netWeightKg : null,
       vehicleCharge: state.vehicleCharge,
       amount: state.amount,
@@ -310,6 +344,12 @@ class BillBloc extends Bloc<BillEvent, BillState> {
         }
       }
 
+      double defaultCharge = 0;
+      if (vehicleType != null) {
+        defaultCharge = vehicleType.emptyPrice;
+      }
+      final isManuallyEdited = weighment.vehicleCharge != defaultCharge && weighment.vehicleCharge > 0;
+
       emit(state.copyWith(
         clearError: true,
         editingBillId: weighment.id,
@@ -319,12 +359,14 @@ class BillBloc extends Bloc<BillEvent, BillState> {
         selectedVehicleType: vehicleType,
         selectedMaterial: material,
         paymentMode: weighment.paymentMode,
-        firstWeightText: weighment.firstWeightKg.toStringAsFixed(0),
-        firstWeightKg: weighment.firstWeightKg,
-        secondWeightText: '',
-        secondWeightKg: 0,
+        grossWeightText: weighment.grossWeightKg.toStringAsFixed(0),
+        grossWeightKg: weighment.grossWeightKg,
+        tareWeightText: '',
+        tareWeightKg: 0,
         netWeightKg: 0,
+        defaultVehicleCharge: defaultCharge,
         vehicleCharge: weighment.vehicleCharge,
+        isVehicleChargeManuallyEdited: isManuallyEdited,
         amount: weighment.amount,
         remarksText: weighment.remarks ?? '',
       ));
@@ -338,6 +380,15 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     _resetForm(emit);
   }
 
+  Future<void> _onLoadPendingBills(LoadPendingBills event, Emitter<BillState> emit) async {
+    try {
+      final bills = await _loadPendingBillsUseCase();
+      emit(state.copyWith(pendingBills: bills));
+    } catch (e) {
+      emit(state.copyWith(errorMessage: 'Failed to load pending bills'));
+    }
+  }
+
   void _resetForm(Emitter<BillState> emit, {String? nextBillNumber}) async {
     final billNum = nextBillNumber ?? await _generateBillNumberUseCase();
     emit(state.copyWith(
@@ -346,13 +397,15 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       clearVehicleType: true,
       clearMaterial: true,
       clearEditingBillId: true,
-      firstWeightText: '',
-      secondWeightText: '',
+      grossWeightText: '',
+      tareWeightText: '',
       remarksText: '',
-      firstWeightKg: 0,
-      secondWeightKg: 0,
+      grossWeightKg: 0,
+      tareWeightKg: 0,
       netWeightKg: 0,
       vehicleCharge: 0,
+      defaultVehicleCharge: 0,
+      isVehicleChargeManuallyEdited: false,
       amount: 0,
       paymentMode: 'Cash',
       currentBillNumber: billNum,
@@ -362,12 +415,36 @@ class BillBloc extends Bloc<BillEvent, BillState> {
 
   Future<void> _onLoadRecentBills(LoadRecentBills event, Emitter<BillState> emit) async {
     try {
-      final bills = await _loadRecentBillsUseCase();
-      emit(state.copyWith(recentBills: bills));
+      if (event.startDate != null && event.endDate != null) {
+        final bills = await _loadRecentBillsUseCase.byDateRange(
+          startDate: _dayOnly(event.startDate!),
+          endDate: _dayOnly(event.endDate!),
+        );
+        emit(state.copyWith(
+          recentBills: bills,
+          billsStartDate: _dayOnly(event.startDate!),
+          billsEndDate: _dayOnly(event.endDate!),
+          clearDateRange: false,
+        ));
+      } else {
+        final billsDate = _dayOnly(event.date ?? DateTime.now());
+        final bills = await _loadBillsFor(billsDate);
+        emit(state.copyWith(
+          recentBills: bills,
+          billsDate: billsDate,
+          clearDateRange: true,
+        ));
+      }
     } catch (e) {
       emit(state.copyWith(errorMessage: 'Failed to load recent bills'));
     }
   }
+
+  Future<List<Weighment>> _loadBillsFor(DateTime date) {
+    return _loadRecentBillsUseCase(date: _dayOnly(date));
+  }
+
+  DateTime _dayOnly(DateTime date) => DateTime(date.year, date.month, date.day);
 
   Future<void> _onPartyQuickAdd(PartyQuickAddRequested event, Emitter<BillState> emit) async {
     try {
@@ -413,9 +490,18 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       final refreshedVehicles = await _vehicleRepository.getVehiclesByStatus(isActive: true);
       final newVehicle = refreshedVehicles.firstWhere((v) => v.id == newId);
 
+      VehicleType? vehicleType;
+      for (final vt in state.vehicleTypes) {
+        if (vt.id == newVehicle.vehicleTypeId) {
+          vehicleType = vt;
+          break;
+        }
+      }
+
       emit(state.copyWith(
         vehicles: refreshedVehicles,
         selectedVehicle: newVehicle,
+        selectedVehicleType: vehicleType,
         clearError: true,
       ));
     } catch (e) {

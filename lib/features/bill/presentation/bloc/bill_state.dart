@@ -18,6 +18,9 @@ class BillState extends Equatable {
   final List<MaterialItem> materials;
   final List<Weighment> recentBills;
   final List<Weighment> pendingBills;
+  final DateTime? billsDate;
+  final DateTime? billsStartDate;
+  final DateTime? billsEndDate;
 
   final Party? selectedParty;
   final Vehicle? selectedVehicle;
@@ -26,14 +29,16 @@ class BillState extends Equatable {
 
   final String paymentMode;
 
-  final String firstWeightText;
-  final String secondWeightText;
+  final String grossWeightText;
+  final String tareWeightText;
   final String remarksText;
 
-  final double firstWeightKg;
-  final double secondWeightKg;
+  final double grossWeightKg;
+  final double tareWeightKg;
   final double netWeightKg;
   final double vehicleCharge;
+  final double defaultVehicleCharge;
+  final bool isVehicleChargeManuallyEdited;
   final double amount;
 
   final String currentBillNumber;
@@ -48,26 +53,44 @@ class BillState extends Equatable {
     this.materials = const [],
     this.recentBills = const [],
     this.pendingBills = const [],
+    this.billsDate,
+    this.billsStartDate,
+    this.billsEndDate,
     this.selectedParty,
     this.selectedVehicle,
     this.selectedVehicleType,
     this.selectedMaterial,
     this.paymentMode = 'Cash',
-    this.firstWeightText = '',
-    this.secondWeightText = '',
+    this.grossWeightText = '',
+    this.tareWeightText = '',
     this.remarksText = '',
-    this.firstWeightKg = 0,
-    this.secondWeightKg = 0,
+    this.grossWeightKg = 0,
+    this.tareWeightKg = 0,
     this.netWeightKg = 0,
     this.vehicleCharge = 0,
+    this.defaultVehicleCharge = 0,
+    this.isVehicleChargeManuallyEdited = false,
     this.amount = 0,
     this.currentBillNumber = 'WB-00001',
     this.editingBillId,
   });
 
   bool get isEditing => editingBillId != null;
-  bool get isPending => secondWeightKg <= 0;
-  bool get isCompleted => secondWeightKg > 0;
+  bool get isPending => tareWeightKg <= 0;
+  bool get isCompleted => tareWeightKg > 0;
+
+  DateTime get effectiveBillsDate {
+    final d = billsDate ?? DateTime.now();
+    return DateTime(d.year, d.month, d.day);
+  }
+
+  bool get isViewingTodaysBills {
+    final now = DateTime.now();
+    final d = effectiveBillsDate;
+    return d.year == now.year && d.month == now.month && d.day == now.day;
+  }
+
+  bool get hasDateRange => billsStartDate != null || billsEndDate != null;
 
   BillState copyWith({
     BillScreenStatus? status,
@@ -79,6 +102,10 @@ class BillState extends Equatable {
     List<MaterialItem>? materials,
     List<Weighment>? recentBills,
     List<Weighment>? pendingBills,
+    DateTime? billsDate,
+    DateTime? billsStartDate,
+    DateTime? billsEndDate,
+    bool clearDateRange = false,
     Party? selectedParty,
     bool clearParty = false,
     Vehicle? selectedVehicle,
@@ -88,13 +115,16 @@ class BillState extends Equatable {
     MaterialItem? selectedMaterial,
     bool clearMaterial = false,
     String? paymentMode,
-    String? firstWeightText,
-    String? secondWeightText,
+    String? grossWeightText,
+    String? tareWeightText,
     String? remarksText,
-    double? firstWeightKg,
-    double? secondWeightKg,
+    double? grossWeightKg,
+    double? tareWeightKg,
     double? netWeightKg,
     double? vehicleCharge,
+    double? defaultVehicleCharge,
+    bool clearManualCharge = false,
+    bool? isVehicleChargeManuallyEdited,
     double? amount,
     String? currentBillNumber,
     int? editingBillId,
@@ -109,18 +139,23 @@ class BillState extends Equatable {
       materials: materials ?? this.materials,
       recentBills: recentBills ?? this.recentBills,
       pendingBills: pendingBills ?? this.pendingBills,
+      billsDate: billsDate ?? this.billsDate,
+      billsStartDate: clearDateRange ? null : (billsStartDate ?? this.billsStartDate),
+      billsEndDate: clearDateRange ? null : (billsEndDate ?? this.billsEndDate),
       selectedParty: clearParty ? null : (selectedParty ?? this.selectedParty),
       selectedVehicle: clearVehicle ? null : (selectedVehicle ?? this.selectedVehicle),
       selectedVehicleType: clearVehicleType ? null : (selectedVehicleType ?? this.selectedVehicleType),
       selectedMaterial: clearMaterial ? null : (selectedMaterial ?? this.selectedMaterial),
       paymentMode: paymentMode ?? this.paymentMode,
-      firstWeightText: firstWeightText ?? this.firstWeightText,
-      secondWeightText: secondWeightText ?? this.secondWeightText,
+      grossWeightText: grossWeightText ?? this.grossWeightText,
+      tareWeightText: tareWeightText ?? this.tareWeightText,
       remarksText: remarksText ?? this.remarksText,
-      firstWeightKg: firstWeightKg ?? this.firstWeightKg,
-      secondWeightKg: secondWeightKg ?? this.secondWeightKg,
+      grossWeightKg: grossWeightKg ?? this.grossWeightKg,
+      tareWeightKg: tareWeightKg ?? this.tareWeightKg,
       netWeightKg: netWeightKg ?? this.netWeightKg,
       vehicleCharge: vehicleCharge ?? this.vehicleCharge,
+      defaultVehicleCharge: clearManualCharge ? (vehicleCharge ?? this.vehicleCharge) : (defaultVehicleCharge ?? this.defaultVehicleCharge),
+      isVehicleChargeManuallyEdited: clearManualCharge ? false : (isVehicleChargeManuallyEdited ?? this.isVehicleChargeManuallyEdited),
       amount: amount ?? this.amount,
       currentBillNumber: currentBillNumber ?? this.currentBillNumber,
       editingBillId: clearEditingBillId ? null : (editingBillId ?? this.editingBillId),
@@ -137,18 +172,23 @@ class BillState extends Equatable {
         materials,
         recentBills,
         pendingBills,
+        billsDate,
+        billsStartDate,
+        billsEndDate,
         selectedParty,
         selectedVehicle,
         selectedVehicleType,
         selectedMaterial,
         paymentMode,
-        firstWeightText,
-        secondWeightText,
+        grossWeightText,
+        tareWeightText,
         remarksText,
-        firstWeightKg,
-        secondWeightKg,
+        grossWeightKg,
+        tareWeightKg,
         netWeightKg,
         vehicleCharge,
+        defaultVehicleCharge,
+        isVehicleChargeManuallyEdited,
         amount,
         currentBillNumber,
         editingBillId,

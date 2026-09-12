@@ -5,8 +5,8 @@ import 'package:weighbridge/features/bill/presentation/widgets/weight_display.da
 void main() {
   Widget buildTestWidget({
     double netWeightTon = 0,
-    double firstWeight = 0,
-    double secondWeight = 0,
+    double grossWeight = 0,
+    double tareWeight = 0,
     String weightUnit = 'kg',
   }) {
     return MaterialApp(
@@ -17,8 +17,8 @@ void main() {
             height: 350,
             child: WeightDisplay(
               netWeightTon: netWeightTon,
-              firstWeight: firstWeight,
-              secondWeight: secondWeight,
+              grossWeight: grossWeight,
+              tareWeight: tareWeight,
               weightUnit: weightUnit,
             ),
           ),
@@ -40,21 +40,21 @@ void main() {
 
       expect(find.text('kg'), findsOneWidget);
       expect(find.text('NET: 0 kg'), findsOneWidget);
-      expect(find.text('1ST: 0 kg'), findsOneWidget);
-      expect(find.text('2ND: 0 kg'), findsOneWidget);
+      expect(find.text('GROSS: 0 kg'), findsOneWidget);
+      expect(find.text('TARE: 0 kg'), findsOneWidget);
     });
 
     testWidgets('displays correct weight values when provided', (tester) async {
       await tester.pumpWidget(buildTestWidget(
         netWeightTon: 5.0,
-        firstWeight: 3000,
-        secondWeight: 8000,
+        grossWeight: 3000,
+        tareWeight: 8000,
       ));
       await tester.pumpAndSettle();
 
       expect(find.text('NET: 5000 kg'), findsOneWidget);
-      expect(find.text('1ST: 3000 kg'), findsOneWidget);
-      expect(find.text('2ND: 8000 kg'), findsOneWidget);
+      expect(find.text('GROSS: 3000 kg'), findsOneWidget);
+      expect(find.text('TARE: 8000 kg'), findsOneWidget);
     });
 
     testWidgets('does not render FIRST, SECOND, or TARE buttons', (tester) async {

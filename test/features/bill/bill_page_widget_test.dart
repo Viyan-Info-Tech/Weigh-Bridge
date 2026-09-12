@@ -32,7 +32,14 @@ class MockLoadRecentBillsUseCase extends Mock implements LoadRecentBillsUseCase 
 class MockGenerateBillNumberUseCase extends Mock
     implements GenerateBillNumberUseCase {}
 
+class MockLoadPendingBillsUseCase extends Mock
+    implements LoadPendingBillsUseCase {}
+
 void main() {
+  setUpAll(() {
+    registerFallbackValue(DateTime(2026, 9, 12));
+  });
+
   late BillBloc billBloc;
   late MockPartyRepository mockPartyRepository;
   late MockVehicleRepository mockVehicleRepository;
@@ -41,6 +48,7 @@ void main() {
   late MockSaveBillUseCase mockSaveBillUseCase;
   late MockLoadRecentBillsUseCase mockLoadRecentBillsUseCase;
   late MockGenerateBillNumberUseCase mockGenerateBillNumberUseCase;
+  late MockLoadPendingBillsUseCase mockLoadPendingBillsUseCase;
 
   final testParties = [
     Party(
@@ -86,6 +94,9 @@ void main() {
     ),
   ];
 
+  final now = DateTime.now();
+  final yesterday = now.subtract(const Duration(days: 1));
+
   final testBills = [
     Weighment(
       id: 1,
@@ -94,14 +105,34 @@ void main() {
       vehicleId: 1,
       materialId: 1,
       paymentMode: 'Cash',
-      firstWeightKg: 25000,
-      secondWeightKg: 10000,
+      grossWeightKg: 25000,
+      tareWeightKg: 10000,
       netWeightKg: 15000,
       vehicleCharge: 500,
       amount: 500,
       status: 'completed',
-      createdAt: DateTime(2025),
-      updatedAt: DateTime(2025),
+      createdAt: now,
+      updatedAt: now,
+    ),
+  ];
+
+  final mixedDayBills = [
+    ...testBills,
+    Weighment(
+      id: 2,
+      billNumber: 'WB-00000',
+      partyId: 1,
+      vehicleId: 1,
+      materialId: 1,
+      paymentMode: 'Cash',
+      grossWeightKg: 10000,
+      tareWeightKg: 20000,
+      netWeightKg: 10000,
+      vehicleCharge: 500,
+      amount: 500,
+      status: 'completed',
+      createdAt: yesterday,
+      updatedAt: yesterday,
     ),
   ];
 
@@ -113,6 +144,7 @@ void main() {
     mockSaveBillUseCase = MockSaveBillUseCase();
     mockLoadRecentBillsUseCase = MockLoadRecentBillsUseCase();
     mockGenerateBillNumberUseCase = MockGenerateBillNumberUseCase();
+    mockLoadPendingBillsUseCase = MockLoadPendingBillsUseCase();
 
     when(() => mockPartyRepository.getAllActiveParties())
         .thenAnswer((_) => Future.value(testParties));
@@ -124,10 +156,12 @@ void main() {
         .thenAnswer((_) => Future.value(testMaterials));
     when(() => mockLoadRecentBillsUseCase())
         .thenAnswer((_) => Future.value(testBills));
-    when(() => mockLoadRecentBillsUseCase(limit: any(named: 'limit')))
+    when(() => mockLoadRecentBillsUseCase(date: any(named: 'date')))
         .thenAnswer((_) => Future.value(testBills));
     when(() => mockGenerateBillNumberUseCase())
         .thenAnswer((_) => Future.value('WB-00002'));
+    when(() => mockLoadPendingBillsUseCase())
+        .thenAnswer((_) => Future.value([]));
 
     billBloc = BillBloc(
       partyRepository: mockPartyRepository,
@@ -136,6 +170,7 @@ void main() {
       materialRepository: mockMaterialRepository,
       saveBillUseCase: mockSaveBillUseCase,
       loadRecentBillsUseCase: mockLoadRecentBillsUseCase,
+      loadPendingBillsUseCase: mockLoadPendingBillsUseCase,
       generateBillNumberUseCase: mockGenerateBillNumberUseCase,
     );
   });
@@ -195,11 +230,33 @@ void main() {
     expect(find.text('Save Ticket'), findsOneWidget);
     expect(find.text('Save & Print Slip'), findsOneWidget);
 
-    // Verify Right Side: Fully Recent Billings panel
+    // Verify Right Side: Today's Recent Billings panel
     expect(find.text('Recent Billings'), findsOneWidget);
+    expect(find.text('1 Today'), findsOneWidget);
     expect(find.text('WB-00001'), findsWidgets);
     expect(find.text('MH 12 AB 1234'), findsWidgets);
     expect(find.text('UltraTech Cement'), findsWidgets);
+  });
+
+  testWidgets('hides yesterday bills from today recent billings',
+      (tester) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+
+    when(() => mockLoadRecentBillsUseCase())
+        .thenAnswer((_) => Future.value(mixedDayBills));
+    when(() => mockLoadRecentBillsUseCase(date: any(named: 'date')))
+        .thenAnswer((_) => Future.value(mixedDayBills));
+
+    await pumpBillPage(tester);
+
+    expect(find.text('WB-00001'), findsWidgets);
+    expect(find.text('WB-00000'), findsNothing);
+    expect(find.text('1 Today'), findsOneWidget);
   });
 
   testWidgets('filters recent bills when typing in search field',
