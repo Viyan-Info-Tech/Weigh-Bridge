@@ -420,12 +420,21 @@ class _BillPageState extends State<BillPage> {
               vehicleTypeId: vehicleTypeId,
             ));
           },
-          onAddVehicleType: (name, emptyPrice, loadPrice) {
-            context.read<BillBloc>().add(VehicleTypeQuickAddRequested(
+          onAddVehicleType: (name, emptyPrice, loadPrice) async {
+            final bloc = context.read<BillBloc>();
+            final repo = bloc.vehicleTypeRepository;
+            final duplicate = await repo.searchVehicleTypes(name);
+            if (duplicate.any((vt) => vt.name.toLowerCase() == name.toLowerCase())) {
+              return null;
+            }
+            final newId = await repo.createVehicleType(
               name: name,
               emptyPrice: emptyPrice,
               loadPrice: loadPrice,
-            ));
+            );
+            final created = await repo.getVehicleTypeById(newId);
+            bloc.add(const LoadBillScreen());
+            return created;
           },
         );
       },

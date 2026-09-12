@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../../../vehicle_type/domain/entities/vehicle_type.dart';
+
 class QuickAddVehicleTypeDialog extends StatefulWidget {
-  final void Function(String name, double emptyPrice, double loadPrice) onSave;
+  final Future<VehicleType?> Function(String name, double emptyPrice, double loadPrice) onSave;
 
   const QuickAddVehicleTypeDialog({super.key, required this.onSave});
 
-  static Future<void> show(BuildContext context, {required void Function(String name, double emptyPrice, double loadPrice) onSave}) {
-    return showDialog(
+  static Future<VehicleType?> show(BuildContext context, {required Future<VehicleType?> Function(String name, double emptyPrice, double loadPrice) onSave}) {
+    return showDialog<VehicleType?>(
       context: context,
       builder: (_) => QuickAddVehicleTypeDialog(onSave: onSave),
     );
@@ -30,12 +32,14 @@ class _QuickAddVehicleTypeDialogState extends State<QuickAddVehicleTypeDialog> {
     super.dispose();
   }
 
-  void _onSave() {
+  void _onSave() async {
     if (_formKey.currentState!.validate()) {
       final emptyPrice = double.tryParse(_emptyPriceController.text) ?? 0;
       final loadPrice = double.tryParse(_loadPriceController.text) ?? 0;
-      widget.onSave(_nameController.text.trim(), emptyPrice, loadPrice);
-      Navigator.of(context).pop();
+      final createdType = await widget.onSave(_nameController.text.trim(), emptyPrice, loadPrice);
+      if (mounted) {
+        Navigator.of(context).pop(createdType);
+      }
     }
   }
 

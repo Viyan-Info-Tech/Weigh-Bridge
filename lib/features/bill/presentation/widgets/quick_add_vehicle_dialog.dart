@@ -7,7 +7,7 @@ import 'quick_add_vehicle_type_dialog.dart';
 class QuickAddVehicleDialog extends StatefulWidget {
   final List<VehicleType> vehicleTypes;
   final void Function(String vehicleNumber, int vehicleTypeId) onSave;
-  final void Function(String name, double emptyPrice, double loadPrice) onAddVehicleType;
+  final Future<VehicleType?> Function(String name, double emptyPrice, double loadPrice) onAddVehicleType;
 
   const QuickAddVehicleDialog({
     super.key,
@@ -20,7 +20,7 @@ class QuickAddVehicleDialog extends StatefulWidget {
     required BuildContext context,
     required List<VehicleType> vehicleTypes,
     required void Function(String vehicleNumber, int vehicleTypeId) onSave,
-    required void Function(String name, double emptyPrice, double loadPrice) onAddVehicleType,
+    required Future<VehicleType?> Function(String name, double emptyPrice, double loadPrice) onAddVehicleType,
   }) {
     return showDialog(
       context: context,
@@ -41,6 +41,21 @@ class _QuickAddVehicleDialogState extends State<QuickAddVehicleDialog> {
   final _numberController = TextEditingController();
   VehicleType? _selectedType;
   final GlobalKey _typeDropdownKey = GlobalKey();
+  late List<VehicleType> _localVehicleTypes;
+
+  @override
+  void initState() {
+    super.initState();
+    _localVehicleTypes = List.of(widget.vehicleTypes);
+  }
+
+  @override
+  void didUpdateWidget(covariant QuickAddVehicleDialog oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.vehicleTypes != widget.vehicleTypes) {
+      _localVehicleTypes = List.of(widget.vehicleTypes);
+    }
+  }
 
   @override
   void dispose() {
@@ -63,7 +78,7 @@ class _QuickAddVehicleDialogState extends State<QuickAddVehicleDialog> {
 
     final items = <PopupMenuEntry<String>>[];
 
-    for (final vt in widget.vehicleTypes) {
+    for (final vt in _localVehicleTypes) {
       items.add(PopupMenuItem<String>(
         value: 'type_${vt.id}',
         height: 36,
@@ -129,16 +144,22 @@ class _QuickAddVehicleDialogState extends State<QuickAddVehicleDialog> {
 
     if (result == '__add_type__') {
       if (mounted) {
-        QuickAddVehicleTypeDialog.show(
+        final createdType = await QuickAddVehicleTypeDialog.show(
           context,
-          onSave: (name, emptyPrice, loadPrice) {
-            widget.onAddVehicleType(name, emptyPrice, loadPrice);
+          onSave: (name, emptyPrice, loadPrice) async {
+            return widget.onAddVehicleType(name, emptyPrice, loadPrice);
           },
         );
+        if (createdType != null && mounted) {
+          setState(() {
+            _localVehicleTypes.add(createdType);
+            _selectedType = createdType;
+          });
+        }
       }
     } else if (result != null && result.startsWith('type_')) {
       final id = int.parse(result.substring(5));
-      final vt = widget.vehicleTypes.firstWhere((v) => v.id == id);
+      final vt = _localVehicleTypes.firstWhere((v) => v.id == id);
       setState(() => _selectedType = vt);
     }
   }

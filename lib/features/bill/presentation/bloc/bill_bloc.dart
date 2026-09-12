@@ -17,6 +17,8 @@ class BillBloc extends Bloc<BillEvent, BillState> {
   final PartyRepository _partyRepository;
   final VehicleRepository _vehicleRepository;
   final VehicleTypeRepository _vehicleTypeRepository;
+
+  VehicleTypeRepository get vehicleTypeRepository => _vehicleTypeRepository;
   final MaterialItemRepository _materialRepository;
   final SaveBillUseCase _saveBillUseCase;
   final LoadRecentBillsUseCase _loadRecentBillsUseCase;
