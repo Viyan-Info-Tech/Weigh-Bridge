@@ -15,11 +15,18 @@ import 'bill_state.dart';
 
 class BillBloc extends Bloc<BillEvent, BillState> {
   final PartyRepository _partyRepository;
+
+  PartyRepository get partyRepository => _partyRepository;
+
   final VehicleRepository _vehicleRepository;
   final VehicleTypeRepository _vehicleTypeRepository;
 
   VehicleTypeRepository get vehicleTypeRepository => _vehicleTypeRepository;
+
   final MaterialItemRepository _materialRepository;
+
+  MaterialItemRepository get materialRepository => _materialRepository;
+
   final SaveBillUseCase _saveBillUseCase;
   final LoadRecentBillsUseCase _loadRecentBillsUseCase;
   final LoadPendingBillsUseCase _loadPendingBillsUseCase;
@@ -63,6 +70,9 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     on<VehicleQuickAddRequested>(_onVehicleQuickAdd);
     on<VehicleTypeQuickAddRequested>(_onVehicleTypeQuickAdd);
     on<MaterialQuickAddRequested>(_onMaterialQuickAdd);
+    on<MaterialCreatedToState>(_onMaterialCreatedToState);
+    on<PartyCreatedToState>(_onPartyCreatedToState);
+    on<VehicleTypeCreatedToState>(_onVehicleTypeCreatedToState);
   }
 
   Future<void> _onLoadBillScreen(LoadBillScreen event, Emitter<BillState> emit) async {
@@ -545,6 +555,42 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     }
   }
 
+  Future<MaterialItem> createMaterial(String name) async {
+    final existing = await _materialRepository.searchMaterials(name);
+    if (existing.any((m) => m.name.toLowerCase() == name.toLowerCase())) {
+      throw Exception('Material with this name already exists');
+    }
+    final newId = await _materialRepository.createMaterial(name: name, category: '');
+    final refreshed = await _materialRepository.getMaterialsByStatus(isActive: true);
+    final created = refreshed.firstWhere((m) => m.id == newId);
+    add(MaterialCreatedToState(materials: refreshed, selected: created));
+    return created;
+  }
+
+  Future<Party> createParty(String name, String contactPerson) async {
+    final existing = await _partyRepository.searchParties(name);
+    if (existing.any((p) => p.name.toLowerCase() == name.toLowerCase())) {
+      throw Exception('Party with this name already exists');
+    }
+    final newId = await _partyRepository.createParty(name: name, contactPerson: contactPerson);
+    final refreshed = await _partyRepository.getAllActiveParties();
+    final created = refreshed.firstWhere((p) => p.id == newId);
+    add(PartyCreatedToState(parties: refreshed, selected: created));
+    return created;
+  }
+
+  Future<VehicleType> createVehicleType(String name, double emptyPrice, double loadPrice) async {
+    final existing = await _vehicleTypeRepository.getVehicleTypesByStatus(isActive: true);
+    if (existing.any((vt) => vt.name.toLowerCase() == name.toLowerCase())) {
+      throw Exception('Vehicle type with this name already exists');
+    }
+    final newId = await _vehicleTypeRepository.createVehicleType(name: name, emptyPrice: emptyPrice, loadPrice: loadPrice);
+    final refreshed = await _vehicleTypeRepository.getVehicleTypesByStatus(isActive: true);
+    final created = refreshed.firstWhere((vt) => vt.id == newId);
+    add(VehicleTypeCreatedToState(vehicleTypes: refreshed, selected: created));
+    return created;
+  }
+
   Future<void> _onMaterialQuickAdd(MaterialQuickAddRequested event, Emitter<BillState> emit) async {
     try {
       final materials = await _materialRepository.getMaterialsByStatus(isActive: true);
@@ -570,5 +616,29 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     } catch (e) {
       emit(state.copyWith(errorMessage: 'Failed to create material: ${e.toString()}'));
     }
+  }
+
+  void _onMaterialCreatedToState(MaterialCreatedToState event, Emitter<BillState> emit) {
+    emit(state.copyWith(
+      materials: event.materials,
+      selectedMaterial: event.selected,
+      clearError: true,
+    ));
+  }
+
+  void _onPartyCreatedToState(PartyCreatedToState event, Emitter<BillState> emit) {
+    emit(state.copyWith(
+      parties: event.parties,
+      selectedParty: event.selected,
+      clearError: true,
+    ));
+  }
+
+  void _onVehicleTypeCreatedToState(VehicleTypeCreatedToState event, Emitter<BillState> emit) {
+    emit(state.copyWith(
+      vehicleTypes: event.vehicleTypes,
+      selectedVehicleType: event.selected,
+      clearError: true,
+    ));
   }
 }

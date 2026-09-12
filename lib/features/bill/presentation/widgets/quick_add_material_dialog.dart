@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../../../material/domain/entities/material_item.dart';
+
 class QuickAddMaterialDialog extends StatefulWidget {
-  final void Function(String name) onSave;
+  final Future<MaterialItem?> Function(String name) onSave;
 
   const QuickAddMaterialDialog({super.key, required this.onSave});
 
-  static Future<void> show(BuildContext context, {required void Function(String name) onSave}) {
-    return showDialog(
+  static Future<MaterialItem?> show(BuildContext context, {required Future<MaterialItem?> Function(String name) onSave}) {
+    return showDialog<MaterialItem?>(
       context: context,
       builder: (context) => QuickAddMaterialDialog(onSave: onSave),
     );
@@ -26,10 +28,12 @@ class _QuickAddMaterialDialogState extends State<QuickAddMaterialDialog> {
     super.dispose();
   }
 
-  void _save() {
+  void _save() async {
     if (_formKey.currentState!.validate()) {
-      widget.onSave(_nameController.text.trim());
-      Navigator.of(context).pop();
+      final created = await widget.onSave(_nameController.text.trim());
+      if (mounted) {
+        Navigator.of(context).pop(created);
+      }
     }
   }
 

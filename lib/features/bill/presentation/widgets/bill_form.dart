@@ -37,9 +37,9 @@ class BillForm extends StatefulWidget {
   final ValueChanged<String> onPaymentModeChanged;
   final ValueChanged<String> onVehicleChargeChanged;
   final VoidCallback onResetVehicleCharge;
-  final VoidCallback? onAddParty;
+  final Future<void> Function()? onAddParty;
   final VoidCallback? onAddVehicle;
-  final VoidCallback? onAddMaterial;
+  final Future<void> Function()? onAddMaterial;
 
   const BillForm({
     super.key,

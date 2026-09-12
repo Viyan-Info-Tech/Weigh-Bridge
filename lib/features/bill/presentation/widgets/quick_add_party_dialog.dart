@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 
+import '../../../party/domain/entities/party.dart';
+
 class QuickAddPartyDialog extends StatefulWidget {
-  final void Function(String name, String? contactPerson) onSave;
+  final Future<Party?> Function(String name, String? contactPerson) onSave;
 
   const QuickAddPartyDialog({super.key, required this.onSave});
 
-  static Future<void> show(BuildContext context, {required void Function(String name, String? contactPerson) onSave}) {
-    return showDialog(
+  static Future<Party?> show(BuildContext context, {required Future<Party?> Function(String name, String? contactPerson) onSave}) {
+    return showDialog<Party?>(
       context: context,
       builder: (_) => QuickAddPartyDialog(onSave: onSave),
     );
@@ -28,13 +30,15 @@ class _QuickAddPartyDialogState extends State<QuickAddPartyDialog> {
     super.dispose();
   }
 
-  void _onSave() {
+  void _onSave() async {
     if (_formKey.currentState!.validate()) {
-      widget.onSave(
+      final created = await widget.onSave(
         _nameController.text.trim(),
         _contactController.text.trim().isEmpty ? null : _contactController.text.trim(),
       );
-      Navigator.of(context).pop();
+      if (mounted) {
+        Navigator.of(context).pop(created);
+      }
     }
   }
 

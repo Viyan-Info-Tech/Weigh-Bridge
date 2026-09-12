@@ -398,16 +398,17 @@ class _BillPageState extends State<BillPage> {
           context.read<BillBloc>().add(VehicleChargeChanged(v)),
       onResetVehicleCharge: () =>
           context.read<BillBloc>().add(const ResetVehicleCharge()),
-      onAddParty: () {
-        QuickAddPartyDialog.show(
+      onAddParty: () async {
+        final bloc = context.read<BillBloc>();
+        final created = await QuickAddPartyDialog.show(
           context,
-          onSave: (name, contactPerson) {
-            context.read<BillBloc>().add(PartyQuickAddRequested(
-              name: name,
-              contactPerson: contactPerson,
-            ));
+          onSave: (name, contactPerson) async {
+            return bloc.createParty(name, contactPerson ?? '');
           },
         );
+        if (created != null && mounted) {
+          bloc.add(PartySelected(created));
+        }
       },
       onAddVehicle: () {
         final state = context.read<BillBloc>().state;
@@ -422,29 +423,21 @@ class _BillPageState extends State<BillPage> {
           },
           onAddVehicleType: (name, emptyPrice, loadPrice) async {
             final bloc = context.read<BillBloc>();
-            final repo = bloc.vehicleTypeRepository;
-            final duplicate = await repo.searchVehicleTypes(name);
-            if (duplicate.any((vt) => vt.name.toLowerCase() == name.toLowerCase())) {
-              return null;
-            }
-            final newId = await repo.createVehicleType(
-              name: name,
-              emptyPrice: emptyPrice,
-              loadPrice: loadPrice,
-            );
-            final created = await repo.getVehicleTypeById(newId);
-            bloc.add(const LoadBillScreen());
-            return created;
+            return bloc.createVehicleType(name, emptyPrice, loadPrice);
           },
         );
       },
-      onAddMaterial: () {
-        QuickAddMaterialDialog.show(
+      onAddMaterial: () async {
+        final bloc = context.read<BillBloc>();
+        final created = await QuickAddMaterialDialog.show(
           context,
-          onSave: (name) {
-            context.read<BillBloc>().add(MaterialQuickAddRequested(name: name));
+          onSave: (name) async {
+            return bloc.createMaterial(name);
           },
         );
+        if (created != null && mounted) {
+          bloc.add(MaterialSelected(created));
+        }
       },
     );
   }

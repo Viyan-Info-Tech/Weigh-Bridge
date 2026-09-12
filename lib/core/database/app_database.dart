@@ -43,7 +43,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -226,6 +226,32 @@ class AppDatabase extends _$AppDatabase {
             );
             await customStatement('DROP TABLE materials');
             await customStatement('ALTER TABLE materials_new RENAME TO materials');
+          }
+
+          if (from < 10) {
+            final hasCreatedAtDefault = await customSelect(
+              "SELECT name FROM pragma_table_info('materials') WHERE name='created_at'",
+            ).getSingleOrNull();
+            if (hasCreatedAtDefault != null) {
+              await customStatement('''
+                CREATE TABLE materials_new (
+                  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                  name TEXT NOT NULL,
+                  category TEXT,
+                  is_active INTEGER NOT NULL DEFAULT 1,
+                  created_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000),
+                  updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
+                )
+              ''');
+              await customStatement(
+                "INSERT INTO materials_new (id, name, category, is_active, created_at, updated_at) "
+                "SELECT id, name, category, is_active, "
+                "COALESCE(created_at, strftime('%s','now') * 1000), "
+                "COALESCE(updated_at, strftime('%s','now') * 1000) FROM materials",
+              );
+              await customStatement('DROP TABLE materials');
+              await customStatement('ALTER TABLE materials_new RENAME TO materials');
+            }
           }
         },
       );

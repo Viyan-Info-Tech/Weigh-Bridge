@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../../../party/domain/entities/party.dart';
 import '../../../vehicle/domain/entities/vehicle.dart';
+import '../../../vehicle_type/domain/entities/vehicle_type.dart';
 import '../../../material/domain/entities/material_item.dart';
 
 abstract class BillEvent extends Equatable {
@@ -151,4 +152,31 @@ class MaterialQuickAddRequested extends BillEvent {
 
   @override
   List<Object?> get props => [name];
+}
+
+class MaterialCreatedToState extends BillEvent {
+  final List<MaterialItem> materials;
+  final MaterialItem selected;
+  const MaterialCreatedToState({required this.materials, required this.selected});
+
+  @override
+  List<Object?> get props => [materials, selected];
+}
+
+class PartyCreatedToState extends BillEvent {
+  final List<Party> parties;
+  final Party selected;
+  const PartyCreatedToState({required this.parties, required this.selected});
+
+  @override
+  List<Object?> get props => [parties, selected];
+}
+
+class VehicleTypeCreatedToState extends BillEvent {
+  final List<VehicleType> vehicleTypes;
+  final VehicleType selected;
+  const VehicleTypeCreatedToState({required this.vehicleTypes, required this.selected});
+
+  @override
+  List<Object?> get props => [vehicleTypes, selected];
 }
