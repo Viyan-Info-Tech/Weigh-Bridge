@@ -38,6 +38,7 @@ class _WeighbridgeAppState extends State<WeighbridgeApp> {
         BlocProvider.value(value: widget.injection.vehicleBloc),
         BlocProvider.value(value: widget.injection.vehicleTypeBloc),
         BlocProvider.value(value: widget.injection.materialBloc),
+        BlocProvider.value(value: widget.injection.settingsBloc),
       ],
       child: MaterialApp.router(
         title: 'Viyan Weighbridge',

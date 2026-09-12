@@ -3460,6 +3460,1772 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
   }
 }
 
+class $AppSettingsTable extends AppSettings
+    with TableInfo<$AppSettingsTable, AppSetting> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AppSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _weightUnitMeta = const VerificationMeta(
+    'weightUnit',
+  );
+  @override
+  late final GeneratedColumn<String> weightUnit = GeneratedColumn<String>(
+    'weight_unit',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('ton'),
+  );
+  static const VerificationMeta _billPrefixMeta = const VerificationMeta(
+    'billPrefix',
+  );
+  @override
+  late final GeneratedColumn<String> billPrefix = GeneratedColumn<String>(
+    'bill_prefix',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('WB'),
+  );
+  static const VerificationMeta _billStartingNumberMeta =
+      const VerificationMeta('billStartingNumber');
+  @override
+  late final GeneratedColumn<int> billStartingNumber = GeneratedColumn<int>(
+    'bill_starting_number',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _billNumberDigitsMeta = const VerificationMeta(
+    'billNumberDigits',
+  );
+  @override
+  late final GeneratedColumn<int> billNumberDigits = GeneratedColumn<int>(
+    'bill_number_digits',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(5),
+  );
+  static const VerificationMeta _businessNameMeta = const VerificationMeta(
+    'businessName',
+  );
+  @override
+  late final GeneratedColumn<String> businessName = GeneratedColumn<String>(
+    'business_name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('VIYAN WEIGHBRIDGE'),
+  );
+  static const VerificationMeta _businessSubtitleMeta = const VerificationMeta(
+    'businessSubtitle',
+  );
+  @override
+  late final GeneratedColumn<String> businessSubtitle = GeneratedColumn<String>(
+    'business_subtitle',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _serviceTextMeta = const VerificationMeta(
+    'serviceText',
+  );
+  @override
+  late final GeneratedColumn<String> serviceText = GeneratedColumn<String>(
+    'service_text',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _addressMeta = const VerificationMeta(
+    'address',
+  );
+  @override
+  late final GeneratedColumn<String> address = GeneratedColumn<String>(
+    'address',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _phoneNumberMeta = const VerificationMeta(
+    'phoneNumber',
+  );
+  @override
+  late final GeneratedColumn<String> phoneNumber = GeneratedColumn<String>(
+    'phone_number',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _emailMeta = const VerificationMeta('email');
+  @override
+  late final GeneratedColumn<String> email = GeneratedColumn<String>(
+    'email',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _gstinMeta = const VerificationMeta('gstin');
+  @override
+  late final GeneratedColumn<String> gstin = GeneratedColumn<String>(
+    'gstin',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _logoPathMeta = const VerificationMeta(
+    'logoPath',
+  );
+  @override
+  late final GeneratedColumn<String> logoPath = GeneratedColumn<String>(
+    'logo_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _receiptTitleMeta = const VerificationMeta(
+    'receiptTitle',
+  );
+  @override
+  late final GeneratedColumn<String> receiptTitle = GeneratedColumn<String>(
+    'receipt_title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('WEIGHMENT RECEIPT'),
+  );
+  static const VerificationMeta _showSerialNumberMeta = const VerificationMeta(
+    'showSerialNumber',
+  );
+  @override
+  late final GeneratedColumn<bool> showSerialNumber = GeneratedColumn<bool>(
+    'show_serial_number',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_serial_number" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _showDateMeta = const VerificationMeta(
+    'showDate',
+  );
+  @override
+  late final GeneratedColumn<bool> showDate = GeneratedColumn<bool>(
+    'show_date',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_date" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _showTimeMeta = const VerificationMeta(
+    'showTime',
+  );
+  @override
+  late final GeneratedColumn<bool> showTime = GeneratedColumn<bool>(
+    'show_time',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_time" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _showVehicleNumberMeta = const VerificationMeta(
+    'showVehicleNumber',
+  );
+  @override
+  late final GeneratedColumn<bool> showVehicleNumber = GeneratedColumn<bool>(
+    'show_vehicle_number',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_vehicle_number" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _showMaterialMeta = const VerificationMeta(
+    'showMaterial',
+  );
+  @override
+  late final GeneratedColumn<bool> showMaterial = GeneratedColumn<bool>(
+    'show_material',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_material" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _showPartyMeta = const VerificationMeta(
+    'showParty',
+  );
+  @override
+  late final GeneratedColumn<bool> showParty = GeneratedColumn<bool>(
+    'show_party',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_party" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _showVehicleTypeMeta = const VerificationMeta(
+    'showVehicleType',
+  );
+  @override
+  late final GeneratedColumn<bool> showVehicleType = GeneratedColumn<bool>(
+    'show_vehicle_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_vehicle_type" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _showGrossWeightMeta = const VerificationMeta(
+    'showGrossWeight',
+  );
+  @override
+  late final GeneratedColumn<bool> showGrossWeight = GeneratedColumn<bool>(
+    'show_gross_weight',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_gross_weight" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _showTareWeightMeta = const VerificationMeta(
+    'showTareWeight',
+  );
+  @override
+  late final GeneratedColumn<bool> showTareWeight = GeneratedColumn<bool>(
+    'show_tare_weight',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_tare_weight" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _showNetWeightMeta = const VerificationMeta(
+    'showNetWeight',
+  );
+  @override
+  late final GeneratedColumn<bool> showNetWeight = GeneratedColumn<bool>(
+    'show_net_weight',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_net_weight" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _showAmountMeta = const VerificationMeta(
+    'showAmount',
+  );
+  @override
+  late final GeneratedColumn<bool> showAmount = GeneratedColumn<bool>(
+    'show_amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_amount" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _showPaymentModeMeta = const VerificationMeta(
+    'showPaymentMode',
+  );
+  @override
+  late final GeneratedColumn<bool> showPaymentMode = GeneratedColumn<bool>(
+    'show_payment_mode',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_payment_mode" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _showCashReceivedMeta = const VerificationMeta(
+    'showCashReceived',
+  );
+  @override
+  late final GeneratedColumn<bool> showCashReceived = GeneratedColumn<bool>(
+    'show_cash_received',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_cash_received" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _showPendingAmountMeta = const VerificationMeta(
+    'showPendingAmount',
+  );
+  @override
+  late final GeneratedColumn<bool> showPendingAmount = GeneratedColumn<bool>(
+    'show_pending_amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_pending_amount" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _showRemarksMeta = const VerificationMeta(
+    'showRemarks',
+  );
+  @override
+  late final GeneratedColumn<bool> showRemarks = GeneratedColumn<bool>(
+    'show_remarks',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_remarks" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _showFooterNoteMeta = const VerificationMeta(
+    'showFooterNote',
+  );
+  @override
+  late final GeneratedColumn<bool> showFooterNote = GeneratedColumn<bool>(
+    'show_footer_note',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("show_footer_note" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _footerNoteMeta = const VerificationMeta(
+    'footerNote',
+  );
+  @override
+  late final GeneratedColumn<String> footerNote = GeneratedColumn<String>(
+    'footer_note',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    weightUnit,
+    billPrefix,
+    billStartingNumber,
+    billNumberDigits,
+    businessName,
+    businessSubtitle,
+    serviceText,
+    address,
+    phoneNumber,
+    email,
+    gstin,
+    logoPath,
+    receiptTitle,
+    showSerialNumber,
+    showDate,
+    showTime,
+    showVehicleNumber,
+    showMaterial,
+    showParty,
+    showVehicleType,
+    showGrossWeight,
+    showTareWeight,
+    showNetWeight,
+    showAmount,
+    showPaymentMode,
+    showCashReceived,
+    showPendingAmount,
+    showRemarks,
+    showFooterNote,
+    footerNote,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'app_settings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AppSetting> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('weight_unit')) {
+      context.handle(
+        _weightUnitMeta,
+        weightUnit.isAcceptableOrUnknown(data['weight_unit']!, _weightUnitMeta),
+      );
+    }
+    if (data.containsKey('bill_prefix')) {
+      context.handle(
+        _billPrefixMeta,
+        billPrefix.isAcceptableOrUnknown(data['bill_prefix']!, _billPrefixMeta),
+      );
+    }
+    if (data.containsKey('bill_starting_number')) {
+      context.handle(
+        _billStartingNumberMeta,
+        billStartingNumber.isAcceptableOrUnknown(
+          data['bill_starting_number']!,
+          _billStartingNumberMeta,
+        ),
+      );
+    }
+    if (data.containsKey('bill_number_digits')) {
+      context.handle(
+        _billNumberDigitsMeta,
+        billNumberDigits.isAcceptableOrUnknown(
+          data['bill_number_digits']!,
+          _billNumberDigitsMeta,
+        ),
+      );
+    }
+    if (data.containsKey('business_name')) {
+      context.handle(
+        _businessNameMeta,
+        businessName.isAcceptableOrUnknown(
+          data['business_name']!,
+          _businessNameMeta,
+        ),
+      );
+    }
+    if (data.containsKey('business_subtitle')) {
+      context.handle(
+        _businessSubtitleMeta,
+        businessSubtitle.isAcceptableOrUnknown(
+          data['business_subtitle']!,
+          _businessSubtitleMeta,
+        ),
+      );
+    }
+    if (data.containsKey('service_text')) {
+      context.handle(
+        _serviceTextMeta,
+        serviceText.isAcceptableOrUnknown(
+          data['service_text']!,
+          _serviceTextMeta,
+        ),
+      );
+    }
+    if (data.containsKey('address')) {
+      context.handle(
+        _addressMeta,
+        address.isAcceptableOrUnknown(data['address']!, _addressMeta),
+      );
+    }
+    if (data.containsKey('phone_number')) {
+      context.handle(
+        _phoneNumberMeta,
+        phoneNumber.isAcceptableOrUnknown(
+          data['phone_number']!,
+          _phoneNumberMeta,
+        ),
+      );
+    }
+    if (data.containsKey('email')) {
+      context.handle(
+        _emailMeta,
+        email.isAcceptableOrUnknown(data['email']!, _emailMeta),
+      );
+    }
+    if (data.containsKey('gstin')) {
+      context.handle(
+        _gstinMeta,
+        gstin.isAcceptableOrUnknown(data['gstin']!, _gstinMeta),
+      );
+    }
+    if (data.containsKey('logo_path')) {
+      context.handle(
+        _logoPathMeta,
+        logoPath.isAcceptableOrUnknown(data['logo_path']!, _logoPathMeta),
+      );
+    }
+    if (data.containsKey('receipt_title')) {
+      context.handle(
+        _receiptTitleMeta,
+        receiptTitle.isAcceptableOrUnknown(
+          data['receipt_title']!,
+          _receiptTitleMeta,
+        ),
+      );
+    }
+    if (data.containsKey('show_serial_number')) {
+      context.handle(
+        _showSerialNumberMeta,
+        showSerialNumber.isAcceptableOrUnknown(
+          data['show_serial_number']!,
+          _showSerialNumberMeta,
+        ),
+      );
+    }
+    if (data.containsKey('show_date')) {
+      context.handle(
+        _showDateMeta,
+        showDate.isAcceptableOrUnknown(data['show_date']!, _showDateMeta),
+      );
+    }
+    if (data.containsKey('show_time')) {
+      context.handle(
+        _showTimeMeta,
+        showTime.isAcceptableOrUnknown(data['show_time']!, _showTimeMeta),
+      );
+    }
+    if (data.containsKey('show_vehicle_number')) {
+      context.handle(
+        _showVehicleNumberMeta,
+        showVehicleNumber.isAcceptableOrUnknown(
+          data['show_vehicle_number']!,
+          _showVehicleNumberMeta,
+        ),
+      );
+    }
+    if (data.containsKey('show_material')) {
+      context.handle(
+        _showMaterialMeta,
+        showMaterial.isAcceptableOrUnknown(
+          data['show_material']!,
+          _showMaterialMeta,
+        ),
+      );
+    }
+    if (data.containsKey('show_party')) {
+      context.handle(
+        _showPartyMeta,
+        showParty.isAcceptableOrUnknown(data['show_party']!, _showPartyMeta),
+      );
+    }
+    if (data.containsKey('show_vehicle_type')) {
+      context.handle(
+        _showVehicleTypeMeta,
+        showVehicleType.isAcceptableOrUnknown(
+          data['show_vehicle_type']!,
+          _showVehicleTypeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('show_gross_weight')) {
+      context.handle(
+        _showGrossWeightMeta,
+        showGrossWeight.isAcceptableOrUnknown(
+          data['show_gross_weight']!,
+          _showGrossWeightMeta,
+        ),
+      );
+    }
+    if (data.containsKey('show_tare_weight')) {
+      context.handle(
+        _showTareWeightMeta,
+        showTareWeight.isAcceptableOrUnknown(
+          data['show_tare_weight']!,
+          _showTareWeightMeta,
+        ),
+      );
+    }
+    if (data.containsKey('show_net_weight')) {
+      context.handle(
+        _showNetWeightMeta,
+        showNetWeight.isAcceptableOrUnknown(
+          data['show_net_weight']!,
+          _showNetWeightMeta,
+        ),
+      );
+    }
+    if (data.containsKey('show_amount')) {
+      context.handle(
+        _showAmountMeta,
+        showAmount.isAcceptableOrUnknown(data['show_amount']!, _showAmountMeta),
+      );
+    }
+    if (data.containsKey('show_payment_mode')) {
+      context.handle(
+        _showPaymentModeMeta,
+        showPaymentMode.isAcceptableOrUnknown(
+          data['show_payment_mode']!,
+          _showPaymentModeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('show_cash_received')) {
+      context.handle(
+        _showCashReceivedMeta,
+        showCashReceived.isAcceptableOrUnknown(
+          data['show_cash_received']!,
+          _showCashReceivedMeta,
+        ),
+      );
+    }
+    if (data.containsKey('show_pending_amount')) {
+      context.handle(
+        _showPendingAmountMeta,
+        showPendingAmount.isAcceptableOrUnknown(
+          data['show_pending_amount']!,
+          _showPendingAmountMeta,
+        ),
+      );
+    }
+    if (data.containsKey('show_remarks')) {
+      context.handle(
+        _showRemarksMeta,
+        showRemarks.isAcceptableOrUnknown(
+          data['show_remarks']!,
+          _showRemarksMeta,
+        ),
+      );
+    }
+    if (data.containsKey('show_footer_note')) {
+      context.handle(
+        _showFooterNoteMeta,
+        showFooterNote.isAcceptableOrUnknown(
+          data['show_footer_note']!,
+          _showFooterNoteMeta,
+        ),
+      );
+    }
+    if (data.containsKey('footer_note')) {
+      context.handle(
+        _footerNoteMeta,
+        footerNote.isAcceptableOrUnknown(data['footer_note']!, _footerNoteMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AppSetting map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AppSetting(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      weightUnit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}weight_unit'],
+      )!,
+      billPrefix: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}bill_prefix'],
+      )!,
+      billStartingNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}bill_starting_number'],
+      )!,
+      billNumberDigits: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}bill_number_digits'],
+      )!,
+      businessName: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}business_name'],
+      )!,
+      businessSubtitle: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}business_subtitle'],
+      ),
+      serviceText: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}service_text'],
+      ),
+      address: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}address'],
+      ),
+      phoneNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}phone_number'],
+      ),
+      email: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}email'],
+      ),
+      gstin: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}gstin'],
+      ),
+      logoPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}logo_path'],
+      ),
+      receiptTitle: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}receipt_title'],
+      )!,
+      showSerialNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_serial_number'],
+      )!,
+      showDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_date'],
+      )!,
+      showTime: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_time'],
+      )!,
+      showVehicleNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_vehicle_number'],
+      )!,
+      showMaterial: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_material'],
+      )!,
+      showParty: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_party'],
+      )!,
+      showVehicleType: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_vehicle_type'],
+      )!,
+      showGrossWeight: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_gross_weight'],
+      )!,
+      showTareWeight: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_tare_weight'],
+      )!,
+      showNetWeight: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_net_weight'],
+      )!,
+      showAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_amount'],
+      )!,
+      showPaymentMode: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_payment_mode'],
+      )!,
+      showCashReceived: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_cash_received'],
+      )!,
+      showPendingAmount: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_pending_amount'],
+      )!,
+      showRemarks: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_remarks'],
+      )!,
+      showFooterNote: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}show_footer_note'],
+      )!,
+      footerNote: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}footer_note'],
+      ),
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $AppSettingsTable createAlias(String alias) {
+    return $AppSettingsTable(attachedDatabase, alias);
+  }
+}
+
+class AppSetting extends DataClass implements Insertable<AppSetting> {
+  final int id;
+  final String weightUnit;
+  final String billPrefix;
+  final int billStartingNumber;
+  final int billNumberDigits;
+  final String businessName;
+  final String? businessSubtitle;
+  final String? serviceText;
+  final String? address;
+  final String? phoneNumber;
+  final String? email;
+  final String? gstin;
+  final String? logoPath;
+  final String receiptTitle;
+  final bool showSerialNumber;
+  final bool showDate;
+  final bool showTime;
+  final bool showVehicleNumber;
+  final bool showMaterial;
+  final bool showParty;
+  final bool showVehicleType;
+  final bool showGrossWeight;
+  final bool showTareWeight;
+  final bool showNetWeight;
+  final bool showAmount;
+  final bool showPaymentMode;
+  final bool showCashReceived;
+  final bool showPendingAmount;
+  final bool showRemarks;
+  final bool showFooterNote;
+  final String? footerNote;
+  final DateTime updatedAt;
+  const AppSetting({
+    required this.id,
+    required this.weightUnit,
+    required this.billPrefix,
+    required this.billStartingNumber,
+    required this.billNumberDigits,
+    required this.businessName,
+    this.businessSubtitle,
+    this.serviceText,
+    this.address,
+    this.phoneNumber,
+    this.email,
+    this.gstin,
+    this.logoPath,
+    required this.receiptTitle,
+    required this.showSerialNumber,
+    required this.showDate,
+    required this.showTime,
+    required this.showVehicleNumber,
+    required this.showMaterial,
+    required this.showParty,
+    required this.showVehicleType,
+    required this.showGrossWeight,
+    required this.showTareWeight,
+    required this.showNetWeight,
+    required this.showAmount,
+    required this.showPaymentMode,
+    required this.showCashReceived,
+    required this.showPendingAmount,
+    required this.showRemarks,
+    required this.showFooterNote,
+    this.footerNote,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['weight_unit'] = Variable<String>(weightUnit);
+    map['bill_prefix'] = Variable<String>(billPrefix);
+    map['bill_starting_number'] = Variable<int>(billStartingNumber);
+    map['bill_number_digits'] = Variable<int>(billNumberDigits);
+    map['business_name'] = Variable<String>(businessName);
+    if (!nullToAbsent || businessSubtitle != null) {
+      map['business_subtitle'] = Variable<String>(businessSubtitle);
+    }
+    if (!nullToAbsent || serviceText != null) {
+      map['service_text'] = Variable<String>(serviceText);
+    }
+    if (!nullToAbsent || address != null) {
+      map['address'] = Variable<String>(address);
+    }
+    if (!nullToAbsent || phoneNumber != null) {
+      map['phone_number'] = Variable<String>(phoneNumber);
+    }
+    if (!nullToAbsent || email != null) {
+      map['email'] = Variable<String>(email);
+    }
+    if (!nullToAbsent || gstin != null) {
+      map['gstin'] = Variable<String>(gstin);
+    }
+    if (!nullToAbsent || logoPath != null) {
+      map['logo_path'] = Variable<String>(logoPath);
+    }
+    map['receipt_title'] = Variable<String>(receiptTitle);
+    map['show_serial_number'] = Variable<bool>(showSerialNumber);
+    map['show_date'] = Variable<bool>(showDate);
+    map['show_time'] = Variable<bool>(showTime);
+    map['show_vehicle_number'] = Variable<bool>(showVehicleNumber);
+    map['show_material'] = Variable<bool>(showMaterial);
+    map['show_party'] = Variable<bool>(showParty);
+    map['show_vehicle_type'] = Variable<bool>(showVehicleType);
+    map['show_gross_weight'] = Variable<bool>(showGrossWeight);
+    map['show_tare_weight'] = Variable<bool>(showTareWeight);
+    map['show_net_weight'] = Variable<bool>(showNetWeight);
+    map['show_amount'] = Variable<bool>(showAmount);
+    map['show_payment_mode'] = Variable<bool>(showPaymentMode);
+    map['show_cash_received'] = Variable<bool>(showCashReceived);
+    map['show_pending_amount'] = Variable<bool>(showPendingAmount);
+    map['show_remarks'] = Variable<bool>(showRemarks);
+    map['show_footer_note'] = Variable<bool>(showFooterNote);
+    if (!nullToAbsent || footerNote != null) {
+      map['footer_note'] = Variable<String>(footerNote);
+    }
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  AppSettingsCompanion toCompanion(bool nullToAbsent) {
+    return AppSettingsCompanion(
+      id: Value(id),
+      weightUnit: Value(weightUnit),
+      billPrefix: Value(billPrefix),
+      billStartingNumber: Value(billStartingNumber),
+      billNumberDigits: Value(billNumberDigits),
+      businessName: Value(businessName),
+      businessSubtitle: businessSubtitle == null && nullToAbsent
+          ? const Value.absent()
+          : Value(businessSubtitle),
+      serviceText: serviceText == null && nullToAbsent
+          ? const Value.absent()
+          : Value(serviceText),
+      address: address == null && nullToAbsent
+          ? const Value.absent()
+          : Value(address),
+      phoneNumber: phoneNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(phoneNumber),
+      email: email == null && nullToAbsent
+          ? const Value.absent()
+          : Value(email),
+      gstin: gstin == null && nullToAbsent
+          ? const Value.absent()
+          : Value(gstin),
+      logoPath: logoPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(logoPath),
+      receiptTitle: Value(receiptTitle),
+      showSerialNumber: Value(showSerialNumber),
+      showDate: Value(showDate),
+      showTime: Value(showTime),
+      showVehicleNumber: Value(showVehicleNumber),
+      showMaterial: Value(showMaterial),
+      showParty: Value(showParty),
+      showVehicleType: Value(showVehicleType),
+      showGrossWeight: Value(showGrossWeight),
+      showTareWeight: Value(showTareWeight),
+      showNetWeight: Value(showNetWeight),
+      showAmount: Value(showAmount),
+      showPaymentMode: Value(showPaymentMode),
+      showCashReceived: Value(showCashReceived),
+      showPendingAmount: Value(showPendingAmount),
+      showRemarks: Value(showRemarks),
+      showFooterNote: Value(showFooterNote),
+      footerNote: footerNote == null && nullToAbsent
+          ? const Value.absent()
+          : Value(footerNote),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory AppSetting.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AppSetting(
+      id: serializer.fromJson<int>(json['id']),
+      weightUnit: serializer.fromJson<String>(json['weightUnit']),
+      billPrefix: serializer.fromJson<String>(json['billPrefix']),
+      billStartingNumber: serializer.fromJson<int>(json['billStartingNumber']),
+      billNumberDigits: serializer.fromJson<int>(json['billNumberDigits']),
+      businessName: serializer.fromJson<String>(json['businessName']),
+      businessSubtitle: serializer.fromJson<String?>(json['businessSubtitle']),
+      serviceText: serializer.fromJson<String?>(json['serviceText']),
+      address: serializer.fromJson<String?>(json['address']),
+      phoneNumber: serializer.fromJson<String?>(json['phoneNumber']),
+      email: serializer.fromJson<String?>(json['email']),
+      gstin: serializer.fromJson<String?>(json['gstin']),
+      logoPath: serializer.fromJson<String?>(json['logoPath']),
+      receiptTitle: serializer.fromJson<String>(json['receiptTitle']),
+      showSerialNumber: serializer.fromJson<bool>(json['showSerialNumber']),
+      showDate: serializer.fromJson<bool>(json['showDate']),
+      showTime: serializer.fromJson<bool>(json['showTime']),
+      showVehicleNumber: serializer.fromJson<bool>(json['showVehicleNumber']),
+      showMaterial: serializer.fromJson<bool>(json['showMaterial']),
+      showParty: serializer.fromJson<bool>(json['showParty']),
+      showVehicleType: serializer.fromJson<bool>(json['showVehicleType']),
+      showGrossWeight: serializer.fromJson<bool>(json['showGrossWeight']),
+      showTareWeight: serializer.fromJson<bool>(json['showTareWeight']),
+      showNetWeight: serializer.fromJson<bool>(json['showNetWeight']),
+      showAmount: serializer.fromJson<bool>(json['showAmount']),
+      showPaymentMode: serializer.fromJson<bool>(json['showPaymentMode']),
+      showCashReceived: serializer.fromJson<bool>(json['showCashReceived']),
+      showPendingAmount: serializer.fromJson<bool>(json['showPendingAmount']),
+      showRemarks: serializer.fromJson<bool>(json['showRemarks']),
+      showFooterNote: serializer.fromJson<bool>(json['showFooterNote']),
+      footerNote: serializer.fromJson<String?>(json['footerNote']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'weightUnit': serializer.toJson<String>(weightUnit),
+      'billPrefix': serializer.toJson<String>(billPrefix),
+      'billStartingNumber': serializer.toJson<int>(billStartingNumber),
+      'billNumberDigits': serializer.toJson<int>(billNumberDigits),
+      'businessName': serializer.toJson<String>(businessName),
+      'businessSubtitle': serializer.toJson<String?>(businessSubtitle),
+      'serviceText': serializer.toJson<String?>(serviceText),
+      'address': serializer.toJson<String?>(address),
+      'phoneNumber': serializer.toJson<String?>(phoneNumber),
+      'email': serializer.toJson<String?>(email),
+      'gstin': serializer.toJson<String?>(gstin),
+      'logoPath': serializer.toJson<String?>(logoPath),
+      'receiptTitle': serializer.toJson<String>(receiptTitle),
+      'showSerialNumber': serializer.toJson<bool>(showSerialNumber),
+      'showDate': serializer.toJson<bool>(showDate),
+      'showTime': serializer.toJson<bool>(showTime),
+      'showVehicleNumber': serializer.toJson<bool>(showVehicleNumber),
+      'showMaterial': serializer.toJson<bool>(showMaterial),
+      'showParty': serializer.toJson<bool>(showParty),
+      'showVehicleType': serializer.toJson<bool>(showVehicleType),
+      'showGrossWeight': serializer.toJson<bool>(showGrossWeight),
+      'showTareWeight': serializer.toJson<bool>(showTareWeight),
+      'showNetWeight': serializer.toJson<bool>(showNetWeight),
+      'showAmount': serializer.toJson<bool>(showAmount),
+      'showPaymentMode': serializer.toJson<bool>(showPaymentMode),
+      'showCashReceived': serializer.toJson<bool>(showCashReceived),
+      'showPendingAmount': serializer.toJson<bool>(showPendingAmount),
+      'showRemarks': serializer.toJson<bool>(showRemarks),
+      'showFooterNote': serializer.toJson<bool>(showFooterNote),
+      'footerNote': serializer.toJson<String?>(footerNote),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  AppSetting copyWith({
+    int? id,
+    String? weightUnit,
+    String? billPrefix,
+    int? billStartingNumber,
+    int? billNumberDigits,
+    String? businessName,
+    Value<String?> businessSubtitle = const Value.absent(),
+    Value<String?> serviceText = const Value.absent(),
+    Value<String?> address = const Value.absent(),
+    Value<String?> phoneNumber = const Value.absent(),
+    Value<String?> email = const Value.absent(),
+    Value<String?> gstin = const Value.absent(),
+    Value<String?> logoPath = const Value.absent(),
+    String? receiptTitle,
+    bool? showSerialNumber,
+    bool? showDate,
+    bool? showTime,
+    bool? showVehicleNumber,
+    bool? showMaterial,
+    bool? showParty,
+    bool? showVehicleType,
+    bool? showGrossWeight,
+    bool? showTareWeight,
+    bool? showNetWeight,
+    bool? showAmount,
+    bool? showPaymentMode,
+    bool? showCashReceived,
+    bool? showPendingAmount,
+    bool? showRemarks,
+    bool? showFooterNote,
+    Value<String?> footerNote = const Value.absent(),
+    DateTime? updatedAt,
+  }) => AppSetting(
+    id: id ?? this.id,
+    weightUnit: weightUnit ?? this.weightUnit,
+    billPrefix: billPrefix ?? this.billPrefix,
+    billStartingNumber: billStartingNumber ?? this.billStartingNumber,
+    billNumberDigits: billNumberDigits ?? this.billNumberDigits,
+    businessName: businessName ?? this.businessName,
+    businessSubtitle: businessSubtitle.present
+        ? businessSubtitle.value
+        : this.businessSubtitle,
+    serviceText: serviceText.present ? serviceText.value : this.serviceText,
+    address: address.present ? address.value : this.address,
+    phoneNumber: phoneNumber.present ? phoneNumber.value : this.phoneNumber,
+    email: email.present ? email.value : this.email,
+    gstin: gstin.present ? gstin.value : this.gstin,
+    logoPath: logoPath.present ? logoPath.value : this.logoPath,
+    receiptTitle: receiptTitle ?? this.receiptTitle,
+    showSerialNumber: showSerialNumber ?? this.showSerialNumber,
+    showDate: showDate ?? this.showDate,
+    showTime: showTime ?? this.showTime,
+    showVehicleNumber: showVehicleNumber ?? this.showVehicleNumber,
+    showMaterial: showMaterial ?? this.showMaterial,
+    showParty: showParty ?? this.showParty,
+    showVehicleType: showVehicleType ?? this.showVehicleType,
+    showGrossWeight: showGrossWeight ?? this.showGrossWeight,
+    showTareWeight: showTareWeight ?? this.showTareWeight,
+    showNetWeight: showNetWeight ?? this.showNetWeight,
+    showAmount: showAmount ?? this.showAmount,
+    showPaymentMode: showPaymentMode ?? this.showPaymentMode,
+    showCashReceived: showCashReceived ?? this.showCashReceived,
+    showPendingAmount: showPendingAmount ?? this.showPendingAmount,
+    showRemarks: showRemarks ?? this.showRemarks,
+    showFooterNote: showFooterNote ?? this.showFooterNote,
+    footerNote: footerNote.present ? footerNote.value : this.footerNote,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  AppSetting copyWithCompanion(AppSettingsCompanion data) {
+    return AppSetting(
+      id: data.id.present ? data.id.value : this.id,
+      weightUnit: data.weightUnit.present
+          ? data.weightUnit.value
+          : this.weightUnit,
+      billPrefix: data.billPrefix.present
+          ? data.billPrefix.value
+          : this.billPrefix,
+      billStartingNumber: data.billStartingNumber.present
+          ? data.billStartingNumber.value
+          : this.billStartingNumber,
+      billNumberDigits: data.billNumberDigits.present
+          ? data.billNumberDigits.value
+          : this.billNumberDigits,
+      businessName: data.businessName.present
+          ? data.businessName.value
+          : this.businessName,
+      businessSubtitle: data.businessSubtitle.present
+          ? data.businessSubtitle.value
+          : this.businessSubtitle,
+      serviceText: data.serviceText.present
+          ? data.serviceText.value
+          : this.serviceText,
+      address: data.address.present ? data.address.value : this.address,
+      phoneNumber: data.phoneNumber.present
+          ? data.phoneNumber.value
+          : this.phoneNumber,
+      email: data.email.present ? data.email.value : this.email,
+      gstin: data.gstin.present ? data.gstin.value : this.gstin,
+      logoPath: data.logoPath.present ? data.logoPath.value : this.logoPath,
+      receiptTitle: data.receiptTitle.present
+          ? data.receiptTitle.value
+          : this.receiptTitle,
+      showSerialNumber: data.showSerialNumber.present
+          ? data.showSerialNumber.value
+          : this.showSerialNumber,
+      showDate: data.showDate.present ? data.showDate.value : this.showDate,
+      showTime: data.showTime.present ? data.showTime.value : this.showTime,
+      showVehicleNumber: data.showVehicleNumber.present
+          ? data.showVehicleNumber.value
+          : this.showVehicleNumber,
+      showMaterial: data.showMaterial.present
+          ? data.showMaterial.value
+          : this.showMaterial,
+      showParty: data.showParty.present ? data.showParty.value : this.showParty,
+      showVehicleType: data.showVehicleType.present
+          ? data.showVehicleType.value
+          : this.showVehicleType,
+      showGrossWeight: data.showGrossWeight.present
+          ? data.showGrossWeight.value
+          : this.showGrossWeight,
+      showTareWeight: data.showTareWeight.present
+          ? data.showTareWeight.value
+          : this.showTareWeight,
+      showNetWeight: data.showNetWeight.present
+          ? data.showNetWeight.value
+          : this.showNetWeight,
+      showAmount: data.showAmount.present
+          ? data.showAmount.value
+          : this.showAmount,
+      showPaymentMode: data.showPaymentMode.present
+          ? data.showPaymentMode.value
+          : this.showPaymentMode,
+      showCashReceived: data.showCashReceived.present
+          ? data.showCashReceived.value
+          : this.showCashReceived,
+      showPendingAmount: data.showPendingAmount.present
+          ? data.showPendingAmount.value
+          : this.showPendingAmount,
+      showRemarks: data.showRemarks.present
+          ? data.showRemarks.value
+          : this.showRemarks,
+      showFooterNote: data.showFooterNote.present
+          ? data.showFooterNote.value
+          : this.showFooterNote,
+      footerNote: data.footerNote.present
+          ? data.footerNote.value
+          : this.footerNote,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AppSetting(')
+          ..write('id: $id, ')
+          ..write('weightUnit: $weightUnit, ')
+          ..write('billPrefix: $billPrefix, ')
+          ..write('billStartingNumber: $billStartingNumber, ')
+          ..write('billNumberDigits: $billNumberDigits, ')
+          ..write('businessName: $businessName, ')
+          ..write('businessSubtitle: $businessSubtitle, ')
+          ..write('serviceText: $serviceText, ')
+          ..write('address: $address, ')
+          ..write('phoneNumber: $phoneNumber, ')
+          ..write('email: $email, ')
+          ..write('gstin: $gstin, ')
+          ..write('logoPath: $logoPath, ')
+          ..write('receiptTitle: $receiptTitle, ')
+          ..write('showSerialNumber: $showSerialNumber, ')
+          ..write('showDate: $showDate, ')
+          ..write('showTime: $showTime, ')
+          ..write('showVehicleNumber: $showVehicleNumber, ')
+          ..write('showMaterial: $showMaterial, ')
+          ..write('showParty: $showParty, ')
+          ..write('showVehicleType: $showVehicleType, ')
+          ..write('showGrossWeight: $showGrossWeight, ')
+          ..write('showTareWeight: $showTareWeight, ')
+          ..write('showNetWeight: $showNetWeight, ')
+          ..write('showAmount: $showAmount, ')
+          ..write('showPaymentMode: $showPaymentMode, ')
+          ..write('showCashReceived: $showCashReceived, ')
+          ..write('showPendingAmount: $showPendingAmount, ')
+          ..write('showRemarks: $showRemarks, ')
+          ..write('showFooterNote: $showFooterNote, ')
+          ..write('footerNote: $footerNote, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hashAll([
+    id,
+    weightUnit,
+    billPrefix,
+    billStartingNumber,
+    billNumberDigits,
+    businessName,
+    businessSubtitle,
+    serviceText,
+    address,
+    phoneNumber,
+    email,
+    gstin,
+    logoPath,
+    receiptTitle,
+    showSerialNumber,
+    showDate,
+    showTime,
+    showVehicleNumber,
+    showMaterial,
+    showParty,
+    showVehicleType,
+    showGrossWeight,
+    showTareWeight,
+    showNetWeight,
+    showAmount,
+    showPaymentMode,
+    showCashReceived,
+    showPendingAmount,
+    showRemarks,
+    showFooterNote,
+    footerNote,
+    updatedAt,
+  ]);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AppSetting &&
+          other.id == this.id &&
+          other.weightUnit == this.weightUnit &&
+          other.billPrefix == this.billPrefix &&
+          other.billStartingNumber == this.billStartingNumber &&
+          other.billNumberDigits == this.billNumberDigits &&
+          other.businessName == this.businessName &&
+          other.businessSubtitle == this.businessSubtitle &&
+          other.serviceText == this.serviceText &&
+          other.address == this.address &&
+          other.phoneNumber == this.phoneNumber &&
+          other.email == this.email &&
+          other.gstin == this.gstin &&
+          other.logoPath == this.logoPath &&
+          other.receiptTitle == this.receiptTitle &&
+          other.showSerialNumber == this.showSerialNumber &&
+          other.showDate == this.showDate &&
+          other.showTime == this.showTime &&
+          other.showVehicleNumber == this.showVehicleNumber &&
+          other.showMaterial == this.showMaterial &&
+          other.showParty == this.showParty &&
+          other.showVehicleType == this.showVehicleType &&
+          other.showGrossWeight == this.showGrossWeight &&
+          other.showTareWeight == this.showTareWeight &&
+          other.showNetWeight == this.showNetWeight &&
+          other.showAmount == this.showAmount &&
+          other.showPaymentMode == this.showPaymentMode &&
+          other.showCashReceived == this.showCashReceived &&
+          other.showPendingAmount == this.showPendingAmount &&
+          other.showRemarks == this.showRemarks &&
+          other.showFooterNote == this.showFooterNote &&
+          other.footerNote == this.footerNote &&
+          other.updatedAt == this.updatedAt);
+}
+
+class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
+  final Value<int> id;
+  final Value<String> weightUnit;
+  final Value<String> billPrefix;
+  final Value<int> billStartingNumber;
+  final Value<int> billNumberDigits;
+  final Value<String> businessName;
+  final Value<String?> businessSubtitle;
+  final Value<String?> serviceText;
+  final Value<String?> address;
+  final Value<String?> phoneNumber;
+  final Value<String?> email;
+  final Value<String?> gstin;
+  final Value<String?> logoPath;
+  final Value<String> receiptTitle;
+  final Value<bool> showSerialNumber;
+  final Value<bool> showDate;
+  final Value<bool> showTime;
+  final Value<bool> showVehicleNumber;
+  final Value<bool> showMaterial;
+  final Value<bool> showParty;
+  final Value<bool> showVehicleType;
+  final Value<bool> showGrossWeight;
+  final Value<bool> showTareWeight;
+  final Value<bool> showNetWeight;
+  final Value<bool> showAmount;
+  final Value<bool> showPaymentMode;
+  final Value<bool> showCashReceived;
+  final Value<bool> showPendingAmount;
+  final Value<bool> showRemarks;
+  final Value<bool> showFooterNote;
+  final Value<String?> footerNote;
+  final Value<DateTime> updatedAt;
+  const AppSettingsCompanion({
+    this.id = const Value.absent(),
+    this.weightUnit = const Value.absent(),
+    this.billPrefix = const Value.absent(),
+    this.billStartingNumber = const Value.absent(),
+    this.billNumberDigits = const Value.absent(),
+    this.businessName = const Value.absent(),
+    this.businessSubtitle = const Value.absent(),
+    this.serviceText = const Value.absent(),
+    this.address = const Value.absent(),
+    this.phoneNumber = const Value.absent(),
+    this.email = const Value.absent(),
+    this.gstin = const Value.absent(),
+    this.logoPath = const Value.absent(),
+    this.receiptTitle = const Value.absent(),
+    this.showSerialNumber = const Value.absent(),
+    this.showDate = const Value.absent(),
+    this.showTime = const Value.absent(),
+    this.showVehicleNumber = const Value.absent(),
+    this.showMaterial = const Value.absent(),
+    this.showParty = const Value.absent(),
+    this.showVehicleType = const Value.absent(),
+    this.showGrossWeight = const Value.absent(),
+    this.showTareWeight = const Value.absent(),
+    this.showNetWeight = const Value.absent(),
+    this.showAmount = const Value.absent(),
+    this.showPaymentMode = const Value.absent(),
+    this.showCashReceived = const Value.absent(),
+    this.showPendingAmount = const Value.absent(),
+    this.showRemarks = const Value.absent(),
+    this.showFooterNote = const Value.absent(),
+    this.footerNote = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  AppSettingsCompanion.insert({
+    this.id = const Value.absent(),
+    this.weightUnit = const Value.absent(),
+    this.billPrefix = const Value.absent(),
+    this.billStartingNumber = const Value.absent(),
+    this.billNumberDigits = const Value.absent(),
+    this.businessName = const Value.absent(),
+    this.businessSubtitle = const Value.absent(),
+    this.serviceText = const Value.absent(),
+    this.address = const Value.absent(),
+    this.phoneNumber = const Value.absent(),
+    this.email = const Value.absent(),
+    this.gstin = const Value.absent(),
+    this.logoPath = const Value.absent(),
+    this.receiptTitle = const Value.absent(),
+    this.showSerialNumber = const Value.absent(),
+    this.showDate = const Value.absent(),
+    this.showTime = const Value.absent(),
+    this.showVehicleNumber = const Value.absent(),
+    this.showMaterial = const Value.absent(),
+    this.showParty = const Value.absent(),
+    this.showVehicleType = const Value.absent(),
+    this.showGrossWeight = const Value.absent(),
+    this.showTareWeight = const Value.absent(),
+    this.showNetWeight = const Value.absent(),
+    this.showAmount = const Value.absent(),
+    this.showPaymentMode = const Value.absent(),
+    this.showCashReceived = const Value.absent(),
+    this.showPendingAmount = const Value.absent(),
+    this.showRemarks = const Value.absent(),
+    this.showFooterNote = const Value.absent(),
+    this.footerNote = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  static Insertable<AppSetting> custom({
+    Expression<int>? id,
+    Expression<String>? weightUnit,
+    Expression<String>? billPrefix,
+    Expression<int>? billStartingNumber,
+    Expression<int>? billNumberDigits,
+    Expression<String>? businessName,
+    Expression<String>? businessSubtitle,
+    Expression<String>? serviceText,
+    Expression<String>? address,
+    Expression<String>? phoneNumber,
+    Expression<String>? email,
+    Expression<String>? gstin,
+    Expression<String>? logoPath,
+    Expression<String>? receiptTitle,
+    Expression<bool>? showSerialNumber,
+    Expression<bool>? showDate,
+    Expression<bool>? showTime,
+    Expression<bool>? showVehicleNumber,
+    Expression<bool>? showMaterial,
+    Expression<bool>? showParty,
+    Expression<bool>? showVehicleType,
+    Expression<bool>? showGrossWeight,
+    Expression<bool>? showTareWeight,
+    Expression<bool>? showNetWeight,
+    Expression<bool>? showAmount,
+    Expression<bool>? showPaymentMode,
+    Expression<bool>? showCashReceived,
+    Expression<bool>? showPendingAmount,
+    Expression<bool>? showRemarks,
+    Expression<bool>? showFooterNote,
+    Expression<String>? footerNote,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (weightUnit != null) 'weight_unit': weightUnit,
+      if (billPrefix != null) 'bill_prefix': billPrefix,
+      if (billStartingNumber != null)
+        'bill_starting_number': billStartingNumber,
+      if (billNumberDigits != null) 'bill_number_digits': billNumberDigits,
+      if (businessName != null) 'business_name': businessName,
+      if (businessSubtitle != null) 'business_subtitle': businessSubtitle,
+      if (serviceText != null) 'service_text': serviceText,
+      if (address != null) 'address': address,
+      if (phoneNumber != null) 'phone_number': phoneNumber,
+      if (email != null) 'email': email,
+      if (gstin != null) 'gstin': gstin,
+      if (logoPath != null) 'logo_path': logoPath,
+      if (receiptTitle != null) 'receipt_title': receiptTitle,
+      if (showSerialNumber != null) 'show_serial_number': showSerialNumber,
+      if (showDate != null) 'show_date': showDate,
+      if (showTime != null) 'show_time': showTime,
+      if (showVehicleNumber != null) 'show_vehicle_number': showVehicleNumber,
+      if (showMaterial != null) 'show_material': showMaterial,
+      if (showParty != null) 'show_party': showParty,
+      if (showVehicleType != null) 'show_vehicle_type': showVehicleType,
+      if (showGrossWeight != null) 'show_gross_weight': showGrossWeight,
+      if (showTareWeight != null) 'show_tare_weight': showTareWeight,
+      if (showNetWeight != null) 'show_net_weight': showNetWeight,
+      if (showAmount != null) 'show_amount': showAmount,
+      if (showPaymentMode != null) 'show_payment_mode': showPaymentMode,
+      if (showCashReceived != null) 'show_cash_received': showCashReceived,
+      if (showPendingAmount != null) 'show_pending_amount': showPendingAmount,
+      if (showRemarks != null) 'show_remarks': showRemarks,
+      if (showFooterNote != null) 'show_footer_note': showFooterNote,
+      if (footerNote != null) 'footer_note': footerNote,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  AppSettingsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? weightUnit,
+    Value<String>? billPrefix,
+    Value<int>? billStartingNumber,
+    Value<int>? billNumberDigits,
+    Value<String>? businessName,
+    Value<String?>? businessSubtitle,
+    Value<String?>? serviceText,
+    Value<String?>? address,
+    Value<String?>? phoneNumber,
+    Value<String?>? email,
+    Value<String?>? gstin,
+    Value<String?>? logoPath,
+    Value<String>? receiptTitle,
+    Value<bool>? showSerialNumber,
+    Value<bool>? showDate,
+    Value<bool>? showTime,
+    Value<bool>? showVehicleNumber,
+    Value<bool>? showMaterial,
+    Value<bool>? showParty,
+    Value<bool>? showVehicleType,
+    Value<bool>? showGrossWeight,
+    Value<bool>? showTareWeight,
+    Value<bool>? showNetWeight,
+    Value<bool>? showAmount,
+    Value<bool>? showPaymentMode,
+    Value<bool>? showCashReceived,
+    Value<bool>? showPendingAmount,
+    Value<bool>? showRemarks,
+    Value<bool>? showFooterNote,
+    Value<String?>? footerNote,
+    Value<DateTime>? updatedAt,
+  }) {
+    return AppSettingsCompanion(
+      id: id ?? this.id,
+      weightUnit: weightUnit ?? this.weightUnit,
+      billPrefix: billPrefix ?? this.billPrefix,
+      billStartingNumber: billStartingNumber ?? this.billStartingNumber,
+      billNumberDigits: billNumberDigits ?? this.billNumberDigits,
+      businessName: businessName ?? this.businessName,
+      businessSubtitle: businessSubtitle ?? this.businessSubtitle,
+      serviceText: serviceText ?? this.serviceText,
+      address: address ?? this.address,
+      phoneNumber: phoneNumber ?? this.phoneNumber,
+      email: email ?? this.email,
+      gstin: gstin ?? this.gstin,
+      logoPath: logoPath ?? this.logoPath,
+      receiptTitle: receiptTitle ?? this.receiptTitle,
+      showSerialNumber: showSerialNumber ?? this.showSerialNumber,
+      showDate: showDate ?? this.showDate,
+      showTime: showTime ?? this.showTime,
+      showVehicleNumber: showVehicleNumber ?? this.showVehicleNumber,
+      showMaterial: showMaterial ?? this.showMaterial,
+      showParty: showParty ?? this.showParty,
+      showVehicleType: showVehicleType ?? this.showVehicleType,
+      showGrossWeight: showGrossWeight ?? this.showGrossWeight,
+      showTareWeight: showTareWeight ?? this.showTareWeight,
+      showNetWeight: showNetWeight ?? this.showNetWeight,
+      showAmount: showAmount ?? this.showAmount,
+      showPaymentMode: showPaymentMode ?? this.showPaymentMode,
+      showCashReceived: showCashReceived ?? this.showCashReceived,
+      showPendingAmount: showPendingAmount ?? this.showPendingAmount,
+      showRemarks: showRemarks ?? this.showRemarks,
+      showFooterNote: showFooterNote ?? this.showFooterNote,
+      footerNote: footerNote ?? this.footerNote,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (weightUnit.present) {
+      map['weight_unit'] = Variable<String>(weightUnit.value);
+    }
+    if (billPrefix.present) {
+      map['bill_prefix'] = Variable<String>(billPrefix.value);
+    }
+    if (billStartingNumber.present) {
+      map['bill_starting_number'] = Variable<int>(billStartingNumber.value);
+    }
+    if (billNumberDigits.present) {
+      map['bill_number_digits'] = Variable<int>(billNumberDigits.value);
+    }
+    if (businessName.present) {
+      map['business_name'] = Variable<String>(businessName.value);
+    }
+    if (businessSubtitle.present) {
+      map['business_subtitle'] = Variable<String>(businessSubtitle.value);
+    }
+    if (serviceText.present) {
+      map['service_text'] = Variable<String>(serviceText.value);
+    }
+    if (address.present) {
+      map['address'] = Variable<String>(address.value);
+    }
+    if (phoneNumber.present) {
+      map['phone_number'] = Variable<String>(phoneNumber.value);
+    }
+    if (email.present) {
+      map['email'] = Variable<String>(email.value);
+    }
+    if (gstin.present) {
+      map['gstin'] = Variable<String>(gstin.value);
+    }
+    if (logoPath.present) {
+      map['logo_path'] = Variable<String>(logoPath.value);
+    }
+    if (receiptTitle.present) {
+      map['receipt_title'] = Variable<String>(receiptTitle.value);
+    }
+    if (showSerialNumber.present) {
+      map['show_serial_number'] = Variable<bool>(showSerialNumber.value);
+    }
+    if (showDate.present) {
+      map['show_date'] = Variable<bool>(showDate.value);
+    }
+    if (showTime.present) {
+      map['show_time'] = Variable<bool>(showTime.value);
+    }
+    if (showVehicleNumber.present) {
+      map['show_vehicle_number'] = Variable<bool>(showVehicleNumber.value);
+    }
+    if (showMaterial.present) {
+      map['show_material'] = Variable<bool>(showMaterial.value);
+    }
+    if (showParty.present) {
+      map['show_party'] = Variable<bool>(showParty.value);
+    }
+    if (showVehicleType.present) {
+      map['show_vehicle_type'] = Variable<bool>(showVehicleType.value);
+    }
+    if (showGrossWeight.present) {
+      map['show_gross_weight'] = Variable<bool>(showGrossWeight.value);
+    }
+    if (showTareWeight.present) {
+      map['show_tare_weight'] = Variable<bool>(showTareWeight.value);
+    }
+    if (showNetWeight.present) {
+      map['show_net_weight'] = Variable<bool>(showNetWeight.value);
+    }
+    if (showAmount.present) {
+      map['show_amount'] = Variable<bool>(showAmount.value);
+    }
+    if (showPaymentMode.present) {
+      map['show_payment_mode'] = Variable<bool>(showPaymentMode.value);
+    }
+    if (showCashReceived.present) {
+      map['show_cash_received'] = Variable<bool>(showCashReceived.value);
+    }
+    if (showPendingAmount.present) {
+      map['show_pending_amount'] = Variable<bool>(showPendingAmount.value);
+    }
+    if (showRemarks.present) {
+      map['show_remarks'] = Variable<bool>(showRemarks.value);
+    }
+    if (showFooterNote.present) {
+      map['show_footer_note'] = Variable<bool>(showFooterNote.value);
+    }
+    if (footerNote.present) {
+      map['footer_note'] = Variable<String>(footerNote.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AppSettingsCompanion(')
+          ..write('id: $id, ')
+          ..write('weightUnit: $weightUnit, ')
+          ..write('billPrefix: $billPrefix, ')
+          ..write('billStartingNumber: $billStartingNumber, ')
+          ..write('billNumberDigits: $billNumberDigits, ')
+          ..write('businessName: $businessName, ')
+          ..write('businessSubtitle: $businessSubtitle, ')
+          ..write('serviceText: $serviceText, ')
+          ..write('address: $address, ')
+          ..write('phoneNumber: $phoneNumber, ')
+          ..write('email: $email, ')
+          ..write('gstin: $gstin, ')
+          ..write('logoPath: $logoPath, ')
+          ..write('receiptTitle: $receiptTitle, ')
+          ..write('showSerialNumber: $showSerialNumber, ')
+          ..write('showDate: $showDate, ')
+          ..write('showTime: $showTime, ')
+          ..write('showVehicleNumber: $showVehicleNumber, ')
+          ..write('showMaterial: $showMaterial, ')
+          ..write('showParty: $showParty, ')
+          ..write('showVehicleType: $showVehicleType, ')
+          ..write('showGrossWeight: $showGrossWeight, ')
+          ..write('showTareWeight: $showTareWeight, ')
+          ..write('showNetWeight: $showNetWeight, ')
+          ..write('showAmount: $showAmount, ')
+          ..write('showPaymentMode: $showPaymentMode, ')
+          ..write('showCashReceived: $showCashReceived, ')
+          ..write('showPendingAmount: $showPendingAmount, ')
+          ..write('showRemarks: $showRemarks, ')
+          ..write('showFooterNote: $showFooterNote, ')
+          ..write('footerNote: $footerNote, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -3469,6 +5235,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $VehiclesTable vehicles = $VehiclesTable(this);
   late final $MaterialsTable materials = $MaterialsTable(this);
   late final $WeighmentsTable weighments = $WeighmentsTable(this);
+  late final $AppSettingsTable appSettings = $AppSettingsTable(this);
   late final UserDao userDao = UserDao(this as AppDatabase);
   late final PartyDao partyDao = PartyDao(this as AppDatabase);
   late final VehicleTypeDao vehicleTypeDao = VehicleTypeDao(
@@ -3477,6 +5244,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final VehicleDao vehicleDao = VehicleDao(this as AppDatabase);
   late final MaterialDao materialDao = MaterialDao(this as AppDatabase);
   late final BillDao billDao = BillDao(this as AppDatabase);
+  late final AppSettingsDao appSettingsDao = AppSettingsDao(
+    this as AppDatabase,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -3488,6 +5258,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     vehicles,
     materials,
     weighments,
+    appSettings,
   ];
 }
 
@@ -5954,6 +7725,759 @@ typedef $$WeighmentsTableProcessedTableManager =
       Weighment,
       PrefetchHooks Function({bool partyId, bool vehicleId, bool materialId})
     >;
+typedef $$AppSettingsTableCreateCompanionBuilder =
+    AppSettingsCompanion Function({
+      Value<int> id,
+      Value<String> weightUnit,
+      Value<String> billPrefix,
+      Value<int> billStartingNumber,
+      Value<int> billNumberDigits,
+      Value<String> businessName,
+      Value<String?> businessSubtitle,
+      Value<String?> serviceText,
+      Value<String?> address,
+      Value<String?> phoneNumber,
+      Value<String?> email,
+      Value<String?> gstin,
+      Value<String?> logoPath,
+      Value<String> receiptTitle,
+      Value<bool> showSerialNumber,
+      Value<bool> showDate,
+      Value<bool> showTime,
+      Value<bool> showVehicleNumber,
+      Value<bool> showMaterial,
+      Value<bool> showParty,
+      Value<bool> showVehicleType,
+      Value<bool> showGrossWeight,
+      Value<bool> showTareWeight,
+      Value<bool> showNetWeight,
+      Value<bool> showAmount,
+      Value<bool> showPaymentMode,
+      Value<bool> showCashReceived,
+      Value<bool> showPendingAmount,
+      Value<bool> showRemarks,
+      Value<bool> showFooterNote,
+      Value<String?> footerNote,
+      Value<DateTime> updatedAt,
+    });
+typedef $$AppSettingsTableUpdateCompanionBuilder =
+    AppSettingsCompanion Function({
+      Value<int> id,
+      Value<String> weightUnit,
+      Value<String> billPrefix,
+      Value<int> billStartingNumber,
+      Value<int> billNumberDigits,
+      Value<String> businessName,
+      Value<String?> businessSubtitle,
+      Value<String?> serviceText,
+      Value<String?> address,
+      Value<String?> phoneNumber,
+      Value<String?> email,
+      Value<String?> gstin,
+      Value<String?> logoPath,
+      Value<String> receiptTitle,
+      Value<bool> showSerialNumber,
+      Value<bool> showDate,
+      Value<bool> showTime,
+      Value<bool> showVehicleNumber,
+      Value<bool> showMaterial,
+      Value<bool> showParty,
+      Value<bool> showVehicleType,
+      Value<bool> showGrossWeight,
+      Value<bool> showTareWeight,
+      Value<bool> showNetWeight,
+      Value<bool> showAmount,
+      Value<bool> showPaymentMode,
+      Value<bool> showCashReceived,
+      Value<bool> showPendingAmount,
+      Value<bool> showRemarks,
+      Value<bool> showFooterNote,
+      Value<String?> footerNote,
+      Value<DateTime> updatedAt,
+    });
+
+class $$AppSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $AppSettingsTable> {
+  $$AppSettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get weightUnit => $composableBuilder(
+    column: $table.weightUnit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get billPrefix => $composableBuilder(
+    column: $table.billPrefix,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get billStartingNumber => $composableBuilder(
+    column: $table.billStartingNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get billNumberDigits => $composableBuilder(
+    column: $table.billNumberDigits,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get businessName => $composableBuilder(
+    column: $table.businessName,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get businessSubtitle => $composableBuilder(
+    column: $table.businessSubtitle,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get serviceText => $composableBuilder(
+    column: $table.serviceText,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get address => $composableBuilder(
+    column: $table.address,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get phoneNumber => $composableBuilder(
+    column: $table.phoneNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get gstin => $composableBuilder(
+    column: $table.gstin,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get logoPath => $composableBuilder(
+    column: $table.logoPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get receiptTitle => $composableBuilder(
+    column: $table.receiptTitle,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showSerialNumber => $composableBuilder(
+    column: $table.showSerialNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showDate => $composableBuilder(
+    column: $table.showDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showTime => $composableBuilder(
+    column: $table.showTime,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showVehicleNumber => $composableBuilder(
+    column: $table.showVehicleNumber,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showMaterial => $composableBuilder(
+    column: $table.showMaterial,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showParty => $composableBuilder(
+    column: $table.showParty,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showVehicleType => $composableBuilder(
+    column: $table.showVehicleType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showGrossWeight => $composableBuilder(
+    column: $table.showGrossWeight,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showTareWeight => $composableBuilder(
+    column: $table.showTareWeight,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showNetWeight => $composableBuilder(
+    column: $table.showNetWeight,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showAmount => $composableBuilder(
+    column: $table.showAmount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showPaymentMode => $composableBuilder(
+    column: $table.showPaymentMode,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showCashReceived => $composableBuilder(
+    column: $table.showCashReceived,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showPendingAmount => $composableBuilder(
+    column: $table.showPendingAmount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showRemarks => $composableBuilder(
+    column: $table.showRemarks,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get showFooterNote => $composableBuilder(
+    column: $table.showFooterNote,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get footerNote => $composableBuilder(
+    column: $table.footerNote,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AppSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AppSettingsTable> {
+  $$AppSettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get weightUnit => $composableBuilder(
+    column: $table.weightUnit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get billPrefix => $composableBuilder(
+    column: $table.billPrefix,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get billStartingNumber => $composableBuilder(
+    column: $table.billStartingNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get billNumberDigits => $composableBuilder(
+    column: $table.billNumberDigits,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get businessName => $composableBuilder(
+    column: $table.businessName,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get businessSubtitle => $composableBuilder(
+    column: $table.businessSubtitle,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get serviceText => $composableBuilder(
+    column: $table.serviceText,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get address => $composableBuilder(
+    column: $table.address,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get phoneNumber => $composableBuilder(
+    column: $table.phoneNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get email => $composableBuilder(
+    column: $table.email,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get gstin => $composableBuilder(
+    column: $table.gstin,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get logoPath => $composableBuilder(
+    column: $table.logoPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get receiptTitle => $composableBuilder(
+    column: $table.receiptTitle,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showSerialNumber => $composableBuilder(
+    column: $table.showSerialNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showDate => $composableBuilder(
+    column: $table.showDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showTime => $composableBuilder(
+    column: $table.showTime,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showVehicleNumber => $composableBuilder(
+    column: $table.showVehicleNumber,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showMaterial => $composableBuilder(
+    column: $table.showMaterial,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showParty => $composableBuilder(
+    column: $table.showParty,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showVehicleType => $composableBuilder(
+    column: $table.showVehicleType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showGrossWeight => $composableBuilder(
+    column: $table.showGrossWeight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showTareWeight => $composableBuilder(
+    column: $table.showTareWeight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showNetWeight => $composableBuilder(
+    column: $table.showNetWeight,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showAmount => $composableBuilder(
+    column: $table.showAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showPaymentMode => $composableBuilder(
+    column: $table.showPaymentMode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showCashReceived => $composableBuilder(
+    column: $table.showCashReceived,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showPendingAmount => $composableBuilder(
+    column: $table.showPendingAmount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showRemarks => $composableBuilder(
+    column: $table.showRemarks,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get showFooterNote => $composableBuilder(
+    column: $table.showFooterNote,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get footerNote => $composableBuilder(
+    column: $table.footerNote,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AppSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AppSettingsTable> {
+  $$AppSettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get weightUnit => $composableBuilder(
+    column: $table.weightUnit,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get billPrefix => $composableBuilder(
+    column: $table.billPrefix,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get billStartingNumber => $composableBuilder(
+    column: $table.billStartingNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get billNumberDigits => $composableBuilder(
+    column: $table.billNumberDigits,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get businessName => $composableBuilder(
+    column: $table.businessName,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get businessSubtitle => $composableBuilder(
+    column: $table.businessSubtitle,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get serviceText => $composableBuilder(
+    column: $table.serviceText,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get address =>
+      $composableBuilder(column: $table.address, builder: (column) => column);
+
+  GeneratedColumn<String> get phoneNumber => $composableBuilder(
+    column: $table.phoneNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get email =>
+      $composableBuilder(column: $table.email, builder: (column) => column);
+
+  GeneratedColumn<String> get gstin =>
+      $composableBuilder(column: $table.gstin, builder: (column) => column);
+
+  GeneratedColumn<String> get logoPath =>
+      $composableBuilder(column: $table.logoPath, builder: (column) => column);
+
+  GeneratedColumn<String> get receiptTitle => $composableBuilder(
+    column: $table.receiptTitle,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showSerialNumber => $composableBuilder(
+    column: $table.showSerialNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showDate =>
+      $composableBuilder(column: $table.showDate, builder: (column) => column);
+
+  GeneratedColumn<bool> get showTime =>
+      $composableBuilder(column: $table.showTime, builder: (column) => column);
+
+  GeneratedColumn<bool> get showVehicleNumber => $composableBuilder(
+    column: $table.showVehicleNumber,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showMaterial => $composableBuilder(
+    column: $table.showMaterial,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showParty =>
+      $composableBuilder(column: $table.showParty, builder: (column) => column);
+
+  GeneratedColumn<bool> get showVehicleType => $composableBuilder(
+    column: $table.showVehicleType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showGrossWeight => $composableBuilder(
+    column: $table.showGrossWeight,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showTareWeight => $composableBuilder(
+    column: $table.showTareWeight,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showNetWeight => $composableBuilder(
+    column: $table.showNetWeight,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showAmount => $composableBuilder(
+    column: $table.showAmount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showPaymentMode => $composableBuilder(
+    column: $table.showPaymentMode,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showCashReceived => $composableBuilder(
+    column: $table.showCashReceived,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showPendingAmount => $composableBuilder(
+    column: $table.showPendingAmount,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showRemarks => $composableBuilder(
+    column: $table.showRemarks,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get showFooterNote => $composableBuilder(
+    column: $table.showFooterNote,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get footerNote => $composableBuilder(
+    column: $table.footerNote,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$AppSettingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AppSettingsTable,
+          AppSetting,
+          $$AppSettingsTableFilterComposer,
+          $$AppSettingsTableOrderingComposer,
+          $$AppSettingsTableAnnotationComposer,
+          $$AppSettingsTableCreateCompanionBuilder,
+          $$AppSettingsTableUpdateCompanionBuilder,
+          (
+            AppSetting,
+            BaseReferences<_$AppDatabase, $AppSettingsTable, AppSetting>,
+          ),
+          AppSetting,
+          PrefetchHooks Function()
+        > {
+  $$AppSettingsTableTableManager(_$AppDatabase db, $AppSettingsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AppSettingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AppSettingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AppSettingsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> weightUnit = const Value.absent(),
+                Value<String> billPrefix = const Value.absent(),
+                Value<int> billStartingNumber = const Value.absent(),
+                Value<int> billNumberDigits = const Value.absent(),
+                Value<String> businessName = const Value.absent(),
+                Value<String?> businessSubtitle = const Value.absent(),
+                Value<String?> serviceText = const Value.absent(),
+                Value<String?> address = const Value.absent(),
+                Value<String?> phoneNumber = const Value.absent(),
+                Value<String?> email = const Value.absent(),
+                Value<String?> gstin = const Value.absent(),
+                Value<String?> logoPath = const Value.absent(),
+                Value<String> receiptTitle = const Value.absent(),
+                Value<bool> showSerialNumber = const Value.absent(),
+                Value<bool> showDate = const Value.absent(),
+                Value<bool> showTime = const Value.absent(),
+                Value<bool> showVehicleNumber = const Value.absent(),
+                Value<bool> showMaterial = const Value.absent(),
+                Value<bool> showParty = const Value.absent(),
+                Value<bool> showVehicleType = const Value.absent(),
+                Value<bool> showGrossWeight = const Value.absent(),
+                Value<bool> showTareWeight = const Value.absent(),
+                Value<bool> showNetWeight = const Value.absent(),
+                Value<bool> showAmount = const Value.absent(),
+                Value<bool> showPaymentMode = const Value.absent(),
+                Value<bool> showCashReceived = const Value.absent(),
+                Value<bool> showPendingAmount = const Value.absent(),
+                Value<bool> showRemarks = const Value.absent(),
+                Value<bool> showFooterNote = const Value.absent(),
+                Value<String?> footerNote = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => AppSettingsCompanion(
+                id: id,
+                weightUnit: weightUnit,
+                billPrefix: billPrefix,
+                billStartingNumber: billStartingNumber,
+                billNumberDigits: billNumberDigits,
+                businessName: businessName,
+                businessSubtitle: businessSubtitle,
+                serviceText: serviceText,
+                address: address,
+                phoneNumber: phoneNumber,
+                email: email,
+                gstin: gstin,
+                logoPath: logoPath,
+                receiptTitle: receiptTitle,
+                showSerialNumber: showSerialNumber,
+                showDate: showDate,
+                showTime: showTime,
+                showVehicleNumber: showVehicleNumber,
+                showMaterial: showMaterial,
+                showParty: showParty,
+                showVehicleType: showVehicleType,
+                showGrossWeight: showGrossWeight,
+                showTareWeight: showTareWeight,
+                showNetWeight: showNetWeight,
+                showAmount: showAmount,
+                showPaymentMode: showPaymentMode,
+                showCashReceived: showCashReceived,
+                showPendingAmount: showPendingAmount,
+                showRemarks: showRemarks,
+                showFooterNote: showFooterNote,
+                footerNote: footerNote,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> weightUnit = const Value.absent(),
+                Value<String> billPrefix = const Value.absent(),
+                Value<int> billStartingNumber = const Value.absent(),
+                Value<int> billNumberDigits = const Value.absent(),
+                Value<String> businessName = const Value.absent(),
+                Value<String?> businessSubtitle = const Value.absent(),
+                Value<String?> serviceText = const Value.absent(),
+                Value<String?> address = const Value.absent(),
+                Value<String?> phoneNumber = const Value.absent(),
+                Value<String?> email = const Value.absent(),
+                Value<String?> gstin = const Value.absent(),
+                Value<String?> logoPath = const Value.absent(),
+                Value<String> receiptTitle = const Value.absent(),
+                Value<bool> showSerialNumber = const Value.absent(),
+                Value<bool> showDate = const Value.absent(),
+                Value<bool> showTime = const Value.absent(),
+                Value<bool> showVehicleNumber = const Value.absent(),
+                Value<bool> showMaterial = const Value.absent(),
+                Value<bool> showParty = const Value.absent(),
+                Value<bool> showVehicleType = const Value.absent(),
+                Value<bool> showGrossWeight = const Value.absent(),
+                Value<bool> showTareWeight = const Value.absent(),
+                Value<bool> showNetWeight = const Value.absent(),
+                Value<bool> showAmount = const Value.absent(),
+                Value<bool> showPaymentMode = const Value.absent(),
+                Value<bool> showCashReceived = const Value.absent(),
+                Value<bool> showPendingAmount = const Value.absent(),
+                Value<bool> showRemarks = const Value.absent(),
+                Value<bool> showFooterNote = const Value.absent(),
+                Value<String?> footerNote = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => AppSettingsCompanion.insert(
+                id: id,
+                weightUnit: weightUnit,
+                billPrefix: billPrefix,
+                billStartingNumber: billStartingNumber,
+                billNumberDigits: billNumberDigits,
+                businessName: businessName,
+                businessSubtitle: businessSubtitle,
+                serviceText: serviceText,
+                address: address,
+                phoneNumber: phoneNumber,
+                email: email,
+                gstin: gstin,
+                logoPath: logoPath,
+                receiptTitle: receiptTitle,
+                showSerialNumber: showSerialNumber,
+                showDate: showDate,
+                showTime: showTime,
+                showVehicleNumber: showVehicleNumber,
+                showMaterial: showMaterial,
+                showParty: showParty,
+                showVehicleType: showVehicleType,
+                showGrossWeight: showGrossWeight,
+                showTareWeight: showTareWeight,
+                showNetWeight: showNetWeight,
+                showAmount: showAmount,
+                showPaymentMode: showPaymentMode,
+                showCashReceived: showCashReceived,
+                showPendingAmount: showPendingAmount,
+                showRemarks: showRemarks,
+                showFooterNote: showFooterNote,
+                footerNote: footerNote,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AppSettingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AppSettingsTable,
+      AppSetting,
+      $$AppSettingsTableFilterComposer,
+      $$AppSettingsTableOrderingComposer,
+      $$AppSettingsTableAnnotationComposer,
+      $$AppSettingsTableCreateCompanionBuilder,
+      $$AppSettingsTableUpdateCompanionBuilder,
+      (
+        AppSetting,
+        BaseReferences<_$AppDatabase, $AppSettingsTable, AppSetting>,
+      ),
+      AppSetting,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -5970,4 +8494,6 @@ class $AppDatabaseManager {
       $$MaterialsTableTableManager(_db, _db.materials);
   $$WeighmentsTableTableManager get weighments =>
       $$WeighmentsTableTableManager(_db, _db.weighments);
+  $$AppSettingsTableTableManager get appSettings =>
+      $$AppSettingsTableTableManager(_db, _db.appSettings);
 }

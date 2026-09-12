@@ -41,6 +41,12 @@ import '../../features/material/domain/usecases/load_materials.dart';
 import '../../features/material/domain/usecases/create_material.dart';
 import '../../features/material/domain/usecases/delete_material.dart';
 import '../../features/material/presentation/bloc/material_bloc.dart';
+import '../../features/settings/data/datasources/settings_local_datasource.dart';
+import '../../features/settings/data/repositories/settings_repository_impl.dart';
+import '../../features/settings/domain/usecases/get_settings.dart';
+import '../../features/settings/domain/usecases/update_settings.dart';
+import '../../features/settings/presentation/bloc/settings_bloc.dart';
+import '../../features/settings/presentation/bloc/settings_event.dart';
 
 class Injection {
   final AppDatabase database;
@@ -50,6 +56,7 @@ class Injection {
   final VehicleBloc vehicleBloc;
   final VehicleTypeBloc vehicleTypeBloc;
   final MaterialBloc materialBloc;
+  final SettingsBloc settingsBloc;
 
   Injection._({
     required this.database,
@@ -59,6 +66,7 @@ class Injection {
     required this.vehicleBloc,
     required this.vehicleTypeBloc,
     required this.materialBloc,
+    required this.settingsBloc,
   });
 
   static Future<Injection> init() async {
@@ -182,6 +190,20 @@ class Injection {
       generateBillNumberUseCase: generateBillNumberUseCase,
     );
 
+    // Settings
+    final settingsLocalDataSource = SettingsLocalDataSource(database);
+    final settingsRepository = SettingsRepositoryImpl(
+      localDataSource: settingsLocalDataSource,
+    );
+    final getSettingsUseCase = GetSettingsUseCase(settingsRepository);
+    final updateSettingsUseCase = UpdateSettingsUseCase(settingsRepository);
+
+    final settingsBloc = SettingsBloc(
+      getSettingsUseCase: getSettingsUseCase,
+      updateSettingsUseCase: updateSettingsUseCase,
+    );
+    settingsBloc.add(const LoadSettings());
+
     await _seedInitialData(authLocalDataSource, passwordHasher);
 
     return Injection._(
@@ -192,6 +214,7 @@ class Injection {
       vehicleBloc: vehicleBloc,
       vehicleTypeBloc: vehicleTypeBloc,
       materialBloc: materialBloc,
+      settingsBloc: settingsBloc,
     );
   }
 

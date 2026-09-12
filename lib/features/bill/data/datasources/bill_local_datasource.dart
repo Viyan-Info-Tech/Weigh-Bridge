@@ -81,7 +81,12 @@ class BillLocalDataSource {
   }
 
   Future<String> generateNextBillNumber() async {
-    return _database.billDao.generateNextBillNumber();
+    final settings = await _database.appSettingsDao.getSettings();
+    return _database.appSettingsDao.generateNextBillNumber(
+      prefix: settings.billPrefix,
+      digits: settings.billNumberDigits,
+      startingNumber: settings.billStartingNumber,
+    );
   }
 
   Future<int> deleteWeighment(int id) async {

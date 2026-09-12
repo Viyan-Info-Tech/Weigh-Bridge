@@ -1,5 +1,14 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
+
+import '../../domain/entities/billing_settings.dart';
+import '../bloc/settings_bloc.dart';
+import '../bloc/settings_event.dart';
+import '../bloc/settings_state.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -9,78 +18,1418 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  String _weightUnit = 'kg';
-  bool _isLoading = true;
+  final _formKey = GlobalKey<FormState>();
+
+  // Weight Unit
+  String _weightUnit = 'ton';
+
+  // Bill Numbering Controllers
+  final _billPrefixController = TextEditingController(text: 'WB');
+  final _billStartingNumberController = TextEditingController(text: '1');
+  final _billNumberDigitsController = TextEditingController(text: '5');
+
+  // Business Info Controllers
+  final _businessNameController = TextEditingController(text: 'VIYAN WEIGHBRIDGE');
+  final _businessSubtitleController = TextEditingController(text: 'Computer Weigh Bridge');
+  final _serviceTextController = TextEditingController(text: '24 HOURS SERVICE');
+  final _addressController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _gstinController = TextEditingController();
+  final _logoPathController = TextEditingController();
+
+  // Receipt Content
+  final _receiptTitleController = TextEditingController(text: 'WEIGHMENT RECEIPT');
+  final _footerNoteController = TextEditingController(
+    text: 'Please check the weight before leaving the weighbridge.',
+  );
+
+  // Field Visibility Toggles
+  bool _showSerialNumber = true;
+  bool _showDate = true;
+  bool _showTime = true;
+  bool _showVehicleNumber = true;
+  bool _showMaterial = true;
+  bool _showParty = true;
+  bool _showVehicleType = true;
+  bool _showGrossWeight = true;
+  bool _showTareWeight = true;
+  bool _showNetWeight = true;
+  bool _showAmount = true;
+  bool _showPaymentMode = true;
+  bool _showCashReceived = true;
+  bool _showPendingAmount = true;
+  bool _showRemarks = true;
+  bool _showFooterNote = true;
+
+  bool _isInitialized = false;
 
   @override
   void initState() {
     super.initState();
-    _loadSettings();
-  }
-
-  Future<void> _loadSettings() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _weightUnit = prefs.getString('weightUnit') ?? 'kg';
-      _isLoading = false;
-    });
-  }
-
-  Future<void> _saveWeightUnit(String unit) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('weightUnit', unit);
-    setState(() => _weightUnit = unit);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Weight unit updated'),
-          backgroundColor: Color(0xFF16A34A),
-        ),
-      );
+    // In case settings are already loaded in bloc
+    final currentSettings = context.read<SettingsBloc>().state.settings;
+    if (currentSettings != null) {
+      _populateFromSettings(currentSettings);
+      _isInitialized = true;
     }
   }
 
   @override
-  Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Center(child: CircularProgressIndicator());
+  void dispose() {
+    _billPrefixController.dispose();
+    _billStartingNumberController.dispose();
+    _billNumberDigitsController.dispose();
+    _businessNameController.dispose();
+    _businessSubtitleController.dispose();
+    _serviceTextController.dispose();
+    _addressController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    _gstinController.dispose();
+    _logoPathController.dispose();
+    _receiptTitleController.dispose();
+    _footerNoteController.dispose();
+    super.dispose();
+  }
+
+  void _populateFromSettings(BillingSettings settings) {
+    _weightUnit = settings.weightUnit;
+    _billPrefixController.text = settings.billPrefix;
+    _billStartingNumberController.text = settings.billStartingNumber.toString();
+    _billNumberDigitsController.text = settings.billNumberDigits.toString();
+    _businessNameController.text = settings.businessName;
+    _businessSubtitleController.text = settings.businessSubtitle ?? '';
+    _serviceTextController.text = settings.serviceText ?? '';
+    _addressController.text = settings.address ?? '';
+    _phoneController.text = settings.phoneNumber ?? '';
+    _emailController.text = settings.email ?? '';
+    _gstinController.text = settings.gstin ?? '';
+    _logoPathController.text = settings.logoPath ?? '';
+    _receiptTitleController.text = settings.receiptTitle;
+    _footerNoteController.text = settings.footerNote ?? '';
+
+    _showSerialNumber = settings.showSerialNumber;
+    _showDate = settings.showDate;
+    _showTime = settings.showTime;
+    _showVehicleNumber = settings.showVehicleNumber;
+    _showMaterial = settings.showMaterial;
+    _showParty = settings.showParty;
+    _showVehicleType = settings.showVehicleType;
+    _showGrossWeight = settings.showGrossWeight;
+    _showTareWeight = settings.showTareWeight;
+    _showNetWeight = settings.showNetWeight;
+    _showAmount = settings.showAmount;
+    _showPaymentMode = settings.showPaymentMode;
+    _showCashReceived = settings.showCashReceived;
+    _showPendingAmount = settings.showPendingAmount;
+    _showRemarks = settings.showRemarks;
+    _showFooterNote = settings.showFooterNote;
+  }
+
+  void _resetToDefaults() {
+    setState(() {
+      _weightUnit = 'ton';
+      _billPrefixController.text = 'WB';
+      _billStartingNumberController.text = '1';
+      _billNumberDigitsController.text = '5';
+      _businessNameController.text = 'VIYAN WEIGHBRIDGE';
+      _businessSubtitleController.text = 'Computer Weigh Bridge';
+      _serviceTextController.text = '24 HOURS SERVICE';
+      _addressController.text = '';
+      _phoneController.text = '';
+      _emailController.text = '';
+      _gstinController.text = '';
+      _logoPathController.text = '';
+      _receiptTitleController.text = 'WEIGHMENT RECEIPT';
+      _footerNoteController.text = 'Please check the weight before leaving the weighbridge.';
+
+      _showSerialNumber = true;
+      _showDate = true;
+      _showTime = true;
+      _showVehicleNumber = true;
+      _showMaterial = true;
+      _showParty = true;
+      _showVehicleType = true;
+      _showGrossWeight = true;
+      _showTareWeight = true;
+      _showNetWeight = true;
+      _showAmount = true;
+      _showPaymentMode = true;
+      _showCashReceived = true;
+      _showPendingAmount = true;
+      _showRemarks = true;
+      _showFooterNote = true;
+    });
+  }
+
+  void _selectAllFields(bool select) {
+    setState(() {
+      _showSerialNumber = select;
+      _showDate = select;
+      _showTime = select;
+      _showVehicleNumber = select;
+      _showMaterial = select;
+      _showParty = select;
+      _showVehicleType = select;
+      _showGrossWeight = select;
+      _showTareWeight = select;
+      _showNetWeight = select;
+      _showAmount = select;
+      _showPaymentMode = select;
+      _showCashReceived = select;
+      _showPendingAmount = select;
+      _showRemarks = select;
+      _showFooterNote = select;
+    });
+  }
+
+  String get _currentBillPreview {
+    final prefix = _billPrefixController.text.trim().isEmpty ? 'WB' : _billPrefixController.text.trim();
+    final startNum = int.tryParse(_billStartingNumberController.text.trim()) ?? 1;
+    final digits = int.tryParse(_billNumberDigitsController.text.trim()) ?? 5;
+    return '$prefix-${startNum.toString().padLeft(digits, '0')}';
+  }
+
+  void _handleSave() {
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please correct the validation errors in the settings form'),
+          backgroundColor: Color(0xFFDC2626),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    final startNum = int.tryParse(_billStartingNumberController.text.trim()) ?? 1;
+    final digits = int.tryParse(_billNumberDigitsController.text.trim()) ?? 5;
+
+    final updated = BillingSettings(
+      weightUnit: _weightUnit,
+      billPrefix: _billPrefixController.text.trim().isEmpty ? 'WB' : _billPrefixController.text.trim().toUpperCase(),
+      billStartingNumber: startNum,
+      billNumberDigits: digits,
+      businessName: _businessNameController.text.trim().isEmpty ? 'VIYAN WEIGHBRIDGE' : _businessNameController.text.trim(),
+      businessSubtitle: _businessSubtitleController.text.trim().isEmpty ? null : _businessSubtitleController.text.trim(),
+      serviceText: _serviceTextController.text.trim().isEmpty ? null : _serviceTextController.text.trim(),
+      address: _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
+      phoneNumber: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+      email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
+      gstin: _gstinController.text.trim().isEmpty ? null : _gstinController.text.trim().toUpperCase(),
+      logoPath: _logoPathController.text.trim().isEmpty ? null : _logoPathController.text.trim(),
+      receiptTitle: _receiptTitleController.text.trim().isEmpty ? 'WEIGHMENT RECEIPT' : _receiptTitleController.text.trim(),
+      showSerialNumber: _showSerialNumber,
+      showDate: _showDate,
+      showTime: _showTime,
+      showVehicleNumber: _showVehicleNumber,
+      showMaterial: _showMaterial,
+      showParty: _showParty,
+      showVehicleType: _showVehicleType,
+      showGrossWeight: _showGrossWeight,
+      showTareWeight: _showTareWeight,
+      showNetWeight: _showNetWeight,
+      showAmount: _showAmount,
+      showPaymentMode: _showPaymentMode,
+      showCashReceived: _showCashReceived,
+      showPendingAmount: _showPendingAmount,
+      showRemarks: _showRemarks,
+      showFooterNote: _showFooterNote,
+      footerNote: _footerNoteController.text.trim().isEmpty ? null : _footerNoteController.text.trim(),
+      updatedAt: DateTime.now(),
+    );
+
+    context.read<SettingsBloc>().add(UpdateBillingSettings(updated));
+  }
+
+  BillingSettings _buildCurrentSettingsSnapshot() {
+    final startNum = int.tryParse(_billStartingNumberController.text.trim()) ?? 1;
+    final digits = int.tryParse(_billNumberDigitsController.text.trim()) ?? 5;
+
+    return BillingSettings(
+      weightUnit: _weightUnit,
+      billPrefix: _billPrefixController.text.trim().isEmpty ? 'WB' : _billPrefixController.text.trim().toUpperCase(),
+      billStartingNumber: startNum,
+      billNumberDigits: digits,
+      businessName: _businessNameController.text.trim().isEmpty ? 'VIYAN WEIGHBRIDGE' : _businessNameController.text.trim(),
+      businessSubtitle: _businessSubtitleController.text.trim().isEmpty ? null : _businessSubtitleController.text.trim(),
+      serviceText: _serviceTextController.text.trim().isEmpty ? null : _serviceTextController.text.trim(),
+      address: _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
+      phoneNumber: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+      email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
+      gstin: _gstinController.text.trim().isEmpty ? null : _gstinController.text.trim().toUpperCase(),
+      logoPath: _logoPathController.text.trim().isEmpty ? null : _logoPathController.text.trim(),
+      receiptTitle: _receiptTitleController.text.trim().isEmpty ? 'WEIGHMENT RECEIPT' : _receiptTitleController.text.trim(),
+      showSerialNumber: _showSerialNumber,
+      showDate: _showDate,
+      showTime: _showTime,
+      showVehicleNumber: _showVehicleNumber,
+      showMaterial: _showMaterial,
+      showParty: _showParty,
+      showVehicleType: _showVehicleType,
+      showGrossWeight: _showGrossWeight,
+      showTareWeight: _showTareWeight,
+      showNetWeight: _showNetWeight,
+      showAmount: _showAmount,
+      showPaymentMode: _showPaymentMode,
+      showCashReceived: _showCashReceived,
+      showPendingAmount: _showPendingAmount,
+      showRemarks: _showRemarks,
+      showFooterNote: _showFooterNote,
+      footerNote: _footerNoteController.text.trim().isEmpty ? null : _footerNoteController.text.trim(),
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocConsumer<SettingsBloc, SettingsState>(
+      listener: (context, state) {
+        if (state.status == SettingsStatus.saved) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Settings saved successfully!'),
+              backgroundColor: Color(0xFF16A34A),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        } else if (state.status == SettingsStatus.error && state.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.errorMessage!),
+              backgroundColor: const Color(0xFFDC2626),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        } else if (state.status == SettingsStatus.loaded && !_isInitialized && state.settings != null) {
+          _populateFromSettings(state.settings!);
+          setState(() {
+            _isInitialized = true;
+          });
+        }
+      },
+      builder: (context, state) {
+        final isSaving = state.status == SettingsStatus.saving;
+
+        return Scaffold(
+          backgroundColor: const Color(0xFFF1F5F9),
+          body: Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                _buildTopAppBar(isSaving),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isWideScreen = constraints.maxWidth >= 960;
+
+                      if (isWideScreen) {
+                        return Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Left: Settings Forms
+                              Expanded(
+                                flex: 6,
+                                child: SingleChildScrollView(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      _buildWeightUnitCard(),
+                                      const SizedBox(height: 16),
+                                      _buildBillNumberingCard(),
+                                      const SizedBox(height: 16),
+                                      _buildBusinessInfoCard(),
+                                      const SizedBox(height: 16),
+                                      _buildReceiptContentCard(),
+                                      const SizedBox(height: 16),
+                                      _buildFooterNoteCard(),
+                                      const SizedBox(height: 24),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 20),
+                              // Right: Sticky Live Receipt Preview
+                              Expanded(
+                                flex: 4,
+                                child: SingleChildScrollView(
+                                  child: _buildLivePreviewCard(),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      } else {
+                        // Narrow screen: Stacked single-column
+                        return SingleChildScrollView(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildWeightUnitCard(),
+                              const SizedBox(height: 16),
+                              _buildBillNumberingCard(),
+                              const SizedBox(height: 16),
+                              _buildBusinessInfoCard(),
+                              const SizedBox(height: 16),
+                              _buildReceiptContentCard(),
+                              const SizedBox(height: 16),
+                              _buildFooterNoteCard(),
+                              const SizedBox(height: 20),
+                              _buildLivePreviewCard(),
+                              const SizedBox(height: 24),
+                            ],
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Top App Bar
+  Widget _buildTopAppBar(bool isSaving) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: const Border(
+          bottom: BorderSide(color: Color(0xFFE2E8F0)),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
         children: [
-          const Text(
-            'Settings',
-            style: TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF0F172A),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFF0D3B82).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: const Icon(
+              Icons.tune_rounded,
+              color: Color(0xFF0D3B82),
+              size: 22,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Configure your weighbridge application',
-            style: TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 14,
-              color: Colors.grey.shade600,
+          const SizedBox(width: 14),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Settings',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                  letterSpacing: -0.2,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                'Configure billing number format, business information, and ticket layout',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 12,
+                  color: Colors.grey.shade500,
+                ),
+              ),
+            ],
+          ),
+          const Spacer(),
+          OutlinedButton.icon(
+            onPressed: isSaving ? null : _resetToDefaults,
+            icon: const Icon(Icons.refresh_rounded, size: 16),
+            label: const Text('Reset Defaults'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF64748B),
+              side: const BorderSide(color: Color(0xFFCBD5E1)),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
           ),
-          const SizedBox(height: 24),
-          _buildSection(
-            title: 'Weight Unit',
-            subtitle: 'Select the unit for weight measurements in billing',
-            child: _buildWeightUnitSelector(),
+          const SizedBox(width: 12),
+          ElevatedButton.icon(
+            onPressed: isSaving ? null : _handleSave,
+            icon: isSaving
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                  )
+                : const Icon(Icons.save_rounded, size: 18),
+            label: Text(
+              isSaving ? 'Saving...' : 'Save Settings',
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.3,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0D3B82),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              elevation: 2,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildSection({
+  // 1. Weight Unit Card
+  Widget _buildWeightUnitCard() {
+    return _buildCardWrapper(
+      icon: Icons.scale_rounded,
+      iconBg: const Color(0xFFEFF6FF),
+      iconColor: const Color(0xFF2563EB),
+      title: 'Weight Unit',
+      subtitle: 'Select the primary unit for scale measurements across the application',
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildUnitRadioTile(
+              title: 'Kilogram (kg)',
+              subtitle: 'Metric standard (1,000 kg = 1 ton)',
+              value: 'kg',
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _buildUnitRadioTile(
+              title: 'Tonne (ton)',
+              subtitle: 'Common industrial weighbridge unit',
+              value: 'ton',
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUnitRadioTile({
+    required String title,
+    required String subtitle,
+    required String value,
+  }) {
+    final isSelected = _weightUnit == value;
+    return InkWell(
+      onTap: () => setState(() => _weightUnit = value),
+      borderRadius: BorderRadius.circular(10),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFF0D3B82).withValues(alpha: 0.05) : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? const Color(0xFF0D3B82) : const Color(0xFFE2E8F0),
+            width: isSelected ? 1.8 : 1.0,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: isSelected ? const Color(0xFF0D3B82) : const Color(0xFF94A3B8),
+                  width: isSelected ? 5.5 : 1.5,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 13,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                      color: const Color(0xFF0F172A),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 11,
+                      color: Colors.grey.shade500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 2. Bill Numbering Card
+  Widget _buildBillNumberingCard() {
+    return _buildCardWrapper(
+      icon: Icons.format_list_numbered_rounded,
+      iconBg: const Color(0xFFF5F3FF),
+      iconColor: const Color(0xFF7C3AED),
+      title: 'Bill Number Settings',
+      subtitle: 'Define the format and starting sequence for generated weighment bills',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 3,
+                child: _buildTextField(
+                  label: 'Prefix',
+                  hint: 'WB',
+                  controller: _billPrefixController,
+                  maxLength: 6,
+                  textCapitalization: TextCapitalization.characters,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                  ],
+                  onChanged: (_) => setState(() {}),
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 3,
+                child: _buildTextField(
+                  label: 'Starting Number',
+                  hint: '1',
+                  controller: _billStartingNumberController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  onChanged: (_) => setState(() {}),
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'Required';
+                    final n = int.tryParse(v);
+                    if (n == null || n < 1) return 'Must be >= 1';
+                    return null;
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 3,
+                child: _buildTextField(
+                  label: 'Number of Digits',
+                  hint: '5',
+                  controller: _billNumberDigitsController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  onChanged: (_) => setState(() {}),
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'Required';
+                    final n = int.tryParse(v);
+                    if (n == null || n < 3 || n > 10) return 'Between 3-10';
+                    return null;
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Live Bill Number Preview Strip
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFF64748B)),
+                const SizedBox(width: 8),
+                const Text(
+                  'Next Bill Number Preview:',
+                  style: TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF475569),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0D3B82),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    _currentBillPreview,
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 3. Business Information Card
+  Widget _buildBusinessInfoCard() {
+    return _buildCardWrapper(
+      icon: Icons.business_rounded,
+      iconBg: const Color(0xFFEFF6FF),
+      iconColor: const Color(0xFF0D3B82),
+      title: 'Business Information',
+      subtitle: 'Header details printed at the top of every weighment receipt',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 6,
+                child: _buildTextField(
+                  label: 'Business Name *',
+                  hint: 'VIYAN WEIGHBRIDGE',
+                  controller: _businessNameController,
+                  textCapitalization: TextCapitalization.characters,
+                  onChanged: (_) => setState(() {}),
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Business name is required' : null,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 4,
+                child: _buildTextField(
+                  label: 'Business Subtitle',
+                  hint: 'Computer Weigh Bridge',
+                  controller: _businessSubtitleController,
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 4,
+                child: _buildTextField(
+                  label: 'Service Text / Tagline',
+                  hint: '24 HOURS SERVICE',
+                  controller: _serviceTextController,
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 6,
+                child: _buildTextField(
+                  label: 'GSTIN (Tax ID)',
+                  hint: '33XXXXXXXXXXXXXX',
+                  controller: _gstinController,
+                  textCapitalization: TextCapitalization.characters,
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _buildTextField(
+            label: 'Address',
+            hint: 'No. 12, Main Road, Industrial Area, Chennai',
+            controller: _addressController,
+            maxLines: 2,
+            onChanged: (_) => setState(() {}),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _buildTextField(
+                  label: 'Phone Number',
+                  hint: '+91 98765 43210',
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildTextField(
+                  label: 'Email',
+                  hint: 'info@viyanweighbridge.com',
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Logo Path Selector
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _buildTextField(
+                  label: 'Business Logo Path',
+                  hint: '/Users/.../weighbridge_logo.png',
+                  controller: _logoPathController,
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Padding(
+                padding: const EdgeInsets.only(top: 22),
+                child: OutlinedButton(
+                  onPressed: () {
+                    setState(() {
+                      _logoPathController.clear();
+                    });
+                  },
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF64748B),
+                    side: const BorderSide(color: Color(0xFFCBD5E1)),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  child: const Text('Clear'),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 4. Receipt Content & Field Visibility Card
+  Widget _buildReceiptContentCard() {
+    return _buildCardWrapper(
+      icon: Icons.receipt_long_rounded,
+      iconBg: const Color(0xFFFEF3C7),
+      iconColor: const Color(0xFFD97706),
+      title: 'Receipt & Ticket Content',
+      subtitle: 'Customize the document title and select which fields appear on the printed receipt',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                flex: 6,
+                child: _buildTextField(
+                  label: 'Receipt Title',
+                  hint: 'WEIGHMENT RECEIPT',
+                  controller: _receiptTitleController,
+                  textCapitalization: TextCapitalization.characters,
+                  onChanged: (_) => setState(() {}),
+                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Title is required' : null,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Padding(
+                padding: const EdgeInsets.only(top: 22),
+                child: Row(
+                  children: [
+                    TextButton.icon(
+                      onPressed: () => _selectAllFields(true),
+                      icon: const Icon(Icons.check_box_outlined, size: 16),
+                      label: const Text('Select All'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFF0D3B82),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      ),
+                    ),
+                    TextButton.icon(
+                      onPressed: () => _selectAllFields(false),
+                      icon: const Icon(Icons.clear_rounded, size: 16),
+                      label: const Text('Deselect All'),
+                      style: TextButton.styleFrom(
+                        foregroundColor: const Color(0xFF64748B),
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'FIELD VISIBILITY TOGGLES',
+            style: TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF64748B),
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildToggleChip('Serial Number', _showSerialNumber, (v) => setState(() => _showSerialNumber = v)),
+                _buildToggleChip('Date', _showDate, (v) => setState(() => _showDate = v)),
+                _buildToggleChip('Time', _showTime, (v) => setState(() => _showTime = v)),
+                _buildToggleChip('Vehicle Number', _showVehicleNumber, (v) => setState(() => _showVehicleNumber = v)),
+                _buildToggleChip('Material', _showMaterial, (v) => setState(() => _showMaterial = v)),
+                _buildToggleChip('Party', _showParty, (v) => setState(() => _showParty = v)),
+                _buildToggleChip('Vehicle Type', _showVehicleType, (v) => setState(() => _showVehicleType = v)),
+                _buildToggleChip('Gross Weight', _showGrossWeight, (v) => setState(() => _showGrossWeight = v)),
+                _buildToggleChip('Tare Weight', _showTareWeight, (v) => setState(() => _showTareWeight = v)),
+                _buildToggleChip('Net Weight', _showNetWeight, (v) => setState(() => _showNetWeight = v)),
+                _buildToggleChip('Amount', _showAmount, (v) => setState(() => _showAmount = v)),
+                _buildToggleChip('Payment Mode', _showPaymentMode, (v) => setState(() => _showPaymentMode = v)),
+                _buildToggleChip('Cash Received', _showCashReceived, (v) => setState(() => _showCashReceived = v)),
+                _buildToggleChip('Pending Amount', _showPendingAmount, (v) => setState(() => _showPendingAmount = v)),
+                _buildToggleChip('Remarks', _showRemarks, (v) => setState(() => _showRemarks = v)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildToggleChip(String label, bool isSelected, ValueChanged<bool> onChanged) {
+    return FilterChip(
+      selected: isSelected,
+      label: Text(label),
+      labelStyle: TextStyle(
+        fontFamily: 'PlusJakartaSans',
+        fontSize: 12,
+        fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+        color: isSelected ? const Color(0xFF0D3B82) : const Color(0xFF475569),
+      ),
+      selectedColor: const Color(0xFF0D3B82).withValues(alpha: 0.12),
+      checkmarkColor: const Color(0xFF0D3B82),
+      backgroundColor: Colors.white,
+      side: BorderSide(
+        color: isSelected ? const Color(0xFF0D3B82) : const Color(0xFFCBD5E1),
+        width: isSelected ? 1.5 : 1.0,
+      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+      onSelected: onChanged,
+    );
+  }
+
+  // 5. Footer Note Card
+  Widget _buildFooterNoteCard() {
+    return _buildCardWrapper(
+      icon: Icons.edit_note_rounded,
+      iconBg: const Color(0xFFECFDF5),
+      iconColor: const Color(0xFF059669),
+      title: 'Footer Settings',
+      subtitle: 'Disclaimer or notice printed at the bottom of the weighment slip',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Checkbox(
+                value: _showFooterNote,
+                onChanged: (v) => setState(() => _showFooterNote = v ?? true),
+                activeColor: const Color(0xFF0D3B82),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+              ),
+              const Text(
+                'Show Footer Note on Receipt',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          _buildTextField(
+            label: 'Footer Note Text',
+            hint: 'Please check the weight before leaving the weighbridge.',
+            controller: _footerNoteController,
+            maxLines: 2,
+            enabled: _showFooterNote,
+            onChanged: (_) => setState(() {}),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Right Side: Live Thermal Receipt Preview
+  Widget _buildLivePreviewCard() {
+    final settings = _buildCurrentSettingsSnapshot();
+    final hasLogo = settings.logoPath != null &&
+        settings.logoPath!.trim().isNotEmpty &&
+        File(settings.logoPath!).existsSync();
+
+    final dateFormatted = DateFormat('dd/MM/yyyy').format(DateTime.now());
+    final timeFormatted = DateFormat('hh:mm:ss a').format(DateTime.now());
+    final timestamp = DateFormat('dd/MM/yyyy HH:mm:ss').format(DateTime.now());
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // Header
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0D3B82).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.visibility_rounded,
+                    color: Color(0xFF0D3B82),
+                    size: 18,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Live Receipt Preview',
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    Text(
+                      'Reflects template changes in real time',
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 11,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+          // The Thermal Slip
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Center(
+              child: Container(
+                width: 290,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFAFAFA),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: const Color(0xFFCBD5E1), width: 0.8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.06),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Business Logo & Header
+                    if (hasLogo)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 6),
+                        child: Image.file(
+                          File(settings.logoPath!),
+                          height: 32,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, _, _) => _buildScaleBadge(),
+                        ),
+                      )
+                    else
+                      _buildScaleBadge(),
+                    const SizedBox(height: 4),
+                    Text(
+                      settings.businessName,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF0F172A),
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    if (settings.businessSubtitle != null && settings.businessSubtitle!.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        settings.businessSubtitle!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                    if (settings.serviceText != null && settings.serviceText!.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        settings.serviceText!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 8,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF475569),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                    if (settings.address != null && settings.address!.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        settings.address!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 7.5,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                    if (settings.phoneNumber != null && settings.phoneNumber!.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        'Ph: ${settings.phoneNumber}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 7.5,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+                    if (settings.gstin != null && settings.gstin!.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        'GSTIN: ${settings.gstin}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 7.5,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 6),
+                    _buildDashedDivider(),
+                    const SizedBox(height: 6),
+
+                    // Receipt Title
+                    Text(
+                      settings.receiptTitle,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 11,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                        letterSpacing: 0.8,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+
+                    // Info Rows
+                    if (_showSerialNumber || _showDate || _showTime) ...[
+                      _buildDashedDivider(),
+                      const SizedBox(height: 4),
+                      if (_showSerialNumber) _buildReceiptRow('SL.NO.', _currentBillPreview),
+                      if (_showDate) _buildReceiptRow('Date', dateFormatted),
+                      if (_showTime) _buildReceiptRow('Time', timeFormatted),
+                      const SizedBox(height: 4),
+                    ],
+
+                    if (_showVehicleNumber || _showMaterial || _showParty || _showVehicleType) ...[
+                      _buildDashedDivider(),
+                      const SizedBox(height: 4),
+                      if (_showVehicleNumber) _buildReceiptRow('Vehicle No.', 'TN 01 AB 1234'),
+                      if (_showMaterial) _buildReceiptRow('Material', 'Crushed Stone (Gravel)'),
+                      if (_showParty) _buildReceiptRow('Party', 'UltraTech Cement Ltd.'),
+                      if (_showVehicleType) _buildReceiptRow('Vehicle Type', '10 Wheeler Truck'),
+                      const SizedBox(height: 4),
+                    ],
+
+                    if (_showGrossWeight || _showTareWeight || _showNetWeight) ...[
+                      _buildDashedDivider(),
+                      const SizedBox(height: 4),
+                      if (_showGrossWeight)
+                        _buildReceiptWeightRow('Gross Weight', _weightUnit == 'kg' ? '28,450 kg' : '28.450 ton'),
+                      if (_showTareWeight)
+                        _buildReceiptWeightRow('Tare Weight', _weightUnit == 'kg' ? '10,200 kg' : '10.200 ton'),
+                      if (_showNetWeight) ...[
+                        const SizedBox(height: 2),
+                        _buildDashedDivider(),
+                        const SizedBox(height: 2),
+                        _buildReceiptWeightRow(
+                          'Net Weight',
+                          _weightUnit == 'kg' ? '18,250 kg' : '18.250 ton',
+                          isBold: true,
+                        ),
+                      ],
+                      const SizedBox(height: 4),
+                    ],
+
+                    if (_showAmount || _showPaymentMode || _showCashReceived || _showPendingAmount) ...[
+                      _buildDashedDivider(),
+                      const SizedBox(height: 4),
+                      if (_showAmount) _buildReceiptRow('Amount', 'Rs. 350.00'),
+                      if (_showPaymentMode) _buildReceiptRow('Payment', 'CASH'),
+                      if (_showCashReceived) _buildReceiptRow('Cash Received', 'Rs. 350.00'),
+                      if (_showPendingAmount) _buildReceiptRow('Pending', 'Rs. 0.00'),
+                      const SizedBox(height: 4),
+                    ],
+
+                    if (_showRemarks) ...[
+                      _buildDashedDivider(),
+                      const SizedBox(height: 4),
+                      const Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Note: ',
+                            style: TextStyle(
+                              fontFamily: 'PlusJakartaSans',
+                              fontSize: 8.5,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF475569),
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              'Standard delivery weighment',
+                              style: TextStyle(
+                                fontFamily: 'PlusJakartaSans',
+                                fontSize: 8.5,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                    ],
+
+                    if (_showFooterNote && settings.footerNote != null && settings.footerNote!.isNotEmpty) ...[
+                      _buildDashedDivider(),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Note: ${settings.footerNote!}',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 8,
+                          color: Color(0xFF94A3B8),
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+
+                    const SizedBox(height: 8),
+                    Center(
+                      child: Text(
+                        '* $timestamp *',
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 7,
+                          fontWeight: FontWeight.w500,
+                          color: Color(0xFF94A3B8),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScaleBadge() {
+    return Center(
+      child: Container(
+        width: 26,
+        height: 26,
+        decoration: BoxDecoration(
+          color: const Color(0xFF0F172A),
+          shape: BoxShape.circle,
+          border: Border.all(color: const Color(0xFF38BDF8), width: 1),
+        ),
+        child: const Icon(
+          Icons.scale_rounded,
+          color: Colors.white,
+          size: 15,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDashedDivider() {
+    return Row(
+      children: List.generate(
+        32,
+        (i) => Expanded(
+          child: Container(
+            height: 1,
+            color: i.isEven ? const Color(0xFF94A3B8) : Colors.transparent,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReceiptRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1.2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 9.5,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF64748B),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 9.5,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReceiptWeightRow(String label, String value, {bool isBold = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 1.2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 9.5,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF64748B),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: isBold ? 10.5 : 10.0,
+                fontWeight: FontWeight.w800,
+                color: const Color(0xFF0F172A),
+                letterSpacing: 0.3,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Card Shell Helper
+  Widget _buildCardWrapper({
+    required IconData icon,
+    required Color iconBg,
+    required Color iconColor,
     required String title,
     required String subtitle,
     required Widget child,
@@ -90,30 +1439,60 @@ class _SettingsPageState extends State<SettingsPage> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF0F172A),
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: iconBg,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, color: iconColor, size: 18),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0F172A),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 12,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 13,
-              color: Colors.grey.shade500,
-            ),
-          ),
+          const SizedBox(height: 16),
+          const Divider(height: 1, color: Color(0xFFF1F5F9)),
           const SizedBox(height: 16),
           child,
         ],
@@ -121,82 +1500,80 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildWeightUnitSelector() {
-    return Column(
-      children: [
-        _buildRadioOption(
-          value: 'kg',
-          title: 'Kilogram (kg)',
-          subtitle: 'Weight displayed in kilograms',
-        ),
-        const SizedBox(height: 8),
-        _buildRadioOption(
-          value: 'ton',
-          title: 'Tonne (ton)',
-          subtitle: 'Weight displayed in metric tonnes',
-        ),
-      ],
-    );
-  }
-
-  Widget _buildRadioOption({
-    required String value,
-    required String title,
-    required String subtitle,
+  // Text Field Helper
+  Widget _buildTextField({
+    required String label,
+    required String hint,
+    required TextEditingController controller,
+    int maxLines = 1,
+    int? maxLength,
+    bool enabled = true,
+    TextInputType? keyboardType,
+    TextCapitalization textCapitalization = TextCapitalization.none,
+    List<TextInputFormatter>? inputFormatters,
+    ValueChanged<String>? onChanged,
+    FormFieldValidator<String>? validator,
   }) {
-    final isSelected = _weightUnit == value;
-    return InkWell(
-      onTap: () => _saveWeightUnit(value),
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF0D3B82).withValues(alpha: 0.05) : Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isSelected ? const Color(0xFF0D3B82) : Colors.grey.shade300,
-            width: isSelected ? 2 : 1,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF334155),
           ),
         ),
-        child: Row(
-          children: [
-            Radio<String>(
-              value: value,
-              groupValue: _weightUnit,
-              onChanged: (v) => _saveWeightUnit(v!),
-              activeColor: const Color(0xFF0D3B82),
+        const SizedBox(height: 6),
+        TextFormField(
+          controller: controller,
+          enabled: enabled,
+          maxLines: maxLines,
+          maxLength: maxLength,
+          keyboardType: keyboardType,
+          textCapitalization: textCapitalization,
+          inputFormatters: inputFormatters,
+          onChanged: onChanged,
+          validator: validator,
+          style: const TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF0F172A),
+          ),
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+              color: Colors.grey.shade400,
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 14,
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                      color: const Color(0xFF0F172A),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 12,
-                      color: Colors.grey.shade500,
-                    ),
-                  ),
-                ],
-              ),
+            filled: true,
+            fillColor: enabled ? const Color(0xFFF8FAFC) : const Color(0xFFF1F5F9),
+            counterText: '',
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
             ),
-            if (isSelected)
-              const Icon(Icons.check_circle, color: Color(0xFF0D3B82), size: 20),
-          ],
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFF0D3B82), width: 1.6),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFDC2626)),
+            ),
+          ),
         ),
-      ),
+      ],
     );
   }
 }

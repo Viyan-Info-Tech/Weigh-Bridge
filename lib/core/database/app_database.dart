@@ -10,12 +10,14 @@ import 'daos/vehicle_dao.dart';
 import 'daos/vehicle_type_dao.dart';
 import 'daos/material_dao.dart';
 import 'daos/bill_dao.dart';
+import 'daos/app_settings_dao.dart';
 import 'tables/users_table.dart';
 import 'tables/parties_table.dart';
 import 'tables/vehicle_types_table.dart';
 import 'tables/vehicles_table.dart';
 import 'tables/materials_table.dart';
 import 'tables/weighments_table.dart';
+import 'tables/app_settings_table.dart';
 
 part 'app_database.g.dart';
 
@@ -27,6 +29,7 @@ part 'app_database.g.dart';
     Vehicles,
     Materials,
     Weighments,
+    AppSettings,
   ],
   daos: [
     UserDao,
@@ -35,6 +38,7 @@ part 'app_database.g.dart';
     VehicleDao,
     MaterialDao,
     BillDao,
+    AppSettingsDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -43,7 +47,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 11;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -252,6 +256,10 @@ class AppDatabase extends _$AppDatabase {
               await customStatement('DROP TABLE materials');
               await customStatement('ALTER TABLE materials_new RENAME TO materials');
             }
+          }
+
+          if (from < 11) {
+            await m.createTable(appSettings);
           }
         },
       );
