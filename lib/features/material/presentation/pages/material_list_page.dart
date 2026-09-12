@@ -6,6 +6,8 @@ import '../bloc/material_bloc.dart';
 import '../bloc/material_event.dart';
 import '../bloc/material_state.dart' as app_material;
 import 'material_form_page.dart' as form;
+import 'material_details_dialog.dart';
+import '../../../../core/presentation/widgets/action_menu.dart';
 
 class MaterialListPage extends StatefulWidget {
   const MaterialListPage({super.key});
@@ -592,46 +594,15 @@ class _MaterialListPageState extends State<MaterialListPage> {
           // Actions
           Expanded(
             flex: 18,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                _buildActionButton(
-                  icon: Icons.edit_outlined,
-                  color: const Color(0xFF0F52BA),
-                  tooltip: 'Edit Material',
-                  onTap: () => _navigateToForm(context, materialId: material.id),
-                ),
-                const SizedBox(width: 4),
-                _buildActionButton(
-                  icon: Icons.block,
-                  color: const Color(0xFFDC2626),
-                  tooltip: 'Deactivate Material',
-                  onTap: () => _confirmDeactivateMaterial(context, material),
-                ),
-              ],
+            child: ActionMenu(
+              isActive: material.isActive,
+              onView: () => MaterialDetailsDialog.show(context, material: material),
+              onEdit: () => _navigateToForm(context, materialId: material.id),
+              onDelete: () => _confirmDeleteMaterial(context, material),
+              onDeactivate: () => _confirmDeactivateMaterial(context, material),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required Color color,
-    required String tooltip,
-    required VoidCallback onTap,
-  }) {
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        hoverColor: color.withValues(alpha: 0.1),
-        child: Padding(
-          padding: const EdgeInsets.all(5),
-          child: Icon(icon, size: 16, color: color),
-        ),
       ),
     );
   }
@@ -771,7 +742,7 @@ class _MaterialListPageState extends State<MaterialListPage> {
           ),
         ),
         content: Text(
-          'Are you sure you want to deactivate material "${material.name}"?',
+          'Are you sure you want to deactivate material "${material.name}"?\nExisting records will be preserved.',
           style: const TextStyle(
             fontFamily: 'PlusJakartaSans',
             fontSize: 13,
@@ -794,6 +765,50 @@ class _MaterialListPageState extends State<MaterialListPage> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             child: const Text('Deactivate', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeleteMaterial(BuildContext context, MaterialItem material) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: const Text(
+          'Delete Material',
+          style: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+            color: Color(0xFF0F172A),
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to permanently delete material "${material.name}"?\n\nThis action cannot be undone.',
+          style: const TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 13,
+            color: Color(0xFF475569),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: TextButton.styleFrom(foregroundColor: const Color(0xFF64748B)),
+            child: const Text('Cancel', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+          ),
+          FilledButton(
+            onPressed: () {
+              context.read<MaterialBloc>().add(DeleteMaterialRequested(material.id));
+              Navigator.pop(ctx);
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Delete', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
           ),
         ],
       ),

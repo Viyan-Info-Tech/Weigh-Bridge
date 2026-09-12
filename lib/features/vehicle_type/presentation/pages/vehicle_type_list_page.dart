@@ -6,6 +6,7 @@ import '../bloc/vehicle_type_event.dart';
 import '../bloc/vehicle_type_state.dart';
 import 'vehicle_type_form_page.dart' as form;
 import 'vehicle_type_details_dialog.dart';
+import '../../../../core/presentation/widgets/action_menu.dart';
 
 class VehicleTypeListPage extends StatefulWidget {
   const VehicleTypeListPage({super.key});
@@ -217,59 +218,15 @@ class _VehicleTypeListPageState extends State<VehicleTypeListPage> {
             DataCell(Text('₹${vehicleType.emptyPrice.toStringAsFixed(2)}', style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
             DataCell(Text('₹${vehicleType.loadPrice.toStringAsFixed(2)}', style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
             DataCell(_buildStatusBadge(vehicleType.isActive)),
-            DataCell(Row(
-              children: [
-                _buildActionIcon(Icons.visibility_outlined, () => VehicleTypeDetailsDialog.show(context, vehicleType: vehicleType)),
-                const SizedBox(width: 4),
-                PopupMenuButton<String>(
-                  tooltip: 'More Actions',
-                  icon: const Icon(Icons.more_vert, size: 18, color: Color(0xFF64748B)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  elevation: 4,
-                  onSelected: (value) {
-                    if (value == 'edit') {
-                      _showFormDialog(context, vehicleType: vehicleType);
-                    } else if (value == 'deactivate') {
-                      _confirmDeactivate(context, vehicleType);
-                    } else if (value == 'delete') {
-                      _confirmDelete(context, vehicleType);
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'edit',
-                      child: Row(
-                        children: [
-                          Icon(Icons.edit_outlined, size: 16, color: Color(0xFF0F52BA)),
-                          SizedBox(width: 10),
-                          Text('Edit', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13)),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'deactivate',
-                      child: Row(
-                        children: [
-                          Icon(Icons.block, size: 16, color: Color(0xFFDC2626)),
-                          SizedBox(width: 10),
-                          Text('Deactivate', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13)),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete_outline, size: 16, color: Color(0xFFDC2626)),
-                          SizedBox(width: 10),
-                          Text('Delete', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            )),
+            DataCell(
+              ActionMenu(
+                isActive: vehicleType.isActive,
+                onView: () => VehicleTypeDetailsDialog.show(context, vehicleType: vehicleType),
+                onEdit: () => _showFormDialog(context, vehicleType: vehicleType),
+                onDelete: () => _confirmDelete(context, vehicleType),
+                onDeactivate: () => _confirmDeactivate(context, vehicleType),
+              ),
+            ),
           ]);
         }).toList(),
       ),
@@ -292,14 +249,6 @@ class _VehicleTypeListPageState extends State<VehicleTypeListPage> {
           color: isActive ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
         ),
       ),
-    );
-  }
-
-  Widget _buildActionIcon(IconData icon, VoidCallback onTap) {
-    return IconButton(
-      icon: Icon(icon, size: 18, color: const Color(0xFF64748B)),
-      onPressed: onTap,
-      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
     );
   }
 

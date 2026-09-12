@@ -64,4 +64,8 @@ class MaterialDao extends DatabaseAccessor<AppDatabase> with _$MaterialDaoMixin 
       updatedAt: Value(now),
     ));
   }
+
+  Future<int> deleteMaterial(int id) async {
+    return await (delete(materials)..where((m) => m.id.equals(id))).go();
+  }
 }

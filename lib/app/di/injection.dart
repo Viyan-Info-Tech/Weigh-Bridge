@@ -39,6 +39,7 @@ import '../../features/material/data/datasources/material_item_local_datasource.
 import '../../features/material/data/repositories/material_item_repository_impl.dart';
 import '../../features/material/domain/usecases/load_materials.dart';
 import '../../features/material/domain/usecases/create_material.dart';
+import '../../features/material/domain/usecases/delete_material.dart';
 import '../../features/material/presentation/bloc/material_bloc.dart';
 
 class Injection {
@@ -150,10 +151,12 @@ class Injection {
 
     final loadMaterialsUseCase = LoadMaterialsUseCase(materialItemRepository);
     final createMaterialUseCase = CreateMaterialUseCase(materialItemRepository);
+    final deleteMaterialUseCase = DeleteMaterialUseCase(materialItemRepository);
 
     final materialBloc = MaterialBloc(
       loadMaterialsUseCase: loadMaterialsUseCase,
       createMaterialUseCase: createMaterialUseCase,
+      deleteMaterialUseCase: deleteMaterialUseCase,
       materialRepository: materialItemRepository,
     );
 

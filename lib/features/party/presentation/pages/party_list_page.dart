@@ -7,6 +7,7 @@ import '../bloc/party_event.dart';
 import '../bloc/party_state.dart';
 import 'party_details_dialog.dart';
 import 'party_form_page.dart' as form;
+import '../../../../core/presentation/widgets/action_menu.dart';
 
 class PartyListPage extends StatefulWidget {
   const PartyListPage({super.key});
@@ -605,82 +606,15 @@ class _PartyListPageState extends State<PartyListPage> {
           // Actions
           Expanded(
             flex: 14,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                _buildActionButton(
-                  icon: Icons.visibility_outlined,
-                  color: const Color(0xFF64748B),
-                  tooltip: 'View Details',
-                  onTap: () => PartyDetailsDialog.show(context, party: party),
-                ),
-                const SizedBox(width: 4),
-                _buildActionButton(
-                  icon: Icons.edit_outlined,
-                  color: const Color(0xFF0F52BA),
-                  tooltip: 'Edit Party',
-                  onTap: () => _navigateToForm(context, partyId: party.id),
-                ),
-                const SizedBox(width: 4),
-                PopupMenuButton<String>(
-                  tooltip: 'More Actions',
-                  icon: const Icon(Icons.more_vert, size: 16, color: Color(0xFF64748B)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  elevation: 4,
-                  onSelected: (value) {
-                    if (value == 'deactivate') {
-                      _confirmDeactivateParty(context, party);
-                    } else if (value == 'delete') {
-                      _confirmDeleteParty(context, party);
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'deactivate',
-                      child: Row(
-                        children: [
-                          Icon(Icons.block, size: 16, color: Color(0xFFDC2626)),
-                          SizedBox(width: 10),
-                          Text('Deactivate', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13)),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete_outline, size: 16, color: Color(0xFFDC2626)),
-                          SizedBox(width: 10),
-                          Text('Delete', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+            child: ActionMenu(
+              isActive: party.isActive,
+              onView: () => PartyDetailsDialog.show(context, party: party),
+              onEdit: () => _navigateToForm(context, partyId: party.id),
+              onDelete: () => _confirmDeleteParty(context, party),
+              onDeactivate: () => _confirmDeactivateParty(context, party),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required Color color,
-    required String tooltip,
-    required VoidCallback onTap,
-  }) {
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        hoverColor: color.withValues(alpha: 0.1),
-        child: Padding(
-          padding: const EdgeInsets.all(5),
-          child: Icon(icon, size: 16, color: color),
-        ),
       ),
     );
   }

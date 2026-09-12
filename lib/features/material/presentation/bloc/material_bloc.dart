@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/usecases/load_materials.dart';
 import '../../domain/usecases/create_material.dart';
+import '../../domain/usecases/delete_material.dart';
 import '../../domain/repositories/material_item_repository.dart';
 import 'material_event.dart';
 import 'material_state.dart';
@@ -9,14 +10,17 @@ import 'material_state.dart';
 class MaterialBloc extends Bloc<MaterialEvent, MaterialState> {
   final LoadMaterialsUseCase _loadMaterialsUseCase;
   final CreateMaterialUseCase _createMaterialUseCase;
+  final DeleteMaterialUseCase _deleteMaterialUseCase;
   final MaterialItemRepository _materialRepository;
 
   MaterialBloc({
     required LoadMaterialsUseCase loadMaterialsUseCase,
     required CreateMaterialUseCase createMaterialUseCase,
+    required DeleteMaterialUseCase deleteMaterialUseCase,
     required MaterialItemRepository materialRepository,
   })  : _loadMaterialsUseCase = loadMaterialsUseCase,
         _createMaterialUseCase = createMaterialUseCase,
+        _deleteMaterialUseCase = deleteMaterialUseCase,
         _materialRepository = materialRepository,
         super(const MaterialState()) {
     on<LoadMaterials>(_onLoadMaterials);
@@ -24,6 +28,7 @@ class MaterialBloc extends Bloc<MaterialEvent, MaterialState> {
     on<CreateMaterialRequested>(_onCreateMaterial);
     on<UpdateMaterialRequested>(_onUpdateMaterial);
     on<DeactivateMaterialRequested>(_onDeactivateMaterial);
+    on<DeleteMaterialRequested>(_onDeleteMaterial);
     on<SearchMaterials>(_onSearchMaterials);
     on<FilterMaterialsByStatus>(_onFilterByStatus);
   }
@@ -85,6 +90,17 @@ class MaterialBloc extends Bloc<MaterialEvent, MaterialState> {
     try {
       await _materialRepository.deactivateMaterial(event.materialId);
       emit(state.copyWith(status: AppMaterialStatus.success, successMessage: 'Material deactivated'));
+      add(const LoadMaterials());
+    } catch (e) {
+      emit(state.copyWith(status: AppMaterialStatus.error, errorMessage: e.toString()));
+    }
+  }
+
+  Future<void> _onDeleteMaterial(DeleteMaterialRequested event, Emitter<MaterialState> emit) async {
+    emit(state.copyWith(status: AppMaterialStatus.loading));
+    try {
+      await _deleteMaterialUseCase(event.materialId);
+      emit(state.copyWith(status: AppMaterialStatus.success, successMessage: 'Material deleted'));
       add(const LoadMaterials());
     } catch (e) {
       emit(state.copyWith(status: AppMaterialStatus.error, errorMessage: e.toString()));

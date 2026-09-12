@@ -13,6 +13,7 @@ import '../bloc/vehicle_state.dart';
 import 'vehicle_form_page.dart' as v_form;
 import 'vehicle_details_dialog.dart';
 import '../../../vehicle_type/presentation/pages/vehicle_type_details_dialog.dart';
+import '../../../../core/presentation/widgets/action_menu.dart';
 
 class VehiclesMergedPage extends StatefulWidget {
   const VehiclesMergedPage({super.key});
@@ -645,87 +646,15 @@ class _VehiclesPanelState extends State<_VehiclesPanel> {
           ),
           Expanded(
             flex: 14,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                _buildActionButton(
-                  icon: Icons.visibility_outlined,
-                  color: const Color(0xFF64748B),
-                  tooltip: 'View Vehicle',
-                  onTap: () => VehicleDetailsDialog.show(context, vehicle: vehicle, typeName: typeName),
-                ),
-                const SizedBox(width: 4),
-                PopupMenuButton<String>(
-                  tooltip: 'More Actions',
-                  icon: const Icon(Icons.more_vert, size: 16, color: Color(0xFF64748B)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  elevation: 4,
-                  onSelected: (value) {
-                    if (value == 'edit') {
-                      v_form.VehicleFormDialog.show(context, vehicleId: vehicle.id);
-                    } else if (value == 'deactivate') {
-                      _confirmDeactivateVehicle(context, vehicle);
-                    } else if (value == 'delete') {
-                      _confirmDeleteVehicle(context, vehicle);
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'edit',
-                      child: Row(
-                        children: [
-                          Icon(Icons.edit_outlined, size: 16, color: Color(0xFF0F52BA)),
-                          SizedBox(width: 10),
-                          Text('Edit', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13)),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'deactivate',
-                      child: Row(
-                        children: [
-                          Icon(Icons.block, size: 16, color: Color(0xFFDC2626)),
-                          SizedBox(width: 10),
-                          Text('Deactivate', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13)),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete_outline, size: 16, color: Color(0xFFDC2626)),
-                          SizedBox(width: 10),
-                          Text('Delete', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+            child: ActionMenu(
+              isActive: vehicle.isActive,
+              onView: () => VehicleDetailsDialog.show(context, vehicle: vehicle, typeName: typeName),
+              onEdit: () => v_form.VehicleFormDialog.show(context, vehicleId: vehicle.id),
+              onDelete: () => _confirmDeleteVehicle(context, vehicle),
+              onDeactivate: () => _confirmDeactivateVehicle(context, vehicle),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required Color color,
-    required String tooltip,
-    required VoidCallback onTap,
-  }) {
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        hoverColor: color.withValues(alpha: 0.1),
-        child: Padding(
-          padding: const EdgeInsets.all(5),
-          child: Icon(icon, size: 16, color: color),
-        ),
       ),
     );
   }
@@ -1285,87 +1214,15 @@ class _VehicleTypesPanelState extends State<_VehicleTypesPanel> {
           ),
           Expanded(
             flex: 16,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                _buildActionButton(
-                  icon: Icons.visibility_outlined,
-                  color: const Color(0xFF64748B),
-                  tooltip: 'View Type',
-                  onTap: () => VehicleTypeDetailsDialog.show(context, vehicleType: vt),
-                ),
-                const SizedBox(width: 4),
-                PopupMenuButton<String>(
-                  tooltip: 'More Actions',
-                  icon: const Icon(Icons.more_vert, size: 16, color: Color(0xFF64748B)),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                  elevation: 4,
-                  onSelected: (value) {
-                    if (value == 'edit') {
-                      vt_form.VehicleTypeFormDialog.show(context, vehicleType: vt);
-                    } else if (value == 'deactivate') {
-                      _confirmDeactivateVehicleType(context, vt);
-                    } else if (value == 'delete') {
-                      _confirmDeleteVehicleType(context, vt);
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'edit',
-                      child: Row(
-                        children: [
-                          Icon(Icons.edit_outlined, size: 16, color: Color(0xFF0F52BA)),
-                          SizedBox(width: 10),
-                          Text('Edit', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13)),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'deactivate',
-                      child: Row(
-                        children: [
-                          Icon(Icons.block, size: 16, color: Color(0xFFDC2626)),
-                          SizedBox(width: 10),
-                          Text('Deactivate', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13)),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete_outline, size: 16, color: Color(0xFFDC2626)),
-                          SizedBox(width: 10),
-                          Text('Delete', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+            child: ActionMenu(
+              isActive: vt.isActive,
+              onView: () => VehicleTypeDetailsDialog.show(context, vehicleType: vt),
+              onEdit: () => vt_form.VehicleTypeFormDialog.show(context, vehicleType: vt),
+              onDelete: () => _confirmDeleteVehicleType(context, vt),
+              onDeactivate: () => _confirmDeactivateVehicleType(context, vt),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required Color color,
-    required String tooltip,
-    required VoidCallback onTap,
-  }) {
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(6),
-        hoverColor: color.withValues(alpha: 0.1),
-        child: Padding(
-          padding: const EdgeInsets.all(5),
-          child: Icon(icon, size: 16, color: color),
-        ),
       ),
     );
   }

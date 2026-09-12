@@ -15,5 +15,6 @@ abstract class MaterialItemRepository {
     String? category,
   });
   Future<void> deactivateMaterial(int id);
+  Future<void> deleteMaterial(int id);
   Future<List<MaterialItem>> searchMaterials(String query);
 }

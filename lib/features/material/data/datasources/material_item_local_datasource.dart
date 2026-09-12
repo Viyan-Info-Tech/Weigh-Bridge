@@ -60,6 +60,10 @@ class MaterialItemLocalDataSource {
     await _database.materialDao.deactivateMaterial(id);
   }
 
+  Future<void> deleteMaterial(int id) async {
+    await _database.materialDao.deleteMaterial(id);
+  }
+
   Future<List<MaterialItem>> searchMaterials(String query) async {
     final records = await _database.materialDao.searchMaterials(query);
     return records.map(_toEntity).toList();

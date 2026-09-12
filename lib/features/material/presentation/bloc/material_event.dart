@@ -55,6 +55,15 @@ class DeactivateMaterialRequested extends MaterialEvent {
   List<Object?> get props => [materialId];
 }
 
+class DeleteMaterialRequested extends MaterialEvent {
+  final int materialId;
+
+  const DeleteMaterialRequested(this.materialId);
+
+  @override
+  List<Object?> get props => [materialId];
+}
+
 class SearchMaterials extends MaterialEvent {
   final String query;
 
