@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:equatable/equatable.dart';
 
 import '../../../party/domain/entities/party.dart';
@@ -148,7 +149,12 @@ class VehicleTypeQuickAddRequested extends BillEvent {
 
 class MaterialQuickAddRequested extends BillEvent {
   final String name;
-  const MaterialQuickAddRequested({required this.name});
+  final Completer<MaterialItem?>? completer;
+
+  const MaterialQuickAddRequested({
+    required this.name,
+    this.completer,
+  });
 
   @override
   List<Object?> get props => [name];

@@ -31,10 +31,15 @@ class MaterialItemLocalDataSource {
   Future<int> insertMaterial({
     required String name,
     String? category,
+    bool isActive = true,
   }) async {
+    final now = DateTime.now();
     return _database.materialDao.insertMaterial(MaterialsCompanion(
       name: Value(name),
       category: Value(category),
+      isActive: Value(isActive),
+      createdAt: Value(now),
+      updatedAt: Value(now),
     ));
   }
 

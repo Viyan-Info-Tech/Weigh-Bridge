@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../party/domain/entities/party.dart';
@@ -555,17 +557,17 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     }
   }
 
-  Future<MaterialItem> createMaterial(String name) async {
-    final existing = await _materialRepository.searchMaterials(name);
-    if (existing.any((m) => m.name.toLowerCase() == name.toLowerCase())) {
-      throw Exception('Material with this name already exists');
+  Future<MaterialItem> quickAddMaterial(String name) async {
+    final completer = Completer<MaterialItem?>();
+    add(MaterialQuickAddRequested(name: name, completer: completer));
+    final result = await completer.future;
+    if (result == null) {
+      throw Exception('Failed to create material');
     }
-    final newId = await _materialRepository.createMaterial(name: name, category: '');
-    final refreshed = await _materialRepository.getMaterialsByStatus(isActive: true);
-    final created = refreshed.firstWhere((m) => m.id == newId);
-    add(MaterialCreatedToState(materials: refreshed, selected: created));
-    return created;
+    return result;
   }
+
+  Future<MaterialItem> createMaterial(String name) => quickAddMaterial(name);
 
   Future<Party> createParty(String name, String contactPerson) async {
     final existing = await _partyRepository.searchParties(name);
@@ -592,29 +594,64 @@ class BillBloc extends Bloc<BillEvent, BillState> {
   }
 
   Future<void> _onMaterialQuickAdd(MaterialQuickAddRequested event, Emitter<BillState> emit) async {
+    final trimmedName = event.name.trim();
+    if (trimmedName.isEmpty) {
+      const errorMsg = 'Material name is required';
+      emit(state.copyWith(errorMessage: errorMsg));
+      if (event.completer != null && !event.completer!.isCompleted) {
+        event.completer!.completeError(Exception(errorMsg));
+      }
+      return;
+    }
+
     try {
-      final materials = await _materialRepository.getMaterialsByStatus(isActive: true);
-      final duplicate = materials.where((m) => m.name.toLowerCase() == event.name.toLowerCase());
-      if (duplicate.isNotEmpty) {
-        emit(state.copyWith(errorMessage: 'Material with this name already exists'));
+      final allMaterials = await _materialRepository.getAllMaterials();
+      final duplicate = allMaterials.cast<MaterialItem?>().firstWhere(
+        (m) => m?.name.trim().toLowerCase() == trimmedName.toLowerCase(),
+        orElse: () => null,
+      );
+
+      if (duplicate != null) {
+        final errorMsg = duplicate.isActive
+            ? 'Material with name "${duplicate.name}" already exists'
+            : 'Material "${duplicate.name}" already exists but is deactivated';
+        emit(state.copyWith(errorMessage: errorMsg));
+        if (event.completer != null && !event.completer!.isCompleted) {
+          event.completer!.completeError(Exception(errorMsg));
+        }
         return;
       }
 
       final newId = await _materialRepository.createMaterial(
-        name: event.name,
+        name: trimmedName,
         category: '',
       );
 
-      final refreshedMaterials = await _materialRepository.getMaterialsByStatus(isActive: true);
-      final newMaterial = refreshedMaterials.firstWhere((m) => m.id == newId);
+      final created = await _materialRepository.getMaterialById(newId);
+      if (created == null) {
+        throw Exception('Failed to retrieve newly created material');
+      }
+
+      final updatedMaterials = [
+        ...state.materials.where((m) => m.id != newId),
+        created,
+      ];
 
       emit(state.copyWith(
-        materials: refreshedMaterials,
-        selectedMaterial: newMaterial,
+        materials: updatedMaterials,
+        selectedMaterial: created,
         clearError: true,
       ));
+
+      if (event.completer != null && !event.completer!.isCompleted) {
+        event.completer!.complete(created);
+      }
     } catch (e) {
-      emit(state.copyWith(errorMessage: 'Failed to create material: ${e.toString()}'));
+      final errorMsg = e.toString().replaceAll('Exception: ', '');
+      emit(state.copyWith(errorMessage: 'Failed to create material: $errorMsg'));
+      if (event.completer != null && !event.completer!.isCompleted) {
+        event.completer!.completeError(Exception(errorMsg));
+      }
     }
   }
 
