@@ -51,4 +51,8 @@ class VehicleTypeDao extends DatabaseAccessor<AppDatabase> with _$VehicleTypeDao
       updatedAt: Value(now),
     ));
   }
+
+  Future<int> deleteVehicleType(int id) async {
+    return await (delete(vehicleTypes)..where((v) => v.id.equals(id))).go();
+  }
 }

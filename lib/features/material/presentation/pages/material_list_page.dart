@@ -603,7 +603,7 @@ class _MaterialListPageState extends State<MaterialListPage> {
                 ),
                 const SizedBox(width: 4),
                 _buildActionButton(
-                  icon: Icons.delete_outline_rounded,
+                  icon: Icons.block,
                   color: const Color(0xFFDC2626),
                   tooltip: 'Deactivate Material',
                   onTap: () => _confirmDeactivateMaterial(context, material),

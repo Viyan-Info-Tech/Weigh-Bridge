@@ -19,5 +19,6 @@ abstract class VehicleRepository {
     String? driverPhone,
   });
   Future<void> deactivateVehicle(int id);
+  Future<void> deleteVehicle(int id);
   Future<List<Vehicle>> searchVehicles(String query);
 }

@@ -51,6 +51,10 @@ class VehicleTypeLocalDataSource {
     return _database.vehicleTypeDao.deactivateVehicleType(id);
   }
 
+  Future<void> deleteVehicleType(int id) async {
+    await _database.vehicleTypeDao.deleteVehicleType(id);
+  }
+
   Future<List<VehicleType>> searchVehicleTypes(String query) async {
     final records = await _database.vehicleTypeDao.searchVehicleTypes(query);
     return records.map(_toEntity).toList();

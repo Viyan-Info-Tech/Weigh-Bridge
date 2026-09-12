@@ -67,4 +67,8 @@ class VehicleDao extends DatabaseAccessor<AppDatabase> with _$VehicleDaoMixin {
       updatedAt: Value(now),
     ));
   }
+
+  Future<int> deleteVehicle(int id) async {
+    return await (delete(vehicles)..where((v) => v.id.equals(id))).go();
+  }
 }

@@ -16,5 +16,6 @@ abstract class VehicleTypeRepository {
     double loadPrice = 0,
   });
   Future<void> deactivateVehicleType(int id);
+  Future<void> deleteVehicleType(int id);
   Future<List<VehicleType>> searchVehicleTypes(String query);
 }

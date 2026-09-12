@@ -55,5 +55,8 @@ class VehicleRepositoryImpl implements VehicleRepository {
   Future<void> deactivateVehicle(int id) => _localDataSource.deactivateVehicle(id);
 
   @override
+  Future<void> deleteVehicle(int id) => _localDataSource.deleteVehicle(id);
+
+  @override
   Future<List<Vehicle>> searchVehicles(String query) => _localDataSource.searchVehicles(query);
 }

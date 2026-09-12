@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/usecases/load_vehicles.dart';
 import '../../domain/usecases/create_vehicle.dart';
+import '../../domain/usecases/delete_vehicle.dart';
 import '../../domain/repositories/vehicle_repository.dart';
 import 'vehicle_event.dart';
 import 'vehicle_state.dart';
@@ -9,14 +10,17 @@ import 'vehicle_state.dart';
 class VehicleBloc extends Bloc<VehicleEvent, VehicleState> {
   final LoadVehiclesUseCase _loadVehiclesUseCase;
   final CreateVehicleUseCase _createVehicleUseCase;
+  final DeleteVehicleUseCase _deleteVehicleUseCase;
   final VehicleRepository _vehicleRepository;
 
   VehicleBloc({
     required LoadVehiclesUseCase loadVehiclesUseCase,
     required CreateVehicleUseCase createVehicleUseCase,
+    required DeleteVehicleUseCase deleteVehicleUseCase,
     required VehicleRepository vehicleRepository,
   })  : _loadVehiclesUseCase = loadVehiclesUseCase,
         _createVehicleUseCase = createVehicleUseCase,
+        _deleteVehicleUseCase = deleteVehicleUseCase,
         _vehicleRepository = vehicleRepository,
         super(const VehicleState()) {
     on<LoadVehicles>(_onLoadVehicles);
@@ -24,6 +28,7 @@ class VehicleBloc extends Bloc<VehicleEvent, VehicleState> {
     on<CreateVehicleRequested>(_onCreateVehicle);
     on<UpdateVehicleRequested>(_onUpdateVehicle);
     on<DeactivateVehicleRequested>(_onDeactivateVehicle);
+    on<DeleteVehicleRequested>(_onDeleteVehicle);
     on<SearchVehicles>(_onSearchVehicles);
     on<FilterVehiclesByStatus>(_onFilterByStatus);
   }
@@ -88,6 +93,17 @@ class VehicleBloc extends Bloc<VehicleEvent, VehicleState> {
     try {
       await _vehicleRepository.deactivateVehicle(event.vehicleId);
       emit(state.copyWith(status: VehicleStatus.success, successMessage: 'Vehicle deactivated'));
+      add(const LoadVehicles());
+    } catch (e) {
+      emit(state.copyWith(status: VehicleStatus.error, errorMessage: e.toString()));
+    }
+  }
+
+  Future<void> _onDeleteVehicle(DeleteVehicleRequested event, Emitter<VehicleState> emit) async {
+    emit(state.copyWith(status: VehicleStatus.loading));
+    try {
+      await _deleteVehicleUseCase(event.vehicleId);
+      emit(state.copyWith(status: VehicleStatus.success, successMessage: 'Vehicle deleted'));
       add(const LoadVehicles());
     } catch (e) {
       emit(state.copyWith(status: VehicleStatus.error, errorMessage: e.toString()));

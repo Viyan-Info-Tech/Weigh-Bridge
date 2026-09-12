@@ -5,12 +5,14 @@ import 'package:mocktail/mocktail.dart';
 import 'package:weighbridge/features/vehicle/domain/entities/vehicle.dart';
 import 'package:weighbridge/features/vehicle/domain/repositories/vehicle_repository.dart';
 import 'package:weighbridge/features/vehicle/domain/usecases/create_vehicle.dart';
+import 'package:weighbridge/features/vehicle/domain/usecases/delete_vehicle.dart';
 import 'package:weighbridge/features/vehicle/domain/usecases/load_vehicles.dart';
 import 'package:weighbridge/features/vehicle/presentation/bloc/vehicle_bloc.dart';
 import 'package:weighbridge/features/vehicle/presentation/pages/vehicles_merged_page.dart';
 import 'package:weighbridge/features/vehicle_type/domain/entities/vehicle_type.dart';
 import 'package:weighbridge/features/vehicle_type/domain/repositories/vehicle_type_repository.dart';
 import 'package:weighbridge/features/vehicle_type/domain/usecases/create_vehicle_type.dart';
+import 'package:weighbridge/features/vehicle_type/domain/usecases/delete_vehicle_type.dart';
 import 'package:weighbridge/features/vehicle_type/domain/usecases/load_vehicle_types.dart';
 import 'package:weighbridge/features/vehicle_type/presentation/bloc/vehicle_type_bloc.dart';
 
@@ -66,12 +68,14 @@ void main() {
     vehicleBloc = VehicleBloc(
       loadVehiclesUseCase: LoadVehiclesUseCase(mockVehicleRepo),
       createVehicleUseCase: CreateVehicleUseCase(mockVehicleRepo),
+      deleteVehicleUseCase: DeleteVehicleUseCase(mockVehicleRepo),
       vehicleRepository: mockVehicleRepo,
     );
 
     vehicleTypeBloc = VehicleTypeBloc(
       loadVehicleTypesUseCase: LoadVehicleTypesUseCase(mockVehicleTypeRepo),
       createVehicleTypeUseCase: CreateVehicleTypeUseCase(mockVehicleTypeRepo),
+      deleteVehicleTypeUseCase: DeleteVehicleTypeUseCase(mockVehicleTypeRepo),
       vehicleTypeRepository: mockVehicleTypeRepo,
     );
   });

@@ -57,6 +57,15 @@ class DeactivateVehicleTypeRequested extends VehicleTypeEvent {
   List<Object?> get props => [vehicleTypeId];
 }
 
+class DeleteVehicleTypeRequested extends VehicleTypeEvent {
+  final int vehicleTypeId;
+
+  const DeleteVehicleTypeRequested(this.vehicleTypeId);
+
+  @override
+  List<Object?> get props => [vehicleTypeId];
+}
+
 class SearchVehicleTypes extends VehicleTypeEvent {
   final String query;
 

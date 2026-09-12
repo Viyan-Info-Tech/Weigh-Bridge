@@ -27,6 +27,7 @@ abstract class PartyRepository {
     String? state,
   });
   Future<void> deactivateParty(int id);
+  Future<void> deleteParty(int id);
   Future<List<Party>> searchParties(String query);
   Future<int> totalPartyCount();
   Future<int> activePartyCount();

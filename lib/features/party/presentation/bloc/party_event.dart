@@ -89,6 +89,15 @@ class DeactivatePartyRequested extends PartyEvent {
   List<Object?> get props => [partyId];
 }
 
+class DeletePartyRequested extends PartyEvent {
+  final int partyId;
+
+  const DeletePartyRequested(this.partyId);
+
+  @override
+  List<Object?> get props => [partyId];
+}
+
 class SearchParties extends PartyEvent {
   final String query;
 

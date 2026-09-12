@@ -72,6 +72,11 @@ class VehicleTypeRepositoryImpl implements VehicleTypeRepository {
   }
 
   @override
+  Future<void> deleteVehicleType(int id) async {
+    return _localDataSource.deleteVehicleType(id);
+  }
+
+  @override
   Future<List<VehicleType>> searchVehicleTypes(String query) async {
     return _localDataSource.searchVehicleTypes(query);
   }

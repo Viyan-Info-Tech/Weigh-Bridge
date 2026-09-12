@@ -131,6 +131,10 @@ class PartyLocalDataSource {
     await _database.partyDao.deactivateParty(id);
   }
 
+  Future<void> deleteParty(int id) async {
+    await _database.partyDao.deleteParty(id);
+  }
+
   Future<List<domain.Party>> searchParties(String query) async {
     final records = await _database.partyDao.searchParties(query);
     return records.map((r) => domain.Party(

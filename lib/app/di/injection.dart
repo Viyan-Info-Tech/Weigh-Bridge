@@ -20,17 +20,20 @@ import '../../features/party/domain/usecases/load_parties.dart';
 import '../../features/party/domain/usecases/create_party.dart';
 import '../../features/party/domain/usecases/update_party.dart';
 import '../../features/party/domain/usecases/deactivate_party.dart';
+import '../../features/party/domain/usecases/delete_party.dart';
 import '../../features/party/domain/usecases/search_parties.dart';
 import '../../features/party/presentation/bloc/party_bloc.dart';
 import '../../features/vehicle/data/datasources/vehicle_local_datasource.dart';
 import '../../features/vehicle/data/repositories/vehicle_repository_impl.dart';
 import '../../features/vehicle/domain/usecases/load_vehicles.dart';
 import '../../features/vehicle/domain/usecases/create_vehicle.dart';
+import '../../features/vehicle/domain/usecases/delete_vehicle.dart';
 import '../../features/vehicle/presentation/bloc/vehicle_bloc.dart';
 import '../../features/vehicle_type/data/datasources/vehicle_type_local_datasource.dart';
 import '../../features/vehicle_type/data/repositories/vehicle_type_repository_impl.dart';
 import '../../features/vehicle_type/domain/usecases/load_vehicle_types.dart';
 import '../../features/vehicle_type/domain/usecases/create_vehicle_type.dart';
+import '../../features/vehicle_type/domain/usecases/delete_vehicle_type.dart';
 import '../../features/vehicle_type/presentation/bloc/vehicle_type_bloc.dart';
 import '../../features/material/data/datasources/material_item_local_datasource.dart';
 import '../../features/material/data/repositories/material_item_repository_impl.dart';
@@ -92,6 +95,7 @@ class Injection {
     final createPartyUseCase = CreatePartyUseCase(partyRepository);
     final updatePartyUseCase = UpdatePartyUseCase(partyRepository);
     final deactivatePartyUseCase = DeactivatePartyUseCase(partyRepository);
+    final deletePartyUseCase = DeletePartyUseCase(partyRepository);
     final searchPartiesUseCase = SearchPartiesUseCase(partyRepository);
 
     final partyBloc = PartyBloc(
@@ -99,6 +103,7 @@ class Injection {
       createPartyUseCase: createPartyUseCase,
       updatePartyUseCase: updatePartyUseCase,
       deactivatePartyUseCase: deactivatePartyUseCase,
+      deletePartyUseCase: deletePartyUseCase,
       searchPartiesUseCase: searchPartiesUseCase,
       partyRepository: partyRepository,
     );
@@ -111,10 +116,12 @@ class Injection {
 
     final loadVehicleTypesUseCase = LoadVehicleTypesUseCase(vehicleTypeRepository);
     final createVehicleTypeUseCase = CreateVehicleTypeUseCase(vehicleTypeRepository);
+    final deleteVehicleTypeUseCase = DeleteVehicleTypeUseCase(vehicleTypeRepository);
 
     final vehicleTypeBloc = VehicleTypeBloc(
       loadVehicleTypesUseCase: loadVehicleTypesUseCase,
       createVehicleTypeUseCase: createVehicleTypeUseCase,
+      deleteVehicleTypeUseCase: deleteVehicleTypeUseCase,
       vehicleTypeRepository: vehicleTypeRepository,
     );
 
@@ -126,10 +133,12 @@ class Injection {
 
     final loadVehiclesUseCase = LoadVehiclesUseCase(vehicleRepository);
     final createVehicleUseCase = CreateVehicleUseCase(vehicleRepository);
+    final deleteVehicleUseCase = DeleteVehicleUseCase(vehicleRepository);
 
     final vehicleBloc = VehicleBloc(
       loadVehiclesUseCase: loadVehiclesUseCase,
       createVehicleUseCase: createVehicleUseCase,
+      deleteVehicleUseCase: deleteVehicleUseCase,
       vehicleRepository: vehicleRepository,
     );
 

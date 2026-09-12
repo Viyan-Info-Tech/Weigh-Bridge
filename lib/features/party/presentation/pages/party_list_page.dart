@@ -5,7 +5,7 @@ import '../../domain/entities/party.dart';
 import '../bloc/party_bloc.dart';
 import '../bloc/party_event.dart';
 import '../bloc/party_state.dart';
-import 'party_detail_page.dart';
+import 'party_details_dialog.dart';
 import 'party_form_page.dart' as form;
 
 class PartyListPage extends StatefulWidget {
@@ -612,7 +612,7 @@ class _PartyListPageState extends State<PartyListPage> {
                   icon: Icons.visibility_outlined,
                   color: const Color(0xFF64748B),
                   tooltip: 'View Details',
-                  onTap: () => _navigateToDetail(context, party.id),
+                  onTap: () => PartyDetailsDialog.show(context, party: party),
                 ),
                 const SizedBox(width: 4),
                 _buildActionButton(
@@ -622,11 +622,40 @@ class _PartyListPageState extends State<PartyListPage> {
                   onTap: () => _navigateToForm(context, partyId: party.id),
                 ),
                 const SizedBox(width: 4),
-                _buildActionButton(
-                  icon: Icons.delete_outline_rounded,
-                  color: const Color(0xFFDC2626),
-                  tooltip: 'Deactivate Party',
-                  onTap: () => _confirmDeactivateParty(context, party),
+                PopupMenuButton<String>(
+                  tooltip: 'More Actions',
+                  icon: const Icon(Icons.more_vert, size: 16, color: Color(0xFF64748B)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  elevation: 4,
+                  onSelected: (value) {
+                    if (value == 'deactivate') {
+                      _confirmDeactivateParty(context, party);
+                    } else if (value == 'delete') {
+                      _confirmDeleteParty(context, party);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'deactivate',
+                      child: Row(
+                        children: [
+                          Icon(Icons.block, size: 16, color: Color(0xFFDC2626)),
+                          SizedBox(width: 10),
+                          Text('Deactivate', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete_outline, size: 16, color: Color(0xFFDC2626)),
+                          SizedBox(width: 10),
+                          Text('Delete', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -791,7 +820,7 @@ class _PartyListPageState extends State<PartyListPage> {
           ),
         ),
         content: Text(
-          'Are you sure you want to deactivate party "${party.name}"?',
+          'Are you sure you want to deactivate "${party.name}"?\nExisting billing records will be preserved.',
           style: const TextStyle(
             fontFamily: 'PlusJakartaSans',
             fontSize: 13,
@@ -820,15 +849,52 @@ class _PartyListPageState extends State<PartyListPage> {
     );
   }
 
-  void _navigateToForm(BuildContext context, {int? partyId}) {
-    form.PartyFormDialog.show(context, partyId: partyId);
+  void _confirmDeleteParty(BuildContext context, Party party) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: const Text(
+          'Delete Party',
+          style: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+            color: Color(0xFF0F172A),
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to permanently delete "${party.name}"?\n\nThis action cannot be undone.',
+          style: const TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 13,
+            color: Color(0xFF475569),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: TextButton.styleFrom(foregroundColor: const Color(0xFF64748B)),
+            child: const Text('Cancel', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+          ),
+          FilledButton(
+            onPressed: () {
+              context.read<PartyBloc>().add(DeletePartyRequested(party.id));
+              Navigator.pop(ctx);
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Delete', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
   }
 
-  void _navigateToDetail(BuildContext context, int partyId) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => PartyDetailPage(partyId: partyId)),
-    );
+  void _navigateToForm(BuildContext context, {int? partyId}) {
+    form.PartyFormDialog.show(context, partyId: partyId);
   }
 }
 

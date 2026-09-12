@@ -85,4 +85,8 @@ class PartyDao extends DatabaseAccessor<AppDatabase> with _$PartyDaoMixin {
       updatedAt: Value(now),
     ));
   }
+
+  Future<int> deleteParty(int id) async {
+    return await (delete(parties)..where((p) => p.id.equals(id))).go();
+  }
 }

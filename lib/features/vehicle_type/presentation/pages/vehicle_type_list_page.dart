@@ -5,6 +5,7 @@ import '../bloc/vehicle_type_bloc.dart';
 import '../bloc/vehicle_type_event.dart';
 import '../bloc/vehicle_type_state.dart';
 import 'vehicle_type_form_page.dart' as form;
+import 'vehicle_type_details_dialog.dart';
 
 class VehicleTypeListPage extends StatefulWidget {
   const VehicleTypeListPage({super.key});
@@ -218,8 +219,55 @@ class _VehicleTypeListPageState extends State<VehicleTypeListPage> {
             DataCell(_buildStatusBadge(vehicleType.isActive)),
             DataCell(Row(
               children: [
-                _buildActionIcon(Icons.edit_outlined, () => _showFormDialog(context, vehicleType: vehicleType)),
-                _buildActionIcon(Icons.delete_outline, () => _confirmDeactivate(context, vehicleType)),
+                _buildActionIcon(Icons.visibility_outlined, () => VehicleTypeDetailsDialog.show(context, vehicleType: vehicleType)),
+                const SizedBox(width: 4),
+                PopupMenuButton<String>(
+                  tooltip: 'More Actions',
+                  icon: const Icon(Icons.more_vert, size: 18, color: Color(0xFF64748B)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  elevation: 4,
+                  onSelected: (value) {
+                    if (value == 'edit') {
+                      _showFormDialog(context, vehicleType: vehicleType);
+                    } else if (value == 'deactivate') {
+                      _confirmDeactivate(context, vehicleType);
+                    } else if (value == 'delete') {
+                      _confirmDelete(context, vehicleType);
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit_outlined, size: 16, color: Color(0xFF0F52BA)),
+                          SizedBox(width: 10),
+                          Text('Edit', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'deactivate',
+                      child: Row(
+                        children: [
+                          Icon(Icons.block, size: 16, color: Color(0xFFDC2626)),
+                          SizedBox(width: 10),
+                          Text('Deactivate', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete_outline, size: 16, color: Color(0xFFDC2626)),
+                          SizedBox(width: 10),
+                          Text('Delete', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13)),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ],
             )),
           ]);
@@ -263,19 +311,84 @@ class _VehicleTypeListPageState extends State<VehicleTypeListPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Deactivate Vehicle Type', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w700)),
-        content: Text('Are you sure you want to deactivate "${vehicleType.name}"?', style: const TextStyle(fontFamily: 'PlusJakartaSans')),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: const Text(
+          'Deactivate Vehicle Type',
+          style: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+            color: Color(0xFF0F172A),
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to deactivate "${vehicleType.name}"? Existing records will be preserved.',
+          style: const TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 13,
+            color: Color(0xFF475569),
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(fontFamily: 'PlusJakartaSans', color: Color(0xFF64748B))),
+            style: TextButton.styleFrom(foregroundColor: const Color(0xFF64748B)),
+            child: const Text('Cancel', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
           ),
-          TextButton(
+          FilledButton(
             onPressed: () {
               context.read<VehicleTypeBloc>().add(DeactivateVehicleTypeRequested(vehicleType.id));
               Navigator.pop(ctx);
             },
-            child: const Text('Deactivate', style: TextStyle(fontFamily: 'PlusJakartaSans', color: Color(0xFFDC2626))),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Deactivate', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDelete(BuildContext context, dynamic vehicleType) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: const Text(
+          'Delete Vehicle Type',
+          style: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+            color: Color(0xFF0F172A),
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to permanently delete "${vehicleType.name}"?\n\nThis action cannot be undone.',
+          style: const TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 13,
+            color: Color(0xFF475569),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: TextButton.styleFrom(foregroundColor: const Color(0xFF64748B)),
+            child: const Text('Cancel', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+          ),
+          FilledButton(
+            onPressed: () {
+              context.read<VehicleTypeBloc>().add(DeleteVehicleTypeRequested(vehicleType.id));
+              Navigator.pop(ctx);
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Delete', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
           ),
         ],
       ),

@@ -82,6 +82,11 @@ class PartyRepositoryImpl implements PartyRepository {
   }
 
   @override
+  Future<void> deleteParty(int id) async {
+    await _dataSource.deleteParty(id);
+  }
+
+  @override
   Future<List<Party>> searchParties(String query) async {
     return await _dataSource.searchParties(query);
   }

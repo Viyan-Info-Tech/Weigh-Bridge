@@ -4,6 +4,7 @@ import '../../domain/usecases/load_parties.dart';
 import '../../domain/usecases/create_party.dart';
 import '../../domain/usecases/update_party.dart';
 import '../../domain/usecases/deactivate_party.dart';
+import '../../domain/usecases/delete_party.dart';
 import '../../domain/usecases/search_parties.dart';
 import '../../domain/repositories/party_repository.dart';
 import 'party_event.dart';
@@ -14,6 +15,7 @@ class PartyBloc extends Bloc<PartyEvent, PartyState> {
   final CreatePartyUseCase _createPartyUseCase;
   final UpdatePartyUseCase _updatePartyUseCase;
   final DeactivatePartyUseCase _deactivatePartyUseCase;
+  final DeletePartyUseCase _deletePartyUseCase;
   final SearchPartiesUseCase _searchPartiesUseCase;
   final PartyRepository _partyRepository;
 
@@ -22,12 +24,14 @@ class PartyBloc extends Bloc<PartyEvent, PartyState> {
     required CreatePartyUseCase createPartyUseCase,
     required UpdatePartyUseCase updatePartyUseCase,
     required DeactivatePartyUseCase deactivatePartyUseCase,
+    required DeletePartyUseCase deletePartyUseCase,
     required SearchPartiesUseCase searchPartiesUseCase,
     required PartyRepository partyRepository,
   })  : _loadPartiesUseCase = loadPartiesUseCase,
         _createPartyUseCase = createPartyUseCase,
         _updatePartyUseCase = updatePartyUseCase,
         _deactivatePartyUseCase = deactivatePartyUseCase,
+        _deletePartyUseCase = deletePartyUseCase,
         _searchPartiesUseCase = searchPartiesUseCase,
         _partyRepository = partyRepository,
         super(const PartyState()) {
@@ -36,6 +40,7 @@ class PartyBloc extends Bloc<PartyEvent, PartyState> {
     on<CreatePartyRequested>(_onCreateParty);
     on<UpdatePartyRequested>(_onUpdateParty);
     on<DeactivatePartyRequested>(_onDeactivateParty);
+    on<DeletePartyRequested>(_onDeleteParty);
     on<SearchParties>(_onSearchParties);
     on<FilterPartiesByStatus>(_onFilterByStatus);
   }
@@ -116,6 +121,17 @@ class PartyBloc extends Bloc<PartyEvent, PartyState> {
     try {
       await _deactivatePartyUseCase(event.partyId);
       emit(state.copyWith(status: PartyStatus.success, successMessage: 'Party deactivated'));
+      add(const LoadParties());
+    } catch (e) {
+      emit(state.copyWith(status: PartyStatus.error, errorMessage: e.toString()));
+    }
+  }
+
+  Future<void> _onDeleteParty(DeletePartyRequested event, Emitter<PartyState> emit) async {
+    emit(state.copyWith(status: PartyStatus.loading));
+    try {
+      await _deletePartyUseCase(event.partyId);
+      emit(state.copyWith(status: PartyStatus.success, successMessage: 'Party deleted'));
       add(const LoadParties());
     } catch (e) {
       emit(state.copyWith(status: PartyStatus.error, errorMessage: e.toString()));
