@@ -331,6 +331,28 @@ class _BillPageState extends State<BillPage> {
           ),
           const Spacer(),
           const LiveDateTime(),
+          const SizedBox(width: 16),
+          ElevatedButton.icon(
+            onPressed: () {
+              context.read<BillBloc>().add(const ClearBillRequested());
+              _syncControllersAfterReset();
+            },
+            icon: const Icon(Icons.add_rounded, size: 16),
+            label: const Text('New Receipt'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0D3B82),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              textStyle: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
         ],
       ),
     );
