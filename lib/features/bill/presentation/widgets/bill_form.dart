@@ -222,6 +222,7 @@ class _BillFormState extends State<BillForm> {
         ),
         const SizedBox(height: 6),
         DropdownButtonFormField<String>(
+          key: ValueKey('payment_${widget.paymentMode}'),
           initialValue: widget.paymentMode,
           isExpanded: true,
           isDense: true,
@@ -911,6 +912,7 @@ class _BillFormState extends State<BillForm> {
         ),
         const SizedBox(height: 6),
         TextFormField(
+          key: ValueKey('vc_${widget.vehicleCharge}_${widget.isVehicleChargeManuallyEdited}'),
           initialValue: widget.vehicleCharge > 0
               ? widget.vehicleCharge.toStringAsFixed(0)
               : '',

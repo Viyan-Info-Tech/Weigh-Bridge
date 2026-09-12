@@ -82,12 +82,18 @@ class BillBloc extends Bloc<BillEvent, BillState> {
 
     try {
       final parties = await _partyRepository.getAllActiveParties();
+      if (emit.isDone) return;
       final vehicles = await _vehicleRepository.getVehiclesByStatus(isActive: true);
+      if (emit.isDone) return;
       final vehicleTypes = await _vehicleTypeRepository.getAllVehicleTypes();
+      if (emit.isDone) return;
       final materials = await _materialRepository.getMaterialsByStatus(isActive: true);
+      if (emit.isDone) return;
       final billsDate = _dayOnly(DateTime.now());
       final recentBills = await _loadRecentBillsUseCase(date: billsDate);
+      if (emit.isDone) return;
       final billNumber = await _generateBillNumberUseCase();
+      if (emit.isDone) return;
 
       emit(state.copyWith(
         status: BillScreenStatus.loaded,
@@ -100,6 +106,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
         currentBillNumber: billNumber,
       ));
     } catch (e) {
+      if (emit.isDone) return;
       emit(state.copyWith(
         status: BillScreenStatus.error,
         errorMessage: 'Failed to load bill screen: $e',
@@ -252,12 +259,15 @@ class BillBloc extends Bloc<BillEvent, BillState> {
 
     try {
       await _saveOrUpdateBill(emit);
+      if (emit.isDone) return;
       final bills = await _loadBillsFor(state.effectiveBillsDate);
+      if (emit.isDone) return;
       emit(state.copyWith(
         status: BillScreenStatus.saved,
         recentBills: bills,
       ));
     } catch (e) {
+      if (emit.isDone) return;
       emit(state.copyWith(
         status: BillScreenStatus.error,
         errorMessage: 'Failed to save bill: $e',
@@ -276,12 +286,15 @@ class BillBloc extends Bloc<BillEvent, BillState> {
 
     try {
       await _saveOrUpdateBill(emit);
+      if (emit.isDone) return;
       final bills = await _loadBillsFor(state.effectiveBillsDate);
+      if (emit.isDone) return;
       emit(state.copyWith(
         status: BillScreenStatus.saved,
         recentBills: bills,
       ));
     } catch (e) {
+      if (emit.isDone) return;
       emit(state.copyWith(
         status: BillScreenStatus.error,
         errorMessage: 'Failed to save bill: $e',
@@ -324,6 +337,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
   Future<void> _onLoadPendingBill(LoadPendingBill event, Emitter<BillState> emit) async {
     try {
       final weighment = await _saveBillUseCase.getWeighmentById(event.billId);
+      if (emit.isDone) return;
       if (weighment == null) {
         emit(state.copyWith(errorMessage: 'Bill not found'));
         return;
@@ -391,25 +405,29 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       ));
       _recalculate(emit);
     } catch (e) {
+      if (emit.isDone) return;
       emit(state.copyWith(errorMessage: 'Failed to load pending bill: $e'));
     }
   }
 
-  void _onClearBillRequested(ClearBillRequested event, Emitter<BillState> emit) {
-    _resetForm(emit);
+  Future<void> _onClearBillRequested(ClearBillRequested event, Emitter<BillState> emit) async {
+    final billNumber = await _generateBillNumberUseCase();
+    if (emit.isDone) return;
+    _resetForm(emit, nextBillNumber: billNumber);
   }
 
   Future<void> _onLoadPendingBills(LoadPendingBills event, Emitter<BillState> emit) async {
     try {
       final bills = await _loadPendingBillsUseCase();
+      if (emit.isDone) return;
       emit(state.copyWith(pendingBills: bills));
     } catch (e) {
+      if (emit.isDone) return;
       emit(state.copyWith(errorMessage: 'Failed to load pending bills'));
     }
   }
 
-  void _resetForm(Emitter<BillState> emit, {String? nextBillNumber}) async {
-    final billNum = nextBillNumber ?? await _generateBillNumberUseCase();
+  void _resetForm(Emitter<BillState> emit, {required String nextBillNumber}) {
     emit(state.copyWith(
       clearParty: true,
       clearVehicle: true,
@@ -427,7 +445,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       isVehicleChargeManuallyEdited: false,
       amount: 0,
       paymentMode: 'Cash',
-      currentBillNumber: billNum,
+      currentBillNumber: nextBillNumber,
       clearError: true,
       clearWeightError: true,
     ));
@@ -440,6 +458,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
           startDate: _dayOnly(event.startDate!),
           endDate: _dayOnly(event.endDate!),
         );
+        if (emit.isDone) return;
         emit(state.copyWith(
           recentBills: bills,
           billsStartDate: _dayOnly(event.startDate!),
@@ -449,6 +468,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       } else {
         final billsDate = _dayOnly(event.date ?? DateTime.now());
         final bills = await _loadBillsFor(billsDate);
+        if (emit.isDone) return;
         emit(state.copyWith(
           recentBills: bills,
           billsDate: billsDate,
@@ -456,6 +476,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
         ));
       }
     } catch (e) {
+      if (emit.isDone) return;
       emit(state.copyWith(errorMessage: 'Failed to load recent bills'));
     }
   }
@@ -469,6 +490,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
   Future<void> _onPartyQuickAdd(PartyQuickAddRequested event, Emitter<BillState> emit) async {
     try {
       final existingParties = await _partyRepository.searchParties(event.name);
+      if (emit.isDone) return;
       final exactMatch = existingParties.where((p) => p.name.toLowerCase() == event.name.toLowerCase());
       if (exactMatch.isNotEmpty) {
         emit(state.copyWith(errorMessage: 'Party with this name already exists'));
@@ -479,8 +501,10 @@ class BillBloc extends Bloc<BillEvent, BillState> {
         name: event.name,
         contactPerson: event.contactPerson,
       );
+      if (emit.isDone) return;
 
       final parties = await _partyRepository.getAllActiveParties();
+      if (emit.isDone) return;
       final newParty = parties.firstWhere((p) => p.id == newId);
 
       emit(state.copyWith(
@@ -489,6 +513,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
         clearError: true,
       ));
     } catch (e) {
+      if (emit.isDone) return;
       emit(state.copyWith(errorMessage: 'Failed to create party: ${e.toString()}'));
     }
   }
@@ -496,6 +521,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
   Future<void> _onVehicleQuickAdd(VehicleQuickAddRequested event, Emitter<BillState> emit) async {
     try {
       final vehicles = await _vehicleRepository.getVehiclesByStatus(isActive: true);
+      if (emit.isDone) return;
       final duplicate = vehicles.where((v) => v.vehicleNumber.toUpperCase() == event.vehicleNumber.toUpperCase());
       if (duplicate.isNotEmpty) {
         emit(state.copyWith(errorMessage: 'Vehicle with this number already exists'));
@@ -506,8 +532,10 @@ class BillBloc extends Bloc<BillEvent, BillState> {
         vehicleNumber: event.vehicleNumber,
         vehicleTypeId: event.vehicleTypeId,
       );
+      if (emit.isDone) return;
 
       final refreshedVehicles = await _vehicleRepository.getVehiclesByStatus(isActive: true);
+      if (emit.isDone) return;
       final newVehicle = refreshedVehicles.firstWhere((v) => v.id == newId);
 
       VehicleType? vehicleType;
@@ -525,6 +553,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
         clearError: true,
       ));
     } catch (e) {
+      if (emit.isDone) return;
       emit(state.copyWith(errorMessage: 'Failed to create vehicle: ${e.toString()}'));
     }
   }
@@ -532,6 +561,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
   Future<void> _onVehicleTypeQuickAdd(VehicleTypeQuickAddRequested event, Emitter<BillState> emit) async {
     try {
       final vehicleTypes = await _vehicleTypeRepository.getVehicleTypesByStatus(isActive: true);
+      if (emit.isDone) return;
       final duplicate = vehicleTypes.where((vt) => vt.name.toLowerCase() == event.name.toLowerCase());
       if (duplicate.isNotEmpty) {
         emit(state.copyWith(errorMessage: 'Vehicle type with this name already exists'));
@@ -543,8 +573,10 @@ class BillBloc extends Bloc<BillEvent, BillState> {
         emptyPrice: event.emptyPrice,
         loadPrice: event.loadPrice,
       );
+      if (emit.isDone) return;
 
       final refreshedTypes = await _vehicleTypeRepository.getVehicleTypesByStatus(isActive: true);
+      if (emit.isDone) return;
       final newType = refreshedTypes.firstWhere((vt) => vt.id == newId);
 
       emit(state.copyWith(
@@ -553,6 +585,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
         clearError: true,
       ));
     } catch (e) {
+      if (emit.isDone) return;
       emit(state.copyWith(errorMessage: 'Failed to create vehicle type: ${e.toString()}'));
     }
   }
@@ -606,6 +639,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
 
     try {
       final allMaterials = await _materialRepository.getAllMaterials();
+      if (emit.isDone) return;
       final duplicate = allMaterials.cast<MaterialItem?>().firstWhere(
         (m) => m?.name.trim().toLowerCase() == trimmedName.toLowerCase(),
         orElse: () => null,
@@ -626,6 +660,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
         name: trimmedName,
         category: '',
       );
+      if (emit.isDone) return;
 
       final created = await _materialRepository.getMaterialById(newId);
       if (created == null) {
@@ -648,6 +683,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       }
     } catch (e) {
       final errorMsg = e.toString().replaceAll('Exception: ', '');
+      if (emit.isDone) return;
       emit(state.copyWith(errorMessage: 'Failed to create material: $errorMsg'));
       if (event.completer != null && !event.completer!.isCompleted) {
         event.completer!.completeError(Exception(errorMsg));

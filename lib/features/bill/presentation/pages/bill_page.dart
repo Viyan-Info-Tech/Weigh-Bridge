@@ -61,6 +61,53 @@ class _BillPageState extends State<BillPage> {
     _remarksController.clear();
   }
 
+  bool _hasUnsavedData(BillState state) {
+    return state.selectedParty != null ||
+        state.selectedVehicle != null ||
+        state.selectedMaterial != null ||
+        state.grossWeightText.isNotEmpty && state.grossWeightText != '0' ||
+        state.tareWeightText.isNotEmpty && state.tareWeightText != '0' ||
+        state.remarksText.isNotEmpty;
+  }
+
+  void _startNewReceipt(BuildContext context, BillState state) {
+    if (!_hasUnsavedData(state)) {
+      context.read<BillBloc>().add(const ClearBillRequested());
+      _syncControllersAfterReset();
+      return;
+    }
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text(
+          'Start New Receipt?',
+          style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w700),
+        ),
+        content: const Text(
+          'Current receipt has unsaved information. If you continue, the entered information will be cleared.',
+          style: TextStyle(fontFamily: 'PlusJakartaSans'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancel',
+                style: TextStyle(fontFamily: 'PlusJakartaSans', color: Color(0xFF64748B))),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              context.read<BillBloc>().add(const ClearBillRequested());
+              _syncControllersAfterReset();
+            },
+            child: const Text('Start New Receipt',
+                style: TextStyle(fontFamily: 'PlusJakartaSans', color: Color(0xFFDC2626), fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<BillBloc, BillState>(
@@ -333,10 +380,7 @@ class _BillPageState extends State<BillPage> {
           const LiveDateTime(),
           const SizedBox(width: 16),
           ElevatedButton.icon(
-            onPressed: () {
-              context.read<BillBloc>().add(const ClearBillRequested());
-              _syncControllersAfterReset();
-            },
+            onPressed: () => _startNewReceipt(context, state),
             icon: const Icon(Icons.add_rounded, size: 16),
             label: const Text('New Receipt'),
             style: ElevatedButton.styleFrom(
@@ -525,14 +569,7 @@ class _BillPageState extends State<BillPage> {
   }
 
   void _onClearFormPressed(BuildContext context, BillState state) {
-    final hasData = state.selectedParty != null ||
-        state.selectedVehicle != null ||
-        state.selectedMaterial != null ||
-        state.grossWeightText.isNotEmpty && state.grossWeightText != '0' ||
-        state.tareWeightText.isNotEmpty && state.tareWeightText != '0' ||
-        state.remarksText.isNotEmpty;
-
-    if (!hasData) {
+    if (!_hasUnsavedData(state)) {
       context.read<BillBloc>().add(const ClearBillRequested());
       _syncControllersAfterReset();
       return;

@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../domain/entities/party.dart';
 import '../bloc/party_bloc.dart';
 import '../bloc/party_event.dart';
 import '../bloc/party_state.dart';
-import 'party_form_page.dart' as form;
 import 'party_detail_page.dart';
+import 'party_form_page.dart' as form;
 
 class PartyListPage extends StatefulWidget {
   const PartyListPage({super.key});
@@ -40,13 +41,34 @@ class _PartyListPageState extends State<PartyListPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildHeader(),
+              _buildPageHeader(),
               const SizedBox(height: 16),
               _buildSummaryCards(),
               const SizedBox(height: 16),
-              _buildSearchAndFilter(),
-              const SizedBox(height: 16),
-              Expanded(child: _buildPartyTable()),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildCardHeader(),
+                      _buildSearchAndFilter(),
+                      Expanded(child: _buildPartyTable()),
+                    ],
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -54,18 +76,22 @@ class _PartyListPageState extends State<PartyListPage> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildPageHeader() {
     return Row(
       children: [
         Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
             color: const Color(0xFF0F52BA).withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(Icons.people_outline, color: Color(0xFF0F52BA), size: 20),
+          child: const Icon(
+            Icons.people_outline_rounded,
+            color: Color(0xFF0F52BA),
+            size: 22,
+          ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 14),
         const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -76,10 +102,12 @@ class _PartyListPageState extends State<PartyListPage> {
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
                 color: Color(0xFF0F172A),
+                letterSpacing: -0.2,
               ),
             ),
+            SizedBox(height: 2),
             Text(
-              'Manage party records',
+              'Manage registered clients, vendors, and billing parties',
               style: TextStyle(
                 fontFamily: 'PlusJakartaSans',
                 fontSize: 12,
@@ -88,18 +116,6 @@ class _PartyListPageState extends State<PartyListPage> {
             ),
           ],
         ),
-        const Spacer(),
-        ElevatedButton.icon(
-          onPressed: () => _navigateToForm(context),
-          icon: const Icon(Icons.add, size: 16),
-          label: const Text('Add Party'),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF0D3B82),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          ),
-        ),
       ],
     );
   }
@@ -107,196 +123,740 @@ class _PartyListPageState extends State<PartyListPage> {
   Widget _buildSummaryCards() {
     return BlocBuilder<PartyBloc, PartyState>(
       builder: (context, state) {
+        final totalParties = state.totalParties;
+        final activeParties = state.activeParties;
+        final inactiveParties = state.inactiveParties;
+
+        final activeRate = totalParties > 0
+            ? ((activeParties / totalParties) * 100).round()
+            : 100;
+
+        final totalVehicles = state.parties.fold<int>(
+          0,
+          (sum, p) => sum + p.vehicleCount,
+        );
+
         return Row(
           children: [
-            _buildSummaryCard('Total Parties', state.totalParties.toString(), const Color(0xFF0F52BA)),
-            const SizedBox(width: 12),
-            _buildSummaryCard('Active', state.activeParties.toString(), const Color(0xFF16A34A)),
-            const SizedBox(width: 12),
-            _buildSummaryCard('Inactive', state.inactiveParties.toString(), const Color(0xFFDC2626)),
+            _buildStatCard(
+              icon: Icons.people_alt_rounded,
+              iconColor: const Color(0xFF0F52BA),
+              iconBg: const Color(0xFF0F52BA).withValues(alpha: 0.1),
+              label: 'Registered Parties',
+              value: '$totalParties',
+              subtext: '$activeParties Active • $inactiveParties Inactive',
+            ),
+            const SizedBox(width: 14),
+            _buildStatCard(
+              icon: Icons.verified_user_rounded,
+              iconColor: const Color(0xFF16A34A),
+              iconBg: const Color(0xFF16A34A).withValues(alpha: 0.1),
+              label: 'Active Accounts',
+              value: '$activeParties',
+              subtext: '$activeRate% Account readiness score',
+            ),
+            const SizedBox(width: 14),
+            _buildStatCard(
+              icon: Icons.local_shipping_rounded,
+              iconColor: const Color(0xFF7C3AED),
+              iconBg: const Color(0xFF7C3AED).withValues(alpha: 0.1),
+              label: 'Associated Fleet',
+              value: '$totalVehicles',
+              subtext: 'Vehicles mapped to parties',
+            ),
           ],
         );
       },
     );
   }
 
-  Widget _buildSummaryCard(String label, String value, Color color) {
+  Widget _buildStatCard({
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBg,
+    required String label,
+    required String value,
+    required String subtext,
+  }) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFFE2E8F0)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.02),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: Row(
           children: [
-            Text(label, style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, color: Colors.grey.shade600)),
-            const SizedBox(height: 4),
-            Text(value, style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 22, fontWeight: FontWeight.w800, color: color)),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: iconBg,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Text(
+                        value,
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          subtext,
+                          style: const TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontSize: 11,
+                            color: Color(0xFF94A3B8),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
+  Widget _buildCardHeader() {
+    return BlocBuilder<PartyBloc, PartyState>(
+      builder: (context, state) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0F52BA).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.people_alt_outlined,
+                  color: Color(0xFF0F52BA),
+                  size: 16,
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Text(
+                'Parties',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${state.parties.length}',
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF475569),
+                  ),
+                ),
+              ),
+              const Spacer(),
+              FilledButton.icon(
+                onPressed: () => _navigateToForm(context),
+                icon: const Icon(Icons.add_rounded, size: 16),
+                label: const Text('Add Party'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFF0D3B82),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  textStyle: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildSearchAndFilter() {
-    return Row(
-      children: [
-        Expanded(
-          flex: 3,
-          child: TextField(
-            controller: _searchController,
-            onChanged: (value) {
-              context.read<PartyBloc>().add(SearchParties(value));
-            },
-            style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13),
-            decoration: InputDecoration(
-              hintText: 'Search party...',
-              hintStyle: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, color: Colors.grey.shade400),
-              prefixIcon: Icon(Icons.search, color: Colors.grey.shade400, size: 18),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF0D3B82))),
-              filled: true,
-              fillColor: Colors.white,
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: SizedBox(
+              height: 38,
+              child: TextField(
+                controller: _searchController,
+                onChanged: (value) {
+                  setState(() {});
+                  context.read<PartyBloc>().add(SearchParties(value));
+                },
+                style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12),
+                decoration: InputDecoration(
+                  hintText: 'Search by party name, phone, GST...',
+                  hintStyle: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 12,
+                    color: Color(0xFF94A3B8),
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.search_rounded,
+                    color: Color(0xFF94A3B8),
+                    size: 18,
+                  ),
+                  suffixIcon: _searchController.text.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(
+                            Icons.clear,
+                            size: 16,
+                            color: Color(0xFF94A3B8),
+                          ),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() {});
+                            context.read<PartyBloc>().add(const SearchParties(''));
+                          },
+                        )
+                      : null,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFF0F52BA), width: 1.5),
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFFF8FAFC),
+                ),
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey.shade300),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _statusFilter,
-              hint: Text('Status', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, color: Colors.grey.shade600)),
-              items: const [
-                DropdownMenuItem(value: null, child: Text('All', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-                DropdownMenuItem(value: 'active', child: Text('Active', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-                DropdownMenuItem(value: 'inactive', child: Text('Inactive', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-              ],
-              onChanged: (value) {
-                setState(() => _statusFilter = value);
-                bool? isActive;
-                if (value == 'active') isActive = true;
-                if (value == 'inactive') isActive = false;
-                context.read<PartyBloc>().add(FilterPartiesByStatus(isActive));
-              },
+          const SizedBox(width: 10),
+          Container(
+            height: 38,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _statusFilter,
+                icon: const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 18,
+                  color: Color(0xFF64748B),
+                ),
+                style: const TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 12,
+                  color: Color(0xFF334155),
+                  fontWeight: FontWeight.w500,
+                ),
+                items: const [
+                  DropdownMenuItem(value: null, child: Text('All Status')),
+                  DropdownMenuItem(value: 'active', child: Text('Active Only')),
+                  DropdownMenuItem(value: 'inactive', child: Text('Inactive Only')),
+                ],
+                onChanged: (value) {
+                  setState(() => _statusFilter = value);
+                  bool? isActive;
+                  if (value == 'active') isActive = true;
+                  if (value == 'inactive') isActive = false;
+                  context.read<PartyBloc>().add(FilterPartiesByStatus(isActive));
+                },
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildPartyTable() {
+    return BlocBuilder<PartyBloc, PartyState>(
+      builder: (context, state) {
+        if (state.status == PartyStatus.loading) {
+          return const Center(child: CircularProgressIndicator(strokeWidth: 2.5));
+        }
+        if (state.parties.isEmpty) {
+          return _buildEmptyState();
+        }
+
+        const minTableWidth = 680.0;
+
+        return Column(
+          children: [
+            Expanded(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final tableContent = Column(
+                    children: [
+                      _buildHeaderRow(),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: state.parties.length,
+                          itemBuilder: (context, index) {
+                            final party = state.parties[index];
+                            return _buildDataRow(party);
+                          },
+                        ),
+                      ),
+                    ],
+                  );
+
+                  if (constraints.maxWidth < minTableWidth) {
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SizedBox(
+                        width: minTableWidth,
+                        child: tableContent,
+                      ),
+                    );
+                  }
+                  return tableContent;
+                },
+              ),
+            ),
+            _buildTableFooter(state.parties.length),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildHeaderRow() {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
+      height: 40,
+      decoration: const BoxDecoration(
+        color: Color(0xFFF8FAFC),
+        border: Border(
+          top: BorderSide(color: Color(0xFFE2E8F0)),
+          bottom: BorderSide(color: Color(0xFFE2E8F0)),
+        ),
       ),
-      child: BlocBuilder<PartyBloc, PartyState>(
-        builder: (context, state) {
-          if (state.status == PartyStatus.loading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (state.parties.isEmpty) {
-            return _buildEmptyState();
-          }
-          return _buildDataTable(state.parties);
-        },
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Expanded(flex: 30, child: _buildHeaderText('PARTY NAME')),
+          Expanded(flex: 22, child: _buildHeaderText('CONTACT PERSON')),
+          Expanded(flex: 18, child: _buildHeaderText('PHONE')),
+          Expanded(flex: 12, child: _buildHeaderText('VEHICLES')),
+          Expanded(flex: 12, child: _buildHeaderText('STATUS')),
+          Expanded(flex: 14, child: _buildHeaderText('ACTIONS', align: TextAlign.right)),
+        ],
       ),
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+  Widget _buildHeaderText(String text, {TextAlign align = TextAlign.left}) {
+    return Text(
+      text,
+      textAlign: align,
+      style: const TextStyle(
+        fontFamily: 'PlusJakartaSans',
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        color: Color(0xFF64748B),
+        letterSpacing: 0.5,
+      ),
+    );
+  }
+
+  Widget _buildDataRow(Party party) {
+    return _HoverableRow(
+      child: Row(
         children: [
-          Icon(Icons.people_outline, size: 48, color: Colors.grey.shade300),
-          const SizedBox(height: 12),
-          Text('No parties found', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 16, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
-          const SizedBox(height: 4),
-          Text('Add your first party to get started.', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, color: Colors.grey.shade400)),
-          const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: () => _navigateToForm(context),
-            icon: const Icon(Icons.add, size: 16),
-            label: const Text('Add Party'),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0D3B82), foregroundColor: Colors.white),
+          // Party Name
+          Expanded(
+            flex: 30,
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F52BA).withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(
+                    Icons.business_rounded,
+                    size: 14,
+                    color: Color(0xFF0F52BA),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        party.name,
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF0F172A),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (party.gstNumber != null && party.gstNumber!.isNotEmpty)
+                        Text(
+                          'GST: ${party.gstNumber}',
+                          style: const TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontSize: 10,
+                            color: Color(0xFF94A3B8),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Contact Person
+          Expanded(
+            flex: 22,
+            child: Text(
+              party.contactPerson != null && party.contactPerson!.isNotEmpty
+                  ? party.contactPerson!
+                  : '-',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: party.contactPerson != null && party.contactPerson!.isNotEmpty
+                    ? const Color(0xFF334155)
+                    : const Color(0xFF94A3B8),
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+
+          // Phone
+          Expanded(
+            flex: 18,
+            child: Text(
+              party.mobile != null && party.mobile!.isNotEmpty
+                  ? party.mobile!
+                  : '-',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: party.mobile != null && party.mobile!.isNotEmpty
+                    ? const Color(0xFF1E293B)
+                    : const Color(0xFF94A3B8),
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+
+          // Vehicles count
+          Expanded(
+            flex: 12,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Text(
+                  '${party.vehicleCount}',
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF334155),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // Status
+          Expanded(
+            flex: 12,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: _buildStatusBadge(party.isActive),
+            ),
+          ),
+
+          // Actions
+          Expanded(
+            flex: 14,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                _buildActionButton(
+                  icon: Icons.visibility_outlined,
+                  color: const Color(0xFF64748B),
+                  tooltip: 'View Details',
+                  onTap: () => _navigateToDetail(context, party.id),
+                ),
+                const SizedBox(width: 4),
+                _buildActionButton(
+                  icon: Icons.edit_outlined,
+                  color: const Color(0xFF0F52BA),
+                  tooltip: 'Edit Party',
+                  onTap: () => _navigateToForm(context, partyId: party.id),
+                ),
+                const SizedBox(width: 4),
+                _buildActionButton(
+                  icon: Icons.delete_outline_rounded,
+                  color: const Color(0xFFDC2626),
+                  tooltip: 'Deactivate Party',
+                  onTap: () => _confirmDeactivateParty(context, party),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDataTable(List parties) {
-    return SingleChildScrollView(
-      child: DataTable(
-        headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
-        columns: const [
-          DataColumn(label: Text('#', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600))),
-          DataColumn(label: Text('Party Name', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600))),
-          DataColumn(label: Text('Phone', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600))),
-          DataColumn(label: Text('Vehicles', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600))),
-          DataColumn(label: Text('Status', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600))),
-          DataColumn(label: Text('Actions', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600))),
-        ],
-        rows: parties.asMap().entries.map((entry) {
-          final index = entry.key + 1;
-          final party = entry.value;
-          return DataRow(cells: [
-            DataCell(Text(index.toString(), style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-            DataCell(Text(party.name, style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, fontWeight: FontWeight.w600))),
-            DataCell(Text(party.mobile ?? '-', style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-            DataCell(Text(party.vehicleCount.toString(), style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-            DataCell(_buildStatusBadge(party.isActive)),
-            DataCell(Row(
-              children: [
-                _buildActionIcon(Icons.visibility_outlined, () => _navigateToDetail(context, party.id)),
-                _buildActionIcon(Icons.edit_outlined, () => _navigateToForm(context, partyId: party.id)),
-                _buildActionIcon(Icons.more_vert, () {}),
-              ],
-            )),
-          ]);
-        }).toList(),
+  Widget _buildActionButton({
+    required IconData icon,
+    required Color color,
+    required String tooltip,
+    required VoidCallback onTap,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        hoverColor: color.withValues(alpha: 0.1),
+        child: Padding(
+          padding: const EdgeInsets.all(5),
+          child: Icon(icon, size: 16, color: color),
+        ),
       ),
     );
   }
 
   Widget _buildStatusBadge(bool isActive) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
       decoration: BoxDecoration(
-        color: isActive ? const Color(0xFF16A34A).withValues(alpha: 0.1) : const Color(0xFFDC2626).withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(4),
+        color: isActive ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2),
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(
-        isActive ? 'Active' : 'Inactive',
-        style: TextStyle(
-          fontFamily: 'PlusJakartaSans',
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: isActive ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 5,
+            height: 5,
+            decoration: BoxDecoration(
+              color: isActive ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 4),
+          Text(
+            isActive ? 'Active' : 'Inactive',
+            style: TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+              color: isActive ? const Color(0xFF15803D) : const Color(0xFFB91C1C),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTableFooter(int count) {
+    return Container(
+      height: 38,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF8FAFC),
+        border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(14)),
+      ),
+      child: Row(
+        children: [
+          Text(
+            'Total $count ${count == 1 ? 'party' : 'parties'}',
+            style: const TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF64748B),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                color: Color(0xFFF1F5F9),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.people_outline_rounded,
+                size: 36,
+                color: Color(0xFF94A3B8),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'No parties found',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF334155),
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              'Add your first party or adjust your search query.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                color: Color(0xFF94A3B8),
+              ),
+            ),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: () => _navigateToForm(context),
+              icon: const Icon(Icons.add_rounded, size: 16),
+              label: const Text('Add Party'),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF0D3B82),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                textStyle: const TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildActionIcon(IconData icon, VoidCallback onTap) {
-    return IconButton(
-      icon: Icon(icon, size: 18, color: const Color(0xFF64748B)),
-      onPressed: onTap,
-      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+  void _confirmDeactivateParty(BuildContext context, Party party) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: const Text(
+          'Deactivate Party',
+          style: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+            color: Color(0xFF0F172A),
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to deactivate party "${party.name}"?',
+          style: const TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 13,
+            color: Color(0xFF475569),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: TextButton.styleFrom(foregroundColor: const Color(0xFF64748B)),
+            child: const Text('Cancel', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+          ),
+          FilledButton(
+            onPressed: () {
+              context.read<PartyBloc>().add(DeactivatePartyRequested(party.id));
+              Navigator.pop(ctx);
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+            child: const Text('Deactivate', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+          ),
+        ],
+      ),
     );
   }
 
@@ -308,6 +868,38 @@ class _PartyListPageState extends State<PartyListPage> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => PartyDetailPage(partyId: partyId)),
+    );
+  }
+}
+
+class _HoverableRow extends StatefulWidget {
+  final Widget child;
+
+  const _HoverableRow({required this.child});
+
+  @override
+  State<_HoverableRow> createState() => _HoverableRowState();
+}
+
+class _HoverableRowState extends State<_HoverableRow> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        decoration: BoxDecoration(
+          color: _isHovered ? const Color(0xFFF8FAFC) : Colors.white,
+          border: const Border(
+            bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1),
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: widget.child,
+      ),
     );
   }
 }

@@ -82,222 +82,241 @@ class _PendingPageState extends State<PendingPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<BillBloc, BillState>(
-      builder: (context, state) {
-        final pendingBills = state.pendingBills;
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8FAFC),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: BlocBuilder<BillBloc, BillState>(
+            builder: (context, state) {
+              final pendingBills = state.pendingBills;
 
-        final filteredBills = pendingBills.where((bill) {
-          final vehicleNo = _getVehicleNumber(state.vehicles, bill.vehicleId).toLowerCase();
-          final partyName = _getPartyName(state.parties, bill.partyId).toLowerCase();
-          final billNo = bill.billNumber.toLowerCase();
-          final query = _searchQuery.toLowerCase();
+              final filteredBills = pendingBills.where((bill) {
+                final vehicleNo = _getVehicleNumber(state.vehicles, bill.vehicleId).toLowerCase();
+                final partyName = _getPartyName(state.parties, bill.partyId).toLowerCase();
+                final billNo = bill.billNumber.toLowerCase();
+                final query = _searchQuery.toLowerCase();
 
-          final matchesSearch =
-              query.isEmpty ||
-              vehicleNo.contains(query) ||
-              partyName.contains(query) ||
-              billNo.contains(query);
+                final matchesSearch = query.isEmpty ||
+                    vehicleNo.contains(query) ||
+                    partyName.contains(query) ||
+                    billNo.contains(query);
 
-          if (!matchesSearch) return false;
+                if (!matchesSearch) return false;
 
-          if (_dateFilter == 'TODAY') return _isToday(bill.createdAt);
-          if (_dateFilter == 'OLDER') return !_isToday(bill.createdAt);
-          return true;
-        }).toList();
+                if (_dateFilter == 'TODAY') return _isToday(bill.createdAt);
+                if (_dateFilter == 'OLDER') return !_isToday(bill.createdAt);
+                return true;
+              }).toList();
 
-        final totalFirstWeight = filteredBills.fold<double>(0, (sum, b) => sum + b.grossWeightKg);
-        final totalExpected = filteredBills.fold<double>(0, (sum, b) => sum + b.amount);
+              final totalFirstWeight =
+                  filteredBills.fold<double>(0, (sum, b) => sum + b.grossWeightKg);
+              final totalExpected =
+                  filteredBills.fold<double>(0, (sum, b) => sum + b.amount);
 
-        return Container(
-          color: const Color(0xFFF8FAFC),
-          child: Column(
-            children: [
-              _buildHeader(pendingBills.length),
-              _buildSummaryStrip(
-                pendingCount: filteredBills.length,
-                totalFirstWeightKg: totalFirstWeight,
-                totalExpected: totalExpected,
-              ),
-              const Divider(height: 1, color: Color(0xFFE2E8F0)),
-              _buildFilterBar(),
-              const Divider(height: 1, color: Color(0xFFE2E8F0)),
-              Expanded(
-                child: filteredBills.isEmpty
-                    ? _buildEmptyState()
-                    : ListView.separated(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                        itemCount: filteredBills.length,
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(height: 10),
-                        itemBuilder: (context, index) {
-                          final bill = filteredBills[index];
-                          return _buildCompactCard(bill, state);
-                        },
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildPageHeader(filteredBills.length),
+                  const SizedBox(height: 16),
+                  _buildSummaryCards(
+                    pendingCount: filteredBills.length,
+                    totalFirstWeightKg: totalFirstWeight,
+                    totalExpected: totalExpected,
+                  ),
+                  const SizedBox(height: 16),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFFE2E8F0)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                       ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildHeader(int pendingCount) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 12),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFD97706).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.pending_outlined,
-              color: Color(0xFFD97706),
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Pending Weighments',
-                  style: TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F172A),
-                    letterSpacing: -0.3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildCardHeader(filteredBills.length),
+                          _buildSearchAndFilter(),
+                          Expanded(
+                            child: _buildPendingTable(filteredBills, state),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 1),
-                Text(
-                  'Vehicles waiting for second weighing',
-                  style: TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 11,
-                    color: Colors.grey.shade500,
-                  ),
-                ),
-              ],
-            ),
+                ],
+              );
+            },
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: pendingCount > 0 ? const Color(0xFFFEF3C7) : const Color(0xFFDCFCE7),
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: pendingCount > 0 ? const Color(0xFFFDE68A) : const Color(0xFFBBF7D0),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 7,
-                  height: 7,
-                  decoration: BoxDecoration(
-                    color: pendingCount > 0 ? const Color(0xFFD97706) : const Color(0xFF16A34A),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  '$pendingCount Pending',
-                  style: TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: pendingCount > 0 ? const Color(0xFF92400E) : const Color(0xFF166534),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
 
-  Widget _buildSummaryStrip({
+  Widget _buildPageHeader(int pendingCount) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: const Color(0xFFD97706).withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Icon(
+            Icons.pending_actions_rounded,
+            color: Color(0xFFD97706),
+            size: 22,
+          ),
+        ),
+        const SizedBox(width: 14),
+        const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Pending Weighments',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF0F172A),
+                letterSpacing: -0.2,
+              ),
+            ),
+            SizedBox(height: 2),
+            Text(
+              'Vehicles waiting for second weighing to complete the bill',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                color: Color(0xFF64748B),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSummaryCards({
     required int pendingCount,
     required double totalFirstWeightKg,
     required double totalExpected,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
-      child: Row(
-        children: [
-          _buildSummaryTile(
-            value: '$pendingCount',
-            label: 'Pending',
-            icon: Icons.pending_outlined,
-            color: const Color(0xFFD97706),
-          ),
-          const SizedBox(width: 10),
-          _buildSummaryTile(
-            value: '${totalFirstWeightKg.toStringAsFixed(0)} kg',
-            label: 'Total Gross Wt',
-            icon: Icons.fitness_center_rounded,
-            color: const Color(0xFF0D3B82),
-          ),
-          const SizedBox(width: 10),
-          _buildSummaryTile(
-            value: 'Rs. ${totalExpected.toStringAsFixed(0)}',
-            label: 'Expected',
-            icon: Icons.currency_rupee_rounded,
-            color: const Color(0xFF16A34A),
-          ),
-        ],
-      ),
+    return Row(
+      children: [
+        _buildStatCard(
+          icon: Icons.timer_outlined,
+          iconColor: const Color(0xFFD97706),
+          iconBg: const Color(0xFFFFF7ED),
+          label: 'Pending Queue',
+          value: '$pendingCount',
+          subtext: 'Awaiting 2nd weight',
+        ),
+        const SizedBox(width: 14),
+        _buildStatCard(
+          icon: Icons.scale_rounded,
+          iconColor: const Color(0xFF0F52BA),
+          iconBg: const Color(0xFFEFF6FF),
+          label: 'Gross Weight Captured',
+          value: '${totalFirstWeightKg.toStringAsFixed(0)} kg',
+          subtext: 'Initial 1st weighment load',
+        ),
+        const SizedBox(width: 14),
+        _buildStatCard(
+          icon: Icons.currency_rupee_rounded,
+          iconColor: const Color(0xFF16A34A),
+          iconBg: const Color(0xFFF0FDF4),
+          label: 'Expected Charges',
+          value: '₹ ${totalExpected.toStringAsFixed(0)}',
+          subtext: 'Estimated billing amount',
+        ),
+      ],
     );
   }
 
-  Widget _buildSummaryTile({
-    required String value,
-    required String label,
+  Widget _buildStatCard({
     required IconData icon,
-    required Color color,
+    required Color iconColor,
+    required Color iconBg,
+    required String label,
+    required String value,
+    required String subtext,
   }) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(color: const Color(0xFFE2E8F0)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF0F172A).withValues(alpha: 0.02),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [
-            Icon(icon, size: 14, color: color),
-            const SizedBox(width: 6),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: color,
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: iconBg,
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: iconColor, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF64748B),
+                    ),
                   ),
-                ),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 9,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF94A3B8),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Text(
+                        value,
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 18,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Flexible(
+                        child: Text(
+                          subtext,
+                          style: const TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontSize: 11,
+                            color: Color(0xFF94A3B8),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ],
         ),
@@ -305,253 +324,459 @@ class _PendingPageState extends State<PendingPage> {
     );
   }
 
-  Widget _buildFilterBar() {
+  Widget _buildCardHeader(int count) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              color: const Color(0xFFD97706).withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Icon(
+              Icons.pending_actions_outlined,
+              color: Color(0xFFD97706),
+              size: 16,
+            ),
+          ),
+          const SizedBox(width: 10),
+          const Text(
+            'Pending Bills',
+            style: TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF0F172A),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              '$count',
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF475569),
+              ),
+            ),
+          ),
+          const Spacer(),
+          OutlinedButton.icon(
+            onPressed: () {
+              context.read<BillBloc>().add(const LoadPendingBills());
+            },
+            icon: const Icon(Icons.refresh_rounded, size: 15),
+            label: const Text('Refresh'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF475569),
+              side: const BorderSide(color: Color(0xFFCBD5E1)),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              textStyle: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchAndFilter() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
       child: Row(
         children: [
           Expanded(
             child: SizedBox(
-              height: 36,
+              height: 38,
               child: TextField(
                 controller: _searchController,
-                onChanged: (val) {
-                  setState(() {
-                    _searchQuery = val;
-                  });
+                onChanged: (value) {
+                  setState(() => _searchQuery = value);
                 },
-                style: const TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 12,
-                ),
+                style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12),
                 decoration: InputDecoration(
-                  hintText: 'Search bill #, vehicle, or party...',
-                  hintStyle: TextStyle(
+                  hintText: 'Search by bill #, vehicle, or party...',
+                  hintStyle: const TextStyle(
                     fontFamily: 'PlusJakartaSans',
-                    fontSize: 11,
-                    color: Colors.grey.shade400,
+                    fontSize: 12,
+                    color: Color(0xFF94A3B8),
                   ),
                   prefixIcon: const Icon(
                     Icons.search_rounded,
-                    size: 16,
                     color: Color(0xFF94A3B8),
+                    size: 18,
                   ),
-                  suffixIcon: _searchQuery.isNotEmpty
+                  suffixIcon: _searchController.text.isNotEmpty
                       ? IconButton(
-                          icon: const Icon(Icons.clear_rounded, size: 14),
+                          icon: const Icon(
+                            Icons.clear,
+                            size: 16,
+                            color: Color(0xFF94A3B8),
+                          ),
                           onPressed: () {
                             _searchController.clear();
-                            setState(() {
-                              _searchQuery = '';
-                            });
+                            setState(() => _searchQuery = '');
                           },
                         )
                       : null,
-                  filled: true,
-                  fillColor: Colors.white,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 0,
-                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(8),
                     borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(8),
                     borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                    borderSide: const BorderSide(color: Color(0xFFD97706)),
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: const BorderSide(color: Color(0xFF0F52BA), width: 1.5),
                   ),
+                  filled: true,
+                  fillColor: const Color(0xFFF8FAFC),
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 8),
-          _buildFilterChip('ALL', 'All'),
-          const SizedBox(width: 4),
-          _buildFilterChip('TODAY', 'Today'),
-          const SizedBox(width: 4),
-          _buildFilterChip('OLDER', 'Older'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFilterChip(String type, String label) {
-    final isSelected = _dateFilter == type;
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _dateFilter = type;
-        });
-      },
-      borderRadius: BorderRadius.circular(5),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFD97706) : const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(5),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            fontSize: 10,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-            color: isSelected ? Colors.white : const Color(0xFF64748B),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCompactCard(Weighment bill, BillState state) {
-    final vehicleNo = _getVehicleNumber(state.vehicles, bill.vehicleId);
-    final partyName = _getPartyName(state.parties, bill.partyId);
-    final materialName = _getMaterialName(state.materials, bill.materialId);
-    final timestamp = _formatTimestamp(bill.createdAt);
-    final isOld = !_isToday(bill.createdAt);
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: isOld ? const Color(0xFFFCD34D) : const Color(0xFFFDE68A),
-          width: isOld ? 1.5 : 1.0,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFFD97706).withValues(alpha: isOld ? 0.08 : 0.04),
-            blurRadius: isOld ? 10 : 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Text(
-                bill.billNumber,
+          const SizedBox(width: 10),
+          Container(
+            height: 38,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFFE2E8F0)),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _dateFilter,
+                icon: const Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 18,
+                  color: Color(0xFF64748B),
+                ),
                 style: const TextStyle(
                   fontFamily: 'PlusJakartaSans',
                   fontSize: 12,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0D3B82),
+                  color: Color(0xFF334155),
+                  fontWeight: FontWeight.w500,
                 ),
+                items: const [
+                  DropdownMenuItem(value: 'ALL', child: Text('All Time')),
+                  DropdownMenuItem(value: 'TODAY', child: Text('Today')),
+                  DropdownMenuItem(value: 'OLDER', child: Text('Older')),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    setState(() => _dateFilter = value);
+                  }
+                },
               ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEF3C7),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Text(
-                  'TARE WEIGHT PENDING',
-                  style: TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFFD97706),
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ),
-              if (isOld) ...[
-                const SizedBox(width: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFEF2F2),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: const Text(
-                    'OLD',
-                    style: TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 8,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFFDC2626),
-                      letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPendingTable(List<Weighment> bills, BillState state) {
+    if (bills.isEmpty) {
+      return _buildEmptyState();
+    }
+
+    const minTableWidth = 720.0;
+
+    return Column(
+      children: [
+        Expanded(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final tableContent = Column(
+                children: [
+                  _buildHeaderRow(),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: bills.length,
+                      itemBuilder: (context, index) {
+                        final bill = bills[index];
+                        return _buildDataRow(bill, state);
+                      },
                     ),
+                  ),
+                ],
+              );
+
+              if (constraints.maxWidth < minTableWidth) {
+                return SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: minTableWidth,
+                    child: tableContent,
+                  ),
+                );
+              }
+              return tableContent;
+            },
+          ),
+        ),
+        _buildTableFooter(bills.length),
+      ],
+    );
+  }
+
+  Widget _buildHeaderRow() {
+    return Container(
+      height: 40,
+      decoration: const BoxDecoration(
+        color: Color(0xFFF8FAFC),
+        border: Border(
+          top: BorderSide(color: Color(0xFFE2E8F0)),
+          bottom: BorderSide(color: Color(0xFFE2E8F0)),
+        ),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          Expanded(flex: 18, child: _buildHeaderText('BILL NUMBER')),
+          Expanded(flex: 20, child: _buildHeaderText('VEHICLE')),
+          Expanded(flex: 26, child: _buildHeaderText('PARTY & MATERIAL')),
+          Expanded(flex: 16, child: _buildHeaderText('1ST WEIGHT')),
+          Expanded(flex: 12, child: _buildHeaderText('TIME')),
+          Expanded(flex: 18, child: _buildHeaderText('ACTION', align: TextAlign.right)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeaderText(String text, {TextAlign align = TextAlign.left}) {
+    return Text(
+      text,
+      textAlign: align,
+      style: const TextStyle(
+        fontFamily: 'PlusJakartaSans',
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        color: Color(0xFF64748B),
+        letterSpacing: 0.5,
+      ),
+    );
+  }
+
+  Widget _buildDataRow(Weighment bill, BillState state) {
+    final vehicleNo = _getVehicleNumber(state.vehicles, bill.vehicleId);
+    final partyName = _getPartyName(state.parties, bill.partyId);
+    final materialName = _getMaterialName(state.materials, bill.materialId);
+
+    return _HoverableRow(
+      child: Row(
+        children: [
+          // Bill Number
+          Expanded(
+            flex: 18,
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD97706).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(
+                    Icons.receipt_long_rounded,
+                    size: 14,
+                    color: Color(0xFFD97706),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        bill.billNumber,
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF0F172A),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 2),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFEF3C7),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Text(
+                          'Waiting Tare',
+                          style: TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF92400E),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
-              const Spacer(),
-              Text(
-                timestamp,
-                style: TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 10,
-                  color: isOld ? const Color(0xFFDC2626) : const Color(0xFF94A3B8),
-                  fontWeight: isOld ? FontWeight.w600 : FontWeight.w500,
-                ),
-              ),
-            ],
+            ),
           ),
-          const SizedBox(height: 6),
-          Row(
-            children: [
-              Icon(
-                Icons.local_shipping_outlined,
-                size: 13,
-                color: isOld ? const Color(0xFFB45309) : const Color(0xFF64748B),
-              ),
-              const SizedBox(width: 4),
-              Text(
-                vehicleNo,
-                style: TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: isOld ? const Color(0xFF92400E) : const Color(0xFF0F172A),
-                  letterSpacing: 0.3,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                '$partyName • $materialName',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF64748B),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _buildMiniWeightCell('Gross Wt', '${bill.grossWeightKg.toStringAsFixed(0)} kg'),
-              _buildMiniDivider(),
-              _buildMiniWeightCell('Tare Wt', 'Waiting...', textColor: const Color(0xFFD97706)),
-              _buildMiniDivider(),
-              _buildMiniWeightCell('Net', '—', textColor: const Color(0xFF94A3B8)),
-              _buildMiniDivider(),
-              _buildMiniWeightCell('Charge', 'Rs. ${bill.amount.toStringAsFixed(0)}', textColor: const Color(0xFF16A34A)),
-              const Spacer(),
-              ElevatedButton.icon(
-                key: Key('pending_continue_button_${bill.billNumber}'),
-                onPressed: () => _continueBill(bill),
-                icon: const Icon(Icons.arrow_forward_rounded, size: 14),
-                label: const Text('Continue 2nd Weighing'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFD97706),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                  shape: RoundedRectangleBorder(
+
+          // Vehicle Number
+          Expanded(
+            flex: 20,
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0F52BA).withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(6),
                   ),
+                  child: const Icon(
+                    Icons.local_shipping_outlined,
+                    size: 13,
+                    color: Color(0xFF0F52BA),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    vehicleNo,
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF0F172A),
+                      letterSpacing: 0.3,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Party & Material
+          Expanded(
+            flex: 26,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  partyName,
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF1E293B),
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    Container(
+                      width: 5,
+                      height: 5,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFFEA580C),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        materialName,
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 11,
+                          color: Color(0xFF64748B),
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // 1st Weight
+          Expanded(
+            flex: 16,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '${bill.grossWeightKg.toStringAsFixed(0)} kg',
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+                Text(
+                  'Gross • ₹${bill.amount.toStringAsFixed(0)}',
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 10,
+                    color: Color(0xFF64748B),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          // Time
+          Expanded(
+            flex: 12,
+            child: Text(
+              _formatTimestamp(bill.createdAt),
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF64748B),
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+
+          // Action button
+          Expanded(
+            flex: 18,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: FilledButton.icon(
+                onPressed: () => _continueBill(bill),
+                icon: const Icon(Icons.arrow_forward_rounded, size: 14),
+                label: const Text('2nd Weight'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFD97706),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   textStyle: const TextStyle(
                     fontFamily: 'PlusJakartaSans',
                     fontSize: 11,
@@ -559,94 +784,111 @@ class _PendingPageState extends State<PendingPage> {
                   ),
                 ),
               ),
-            ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildMiniWeightCell(String label, String value, {Color? textColor}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildTableFooter(int count) {
+    return Container(
+      height: 38,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF8FAFC),
+        border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(14)),
+      ),
+      child: Row(
         children: [
           Text(
-            label,
+            'Total $count ${count == 1 ? 'pending weighment' : 'pending weighments'}',
             style: const TextStyle(
               fontFamily: 'PlusJakartaSans',
-              fontSize: 9,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF94A3B8),
-            ),
-          ),
-          const SizedBox(height: 1),
-          Text(
-            value,
-            style: TextStyle(
-              fontFamily: 'PlusJakartaSans',
               fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: textColor ?? const Color(0xFF0F172A),
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF64748B),
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildMiniDivider() {
-    return Container(
-      width: 1,
-      height: 22,
-      color: const Color(0xFFE2E8F0),
     );
   }
 
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(40),
+        padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               padding: const EdgeInsets.all(16),
               decoration: const BoxDecoration(
-                color: Color(0xFFDCFCE7),
+                color: Color(0xFFF1F5F9),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.check_circle_outline_rounded,
-                size: 40,
+                size: 36,
                 color: Color(0xFF16A34A),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             const Text(
-              'All caught up!',
+              'No pending weighments',
               style: TextStyle(
                 fontFamily: 'PlusJakartaSans',
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF0F172A),
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF334155),
               ),
             ),
-            const SizedBox(height: 6),
-            Text(
-              _searchQuery.isNotEmpty
-                  ? 'No pending bills match your search.'
-                  : 'No pending weighments. All vehicles have been fully weighed.',
+            const SizedBox(height: 4),
+            const Text(
+              'All first weighments have been completed or no bills are awaiting 2nd weight.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'PlusJakartaSans',
                 fontSize: 12,
-                color: Colors.grey.shade500,
+                color: Color(0xFF94A3B8),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _HoverableRow extends StatefulWidget {
+  final Widget child;
+
+  const _HoverableRow({required this.child});
+
+  @override
+  State<_HoverableRow> createState() => _HoverableRowState();
+}
+
+class _HoverableRowState extends State<_HoverableRow> {
+  bool _isHovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return MouseRegion(
+      onEnter: (_) => setState(() => _isHovered = true),
+      onExit: (_) => setState(() => _isHovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        decoration: BoxDecoration(
+          color: _isHovered ? const Color(0xFFF8FAFC) : Colors.white,
+          border: const Border(
+            bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1),
+          ),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: widget.child,
       ),
     );
   }
