@@ -372,7 +372,7 @@ class WeighmentSlipDialog extends StatelessWidget {
     return Text(
       isCompleted
           ? 'Note: Please check the weight before leaving the weighbridge.'
-          : 'Note: Tare weight is pending.\nPlease return to the weighbridge for the second weighing.',
+          : 'Note: Tare weight is pending.\nPlease return to the weighbridge for tare weighing.',
       textAlign: TextAlign.center,
       style: const TextStyle(
         fontFamily: 'PlusJakartaSans',

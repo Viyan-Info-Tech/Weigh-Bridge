@@ -109,7 +109,7 @@ class _PendingPageState extends State<PendingPage> {
                 return true;
               }).toList();
 
-              final totalFirstWeight =
+              final totalGrossWeight =
                   filteredBills.fold<double>(0, (sum, b) => sum + b.grossWeightKg);
               final totalExpected =
                   filteredBills.fold<double>(0, (sum, b) => sum + b.amount);
@@ -121,7 +121,7 @@ class _PendingPageState extends State<PendingPage> {
                   const SizedBox(height: 16),
                   _buildSummaryCards(
                     pendingCount: filteredBills.length,
-                    totalFirstWeightKg: totalFirstWeight,
+                    totalFirstWeightKg: totalGrossWeight,
                     totalExpected: totalExpected,
                   ),
                   const SizedBox(height: 16),
@@ -191,7 +191,7 @@ class _PendingPageState extends State<PendingPage> {
             ),
             SizedBox(height: 2),
             Text(
-              'Vehicles waiting for second weighing to complete the bill',
+              'Vehicles waiting for tare weighing to complete the bill',
               style: TextStyle(
                 fontFamily: 'PlusJakartaSans',
                 fontSize: 12,
@@ -217,7 +217,7 @@ class _PendingPageState extends State<PendingPage> {
           iconBg: const Color(0xFFFFF7ED),
           label: 'Pending Queue',
           value: '$pendingCount',
-          subtext: 'Awaiting 2nd weight',
+          subtext: 'Awaiting Tare Weight',
         ),
         const SizedBox(width: 14),
         _buildStatCard(
@@ -226,7 +226,7 @@ class _PendingPageState extends State<PendingPage> {
           iconBg: const Color(0xFFEFF6FF),
           label: 'Gross Weight Captured',
           value: '${totalFirstWeightKg.toStringAsFixed(0)} kg',
-          subtext: 'Initial 1st weighment load',
+          subtext: 'Gross weight captured',
         ),
         const SizedBox(width: 14),
         _buildStatCard(
@@ -552,7 +552,7 @@ class _PendingPageState extends State<PendingPage> {
           Expanded(flex: 18, child: _buildHeaderText('BILL NUMBER')),
           Expanded(flex: 20, child: _buildHeaderText('VEHICLE')),
           Expanded(flex: 26, child: _buildHeaderText('PARTY & MATERIAL')),
-          Expanded(flex: 16, child: _buildHeaderText('1ST WEIGHT')),
+          Expanded(flex: 16, child: _buildHeaderText('GROSS WEIGHT')),
           Expanded(flex: 12, child: _buildHeaderText('TIME')),
           Expanded(flex: 18, child: _buildHeaderText('ACTION', align: TextAlign.right)),
         ],
@@ -623,7 +623,7 @@ class _PendingPageState extends State<PendingPage> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         child: const Text(
-                          'Waiting Tare',
+                          'Tare Weight Pending',
                           style: TextStyle(
                             fontFamily: 'PlusJakartaSans',
                             fontSize: 9.5,
@@ -720,7 +720,7 @@ class _PendingPageState extends State<PendingPage> {
             ),
           ),
 
-          // 1st Weight
+          // Gross Weight
           Expanded(
             flex: 16,
             child: Column(
@@ -771,7 +771,7 @@ class _PendingPageState extends State<PendingPage> {
               child: FilledButton.icon(
                 onPressed: () => _continueBill(bill),
                 icon: const Icon(Icons.arrow_forward_rounded, size: 14),
-                label: const Text('2nd Weight'),
+                label: const Text('Tare Weight'),
                 style: FilledButton.styleFrom(
                   backgroundColor: const Color(0xFFD97706),
                   foregroundColor: Colors.white,
@@ -847,7 +847,7 @@ class _PendingPageState extends State<PendingPage> {
             ),
             const SizedBox(height: 4),
             const Text(
-              'All first weighments have been completed or no bills are awaiting 2nd weight.',
+              'All gross weighments have been completed or no bills are awaiting tare weight.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'PlusJakartaSans',

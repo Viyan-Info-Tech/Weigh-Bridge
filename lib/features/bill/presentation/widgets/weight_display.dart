@@ -6,7 +6,7 @@ import 'truck_image_asset.dart';
 /// - Photorealistic European white cab-over commercial semi-truck on weighbridge platform
 /// - Integrated high-tech digital scale display inside the cargo container body
 /// - Neon 7-segment digital LED readout with ghost background segments
-/// - Sub-metric weight summary breakdown (1st, 2nd, Net)
+/// - Sub-metric weight summary breakdown (Gross, Tare, Net)
 class WeightDisplay extends StatelessWidget {
   final double netWeightTon;
   final double grossWeight;
@@ -160,7 +160,7 @@ class WeightDisplay extends StatelessWidget {
                           ),
                         ),
 
-                        // Bottom Strip: 1st, 2nd, Net Weight Summary
+                        // Bottom Strip: Gross, Tare, Net Weight Summary
                         Container(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 6, vertical: 2),

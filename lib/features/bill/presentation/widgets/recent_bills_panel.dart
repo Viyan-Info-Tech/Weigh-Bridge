@@ -600,7 +600,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
         border: Border.all(
           color: isCompleted
               ? const Color(0xFFE2E8F0)
-              : const Color(0xFFFDE68A), // Amber border for pending 2nd wt
+              : const Color(0xFFFDE68A), // Amber border for pending tare wt
           width: isCompleted ? 1.0 : 1.5,
         ),
         boxShadow: [
