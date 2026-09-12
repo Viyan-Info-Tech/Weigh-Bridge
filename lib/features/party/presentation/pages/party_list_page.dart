@@ -131,11 +131,6 @@ class _PartyListPageState extends State<PartyListPage> {
             ? ((activeParties / totalParties) * 100).round()
             : 100;
 
-        final totalVehicles = state.parties.fold<int>(
-          0,
-          (sum, p) => sum + p.vehicleCount,
-        );
-
         return Row(
           children: [
             _buildStatCard(
@@ -154,15 +149,6 @@ class _PartyListPageState extends State<PartyListPage> {
               label: 'Active Accounts',
               value: '$activeParties',
               subtext: '$activeRate% Account readiness score',
-            ),
-            const SizedBox(width: 14),
-            _buildStatCard(
-              icon: Icons.local_shipping_rounded,
-              iconColor: const Color(0xFF7C3AED),
-              iconBg: const Color(0xFF7C3AED).withValues(alpha: 0.1),
-              label: 'Associated Fleet',
-              value: '$totalVehicles',
-              subtext: 'Vehicles mapped to parties',
             ),
           ],
         );
@@ -491,11 +477,10 @@ class _PartyListPageState extends State<PartyListPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          Expanded(flex: 30, child: _buildHeaderText('PARTY NAME')),
+          Expanded(flex: 36, child: _buildHeaderText('PARTY NAME')),
           Expanded(flex: 22, child: _buildHeaderText('CONTACT PERSON')),
           Expanded(flex: 18, child: _buildHeaderText('PHONE')),
-          Expanded(flex: 12, child: _buildHeaderText('VEHICLES')),
-          Expanded(flex: 12, child: _buildHeaderText('STATUS')),
+          Expanded(flex: 18, child: _buildHeaderText('STATUS')),
           Expanded(flex: 14, child: _buildHeaderText('ACTIONS', align: TextAlign.right)),
         ],
       ),
@@ -522,7 +507,7 @@ class _PartyListPageState extends State<PartyListPage> {
         children: [
           // Party Name
           Expanded(
-            flex: 30,
+            flex: 36,
             child: Row(
               children: [
                 Container(
@@ -608,34 +593,9 @@ class _PartyListPageState extends State<PartyListPage> {
             ),
           ),
 
-          // Vehicles count
-          Expanded(
-            flex: 12,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2.5),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Text(
-                  '${party.vehicleCount}',
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF334155),
-                  ),
-                ),
-              ),
-            ),
-          ),
-
           // Status
           Expanded(
-            flex: 12,
+            flex: 18,
             child: Align(
               alignment: Alignment.centerLeft,
               child: _buildStatusBadge(party.isActive),

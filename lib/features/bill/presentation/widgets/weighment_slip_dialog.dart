@@ -69,7 +69,7 @@ class WeighmentSlipDialog extends StatelessWidget {
                       const SizedBox(height: 8),
                       _buildDivider(),
                       const SizedBox(height: 6),
-                      _buildTitle(),
+                      _buildTitle(isCompleted: isCompleted),
                       const SizedBox(height: 8),
                       _buildDivider(),
                       const SizedBox(height: 6),
@@ -108,13 +108,8 @@ class WeighmentSlipDialog extends StatelessWidget {
                       const SizedBox(height: 6),
                       _buildInfoRow('Amount', 'Rs. ${bill.amount.toStringAsFixed(2)}'),
                       _buildInfoRow('Payment', bill.paymentMode.toUpperCase()),
-                      if (isCompleted) ...[
-                        _buildInfoRow('Cash Received', 'Rs. ${bill.amount.toStringAsFixed(2)}'),
-                        _buildInfoRow('Pending', 'Rs. 0.00'),
-                      ] else ...[
-                        _buildInfoRow('Cash Received', '—'),
-                        _buildInfoRow('Pending', 'Rs. ${bill.amount.toStringAsFixed(2)}'),
-                      ],
+                      _buildInfoRow('Cash Received', 'Rs. ${bill.amount.toStringAsFixed(2)}'),
+                      _buildInfoRow('Pending', 'Rs. 0.00'),
                       if (!isCompleted) ...[
                         const SizedBox(height: 6),
                         _buildStatusBadge(),
@@ -128,7 +123,7 @@ class WeighmentSlipDialog extends StatelessWidget {
                       const SizedBox(height: 8),
                       _buildDivider(),
                       const SizedBox(height: 6),
-                      _buildFooterNote(),
+                      _buildFooterNote(isCompleted: isCompleted),
                       const SizedBox(height: 8),
                       Center(
                         child: Text(
@@ -210,15 +205,16 @@ class WeighmentSlipDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildTitle() {
-    return const Center(
+  Widget _buildTitle({required bool isCompleted}) {
+    return Center(
       child: Text(
-        'WEIGHMENT RECEIPT',
+        isCompleted ? 'WEIGHMENT RECEIPT' : 'WEIGHMENT RECEIPT — TARE WEIGHT PENDING',
+        textAlign: TextAlign.center,
         style: TextStyle(
           fontFamily: 'PlusJakartaSans',
-          fontSize: 12,
+          fontSize: isCompleted ? 12 : 10,
           fontWeight: FontWeight.w800,
-          color: Color(0xFF0F172A),
+          color: const Color(0xFF0F172A),
           letterSpacing: 1.0,
         ),
       ),
@@ -372,11 +368,13 @@ class WeighmentSlipDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildFooterNote() {
-    return const Text(
-      'Note: Please check the weight before leaving the weighbridge.',
+  Widget _buildFooterNote({required bool isCompleted}) {
+    return Text(
+      isCompleted
+          ? 'Note: Please check the weight before leaving the weighbridge.'
+          : 'Note: Tare weight is pending.\nPlease return to the weighbridge for the second weighing.',
       textAlign: TextAlign.center,
-      style: TextStyle(
+      style: const TextStyle(
         fontFamily: 'PlusJakartaSans',
         fontSize: 8,
         fontWeight: FontWeight.w500,

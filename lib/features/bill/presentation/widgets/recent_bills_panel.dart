@@ -802,7 +802,15 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                 ),
               ),
               const Spacer(),
-              if (!isCompleted)
+              if (!isCompleted) ...[
+                IconButton(
+                  key: Key('print_slip_button_${bill.billNumber}'),
+                  icon: const Icon(Icons.print_outlined, size: 18),
+                  color: const Color(0xFF0D3B82),
+                  tooltip: 'View & Print Pending Slip',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => _showBillSlipDialog(bill),
+                ),
                 TextButton.icon(
                   key: Key('continue_bill_button_${bill.billNumber}'),
                   onPressed: () => _onLoadPendingBill(bill),
@@ -812,8 +820,8 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                     foregroundColor: const Color(0xFFD97706),
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   ),
-                )
-              else
+                ),
+              ] else
                 IconButton(
                   key: Key('print_slip_button_${bill.billNumber}'),
                   icon: const Icon(Icons.print_outlined, size: 18),
