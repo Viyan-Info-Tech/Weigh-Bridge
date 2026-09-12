@@ -26,6 +26,7 @@ class BillForm extends StatefulWidget {
   final bool isVehicleChargeManuallyEdited;
   final double amount;
   final String weightUnit;
+  final String? weightValidationError;
 
   final ValueChanged<Party> onPartyChanged;
   final ValueChanged<Vehicle> onVehicleChanged;
@@ -61,6 +62,7 @@ class BillForm extends StatefulWidget {
     this.isVehicleChargeManuallyEdited = false,
     required this.amount,
     this.weightUnit = 'kg',
+    this.weightValidationError,
     required this.onPartyChanged,
     required this.onVehicleChanged,
     required this.onMaterialChanged,
@@ -139,11 +141,32 @@ class _BillFormState extends State<BillForm> {
                   'Tare Weight (${widget.weightUnit}) *', widget.tareWeightController, widget.onTareWeightChanged)),
             ],
           ),
+          if (widget.weightValidationError != null) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                const Icon(Icons.warning_amber_rounded, size: 14, color: Color(0xFFDC2626)),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    widget.weightValidationError!,
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFFDC2626),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 16),
           Row(
             children: [
               Expanded(child: _buildAutoField(
-                  'Net Weight (${widget.weightUnit})', '${widget.netWeightKg.toStringAsFixed(0)} ${widget.weightUnit}')),
+                  'Net Weight (${widget.weightUnit})',
+                  widget.weightValidationError != null ? '—' : '${widget.netWeightKg.toStringAsFixed(0)} ${widget.weightUnit}')),
               const SizedBox(width: 16),
               Expanded(child: _buildVehicleChargeField()),
             ],

@@ -43,6 +43,7 @@ class BillState extends Equatable {
 
   final String currentBillNumber;
   final int? editingBillId;
+  final String? weightValidationError;
 
   const BillState({
     this.status = BillScreenStatus.initial,
@@ -73,6 +74,7 @@ class BillState extends Equatable {
     this.amount = 0,
     this.currentBillNumber = 'WB-00001',
     this.editingBillId,
+    this.weightValidationError,
   });
 
   bool get isEditing => editingBillId != null;
@@ -91,6 +93,7 @@ class BillState extends Equatable {
   }
 
   bool get hasDateRange => billsStartDate != null || billsEndDate != null;
+  bool get hasWeightError => weightValidationError != null;
 
   BillState copyWith({
     BillScreenStatus? status,
@@ -129,6 +132,8 @@ class BillState extends Equatable {
     String? currentBillNumber,
     int? editingBillId,
     bool clearEditingBillId = false,
+    String? weightValidationError,
+    bool clearWeightError = false,
   }) {
     return BillState(
       status: status ?? this.status,
@@ -159,6 +164,7 @@ class BillState extends Equatable {
       amount: amount ?? this.amount,
       currentBillNumber: currentBillNumber ?? this.currentBillNumber,
       editingBillId: clearEditingBillId ? null : (editingBillId ?? this.editingBillId),
+      weightValidationError: clearWeightError ? null : (weightValidationError ?? this.weightValidationError),
     );
   }
 
@@ -192,5 +198,6 @@ class BillState extends Equatable {
         amount,
         currentBillNumber,
         editingBillId,
+        weightValidationError,
       ];
 }

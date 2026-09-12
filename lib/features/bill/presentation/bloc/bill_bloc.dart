@@ -177,19 +177,25 @@ class BillBloc extends Bloc<BillEvent, BillState> {
 
   void _recalculate(Emitter<BillState> emit) {
     final vehicleType = state.selectedVehicleType;
-    final fw = state.grossWeightKg;
-    final sw = state.tareWeightKg;
+    final gw = state.grossWeightKg;
+    final tw = state.tareWeightKg;
 
     double defaultCharge = 0;
     double netWeightKg = 0;
+    String? weightError;
 
-    if (vehicleType != null && fw > 0) {
-      if (sw > 0) {
-        netWeightKg = sw - fw;
-        defaultCharge = vehicleType.loadPrice;
+    if (gw > 0 && tw > 0) {
+      if (tw > gw) {
+        weightError = 'Tare weight cannot be greater than gross weight';
+        netWeightKg = 0;
       } else {
-        defaultCharge = vehicleType.emptyPrice;
+        netWeightKg = gw - tw;
+        if (vehicleType != null) {
+          defaultCharge = vehicleType.loadPrice;
+        }
       }
+    } else if (gw > 0 && vehicleType != null) {
+      defaultCharge = vehicleType.emptyPrice;
     }
 
     final vehicleCharge = state.isVehicleChargeManuallyEdited
@@ -202,6 +208,8 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       defaultVehicleCharge: defaultCharge,
       vehicleCharge: vehicleCharge,
       amount: amount,
+      weightValidationError: weightError,
+      clearWeightError: weightError == null,
     ));
   }
 
@@ -212,11 +220,8 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     if (state.selectedMaterial == null) return 'Please select a material';
     if (state.grossWeightKg <= 0) return 'Please enter gross weight';
 
-    if (state.tareWeightKg > 0) {
-      if (state.tareWeightKg <= state.grossWeightKg) {
-        return 'Tare weight must be greater than gross weight';
-      }
-      if (state.netWeightKg <= 0) return 'Net weight must be positive';
+    if (state.tareWeightKg > 0 && state.tareWeightKg > state.grossWeightKg) {
+      return 'Tare weight cannot be greater than gross weight';
     }
 
     return null;
@@ -410,6 +415,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       paymentMode: 'Cash',
       currentBillNumber: billNum,
       clearError: true,
+      clearWeightError: true,
     ));
   }
 

@@ -357,6 +357,7 @@ class _BillPageState extends State<BillPage> {
       isVehicleChargeManuallyEdited: state.isVehicleChargeManuallyEdited,
       amount: state.amount,
       weightUnit: _weightUnit,
+      weightValidationError: state.weightValidationError,
       onPartyChanged: (party) =>
           context.read<BillBloc>().add(PartySelected(party)),
       onVehicleChanged: (vehicle) =>
@@ -419,6 +420,7 @@ class _BillPageState extends State<BillPage> {
 
   Widget _buildActionButtons(BillState state) {
     final isSaving = state.status == BillScreenStatus.saving || state.status == BillScreenStatus.printing;
+    final isDisabled = isSaving || state.hasWeightError;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -446,7 +448,7 @@ class _BillPageState extends State<BillPage> {
             ),
           ),
           ElevatedButton.icon(
-            onPressed: isSaving
+            onPressed: isDisabled
                 ? null
                 : () => context.read<BillBloc>().add(const SaveBillRequested()),
             icon: isSaving
@@ -470,7 +472,7 @@ class _BillPageState extends State<BillPage> {
             ),
           ),
           ElevatedButton.icon(
-            onPressed: isSaving
+            onPressed: isDisabled
                 ? null
                 : () => context.read<BillBloc>().add(const SaveAndPrintBillRequested()),
             icon: isSaving
