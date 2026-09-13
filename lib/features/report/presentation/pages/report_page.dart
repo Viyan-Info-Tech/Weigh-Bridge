@@ -1,6 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:path/path.dart' as p;
 
 import '../../../vehicle_type/domain/entities/vehicle_type.dart';
 import '../../../vehicle_type/presentation/bloc/vehicle_type_bloc.dart';
@@ -8,10 +10,10 @@ import '../../../vehicle_type/presentation/bloc/vehicle_type_state.dart';
 import '../../domain/entities/report_filter.dart';
 import '../../domain/entities/report_summary.dart';
 import '../../domain/entities/weighment_report_item.dart';
+import '../../domain/usecases/export_report_usecase.dart';
 import '../bloc/report_bloc.dart';
 import '../bloc/report_event.dart';
 import '../bloc/report_state.dart';
-import '../utils/csv_exporter.dart';
 import '../widgets/print_report_dialog.dart';
 import '../widgets/weighment_details_dialog.dart';
 
@@ -99,6 +101,145 @@ class _ReportPageState extends State<ReportPage> {
                 backgroundColor: const Color(0xFFDC2626),
               ),
             );
+          }
+
+          if (state.exportResult != null) {
+            final result = state.exportResult!;
+            context.read<ReportBloc>().add(const ClearExportResult());
+
+            switch (result.type) {
+              case ExportResultType.noRecords:
+                showDialog<void>(
+                  context: context,
+                  builder: (dialogContext) => AlertDialog(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    title: const Text(
+                      'No Records to Export',
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
+                    ),
+                    content: const Text(
+                      'There are no weighment records matching the selected filters.',
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 13,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                        child: const Text(
+                          'OK',
+                          style: TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0284C7),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+                break;
+
+              case ExportResultType.failure:
+                showDialog<void>(
+                  context: context,
+                  builder: (dialogContext) => AlertDialog(
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    title: const Text(
+                      'Unable to Export Report',
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                        color: Color(0xFFDC2626),
+                      ),
+                    ),
+                    content: Text(
+                      result.errorMessage ??
+                          'The file could not be saved to the selected location.\n\nPlease choose another location and try again.',
+                      style: const TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 13,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                        child: const Text(
+                          'OK',
+                          style: TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0284C7),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+                break;
+
+              case ExportResultType.cancelled:
+                // User intentionally cancelled save dialog: silent return, no error snackbar
+                break;
+
+              case ExportResultType.success:
+                final filePath = result.filePath!;
+                final fileName = result.fileName ?? p.basename(filePath);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Text(
+                                '✓ Report exported successfully',
+                                style: TextStyle(
+                                  fontFamily: 'PlusJakartaSans',
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              Text(
+                                fileName,
+                                style: const TextStyle(
+                                  fontFamily: 'PlusJakartaSans',
+                                  fontSize: 11,
+                                  color: Colors.white70,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    backgroundColor: const Color(0xFF16A34A),
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    duration: const Duration(seconds: 5),
+                    action: SnackBarAction(
+                      label: 'Open Folder',
+                      textColor: Colors.white,
+                      onPressed: () => _openFolder(filePath),
+                    ),
+                  ),
+                );
+                break;
+            }
           }
         },
         builder: (context, state) {
@@ -794,16 +935,24 @@ class _ReportPageState extends State<ReportPage> {
 
         // Export CSV button
         ElevatedButton.icon(
-          onPressed: () {
-            CsvExporter.exportReportToCsv(
-              context: context,
-              records: state.records,
-            );
-          },
-          icon: const Icon(Icons.download_rounded, size: 16),
-          label: const Text(
-            'Export CSV',
-            style: TextStyle(
+          onPressed: state.isExporting
+              ? null
+              : () {
+                  context.read<ReportBloc>().add(const ExportReportCsv());
+                },
+          icon: state.isExporting
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Icon(Icons.download_rounded, size: 16),
+          label: Text(
+            state.isExporting ? 'Exporting...' : 'Export CSV',
+            style: const TextStyle(
               fontFamily: 'PlusJakartaSans',
               fontSize: 13,
               fontWeight: FontWeight.w700,
@@ -812,6 +961,8 @@ class _ReportPageState extends State<ReportPage> {
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF1E293B),
             foregroundColor: Colors.white,
+            disabledBackgroundColor: const Color(0xFF64748B),
+            disabledForegroundColor: Colors.white70,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             elevation: 0,
@@ -893,16 +1044,16 @@ class _ReportPageState extends State<ReportPage> {
                 ),
                 child: Row(
                   children: const [
-                    Expanded(flex: 12, child: _HeaderCell('BILL NO')),
-                    Expanded(flex: 14, child: _HeaderCell('DATE & TIME')),
-                    Expanded(flex: 13, child: _HeaderCell('VEHICLE')),
-                    Expanded(flex: 14, child: _HeaderCell('PARTY')),
+                    Expanded(flex: 11, child: _HeaderCell('BILL NO')),
+                    Expanded(flex: 13, child: _HeaderCell('DATE & TIME')),
+                    Expanded(flex: 11, child: _HeaderCell('VEHICLE')),
+                    Expanded(flex: 13, child: _HeaderCell('PARTY')),
                     Expanded(flex: 11, child: _HeaderCell('MATERIAL')),
-                    Expanded(flex: 12, child: _HeaderCell('FIRST WT', align: TextAlign.right)),
-                    Expanded(flex: 12, child: _HeaderCell('SECOND WT', align: TextAlign.right)),
-                    Expanded(flex: 12, child: _HeaderCell('NET WT', align: TextAlign.right)),
-                    Expanded(flex: 10, child: _HeaderCell('AMT', align: TextAlign.right)),
-                    Expanded(flex: 14, child: _HeaderCell('STATUS', align: TextAlign.center)),
+                    Expanded(flex: 12, child: _HeaderCell('GROSS WEIGHT', align: TextAlign.right)),
+                    Expanded(flex: 12, child: _HeaderCell('TARE WEIGHT', align: TextAlign.right)),
+                    Expanded(flex: 12, child: _HeaderCell('NET WEIGHT', align: TextAlign.right)),
+                    Expanded(flex: 10, child: _HeaderCell('AMOUNT', align: TextAlign.right)),
+                    Expanded(flex: 11, child: _HeaderCell('STATUS', align: TextAlign.center)),
                     Expanded(flex: 8, child: _HeaderCell('ACTION', align: TextAlign.center)),
                   ],
                 ),
@@ -1007,7 +1158,7 @@ class _ReportPageState extends State<ReportPage> {
           children: [
             // Bill No
             Expanded(
-              flex: 12,
+              flex: 11,
               child: Text(
                 item.billNumber,
                 style: const TextStyle(
@@ -1020,7 +1171,7 @@ class _ReportPageState extends State<ReportPage> {
             ),
             // Date & Time
             Expanded(
-              flex: 14,
+              flex: 13,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1047,7 +1198,7 @@ class _ReportPageState extends State<ReportPage> {
             ),
             // Vehicle
             Expanded(
-              flex: 13,
+              flex: 11,
               child: Text(
                 item.vehicleNumber,
                 style: const TextStyle(
@@ -1061,7 +1212,7 @@ class _ReportPageState extends State<ReportPage> {
             ),
             // Party
             Expanded(
-              flex: 14,
+              flex: 13,
               child: Text(
                 item.partyName,
                 style: const TextStyle(
@@ -1085,58 +1236,41 @@ class _ReportPageState extends State<ReportPage> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            // First Weight
+            // Gross Weight
             Expanded(
               flex: 12,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text(
-                    '${item.firstWeightKg.toStringAsFixed(0)} kg',
-                    style: const TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1E293B),
-                    ),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  item.grossWeightKg != null
+                      ? '${item.grossWeightKg!.toStringAsFixed(0)} kg'
+                      : '—',
+                  style: TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: item.grossWeightKg != null ? const Color(0xFF1E293B) : const Color(0xFF94A3B8),
                   ),
-                  const SizedBox(width: 4),
-                  _buildTinyTypeTag(item.firstWeightType),
-                ],
+                ),
               ),
             ),
-            // Second Weight
+            // Tare Weight
             Expanded(
               flex: 12,
-              child: item.secondWeightKg != null
-                  ? Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Text(
-                          '${item.secondWeightKg!.toStringAsFixed(0)} kg',
-                          style: const TextStyle(
-                            fontFamily: 'PlusJakartaSans',
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF1E293B),
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        _buildTinyTypeTag(item.secondWeightType ?? ''),
-                      ],
-                    )
-                  : const Align(
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        'Pending',
-                        style: TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFFD97706),
-                        ),
-                      ),
-                    ),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  item.tareWeightKg != null
+                      ? '${item.tareWeightKg!.toStringAsFixed(0)} kg'
+                      : '—',
+                  style: TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: item.tareWeightKg != null ? const Color(0xFF1E293B) : const Color(0xFF94A3B8),
+                  ),
+                ),
+              ),
             ),
             // Net Weight
             Expanded(
@@ -1172,7 +1306,7 @@ class _ReportPageState extends State<ReportPage> {
             ),
             // Status Badge
             Expanded(
-              flex: 14,
+              flex: 11,
               child: Center(
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -1181,16 +1315,29 @@ class _ReportPageState extends State<ReportPage> {
                     borderRadius: BorderRadius.circular(4),
                     border: Border.all(color: statusColor.withValues(alpha: 0.3)),
                   ),
-                  child: Text(
-                    item.displayStatus,
-                    style: TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: statusColor,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: statusColor,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        item.displayStatus,
+                        style: TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: statusColor,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -1222,27 +1369,21 @@ class _ReportPageState extends State<ReportPage> {
     );
   }
 
-  Widget _buildTinyTypeTag(String type) {
-    if (type.isEmpty) return const SizedBox.shrink();
-    final isGross = type.toUpperCase() == 'GROSS';
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-      decoration: BoxDecoration(
-        color: isGross ? const Color(0xFFE2E8F0) : const Color(0xFFFEF3C7),
-        borderRadius: BorderRadius.circular(3),
-      ),
-      child: Text(
-        isGross ? 'G' : 'T',
-        style: TextStyle(
-          fontFamily: 'PlusJakartaSans',
-          fontSize: 9,
-          fontWeight: FontWeight.w800,
-          color: isGross ? const Color(0xFF475569) : const Color(0xFFB45309),
-        ),
-      ),
-    );
+  static void _openFolder(String filePath) {
+    try {
+      if (Platform.isMacOS) {
+        Process.run('open', ['-R', filePath]);
+      } else if (Platform.isWindows) {
+        Process.run('explorer.exe', ['/select,', filePath]);
+      } else if (Platform.isLinux) {
+        Process.run('xdg-open', [p.dirname(filePath)]);
+      }
+    } catch (e) {
+      debugPrint('Error opening folder: $e');
+    }
   }
 }
+
 
 class _HeaderCell extends StatelessWidget {
   final String label;

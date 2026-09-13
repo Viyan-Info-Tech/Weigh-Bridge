@@ -216,12 +216,14 @@ class WeighmentDetailsDialog extends StatelessWidget {
                   const Divider(height: 14, color: Color(0xFFE2E8F0)),
                   _buildWeightRow(
                     label: 'Second Weight',
-                    weight: record.secondWeightKg != null
+                    weight: (record.secondWeightKg != null && record.secondWeightKg! > 0)
                         ? '${record.secondWeightKg!.toStringAsFixed(0)} kg'
-                        : 'Pending',
-                    badge: record.secondWeightType ?? (record.secondWeightKg != null ? '' : 'PENDING'),
-                    badgeColor: record.secondWeightKg != null ? Colors.blueGrey : const Color(0xFFD97706),
-                    isPending: record.secondWeightKg == null,
+                        : '—',
+                    badge: (record.secondWeightKg != null && record.secondWeightKg! > 0)
+                        ? (record.secondWeightType ?? '')
+                        : '',
+                    badgeColor: Colors.blueGrey,
+                    isPending: record.secondWeightKg == null || record.secondWeightKg == 0,
                   ),
                   const Divider(height: 14, color: Color(0xFFE2E8F0)),
                   _buildSummaryWeightRow('Gross Weight', record.grossWeightKg != null ? '${record.grossWeightKg!.toStringAsFixed(0)} kg' : '—'),

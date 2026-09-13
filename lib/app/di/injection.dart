@@ -49,6 +49,9 @@ import '../../features/settings/presentation/bloc/settings_bloc.dart';
 import '../../features/settings/presentation/bloc/settings_event.dart';
 import '../../features/report/data/datasources/report_local_datasource.dart';
 import '../../features/report/data/repositories/report_repository_impl.dart';
+import '../../features/report/data/services/file_picker_save_service.dart';
+import '../../features/report/domain/services/csv_generator.dart';
+import '../../features/report/domain/usecases/export_report_usecase.dart';
 import '../../features/report/presentation/bloc/report_bloc.dart';
 
 class Injection {
@@ -212,11 +215,19 @@ class Injection {
     // Report
     final reportLocalDataSource = ReportLocalDataSource(database);
     final reportRepository = ReportRepositoryImpl(reportLocalDataSource);
+    final fileSaveService = FilePickerSaveService();
+    const csvGenerator = CsvGenerator();
+    final exportReportUseCase = ExportReportUseCase(
+      reportRepository: reportRepository,
+      fileSaveService: fileSaveService,
+      csvGenerator: csvGenerator,
+    );
     final reportBloc = ReportBloc(
       reportRepository: reportRepository,
       partyRepository: partyRepository,
       vehicleRepository: vehicleRepository,
       materialRepository: materialItemRepository,
+      exportReportUseCase: exportReportUseCase,
     );
 
     await _seedInitialData(authLocalDataSource, passwordHasher);

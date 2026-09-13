@@ -44,29 +44,29 @@ class WeighmentReportItem extends Equatable {
   });
 
   /// Business Logic for Gross Weight:
-  /// If firstWeightType == GROSS -> firstWeight
-  /// If firstWeightType == TARE -> secondWeight
+  /// If firstWeightType == GROSS -> firstWeight (if > 0)
+  /// If firstWeightType == TARE -> secondWeight (if available > 0, else null)
   double? get grossWeightKg {
     final type = firstWeightType.toUpperCase();
     if (type == 'GROSS') {
-      return firstWeightKg;
+      return firstWeightKg > 0 ? firstWeightKg : null;
     } else if (type == 'TARE') {
-      return secondWeightKg;
+      return (secondWeightKg != null && secondWeightKg! > 0) ? secondWeightKg : null;
     }
-    return firstWeightKg;
+    return firstWeightKg > 0 ? firstWeightKg : null;
   }
 
   /// Business Logic for Tare Weight:
-  /// If firstWeightType == TARE -> firstWeight
-  /// If firstWeightType == GROSS -> secondWeight
+  /// If firstWeightType == TARE -> firstWeight (if > 0)
+  /// If firstWeightType == GROSS -> secondWeight (if available > 0, else null)
   double? get tareWeightKg {
     final type = firstWeightType.toUpperCase();
     if (type == 'TARE') {
-      return firstWeightKg;
+      return firstWeightKg > 0 ? firstWeightKg : null;
     } else if (type == 'GROSS') {
-      return secondWeightKg;
+      return (secondWeightKg != null && secondWeightKg! > 0) ? secondWeightKg : null;
     }
-    return secondWeightKg;
+    return (secondWeightKg != null && secondWeightKg! > 0) ? secondWeightKg : null;
   }
 
   /// Net Weight is only calculated when both Gross and Tare weights exist:
@@ -80,25 +80,17 @@ class WeighmentReportItem extends Equatable {
     return null;
   }
 
-  /// Status logic:
-  /// No weight -> DRAFT
-  /// First weight only ->
-  ///   If First == GROSS, Second missing -> TARE WEIGHT PENDING
-  ///   If First == TARE, Second missing -> GROSS WEIGHT PENDING
-  /// Second weight entered -> COMPLETED
+  /// Business-level status logic:
+  /// First weight entered:
+  ///   Is second weight available?
+  ///     YES -> COMPLETED
+  ///     NO  -> PENDING
   String get displayStatus {
     final hasSecond = secondWeightKg != null && secondWeightKg! > 0;
     if (firstWeightKg > 0 && hasSecond) {
       return 'COMPLETED';
     }
-    if (firstWeightKg > 0 && !hasSecond) {
-      final type = firstWeightType.toUpperCase();
-      if (type == 'TARE') {
-        return 'GROSS WEIGHT PENDING';
-      }
-      return 'TARE WEIGHT PENDING';
-    }
-    return 'DRAFT';
+    return 'PENDING';
   }
 
   bool get isCompleted => displayStatus == 'COMPLETED';

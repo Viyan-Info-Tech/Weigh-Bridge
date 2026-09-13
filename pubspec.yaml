@@ -36,6 +36,7 @@ dependencies:
 
   # Date formatting
   intl: ^0.20.2
+  file_picker: ^12.3.0
 
 dev_dependencies:
   flutter_test:

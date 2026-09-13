@@ -97,3 +97,11 @@ class ResetReportFilters extends ReportEvent {
 class RefreshReport extends ReportEvent {
   const RefreshReport();
 }
+
+class ExportReportCsv extends ReportEvent {
+  const ExportReportCsv();
+}
+
+class ClearExportResult extends ReportEvent {
+  const ClearExportResult();
+}

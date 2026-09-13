@@ -5,6 +5,7 @@ import '../../../party/domain/repositories/party_repository.dart';
 import '../../../vehicle/domain/repositories/vehicle_repository.dart';
 import '../../domain/entities/report_filter.dart';
 import '../../domain/repositories/report_repository.dart';
+import '../../domain/usecases/export_report_usecase.dart';
 import 'report_event.dart';
 import 'report_state.dart';
 
@@ -13,16 +14,19 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
   final PartyRepository _partyRepository;
   final VehicleRepository _vehicleRepository;
   final MaterialItemRepository _materialRepository;
+  final ExportReportUseCase _exportReportUseCase;
 
   ReportBloc({
     required ReportRepository reportRepository,
     required PartyRepository partyRepository,
     required VehicleRepository vehicleRepository,
     required MaterialItemRepository materialRepository,
+    required ExportReportUseCase exportReportUseCase,
   })  : _reportRepository = reportRepository,
         _partyRepository = partyRepository,
         _vehicleRepository = vehicleRepository,
         _materialRepository = materialRepository,
+        _exportReportUseCase = exportReportUseCase,
         super(const ReportState()) {
     on<LoadReportInitial>(_onLoadReportInitial);
     on<ReportFilterPresetChanged>(_onFilterPresetChanged);
@@ -36,6 +40,8 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     on<ApplyReportFilters>(_onApplyReportFilters);
     on<ResetReportFilters>(_onResetReportFilters);
     on<RefreshReport>(_onRefreshReport);
+    on<ExportReportCsv>(_onExportReportCsv);
+    on<ClearExportResult>(_onClearExportResult);
   }
 
   Future<void> _onLoadReportInitial(
@@ -227,5 +233,21 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
         ),
       );
     }
+  }
+
+  Future<void> _onExportReportCsv(
+    ExportReportCsv event,
+    Emitter<ReportState> emit,
+  ) async {
+    emit(state.copyWith(isExporting: true, clearExportResult: true));
+    final result = await _exportReportUseCase(state.filter);
+    emit(state.copyWith(isExporting: false, exportResult: result));
+  }
+
+  void _onClearExportResult(
+    ClearExportResult event,
+    Emitter<ReportState> emit,
+  ) {
+    emit(state.copyWith(clearExportResult: true));
   }
 }

@@ -6,6 +6,7 @@ import '../../../vehicle/domain/entities/vehicle.dart';
 import '../../domain/entities/report_filter.dart';
 import '../../domain/entities/report_summary.dart';
 import '../../domain/entities/weighment_report_item.dart';
+import '../../domain/usecases/export_report_usecase.dart';
 
 enum ReportStatus { initial, loading, loaded, error }
 
@@ -19,6 +20,8 @@ class ReportState extends Equatable {
   final List<MaterialItem> materials;
   final String? errorMessage;
   final String weightUnit;
+  final bool isExporting;
+  final ExportReportResult? exportResult;
 
   const ReportState({
     this.status = ReportStatus.initial,
@@ -30,6 +33,8 @@ class ReportState extends Equatable {
     this.materials = const [],
     this.errorMessage,
     this.weightUnit = 'kg',
+    this.isExporting = false,
+    this.exportResult,
   });
 
   bool get isLoading => status == ReportStatus.loading;
@@ -45,6 +50,9 @@ class ReportState extends Equatable {
     String? errorMessage,
     bool clearError = false,
     String? weightUnit,
+    bool? isExporting,
+    ExportReportResult? exportResult,
+    bool clearExportResult = false,
   }) {
     return ReportState(
       status: status ?? this.status,
@@ -56,6 +64,8 @@ class ReportState extends Equatable {
       materials: materials ?? this.materials,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       weightUnit: weightUnit ?? this.weightUnit,
+      isExporting: isExporting ?? this.isExporting,
+      exportResult: clearExportResult ? null : (exportResult ?? this.exportResult),
     );
   }
 
@@ -70,5 +80,7 @@ class ReportState extends Equatable {
         materials,
         errorMessage,
         weightUnit,
+        isExporting,
+        exportResult,
       ];
 }
