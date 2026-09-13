@@ -20,6 +20,7 @@ class WeighmentReportItem extends Equatable {
   final double? secondWeightKg;
   final String? secondWeightType;
   final String rawStatus;
+  final String weightUnit;
 
   const WeighmentReportItem({
     required this.id,
@@ -41,6 +42,7 @@ class WeighmentReportItem extends Equatable {
     this.secondWeightKg,
     this.secondWeightType,
     required this.rawStatus,
+    this.weightUnit = 'ton',
   });
 
   /// Business Logic for Gross Weight:
@@ -117,5 +119,6 @@ class WeighmentReportItem extends Equatable {
         secondWeightKg,
         secondWeightType,
         rawStatus,
+        weightUnit,
       ];
 }

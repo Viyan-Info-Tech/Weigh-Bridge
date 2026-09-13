@@ -2783,6 +2783,22 @@ class $WeighmentsTable extends Weighments
     requiredDuringInsert: false,
     defaultValue: const Constant('pending'),
   );
+  static const VerificationMeta _weightUnitMeta = const VerificationMeta(
+    'weightUnit',
+  );
+  @override
+  late final GeneratedColumn<String> weightUnit = GeneratedColumn<String>(
+    'weight_unit',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 10,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('ton'),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -2824,6 +2840,7 @@ class $WeighmentsTable extends Weighments
     amount,
     remarks,
     status,
+    weightUnit,
     createdAt,
     updatedAt,
   ];
@@ -2959,6 +2976,12 @@ class $WeighmentsTable extends Weighments
         status.isAcceptableOrUnknown(data['status']!, _statusMeta),
       );
     }
+    if (data.containsKey('weight_unit')) {
+      context.handle(
+        _weightUnitMeta,
+        weightUnit.isAcceptableOrUnknown(data['weight_unit']!, _weightUnitMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -3040,6 +3063,10 @@ class $WeighmentsTable extends Weighments
         DriftSqlType.string,
         data['${effectivePrefix}status'],
       )!,
+      weightUnit: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}weight_unit'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -3073,6 +3100,7 @@ class Weighment extends DataClass implements Insertable<Weighment> {
   final double amount;
   final String? remarks;
   final String status;
+  final String weightUnit;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Weighment({
@@ -3091,6 +3119,7 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     required this.amount,
     this.remarks,
     required this.status,
+    required this.weightUnit,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -3120,6 +3149,7 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       map['remarks'] = Variable<String>(remarks);
     }
     map['status'] = Variable<String>(status);
+    map['weight_unit'] = Variable<String>(weightUnit);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -3150,6 +3180,7 @@ class Weighment extends DataClass implements Insertable<Weighment> {
           ? const Value.absent()
           : Value(remarks),
       status: Value(status),
+      weightUnit: Value(weightUnit),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -3176,6 +3207,7 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       amount: serializer.fromJson<double>(json['amount']),
       remarks: serializer.fromJson<String?>(json['remarks']),
       status: serializer.fromJson<String>(json['status']),
+      weightUnit: serializer.fromJson<String>(json['weightUnit']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -3199,6 +3231,7 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       'amount': serializer.toJson<double>(amount),
       'remarks': serializer.toJson<String?>(remarks),
       'status': serializer.toJson<String>(status),
+      'weightUnit': serializer.toJson<String>(weightUnit),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -3220,6 +3253,7 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     double? amount,
     Value<String?> remarks = const Value.absent(),
     String? status,
+    String? weightUnit,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => Weighment(
@@ -3242,6 +3276,7 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     amount: amount ?? this.amount,
     remarks: remarks.present ? remarks.value : this.remarks,
     status: status ?? this.status,
+    weightUnit: weightUnit ?? this.weightUnit,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -3280,6 +3315,9 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       amount: data.amount.present ? data.amount.value : this.amount,
       remarks: data.remarks.present ? data.remarks.value : this.remarks,
       status: data.status.present ? data.status.value : this.status,
+      weightUnit: data.weightUnit.present
+          ? data.weightUnit.value
+          : this.weightUnit,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -3303,6 +3341,7 @@ class Weighment extends DataClass implements Insertable<Weighment> {
           ..write('amount: $amount, ')
           ..write('remarks: $remarks, ')
           ..write('status: $status, ')
+          ..write('weightUnit: $weightUnit, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -3326,6 +3365,7 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     amount,
     remarks,
     status,
+    weightUnit,
     createdAt,
     updatedAt,
   );
@@ -3348,6 +3388,7 @@ class Weighment extends DataClass implements Insertable<Weighment> {
           other.amount == this.amount &&
           other.remarks == this.remarks &&
           other.status == this.status &&
+          other.weightUnit == this.weightUnit &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -3368,6 +3409,7 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
   final Value<double> amount;
   final Value<String?> remarks;
   final Value<String> status;
+  final Value<String> weightUnit;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   const WeighmentsCompanion({
@@ -3386,6 +3428,7 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     this.amount = const Value.absent(),
     this.remarks = const Value.absent(),
     this.status = const Value.absent(),
+    this.weightUnit = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
@@ -3405,6 +3448,7 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     this.amount = const Value.absent(),
     this.remarks = const Value.absent(),
     this.status = const Value.absent(),
+    this.weightUnit = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   }) : billNumber = Value(billNumber),
@@ -3429,6 +3473,7 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     Expression<double>? amount,
     Expression<String>? remarks,
     Expression<String>? status,
+    Expression<String>? weightUnit,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
   }) {
@@ -3448,6 +3493,7 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
       if (amount != null) 'amount': amount,
       if (remarks != null) 'remarks': remarks,
       if (status != null) 'status': status,
+      if (weightUnit != null) 'weight_unit': weightUnit,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
@@ -3469,6 +3515,7 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     Value<double>? amount,
     Value<String?>? remarks,
     Value<String>? status,
+    Value<String>? weightUnit,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
   }) {
@@ -3488,6 +3535,7 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
       amount: amount ?? this.amount,
       remarks: remarks ?? this.remarks,
       status: status ?? this.status,
+      weightUnit: weightUnit ?? this.weightUnit,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -3541,6 +3589,9 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     if (status.present) {
       map['status'] = Variable<String>(status.value);
     }
+    if (weightUnit.present) {
+      map['weight_unit'] = Variable<String>(weightUnit.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -3568,6 +3619,7 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
           ..write('amount: $amount, ')
           ..write('remarks: $remarks, ')
           ..write('status: $status, ')
+          ..write('weightUnit: $weightUnit, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -7164,6 +7216,7 @@ typedef $$WeighmentsTableCreateCompanionBuilder =
       Value<double> amount,
       Value<String?> remarks,
       Value<String> status,
+      Value<String> weightUnit,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
     });
@@ -7184,6 +7237,7 @@ typedef $$WeighmentsTableUpdateCompanionBuilder =
       Value<double> amount,
       Value<String?> remarks,
       Value<String> status,
+      Value<String> weightUnit,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
     });
@@ -7310,6 +7364,11 @@ class $$WeighmentsTableFilterComposer
 
   ColumnFilters<String> get status => $composableBuilder(
     column: $table.status,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get weightUnit => $composableBuilder(
+    column: $table.weightUnit,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7462,6 +7521,11 @@ class $$WeighmentsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get weightUnit => $composableBuilder(
+    column: $table.weightUnit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -7603,6 +7667,11 @@ class $$WeighmentsTableAnnotationComposer
   GeneratedColumn<String> get status =>
       $composableBuilder(column: $table.status, builder: (column) => column);
 
+  GeneratedColumn<String> get weightUnit => $composableBuilder(
+    column: $table.weightUnit,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -7726,6 +7795,7 @@ class $$WeighmentsTableTableManager
                 Value<double> amount = const Value.absent(),
                 Value<String?> remarks = const Value.absent(),
                 Value<String> status = const Value.absent(),
+                Value<String> weightUnit = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => WeighmentsCompanion(
@@ -7744,6 +7814,7 @@ class $$WeighmentsTableTableManager
                 amount: amount,
                 remarks: remarks,
                 status: status,
+                weightUnit: weightUnit,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),
@@ -7764,6 +7835,7 @@ class $$WeighmentsTableTableManager
                 Value<double> amount = const Value.absent(),
                 Value<String?> remarks = const Value.absent(),
                 Value<String> status = const Value.absent(),
+                Value<String> weightUnit = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => WeighmentsCompanion.insert(
@@ -7782,6 +7854,7 @@ class $$WeighmentsTableTableManager
                 amount: amount,
                 remarks: remarks,
                 status: status,
+                weightUnit: weightUnit,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),

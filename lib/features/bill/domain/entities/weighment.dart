@@ -16,6 +16,7 @@ class Weighment extends Equatable {
   final double amount;
   final String? remarks;
   final String status;
+  final String weightUnit;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -37,6 +38,7 @@ class Weighment extends Equatable {
     required this.amount,
     this.remarks,
     this.status = 'pending',
+    this.weightUnit = 'ton',
     required this.createdAt,
     required this.updatedAt,
   })  : firstWeightKg = firstWeightKg ??
@@ -106,6 +108,7 @@ class Weighment extends Equatable {
         vehicleCharge,
         amount,
         status,
+        weightUnit,
         createdAt,
         updatedAt,
       ];

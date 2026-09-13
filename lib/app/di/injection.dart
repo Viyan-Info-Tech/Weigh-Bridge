@@ -176,6 +176,20 @@ class Injection {
       materialRepository: materialItemRepository,
     );
 
+    // Settings
+    final settingsLocalDataSource = SettingsLocalDataSource(database);
+    final settingsRepository = SettingsRepositoryImpl(
+      localDataSource: settingsLocalDataSource,
+    );
+    final getSettingsUseCase = GetSettingsUseCase(settingsRepository);
+    final updateSettingsUseCase = UpdateSettingsUseCase(settingsRepository);
+
+    final settingsBloc = SettingsBloc(
+      getSettingsUseCase: getSettingsUseCase,
+      updateSettingsUseCase: updateSettingsUseCase,
+    );
+    settingsBloc.add(const LoadSettings());
+
     // Bill
     final billLocalDataSource = BillLocalDataSource(database);
     final billRepository = BillRepositoryImpl(
@@ -196,21 +210,8 @@ class Injection {
       loadRecentBillsUseCase: loadRecentBillsUseCase,
       loadPendingBillsUseCase: loadPendingBillsUseCase,
       generateBillNumberUseCase: generateBillNumberUseCase,
+      settingsRepository: settingsRepository,
     );
-
-    // Settings
-    final settingsLocalDataSource = SettingsLocalDataSource(database);
-    final settingsRepository = SettingsRepositoryImpl(
-      localDataSource: settingsLocalDataSource,
-    );
-    final getSettingsUseCase = GetSettingsUseCase(settingsRepository);
-    final updateSettingsUseCase = UpdateSettingsUseCase(settingsRepository);
-
-    final settingsBloc = SettingsBloc(
-      getSettingsUseCase: getSettingsUseCase,
-      updateSettingsUseCase: updateSettingsUseCase,
-    );
-    settingsBloc.add(const LoadSettings());
 
     // Report
     final reportLocalDataSource = ReportLocalDataSource(database);

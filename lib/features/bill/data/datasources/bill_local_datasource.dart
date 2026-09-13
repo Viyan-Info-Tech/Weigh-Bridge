@@ -25,6 +25,7 @@ class BillLocalDataSource {
         amount: Value(weighment.amount),
         remarks: Value(weighment.remarks),
         status: Value(weighment.status),
+        weightUnit: Value(weighment.weightUnit),
       ),
     );
   }
@@ -42,6 +43,7 @@ class BillLocalDataSource {
         amount: Value(weighment.amount),
         status: Value(weighment.status),
         remarks: Value(weighment.remarks),
+        weightUnit: Value(weighment.weightUnit),
         updatedAt: Value(DateTime.now()),
       ),
     );
@@ -112,6 +114,8 @@ class BillLocalDataSource {
       secondType = null;
     }
 
+    final unit = (record.weightUnit as String?) ?? (firstWeight >= 500 ? 'kg' : 'ton');
+
     return Weighment(
       id: record.id,
       billNumber: record.billNumber,
@@ -128,6 +132,7 @@ class BillLocalDataSource {
       amount: (record.amount as num).toDouble(),
       remarks: record.remarks as String?,
       status: record.status as String,
+      weightUnit: unit,
       createdAt: record.createdAt as DateTime,
       updatedAt: record.updatedAt as DateTime,
     );

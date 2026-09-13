@@ -277,9 +277,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // Verify Page Title & Actions
+      // Verify Page Title & Actions (in View Mode)
       expect(find.text('Settings'), findsOneWidget);
-      expect(find.text('Save Settings'), findsOneWidget);
+      expect(find.text('Edit Settings'), findsOneWidget);
       expect(find.text('Reset Defaults'), findsOneWidget);
 
       // Verify Sections
@@ -331,12 +331,12 @@ void main() {
 
         expect(tester.takeException(), isNull, reason: 'exceptions at $size');
         expect(find.text('Settings'), findsOneWidget);
-        expect(find.text('Save Settings'), findsOneWidget);
+        expect(find.text('Edit Settings'), findsOneWidget);
         expect(find.text('Reset Defaults'), findsOneWidget);
         expect(find.text('Weight Unit'), findsOneWidget);
         expect(find.text('Live Receipt Preview'), findsOneWidget);
 
-        await tester.ensureVisible(find.text('Save Settings'));
+        await tester.ensureVisible(find.text('Edit Settings'));
         await tester.ensureVisible(find.text('Reset Defaults'));
 
         await tester.pumpWidget(const SizedBox());

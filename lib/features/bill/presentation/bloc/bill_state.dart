@@ -46,6 +46,7 @@ class BillState extends Equatable {
   final String? editingFirstWeightType;
   final double? editingFirstWeightKg;
   final String? weightValidationError;
+  final String weightUnit;
 
   const BillState({
     this.status = BillScreenStatus.initial,
@@ -79,6 +80,7 @@ class BillState extends Equatable {
     this.editingFirstWeightType,
     this.editingFirstWeightKg,
     this.weightValidationError,
+    this.weightUnit = 'ton',
   });
 
   bool get isEditing => editingBillId != null;
@@ -141,6 +143,7 @@ class BillState extends Equatable {
     bool clearEditingFirstWeight = false,
     String? weightValidationError,
     bool clearWeightError = false,
+    String? weightUnit,
   }) {
     return BillState(
       status: status ?? this.status,
@@ -174,6 +177,7 @@ class BillState extends Equatable {
       editingFirstWeightType: clearEditingFirstWeight ? null : (editingFirstWeightType ?? this.editingFirstWeightType),
       editingFirstWeightKg: clearEditingFirstWeight ? null : (editingFirstWeightKg ?? this.editingFirstWeightKg),
       weightValidationError: clearWeightError ? null : (weightValidationError ?? this.weightValidationError),
+      weightUnit: weightUnit ?? this.weightUnit,
     );
   }
 
@@ -210,5 +214,6 @@ class BillState extends Equatable {
         editingFirstWeightType,
         editingFirstWeightKg,
         weightValidationError,
+        weightUnit,
       ];
 }

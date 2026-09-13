@@ -20,6 +20,7 @@ class Weighments extends Table {
   RealColumn get amount => real().withDefault(const Constant(0))();
   TextColumn get remarks => text().withLength(min: 0, max: 500).nullable()();
   TextColumn get status => text().withLength(min: 1, max: 20).withDefault(const Constant('pending'))();
+  TextColumn get weightUnit => text().withLength(min: 1, max: 10).withDefault(const Constant('ton'))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }

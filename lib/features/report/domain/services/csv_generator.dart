@@ -44,22 +44,25 @@ class CsvGenerator {
 
     // Clean, standard CSV Header
     buffer.writeln(
-      'Bill No,Date & Time,Vehicle,Party,Material,Gross Weight,Tare Weight,Net Weight,Amount,Status',
+      'Bill No,Date & Time,Vehicle,Party,Material,Gross Weight,Tare Weight,Net Weight,Weight Unit,Amount,Status',
     );
 
     final dateTimeFormat = DateFormat('dd/MM/yyyy hh:mm a');
 
     for (final item in records) {
       final dateTimeStr = dateTimeFormat.format(item.createdAt);
+      final unit = item.weightUnit;
+      final decimals = unit == 'kg' ? 0 : 3;
+
       // Represent empty weight values as empty strings in CSV so cells are clean
       final grossStr = item.grossWeightKg != null
-          ? '${item.grossWeightKg!.toStringAsFixed(0)} kg'
+          ? '${item.grossWeightKg!.toStringAsFixed(decimals)} $unit'
           : '';
       final tareStr = item.tareWeightKg != null
-          ? '${item.tareWeightKg!.toStringAsFixed(0)} kg'
+          ? '${item.tareWeightKg!.toStringAsFixed(decimals)} $unit'
           : '';
       final netStr = item.netWeightKg != null
-          ? '${item.netWeightKg!.toStringAsFixed(0)} kg'
+          ? '${item.netWeightKg!.toStringAsFixed(decimals)} $unit'
           : '';
       final statusFormatted = item.isCompleted ? 'Completed' : 'Pending';
 
@@ -72,6 +75,7 @@ class CsvGenerator {
         _escape(grossStr),
         _escape(tareStr),
         _escape(netStr),
+        _escape(unit),
         item.amount.toStringAsFixed(0),
         _escape(statusFormatted),
       ].join(',');

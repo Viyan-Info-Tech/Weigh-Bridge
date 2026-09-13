@@ -12,6 +12,7 @@ import '../../../material/domain/entities/material_item.dart';
 import '../../../material/domain/repositories/material_item_repository.dart';
 import '../../domain/entities/weighment.dart';
 import '../../domain/usecases/save_bill.dart';
+import '../../../settings/domain/repositories/settings_repository.dart';
 import 'bill_event.dart';
 import 'bill_state.dart';
 
@@ -33,6 +34,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
   final LoadRecentBillsUseCase _loadRecentBillsUseCase;
   final LoadPendingBillsUseCase _loadPendingBillsUseCase;
   final GenerateBillNumberUseCase _generateBillNumberUseCase;
+  final SettingsRepository? _settingsRepository;
 
   BillBloc({
     required PartyRepository partyRepository,
@@ -43,6 +45,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     required LoadRecentBillsUseCase loadRecentBillsUseCase,
     required LoadPendingBillsUseCase loadPendingBillsUseCase,
     required GenerateBillNumberUseCase generateBillNumberUseCase,
+    SettingsRepository? settingsRepository,
   }) : _partyRepository = partyRepository,
        _vehicleRepository = vehicleRepository,
        _vehicleTypeRepository = vehicleTypeRepository,
@@ -51,6 +54,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
        _loadRecentBillsUseCase = loadRecentBillsUseCase,
        _loadPendingBillsUseCase = loadPendingBillsUseCase,
        _generateBillNumberUseCase = generateBillNumberUseCase,
+       _settingsRepository = settingsRepository,
        super(const BillState()) {
     on<LoadBillScreen>(_onLoadBillScreen);
     on<PartySelected>(_onPartySelected);
@@ -60,6 +64,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     on<TareWeightChanged>(_onTareWeightChanged);
     on<RemarksChanged>(_onRemarksChanged);
     on<PaymentModeChanged>(_onPaymentModeChanged);
+    on<WeightUnitChanged>(_onWeightUnitChanged);
     on<VehicleChargeChanged>(_onVehicleChargeChanged);
     on<ResetVehicleCharge>(_onResetVehicleCharge);
     on<SaveBillRequested>(_onSaveBillRequested);
@@ -102,6 +107,12 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       final billNumber = await _generateBillNumberUseCase();
       if (emit.isDone) return;
 
+      String unit = 'ton';
+      if (_settingsRepository != null) {
+        final settings = await _settingsRepository.getSettings();
+        unit = settings.weightUnit;
+      }
+
       emit(
         state.copyWith(
           status: BillScreenStatus.loaded,
@@ -112,6 +123,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
           recentBills: recentBills,
           billsDate: billsDate,
           currentBillNumber: billNumber,
+          weightUnit: unit,
         ),
       );
     } catch (e) {
@@ -190,6 +202,13 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     Emitter<BillState> emit,
   ) {
     emit(state.copyWith(paymentMode: event.value));
+  }
+
+  void _onWeightUnitChanged(
+    WeightUnitChanged event,
+    Emitter<BillState> emit,
+  ) {
+    emit(state.copyWith(weightUnit: event.value));
   }
 
   void _onVehicleChargeChanged(
@@ -406,6 +425,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       amount: state.amount,
       remarks: state.remarksText.isNotEmpty ? state.remarksText : null,
       status: status,
+      weightUnit: state.weightUnit,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
@@ -417,7 +437,12 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     }
 
     final nextBillNumber = await _generateBillNumberUseCase();
-    _resetForm(emit, nextBillNumber: nextBillNumber);
+    String unit = 'ton';
+    if (_settingsRepository != null) {
+      final settings = await _settingsRepository.getSettings();
+      unit = settings.weightUnit;
+    }
+    _resetForm(emit, nextBillNumber: nextBillNumber, weightUnit: unit);
   }
 
   Future<void> _onLoadPendingBill(
@@ -501,6 +526,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
           isVehicleChargeManuallyEdited: isManuallyEdited,
           amount: weighment.amount,
           remarksText: weighment.remarks ?? '',
+          weightUnit: weighment.weightUnit,
         ),
       );
       _recalculate(emit);
@@ -516,7 +542,12 @@ class BillBloc extends Bloc<BillEvent, BillState> {
   ) async {
     final billNumber = await _generateBillNumberUseCase();
     if (emit.isDone) return;
-    _resetForm(emit, nextBillNumber: billNumber);
+    String unit = 'ton';
+    if (_settingsRepository != null) {
+      final settings = await _settingsRepository.getSettings();
+      unit = settings.weightUnit;
+    }
+    _resetForm(emit, nextBillNumber: billNumber, weightUnit: unit);
   }
 
   Future<void> _onLoadPendingBills(
@@ -533,7 +564,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     }
   }
 
-  void _resetForm(Emitter<BillState> emit, {required String nextBillNumber}) {
+  void _resetForm(Emitter<BillState> emit, {required String nextBillNumber, String? weightUnit}) {
     emit(
       state.copyWith(
         clearParty: true,
@@ -556,6 +587,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
         currentBillNumber: nextBillNumber,
         clearError: true,
         clearWeightError: true,
+        weightUnit: weightUnit ?? state.weightUnit,
       ),
     );
   }

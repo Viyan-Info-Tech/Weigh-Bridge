@@ -198,45 +198,51 @@ class WeighmentDetailsDialog extends StatelessWidget {
             const SizedBox(height: 16),
 
             // Weights Section
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8FAFC),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: Column(
-                children: [
-                  _buildWeightRow(
-                    label: 'First Weight',
-                    weight: '${record.firstWeightKg.toStringAsFixed(0)} kg',
-                    badge: record.firstWeightType,
-                    badgeColor: Colors.blueGrey,
+            Builder(
+              builder: (context) {
+                final unit = record.weightUnit;
+                final decimals = unit == 'kg' ? 0 : 3;
+                return Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
-                  const Divider(height: 14, color: Color(0xFFE2E8F0)),
-                  _buildWeightRow(
-                    label: 'Second Weight',
-                    weight: (record.secondWeightKg != null && record.secondWeightKg! > 0)
-                        ? '${record.secondWeightKg!.toStringAsFixed(0)} kg'
-                        : '—',
-                    badge: (record.secondWeightKg != null && record.secondWeightKg! > 0)
-                        ? (record.secondWeightType ?? '')
-                        : '',
-                    badgeColor: Colors.blueGrey,
-                    isPending: record.secondWeightKg == null || record.secondWeightKg == 0,
+                  child: Column(
+                    children: [
+                      _buildWeightRow(
+                        label: 'First Weight',
+                        weight: '${record.firstWeightKg.toStringAsFixed(decimals)} $unit',
+                        badge: record.firstWeightType,
+                        badgeColor: Colors.blueGrey,
+                      ),
+                      const Divider(height: 14, color: Color(0xFFE2E8F0)),
+                      _buildWeightRow(
+                        label: 'Second Weight',
+                        weight: (record.secondWeightKg != null && record.secondWeightKg! > 0)
+                            ? '${record.secondWeightKg!.toStringAsFixed(decimals)} $unit'
+                            : '—',
+                        badge: (record.secondWeightKg != null && record.secondWeightKg! > 0)
+                            ? (record.secondWeightType ?? '')
+                            : '',
+                        badgeColor: Colors.blueGrey,
+                        isPending: record.secondWeightKg == null || record.secondWeightKg == 0,
+                      ),
+                      const Divider(height: 14, color: Color(0xFFE2E8F0)),
+                      _buildSummaryWeightRow('Gross Weight', record.grossWeightKg != null ? '${record.grossWeightKg!.toStringAsFixed(decimals)} $unit' : '—'),
+                      const SizedBox(height: 4),
+                      _buildSummaryWeightRow('Tare Weight', record.tareWeightKg != null ? '${record.tareWeightKg!.toStringAsFixed(decimals)} $unit' : '—'),
+                      const SizedBox(height: 4),
+                      _buildSummaryWeightRow(
+                        'Net Weight',
+                        record.netWeightKg != null ? '${record.netWeightKg!.toStringAsFixed(decimals)} $unit' : '—',
+                        isHighlight: true,
+                      ),
+                    ],
                   ),
-                  const Divider(height: 14, color: Color(0xFFE2E8F0)),
-                  _buildSummaryWeightRow('Gross Weight', record.grossWeightKg != null ? '${record.grossWeightKg!.toStringAsFixed(0)} kg' : '—'),
-                  const SizedBox(height: 4),
-                  _buildSummaryWeightRow('Tare Weight', record.tareWeightKg != null ? '${record.tareWeightKg!.toStringAsFixed(0)} kg' : '—'),
-                  const SizedBox(height: 4),
-                  _buildSummaryWeightRow(
-                    'Net Weight',
-                    record.netWeightKg != null ? '${record.netWeightKg!.toStringAsFixed(0)} kg' : '—',
-                    isHighlight: true,
-                  ),
-                ],
-              ),
+                );
+              },
             ),
             const SizedBox(height: 16),
 

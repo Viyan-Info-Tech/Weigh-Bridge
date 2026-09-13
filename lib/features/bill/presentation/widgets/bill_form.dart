@@ -37,6 +37,7 @@ class BillForm extends StatefulWidget {
   final ValueChanged<String> onTareWeightChanged;
   final ValueChanged<String> onRemarksChanged;
   final ValueChanged<String> onPaymentModeChanged;
+  final ValueChanged<String>? onWeightUnitChanged;
   final ValueChanged<String> onVehicleChargeChanged;
   final VoidCallback onResetVehicleCharge;
   final Future<void> Function()? onAddParty;
@@ -73,6 +74,7 @@ class BillForm extends StatefulWidget {
     required this.onTareWeightChanged,
     required this.onRemarksChanged,
     required this.onPaymentModeChanged,
+    this.onWeightUnitChanged,
     required this.onVehicleChargeChanged,
     required this.onResetVehicleCharge,
     this.onAddParty,
@@ -106,9 +108,12 @@ class _BillFormState extends State<BillForm> {
             widget.editingFirstWeightType?.toUpperCase() == 'TARE';
         final bool isTareEnabled = !widget.isEditing ||
             widget.editingFirstWeightType?.toUpperCase() == 'GROSS';
+        final isKg = widget.weightUnit.toLowerCase() == 'kg';
         final netWeightDisplay = widget.weightValidationError != null || widget.netWeightKg <= 0
             ? '—'
-            : '${widget.netWeightKg.toStringAsFixed(0)} ${widget.weightUnit}';
+            : (isKg
+                ? '${widget.netWeightKg.toStringAsFixed(0)} kg'
+                : '${widget.netWeightKg.toStringAsFixed(3)} ton');
 
         return Container(
           padding: EdgeInsets.all(formWidth < 500 ? 16 : 24),
@@ -120,7 +125,7 @@ class _BillFormState extends State<BillForm> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Row 1: Bill Number Badge + Payment Mode
+              // Row 1: Bill Number Badge + Payment Mode + Weight Unit
               if (isHeaderCompact)
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,6 +133,8 @@ class _BillFormState extends State<BillForm> {
                     _buildBillNumberBadge(),
                     const SizedBox(height: 12),
                     _buildPaymentModeDropdown(),
+                    const SizedBox(height: 12),
+                    _buildWeightUnitDropdown(),
                   ],
                 )
               else
@@ -136,6 +143,8 @@ class _BillFormState extends State<BillForm> {
                     _buildBillNumberBadge(),
                     const SizedBox(width: 16),
                     Expanded(child: _buildPaymentModeDropdown()),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildWeightUnitDropdown()),
                   ],
                 ),
               const SizedBox(height: 20),
@@ -370,6 +379,74 @@ class _BillFormState extends State<BillForm> {
           onChanged: (value) {
             if (value != null) widget.onPaymentModeChanged(value);
           },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildWeightUnitDropdown() {
+    final isLocked = widget.isEditing;
+    final currentUnit = widget.weightUnit.toLowerCase() == 'ton' ? 'ton' : 'kg';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Weight Unit',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            if (isLocked) ...[
+              const SizedBox(width: 4),
+              Icon(Icons.lock_outline_rounded, size: 13, color: Colors.grey.shade500),
+            ],
+          ],
+        ),
+        const SizedBox(height: 6),
+        DropdownButtonFormField<String>(
+          key: ValueKey('weight_unit_${currentUnit}_$isLocked'),
+          initialValue: currentUnit,
+          isExpanded: true,
+          isDense: true,
+          decoration: InputDecoration(
+            fillColor: isLocked ? const Color(0xFFF8FAFC) : Colors.white,
+            filled: true,
+            contentPadding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            disabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade200),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFF0D3B82)),
+            ),
+          ),
+          items: const [
+            DropdownMenuItem(value: 'kg', child: Text('Kilogram (kg)', overflow: TextOverflow.ellipsis)),
+            DropdownMenuItem(value: 'ton', child: Text('Tonne (ton)', overflow: TextOverflow.ellipsis)),
+          ],
+          onChanged: isLocked
+              ? null
+              : (value) {
+                  if (value != null && widget.onWeightUnitChanged != null) {
+                    widget.onWeightUnitChanged!(value);
+                  }
+                },
         ),
       ],
     );

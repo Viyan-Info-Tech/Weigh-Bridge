@@ -1243,7 +1243,7 @@ class _ReportPageState extends State<ReportPage> {
                 alignment: Alignment.centerRight,
                 child: Text(
                   item.grossWeightKg != null
-                      ? '${item.grossWeightKg!.toStringAsFixed(0)} kg'
+                      ? '${item.grossWeightKg!.toStringAsFixed(item.weightUnit == 'kg' ? 0 : 3)} ${item.weightUnit}'
                       : '—',
                   style: TextStyle(
                     fontFamily: 'PlusJakartaSans',
@@ -1261,7 +1261,7 @@ class _ReportPageState extends State<ReportPage> {
                 alignment: Alignment.centerRight,
                 child: Text(
                   item.tareWeightKg != null
-                      ? '${item.tareWeightKg!.toStringAsFixed(0)} kg'
+                      ? '${item.tareWeightKg!.toStringAsFixed(item.weightUnit == 'kg' ? 0 : 3)} ${item.weightUnit}'
                       : '—',
                   style: TextStyle(
                     fontFamily: 'PlusJakartaSans',
@@ -1278,7 +1278,9 @@ class _ReportPageState extends State<ReportPage> {
               child: Align(
                 alignment: Alignment.centerRight,
                 child: Text(
-                  item.netWeightKg != null ? '${item.netWeightKg!.toStringAsFixed(0)} kg' : '—',
+                  item.netWeightKg != null
+                      ? '${item.netWeightKg!.toStringAsFixed(item.weightUnit == 'kg' ? 0 : 3)} ${item.weightUnit}'
+                      : '—',
                   style: TextStyle(
                     fontFamily: 'PlusJakartaSans',
                     fontSize: 12.5,

@@ -47,7 +47,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -274,6 +274,18 @@ class AppDatabase extends _$AppDatabase {
             ).getSingleOrNull();
             if (hasSecondWeightType == null) {
               await m.addColumn(weighments, weighments.secondWeightType);
+            }
+          }
+
+          if (from < 13) {
+            final hasWeightUnit = await customSelect(
+              "SELECT name FROM pragma_table_info('weighments') WHERE name='weight_unit'",
+            ).getSingleOrNull();
+            if (hasWeightUnit == null) {
+              await m.addColumn(weighments, weighments.weightUnit);
+              await customStatement(
+                "UPDATE weighments SET weight_unit = 'kg' WHERE first_weight_kg >= 500",
+              );
             }
           }
         },

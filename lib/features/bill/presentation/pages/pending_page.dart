@@ -933,7 +933,7 @@ class _PendingPageState extends State<PendingPage> {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    '${displayedWeightKg.toStringAsFixed(0)} kg',
+                    '${displayedWeightKg.toStringAsFixed(bill.weightUnit == 'kg' ? 0 : 3)} ${bill.weightUnit}',
                     style: const TextStyle(
                       fontFamily: 'PlusJakartaSans',
                       fontSize: 13,

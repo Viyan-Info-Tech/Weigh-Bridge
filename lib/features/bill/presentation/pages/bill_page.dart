@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import '../bloc/bill_bloc.dart';
 import '../bloc/bill_event.dart';
@@ -24,7 +23,6 @@ class _BillPageState extends State<BillPage> {
   late final TextEditingController _grossWeightController;
   late final TextEditingController _tareWeightController;
   late final TextEditingController _remarksController;
-  String _weightUnit = 'kg';
 
   @override
   void initState() {
@@ -32,18 +30,10 @@ class _BillPageState extends State<BillPage> {
     _grossWeightController = TextEditingController();
     _tareWeightController = TextEditingController();
     _remarksController = TextEditingController();
-    _loadWeightUnit();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<BillBloc>().add(const LoadBillScreen());
       }
-    });
-  }
-
-  Future<void> _loadWeightUnit() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _weightUnit = prefs.getString('weightUnit') ?? 'kg';
     });
   }
 
@@ -208,7 +198,7 @@ class _BillPageState extends State<BillPage> {
                                           netWeightTon: state.netWeightKg / 1000,
                                           grossWeight: state.grossWeightKg,
                                           tareWeight: state.tareWeightKg,
-                                          weightUnit: _weightUnit,
+                                          weightUnit: state.weightUnit,
                                         ),
                                         const SizedBox(height: 16),
                                         _buildBillForm(state),
@@ -277,7 +267,7 @@ class _BillPageState extends State<BillPage> {
                         netWeightTon: state.netWeightKg / 1000,
                         grossWeight: state.grossWeightKg,
                         tareWeight: state.tareWeightKg,
-                        weightUnit: _weightUnit,
+                        weightUnit: state.weightUnit,
                       ),
                       const SizedBox(height: 16),
                       _buildBillForm(state),
@@ -485,7 +475,7 @@ class _BillPageState extends State<BillPage> {
       defaultVehicleCharge: state.defaultVehicleCharge,
       isVehicleChargeManuallyEdited: state.isVehicleChargeManuallyEdited,
       amount: state.amount,
-      weightUnit: _weightUnit,
+      weightUnit: state.weightUnit,
       weightValidationError: state.weightValidationError,
       onPartyChanged: (party) =>
           context.read<BillBloc>().add(PartySelected(party)),
@@ -501,6 +491,8 @@ class _BillPageState extends State<BillPage> {
           context.read<BillBloc>().add(RemarksChanged(v)),
       onPaymentModeChanged: (v) =>
           context.read<BillBloc>().add(PaymentModeChanged(v)),
+      onWeightUnitChanged: (v) =>
+          context.read<BillBloc>().add(WeightUnitChanged(v)),
       onVehicleChargeChanged: (v) =>
           context.read<BillBloc>().add(VehicleChargeChanged(v)),
       onResetVehicleCharge: () =>

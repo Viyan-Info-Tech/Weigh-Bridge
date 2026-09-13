@@ -696,21 +696,24 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
     final Color? tareColor;
     final String netDisplay;
 
+    final unit = bill.weightUnit;
+    final decimals = unit == 'kg' ? 0 : 3;
+
     if (isCompleted) {
-      grossDisplay = bill.grossWeightKg != null ? '${bill.grossWeightKg!.toStringAsFixed(0)} kg' : '—';
+      grossDisplay = bill.grossWeightKg != null ? '${bill.grossWeightKg!.toStringAsFixed(decimals)} $unit' : '—';
       grossColor = null;
-      tareDisplay = bill.tareWeightKg != null ? '${bill.tareWeightKg!.toStringAsFixed(0)} kg' : '—';
+      tareDisplay = bill.tareWeightKg != null ? '${bill.tareWeightKg!.toStringAsFixed(decimals)} $unit' : '—';
       tareColor = null;
-      netDisplay = bill.netWeightKg != null ? '${bill.netWeightKg!.toStringAsFixed(0)} kg' : '—';
+      netDisplay = bill.netWeightKg != null ? '${bill.netWeightKg!.toStringAsFixed(decimals)} $unit' : '—';
     } else {
       netDisplay = '—';
       if (isTareFirst) {
         grossDisplay = '—';
         grossColor = null;
-        tareDisplay = '${bill.firstWeightKg.toStringAsFixed(0)} kg';
+        tareDisplay = '${bill.firstWeightKg.toStringAsFixed(decimals)} $unit';
         tareColor = null;
       } else {
-        grossDisplay = '${bill.firstWeightKg.toStringAsFixed(0)} kg';
+        grossDisplay = '${bill.firstWeightKg.toStringAsFixed(decimals)} $unit';
         grossColor = null;
         tareDisplay = 'Waiting...';
         tareColor = const Color(0xFFD97706);

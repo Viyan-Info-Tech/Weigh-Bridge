@@ -23,10 +23,12 @@ class WeightDisplay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Format display tonnage from actual BillState
-    final double activeWeight = netWeightTon;
-    final String weightString = activeWeight.toStringAsFixed(3);
+    final isKg = weightUnit.toLowerCase() == 'kg';
     final double netKg = netWeightTon * 1000;
+    final double netVal = isKg ? netKg : netWeightTon;
+    final String weightString = isKg
+        ? (netVal > 0 ? netVal.toStringAsFixed(0) : '0')
+        : (netVal > 0 ? netVal.toStringAsFixed(3) : '0.000');
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -44,19 +46,24 @@ class WeightDisplay extends StatelessWidget {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final isCompact = constraints.maxWidth < 580;
-
-          if (isCompact) {
-            return _buildModernTruckScale(weightString, netKg);
-          }
-
           return _buildModernTruckScale(weightString, netKg);
         },
       ),
     );
   }
 
+  String _formatSummaryWeight(double val, String unit) {
+    if (val <= 0) return '—';
+    if (unit.toLowerCase() == 'kg') {
+      return '${val.toStringAsFixed(0)} kg';
+    }
+    return '${val.toStringAsFixed(3)} ton';
+  }
+
   Widget _buildModernTruckScale(String weightString, double netKg) {
+    final isKg = weightUnit.toLowerCase() == 'kg';
+    final double netVal = isKg ? netKg : netWeightTon;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: AspectRatio(
@@ -133,7 +140,7 @@ class WeightDisplay extends StatelessWidget {
                                   _buildGhostDigit(containerHeight * 0.44),
                                   const SizedBox(width: 6),
 
-                                  // Active 7-Segment digits for the weight (e.g. "2.000")
+                                  // Active 7-Segment digits for the weight
                                   ..._buildDigitalString(
                                       weightString, containerHeight * 0.48),
 
@@ -172,7 +179,7 @@ class WeightDisplay extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'GROSS: ${grossWeight > 0 ? '${grossWeight.toStringAsFixed(0)} $weightUnit' : '—'}',
+                                'GROSS: ${_formatSummaryWeight(grossWeight, weightUnit)}',
                                 style: const TextStyle(
                                   fontFamily: 'PlusJakartaSans',
                                   fontSize: 8.5,
@@ -181,7 +188,7 @@ class WeightDisplay extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                'TARE: ${tareWeight > 0 ? '${tareWeight.toStringAsFixed(0)} $weightUnit' : '—'}',
+                                'TARE: ${_formatSummaryWeight(tareWeight, weightUnit)}',
                                 style: const TextStyle(
                                   fontFamily: 'PlusJakartaSans',
                                   fontSize: 8.5,
@@ -190,7 +197,7 @@ class WeightDisplay extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                'NET: ${netKg > 0 ? '${netKg.toStringAsFixed(0)} $weightUnit' : '—'}',
+                                'NET: ${_formatSummaryWeight(netVal, weightUnit)}',
                                 style: const TextStyle(
                                   fontFamily: 'PlusJakartaSans',
                                   fontSize: 8.5,

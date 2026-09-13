@@ -168,55 +168,66 @@ class WeighmentSlipDialog extends StatelessWidget {
                       if (hasWeights) ...[
                         _buildDivider(),
                         const SizedBox(height: 6),
-                        if (isCompleted) ...[
-                          if (hasGross)
-                            _buildWeightRow(
-                              'Gross Weight',
-                              '${bill.grossWeightKg?.toStringAsFixed(3) ?? '—'} kg',
-                            ),
-                          if (hasTare)
-                            _buildWeightRow(
-                              'Tare Weight',
-                              '${bill.tareWeightKg?.toStringAsFixed(3) ?? '—'} kg',
-                            ),
-                          if (hasGross || hasTare) const SizedBox(height: 4),
-                          if (hasNet) ...[
-                            _buildDivider(),
-                            const SizedBox(height: 4),
-                            _buildWeightRow(
-                              'Net Weight',
-                              '${(bill.netWeightKg ?? 0).toStringAsFixed(3)} kg',
-                            ),
-                          ],
-                        ] else if (isGrossPending) ...[
-                          if (hasGross)
-                            _buildWeightRow('Gross Weight', 'PENDING'),
-                          if (hasTare)
-                            _buildWeightRow(
-                              'Tare Weight',
-                              '${(bill.tareWeightKg ?? bill.firstWeightKg).toStringAsFixed(3)} kg',
-                            ),
-                          if (hasGross || hasTare) const SizedBox(height: 4),
-                          if (hasNet) ...[
-                            _buildDivider(),
-                            const SizedBox(height: 4),
-                            _buildWeightRow('Net Weight', '—'),
-                          ],
-                        ] else ...[
-                          if (hasGross)
-                            _buildWeightRow(
-                              'Gross Weight',
-                              '${(bill.grossWeightKg ?? bill.firstWeightKg).toStringAsFixed(3)} kg',
-                            ),
-                          if (hasTare)
-                            _buildWeightRow('Tare Weight', 'PENDING'),
-                          if (hasGross || hasTare) const SizedBox(height: 4),
-                          if (hasNet) ...[
-                            _buildDivider(),
-                            const SizedBox(height: 4),
-                            _buildWeightRow('Net Weight', '—'),
-                          ],
-                        ],
+                        Builder(
+                          builder: (context) {
+                            final unit = bill.weightUnit;
+                            final decimals = unit == 'kg' ? 0 : 3;
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (isCompleted) ...[
+                                  if (hasGross)
+                                    _buildWeightRow(
+                                      'Gross Weight',
+                                      '${bill.grossWeightKg?.toStringAsFixed(decimals) ?? '—'} $unit',
+                                    ),
+                                  if (hasTare)
+                                    _buildWeightRow(
+                                      'Tare Weight',
+                                      '${bill.tareWeightKg?.toStringAsFixed(decimals) ?? '—'} $unit',
+                                    ),
+                                  if (hasGross || hasTare) const SizedBox(height: 4),
+                                  if (hasNet) ...[
+                                    _buildDivider(),
+                                    const SizedBox(height: 4),
+                                    _buildWeightRow(
+                                      'Net Weight',
+                                      '${(bill.netWeightKg ?? 0).toStringAsFixed(decimals)} $unit',
+                                    ),
+                                  ],
+                                ] else if (isGrossPending) ...[
+                                  if (hasGross)
+                                    _buildWeightRow('Gross Weight', 'PENDING'),
+                                  if (hasTare)
+                                    _buildWeightRow(
+                                      'Tare Weight',
+                                      '${(bill.tareWeightKg ?? bill.firstWeightKg).toStringAsFixed(decimals)} $unit',
+                                    ),
+                                  if (hasGross || hasTare) const SizedBox(height: 4),
+                                  if (hasNet) ...[
+                                    _buildDivider(),
+                                    const SizedBox(height: 4),
+                                    _buildWeightRow('Net Weight', '—'),
+                                  ],
+                                ] else ...[
+                                  if (hasGross)
+                                    _buildWeightRow(
+                                      'Gross Weight',
+                                      '${(bill.grossWeightKg ?? bill.firstWeightKg).toStringAsFixed(decimals)} $unit',
+                                    ),
+                                  if (hasTare)
+                                    _buildWeightRow('Tare Weight', 'PENDING'),
+                                  if (hasGross || hasTare) const SizedBox(height: 4),
+                                  if (hasNet) ...[
+                                    _buildDivider(),
+                                    const SizedBox(height: 4),
+                                    _buildWeightRow('Net Weight', '—'),
+                                  ],
+                                ],
+                              ],
+                            );
+                          },
+                        ),
                         const SizedBox(height: 6),
                       ],
 

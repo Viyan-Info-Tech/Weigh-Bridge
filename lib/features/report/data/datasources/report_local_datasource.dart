@@ -122,6 +122,7 @@ class ReportLocalDataSource {
           secondWeightKg: w.secondWeightKg,
           secondWeightType: w.secondWeightType,
           rawStatus: w.status,
+          weightUnit: w.weightUnit,
         ),
       );
     }
