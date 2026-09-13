@@ -18,6 +18,8 @@ class WeighmentSlipDialog extends StatelessWidget {
   final List<VehicleType> vehicleTypes;
   final String materialName;
   final BillingSettings? settings;
+  final VoidCallback? onContinue;
+  final String? continueLabel;
 
   const WeighmentSlipDialog({
     super.key,
@@ -27,6 +29,8 @@ class WeighmentSlipDialog extends StatelessWidget {
     this.vehicleTypes = const [],
     required this.materialName,
     this.settings,
+    this.onContinue,
+    this.continueLabel,
   });
 
   @override
@@ -39,15 +43,16 @@ class WeighmentSlipDialog extends StatelessWidget {
       blocSettings = null;
     }
 
-    final activeSettings = settings ??
-        blocSettings ??
-        BillingSettings(updatedAt: DateTime.now());
+    final activeSettings =
+        settings ?? blocSettings ?? BillingSettings(updatedAt: DateTime.now());
 
     final vehicleNo = vehicle?.vehicleNumber ?? '—';
     String vehicleTypeName = '—';
     if (vehicle != null) {
       try {
-        vehicleTypeName = vehicleTypes.firstWhere((vt) => vt.id == vehicle!.vehicleTypeId).name;
+        vehicleTypeName = vehicleTypes
+            .firstWhere((vt) => vt.id == vehicle!.vehicleTypeId)
+            .name;
       } catch (_) {}
     }
     final partyName = party?.name ?? '—';
@@ -56,6 +61,9 @@ class WeighmentSlipDialog extends StatelessWidget {
     final timeFormatted = DateFormat('hh:mm:ss a').format(bill.createdAt);
     final printDate = DateFormat('dd/MM/yyyy HH:mm:ss').format(DateTime.now());
     final isCompleted = bill.status.toLowerCase() == 'completed';
+    final isGrossPending =
+        !isCompleted &&
+        ((bill.tareWeightKg ?? 0) > 0 && bill.grossWeightKg == 0);
 
     // Check if any basic info rows are enabled
     final hasSerial = activeSettings.showSerialNumber;
@@ -83,14 +91,17 @@ class WeighmentSlipDialog extends StatelessWidget {
     final hasPending = activeSettings.showPendingAmount;
     final hasFinancials = hasAmount || hasPayment || hasCash || hasPending;
 
-    final hasRemarks = activeSettings.showRemarks && bill.remarks != null && bill.remarks!.trim().isNotEmpty;
+    final hasRemarks =
+        activeSettings.showRemarks &&
+        bill.remarks != null &&
+        bill.remarks!.trim().isNotEmpty;
     final hasFooter = activeSettings.showFooterNote;
 
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       child: SizedBox(
-        width: 320,
+        width: onContinue != null ? 360 : 320,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -100,7 +111,10 @@ class WeighmentSlipDialog extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFFCBD5E1), width: 0.5),
+                    border: Border.all(
+                      color: const Color(0xFFCBD5E1),
+                      width: 0.5,
+                    ),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.08),
@@ -109,7 +123,10 @@ class WeighmentSlipDialog extends StatelessWidget {
                       ),
                     ],
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 16,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -117,13 +134,18 @@ class WeighmentSlipDialog extends StatelessWidget {
                       const SizedBox(height: 8),
                       _buildDivider(),
                       const SizedBox(height: 6),
-                      _buildTitle(activeSettings, isCompleted: isCompleted),
+                      _buildTitle(
+                        activeSettings,
+                        isCompleted: isCompleted,
+                        isGrossPending: isGrossPending,
+                      ),
                       const SizedBox(height: 8),
 
                       if (hasGeneralInfo) ...[
                         _buildDivider(),
                         const SizedBox(height: 6),
-                        if (hasSerial) _buildInfoRow('SL.NO.', bill.billNumber),
+                        if (hasSerial)
+                          _buildInfoRow('Bill No.', bill.billNumber),
                         if (hasDate) _buildInfoRow('Date', dateFormatted),
                         if (hasTime) _buildInfoRow('Time', timeFormatted),
                         const SizedBox(height: 6),
@@ -136,9 +158,11 @@ class WeighmentSlipDialog extends StatelessWidget {
                         if (hasMat) _buildInfoRow('Material', materialName),
                         if (hasParty) ...[
                           _buildInfoRow('Party', partyName),
-                          if (partyPhone.isNotEmpty) _buildInfoRow('Party Mobile', partyPhone),
+                          if (partyPhone.isNotEmpty)
+                            _buildInfoRow('Party Mobile', partyPhone),
                         ],
-                        if (hasVehType) _buildInfoRow('Vehicle Type', vehicleTypeName),
+                        if (hasVehType)
+                          _buildInfoRow('Vehicle Type', vehicleTypeName),
                         const SizedBox(height: 6),
                       ],
 
@@ -146,17 +170,47 @@ class WeighmentSlipDialog extends StatelessWidget {
                         _buildDivider(),
                         const SizedBox(height: 6),
                         if (isCompleted) ...[
-                          if (hasGross) _buildWeightRow('Gross Weight', '${bill.grossWeightKg.toStringAsFixed(3)} kg'),
-                          if (hasTare) _buildWeightRow('Tare Weight', '${bill.tareWeightKg?.toStringAsFixed(3) ?? '—'} kg'),
+                          if (hasGross)
+                            _buildWeightRow(
+                              'Gross Weight',
+                              '${bill.grossWeightKg.toStringAsFixed(3)} kg',
+                            ),
+                          if (hasTare)
+                            _buildWeightRow(
+                              'Tare Weight',
+                              '${bill.tareWeightKg?.toStringAsFixed(3) ?? '—'} kg',
+                            ),
                           if (hasGross || hasTare) const SizedBox(height: 4),
                           if (hasNet) ...[
                             _buildDivider(),
                             const SizedBox(height: 4),
-                            _buildWeightRow('Net Weight', '${(bill.netWeightKg ?? 0).toStringAsFixed(3)} kg'),
+                            _buildWeightRow(
+                              'Net Weight',
+                              '${(bill.netWeightKg ?? (bill.grossWeightKg - (bill.tareWeightKg ?? 0))).toStringAsFixed(3)} kg',
+                            ),
+                          ],
+                        ] else if (isGrossPending) ...[
+                          if (hasGross)
+                            _buildWeightRow('Gross Weight', 'PENDING'),
+                          if (hasTare)
+                            _buildWeightRow(
+                              'Tare Weight',
+                              '${bill.tareWeightKg!.toStringAsFixed(3)} kg',
+                            ),
+                          if (hasGross || hasTare) const SizedBox(height: 4),
+                          if (hasNet) ...[
+                            _buildDivider(),
+                            const SizedBox(height: 4),
+                            _buildWeightRow('Net Weight', '—'),
                           ],
                         ] else ...[
-                          if (hasGross) _buildWeightRow('Gross Weight', '${bill.grossWeightKg.toStringAsFixed(3)} kg'),
-                          if (hasTare) _buildWeightRow('Tare Weight', 'PENDING'),
+                          if (hasGross)
+                            _buildWeightRow(
+                              'Gross Weight',
+                              '${bill.grossWeightKg.toStringAsFixed(3)} kg',
+                            ),
+                          if (hasTare)
+                            _buildWeightRow('Tare Weight', 'PENDING'),
                           if (hasGross || hasTare) const SizedBox(height: 4),
                           if (hasNet) ...[
                             _buildDivider(),
@@ -170,15 +224,27 @@ class WeighmentSlipDialog extends StatelessWidget {
                       if (hasFinancials) ...[
                         _buildDivider(),
                         const SizedBox(height: 6),
-                        if (hasAmount) _buildInfoRow('Amount', 'Rs. ${bill.amount.toStringAsFixed(2)}'),
-                        if (hasPayment) _buildInfoRow('Payment', bill.paymentMode.toUpperCase()),
-                        if (hasCash) _buildInfoRow('Cash Received', 'Rs. ${bill.amount.toStringAsFixed(2)}'),
+                        if (hasAmount)
+                          _buildInfoRow(
+                            'Amount',
+                            'Rs. ${bill.amount.toStringAsFixed(2)}',
+                          ),
+                        if (hasPayment)
+                          _buildInfoRow(
+                            'Payment',
+                            bill.paymentMode.toUpperCase(),
+                          ),
+                        if (hasCash)
+                          _buildInfoRow(
+                            'Cash Received',
+                            'Rs. ${bill.amount.toStringAsFixed(2)}',
+                          ),
                         if (hasPending) _buildInfoRow('Pending', 'Rs. 0.00'),
                       ],
 
                       if (!isCompleted) ...[
                         const SizedBox(height: 6),
-                        _buildStatusBadge(),
+                        _buildStatusBadge(isGrossPending: isGrossPending),
                       ],
 
                       if (hasRemarks) ...[
@@ -192,7 +258,11 @@ class WeighmentSlipDialog extends StatelessWidget {
                         const SizedBox(height: 8),
                         _buildDivider(),
                         const SizedBox(height: 6),
-                        _buildFooterNote(activeSettings, isCompleted: isCompleted),
+                        _buildFooterNote(
+                          activeSettings,
+                          isCompleted: isCompleted,
+                          isGrossPending: isGrossPending,
+                        ),
                       ],
 
                       const SizedBox(height: 8),
@@ -213,7 +283,7 @@ class WeighmentSlipDialog extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            _buildActions(context),
+            _buildActions(context, isGrossPending: isGrossPending),
           ],
         ),
       ),
@@ -221,7 +291,8 @@ class WeighmentSlipDialog extends StatelessWidget {
   }
 
   Widget _buildHeader(BillingSettings settings) {
-    final hasLogo = settings.logoPath != null &&
+    final hasLogo =
+        settings.logoPath != null &&
         settings.logoPath!.trim().isNotEmpty &&
         File(settings.logoPath!).existsSync();
 
@@ -241,7 +312,9 @@ class WeighmentSlipDialog extends StatelessWidget {
           _buildDefaultLogo(),
         const SizedBox(height: 4),
         Text(
-          settings.businessName.isNotEmpty ? settings.businessName : 'VIYAN WEIGHBRIDGE',
+          settings.businessName.isNotEmpty
+              ? settings.businessName
+              : 'VIYAN WEIGHBRIDGE',
           textAlign: TextAlign.center,
           style: const TextStyle(
             fontFamily: 'PlusJakartaSans',
@@ -251,7 +324,8 @@ class WeighmentSlipDialog extends StatelessWidget {
             letterSpacing: 1.2,
           ),
         ),
-        if (settings.businessSubtitle != null && settings.businessSubtitle!.trim().isNotEmpty) ...[
+        if (settings.businessSubtitle != null &&
+            settings.businessSubtitle!.trim().isNotEmpty) ...[
           const SizedBox(height: 2),
           Text(
             settings.businessSubtitle!,
@@ -264,7 +338,8 @@ class WeighmentSlipDialog extends StatelessWidget {
             ),
           ),
         ],
-        if (settings.serviceText != null && settings.serviceText!.trim().isNotEmpty) ...[
+        if (settings.serviceText != null &&
+            settings.serviceText!.trim().isNotEmpty) ...[
           const SizedBox(height: 2),
           Text(
             settings.serviceText!,
@@ -278,7 +353,8 @@ class WeighmentSlipDialog extends StatelessWidget {
             ),
           ),
         ],
-        if (settings.address != null && settings.address!.trim().isNotEmpty) ...[
+        if (settings.address != null &&
+            settings.address!.trim().isNotEmpty) ...[
           const SizedBox(height: 2),
           Text(
             settings.address!,
@@ -290,13 +366,15 @@ class WeighmentSlipDialog extends StatelessWidget {
             ),
           ),
         ],
-        if ((settings.phoneNumber != null && settings.phoneNumber!.trim().isNotEmpty) ||
+        if ((settings.phoneNumber != null &&
+                settings.phoneNumber!.trim().isNotEmpty) ||
             (settings.gstin != null && settings.gstin!.trim().isNotEmpty)) ...[
           const SizedBox(height: 2),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (settings.phoneNumber != null && settings.phoneNumber!.trim().isNotEmpty)
+              if (settings.phoneNumber != null &&
+                  settings.phoneNumber!.trim().isNotEmpty)
                 Text(
                   'Ph: ${settings.phoneNumber!}',
                   style: const TextStyle(
@@ -309,7 +387,10 @@ class WeighmentSlipDialog extends StatelessWidget {
                   settings.phoneNumber!.trim().isNotEmpty &&
                   settings.gstin != null &&
                   settings.gstin!.trim().isNotEmpty)
-                const Text(' · ', style: TextStyle(fontSize: 8, color: Color(0xFF94A3B8))),
+                const Text(
+                  ' · ',
+                  style: TextStyle(fontSize: 8, color: Color(0xFF94A3B8)),
+                ),
               if (settings.gstin != null && settings.gstin!.trim().isNotEmpty)
                 Text(
                   'GSTIN: ${settings.gstin!}',
@@ -336,19 +417,30 @@ class WeighmentSlipDialog extends StatelessWidget {
         shape: BoxShape.circle,
         border: Border.all(color: const Color(0xFF38BDF8), width: 1),
       ),
-      child: const Icon(
-        Icons.scale_rounded,
-        color: Colors.white,
-        size: 16,
-      ),
+      child: const Icon(Icons.scale_rounded, color: Colors.white, size: 16),
     );
   }
 
-  Widget _buildTitle(BillingSettings settings, {required bool isCompleted}) {
-    final title = settings.receiptTitle.isNotEmpty ? settings.receiptTitle : 'WEIGHMENT RECEIPT';
+  Widget _buildTitle(
+    BillingSettings settings, {
+    required bool isCompleted,
+    required bool isGrossPending,
+  }) {
+    final title = settings.receiptTitle.isNotEmpty
+        ? settings.receiptTitle
+        : 'WEIGHMENT RECEIPT';
+    final String displayTitle;
+    if (isCompleted) {
+      displayTitle = title;
+    } else if (isGrossPending) {
+      displayTitle = '$title — GROSS WEIGHT PENDING';
+    } else {
+      displayTitle = '$title — TARE WEIGHT PENDING';
+    }
+
     return Center(
       child: Text(
-        isCompleted ? title : '$title — TARE WEIGHT PENDING',
+        displayTitle,
         textAlign: TextAlign.center,
         style: TextStyle(
           fontFamily: 'PlusJakartaSans',
@@ -441,8 +533,8 @@ class WeighmentSlipDialog extends StatelessWidget {
                 color: isPending
                     ? const Color(0xFFD97706)
                     : isDash
-                        ? const Color(0xFF94A3B8)
-                        : const Color(0xFF0F172A),
+                    ? const Color(0xFF94A3B8)
+                    : const Color(0xFF0F172A),
                 letterSpacing: 0.3,
               ),
             ),
@@ -452,24 +544,32 @@ class WeighmentSlipDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildStatusBadge() {
+  Widget _buildStatusBadge({required bool isGrossPending}) {
+    final text = isGrossPending
+        ? 'GROSS WEIGHT PENDING'
+        : 'TARE WEIGHT PENDING';
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: const Color(0xFFFFFBEB),
-        borderRadius: BorderRadius.circular(3),
+        borderRadius: BorderRadius.circular(4),
         border: Border.all(color: const Color(0xFFFDE68A)),
       ),
-      child: const Row(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.pending_outlined, size: 12, color: Color(0xFFD97706)),
-          SizedBox(width: 4),
+          const Icon(
+            Icons.radio_button_checked_rounded,
+            size: 12,
+            color: Color(0xFFD97706),
+          ),
+          const SizedBox(width: 6),
           Text(
-            'TARE WEIGHT PENDING',
-            style: TextStyle(
+            text,
+            style: const TextStyle(
               fontFamily: 'PlusJakartaSans',
-              fontSize: 9,
+              fontSize: 9.5,
               fontWeight: FontWeight.w800,
               color: Color(0xFFD97706),
               letterSpacing: 0.5,
@@ -508,13 +608,22 @@ class WeighmentSlipDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildFooterNote(BillingSettings settings, {required bool isCompleted}) {
+  Widget _buildFooterNote(
+    BillingSettings settings, {
+    required bool isCompleted,
+    required bool isGrossPending,
+  }) {
     final customNote = settings.footerNote?.trim();
-    final noteText = (customNote != null && customNote.isNotEmpty)
-        ? customNote
-        : (isCompleted
-            ? 'Please check the weight before leaving the weighbridge.'
-            : 'Tare weight is pending.\nPlease return to the weighbridge for tare weighing.');
+    final String noteText;
+    if (isCompleted) {
+      noteText = (customNote != null && customNote.isNotEmpty)
+          ? customNote
+          : 'Please check the weight before leaving the weighbridge.';
+    } else {
+      noteText = isGrossPending
+          ? 'Gross weight is pending.\nPlease return to the weighbridge for gross weighing.'
+          : 'Tare weight is pending.\nPlease return to the weighbridge for tare weighing.';
+    }
 
     return Text(
       'Note: $noteText',
@@ -529,7 +638,100 @@ class WeighmentSlipDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildActions(BuildContext context) {
+  Widget _buildActions(BuildContext context, {required bool isGrossPending}) {
+    final actionLabel =
+        continueLabel ?? (isGrossPending ? 'Gross Weight' : 'Tare Weight');
+
+    if (onContinue != null) {
+      return Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF334155),
+                side: const BorderSide(color: Color(0xFFCBD5E1)),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+              child: const Text(
+                'Close',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Print job sent for ${bill.billNumber}'),
+                    backgroundColor: const Color(0xFF16A34A),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              },
+              icon: const Icon(Icons.print_rounded, size: 14),
+              label: const Text(
+                'Print Ticket',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontWeight: FontWeight.w700,
+                  fontSize: 11,
+                ),
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF0F52BA),
+                side: const BorderSide(color: Color(0xFF93C5FD)),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: FilledButton.icon(
+              onPressed: () {
+                Navigator.of(context).pop();
+                onContinue!();
+              },
+              icon: const Icon(Icons.arrow_forward_rounded, size: 13),
+              label: Text(
+                actionLabel,
+                style: const TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontWeight: FontWeight.w800,
+                  fontSize: 11,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFD97706),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  vertical: 10,
+                  horizontal: 4,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                elevation: 1,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
     return Row(
       children: [
         Expanded(
@@ -539,7 +741,9 @@ class WeighmentSlipDialog extends StatelessWidget {
               foregroundColor: const Color(0xFF334155),
               side: const BorderSide(color: Color(0xFFCBD5E1)),
               padding: const EdgeInsets.symmetric(vertical: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
             ),
             child: const Text(
               'Close',
@@ -577,7 +781,9 @@ class WeighmentSlipDialog extends StatelessWidget {
               backgroundColor: const Color(0xFF0D3B82),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 10),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(6),
+              ),
               elevation: 2,
             ),
           ),

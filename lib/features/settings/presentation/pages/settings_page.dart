@@ -322,37 +322,58 @@ class _SettingsPageState extends State<SettingsPage> {
                 Expanded(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
-                      final isWideScreen = constraints.maxWidth >= 960;
+                      final width = constraints.maxWidth;
+                      final compact = width < 700;
+                      final horizontalPadding = compact
+                          ? 12.0
+                          : width < 960
+                              ? 16.0
+                              : 24.0;
+                      final verticalPadding = compact ? 12.0 : 16.0;
+                      final useTwoColumns = _shouldUseTwoColumns(
+                        width,
+                        horizontalPadding,
+                      );
+                      final formColumn = Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildWeightUnitCard(),
+                          const SizedBox(height: 16),
+                          _buildBillNumberingCard(),
+                          const SizedBox(height: 16),
+                          _buildBusinessInfoCard(),
+                          const SizedBox(height: 16),
+                          _buildReceiptContentCard(),
+                          const SizedBox(height: 16),
+                          _buildFooterNoteCard(),
+                        ],
+                      );
 
-                      if (isWideScreen) {
+                      if (useTwoColumns) {
                         return Padding(
-                          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                          padding: EdgeInsets.fromLTRB(
+                            horizontalPadding,
+                            verticalPadding,
+                            horizontalPadding,
+                            compact ? 12 : 24,
+                          ),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Left: Settings Forms
                               Expanded(
                                 flex: 6,
                                 child: SingleChildScrollView(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
                                     children: [
-                                      _buildWeightUnitCard(),
-                                      const SizedBox(height: 16),
-                                      _buildBillNumberingCard(),
-                                      const SizedBox(height: 16),
-                                      _buildBusinessInfoCard(),
-                                      const SizedBox(height: 16),
-                                      _buildReceiptContentCard(),
-                                      const SizedBox(height: 16),
-                                      _buildFooterNoteCard(),
+                                      formColumn,
                                       const SizedBox(height: 24),
                                     ],
                                   ),
                                 ),
                               ),
                               const SizedBox(width: 20),
-                              // Right: Sticky Live Receipt Preview
                               Expanded(
                                 flex: 4,
                                 child: SingleChildScrollView(
@@ -362,29 +383,25 @@ class _SettingsPageState extends State<SettingsPage> {
                             ],
                           ),
                         );
-                      } else {
-                        // Narrow screen: Stacked single-column
-                        return SingleChildScrollView(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildWeightUnitCard(),
-                              const SizedBox(height: 16),
-                              _buildBillNumberingCard(),
-                              const SizedBox(height: 16),
-                              _buildBusinessInfoCard(),
-                              const SizedBox(height: 16),
-                              _buildReceiptContentCard(),
-                              const SizedBox(height: 16),
-                              _buildFooterNoteCard(),
-                              const SizedBox(height: 20),
-                              _buildLivePreviewCard(),
-                              const SizedBox(height: 24),
-                            ],
-                          ),
-                        );
                       }
+
+                      return SingleChildScrollView(
+                        padding: EdgeInsets.fromLTRB(
+                          horizontalPadding,
+                          verticalPadding,
+                          horizontalPadding,
+                          compact ? 16 : 24,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            formColumn,
+                            const SizedBox(height: 20),
+                            _buildLivePreviewCard(),
+                            const SizedBox(height: 24),
+                          ],
+                        ),
+                      );
                     },
                   ),
                 ),
@@ -396,10 +413,111 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  // Top App Bar
+  bool _shouldUseTwoColumns(double width, double horizontalPadding) {
+    const gap = 20.0;
+    final inner = width - (horizontalPadding * 2) - gap;
+    if (inner <= 0) return false;
+    final leftWidth = inner * 0.6;
+    final rightWidth = inner * 0.4;
+    if (width >= 1100) return true;
+    if (width >= 900) {
+      return leftWidth >= 380 && rightWidth >= 280;
+    }
+    return false;
+  }
+
+  Widget _buildResponsiveFieldRow({
+    required List<Widget> children,
+    double minItemWidth = 200,
+    double spacing = 12,
+  }) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final maxWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : minItemWidth;
+        final needed =
+            children.length * minItemWidth + (children.length - 1) * spacing;
+        final canFitRow = children.length > 1 && needed <= maxWidth;
+
+        if (canFitRow) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (var i = 0; i < children.length; i++) ...[
+                if (i > 0) SizedBox(width: spacing),
+                Expanded(child: children[i]),
+              ],
+            ],
+          );
+        }
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            for (var i = 0; i < children.length; i++) ...[
+              if (i > 0) SizedBox(height: spacing),
+              children[i],
+            ],
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildActionButtons(bool isSaving) {
+    return Wrap(
+      spacing: 12,
+      runSpacing: 8,
+      alignment: WrapAlignment.end,
+      children: [
+        OutlinedButton.icon(
+          onPressed: isSaving ? null : _resetToDefaults,
+          icon: const Icon(Icons.refresh_rounded, size: 16),
+          label: const Text('Reset Defaults'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: const Color(0xFF64748B),
+            side: const BorderSide(color: Color(0xFFCBD5E1)),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        ),
+        ElevatedButton.icon(
+          onPressed: isSaving ? null : _handleSave,
+          icon: isSaving
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+              : const Icon(Icons.save_rounded, size: 18),
+          label: Text(
+            isSaving ? 'Saving...' : 'Save Settings',
+            style: const TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.3,
+            ),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF0D3B82),
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            elevation: 2,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildTopAppBar(bool isSaving) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: Colors.white,
         border: const Border(
@@ -413,84 +531,78 @@ class _SettingsPageState extends State<SettingsPage> {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0D3B82).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(
-              Icons.tune_rounded,
-              color: Color(0xFF0D3B82),
-              size: 22,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Column(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final stacked = constraints.maxWidth < 820;
+          final titleBlock = Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Settings',
-                style: TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
-                  letterSpacing: -0.2,
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0D3B82).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.tune_rounded,
+                  color: Color(0xFF0D3B82),
+                  size: 22,
                 ),
               ),
-              const SizedBox(height: 2),
-              Text(
-                'Configure billing number format, business information, and ticket layout',
-                style: TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 12,
-                  color: Colors.grey.shade500,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Settings',
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF0F172A),
+                        letterSpacing: -0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Configure billing number format, business information, and ticket layout',
+                      softWrap: true,
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 12,
+                        color: Colors.grey.shade500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
-          ),
-          const Spacer(),
-          OutlinedButton.icon(
-            onPressed: isSaving ? null : _resetToDefaults,
-            icon: const Icon(Icons.refresh_rounded, size: 16),
-            label: const Text('Reset Defaults'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF64748B),
-              side: const BorderSide(color: Color(0xFFCBD5E1)),
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-            ),
-          ),
-          const SizedBox(width: 12),
-          ElevatedButton.icon(
-            onPressed: isSaving ? null : _handleSave,
-            icon: isSaving
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                  )
-                : const Icon(Icons.save_rounded, size: 18),
-            label: Text(
-              isSaving ? 'Saving...' : 'Save Settings',
-              style: const TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.3,
-              ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0D3B82),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              elevation: 2,
-            ),
-          ),
-        ],
+          );
+
+          if (stacked) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                titleBlock,
+                const SizedBox(height: 12),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: _buildActionButtons(isSaving),
+                ),
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(child: titleBlock),
+              const SizedBox(width: 12),
+              _buildActionButtons(isSaving),
+            ],
+          );
+        },
       ),
     );
   }
@@ -503,24 +615,39 @@ class _SettingsPageState extends State<SettingsPage> {
       iconColor: const Color(0xFF2563EB),
       title: 'Weight Unit',
       subtitle: 'Select the primary unit for scale measurements across the application',
-      child: Row(
-        children: [
-          Expanded(
-            child: _buildUnitRadioTile(
-              title: 'Kilogram (kg)',
-              subtitle: 'Metric standard (1,000 kg = 1 ton)',
-              value: 'kg',
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: _buildUnitRadioTile(
-              title: 'Tonne (ton)',
-              subtitle: 'Common industrial weighbridge unit',
-              value: 'ton',
-            ),
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final stackTiles = constraints.maxWidth < 420;
+          final kgTile = _buildUnitRadioTile(
+            title: 'Kilogram (kg)',
+            subtitle: 'Metric standard (1,000 kg = 1 ton)',
+            value: 'kg',
+          );
+          final tonTile = _buildUnitRadioTile(
+            title: 'Tonne (ton)',
+            subtitle: 'Common industrial weighbridge unit',
+            value: 'ton',
+          );
+
+          if (stackTiles) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                kgTile,
+                const SizedBox(height: 12),
+                tonTile,
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              Expanded(child: kgTile),
+              const SizedBox(width: 12),
+              Expanded(child: tonTile),
+            ],
+          );
+        },
       ),
     );
   }
@@ -565,6 +692,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 children: [
                   Text(
                     title,
+                    softWrap: true,
                     style: TextStyle(
                       fontFamily: 'PlusJakartaSans',
                       fontSize: 13,
@@ -575,6 +703,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   const SizedBox(height: 2),
                   Text(
                     subtitle,
+                    softWrap: true,
                     style: TextStyle(
                       fontFamily: 'PlusJakartaSans',
                       fontSize: 11,
@@ -601,75 +730,66 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          _buildResponsiveFieldRow(
+            minItemWidth: 160,
             children: [
-              Expanded(
-                flex: 3,
-                child: _buildTextField(
-                  label: 'Prefix',
-                  hint: 'WB',
-                  controller: _billPrefixController,
-                  maxLength: 6,
-                  textCapitalization: TextCapitalization.characters,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
-                  ],
-                  onChanged: (_) => setState(() {}),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
-                ),
+              _buildTextField(
+                label: 'Prefix',
+                hint: 'WB',
+                controller: _billPrefixController,
+                maxLength: 6,
+                textCapitalization: TextCapitalization.characters,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                ],
+                onChanged: (_) => setState(() {}),
+                validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 3,
-                child: _buildTextField(
-                  label: 'Starting Number',
-                  hint: '1',
-                  controller: _billStartingNumberController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  onChanged: (_) => setState(() {}),
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Required';
-                    final n = int.tryParse(v);
-                    if (n == null || n < 1) return 'Must be >= 1';
-                    return null;
-                  },
-                ),
+              _buildTextField(
+                label: 'Starting Number',
+                hint: '1',
+                controller: _billStartingNumberController,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                onChanged: (_) => setState(() {}),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return 'Required';
+                  final n = int.tryParse(v);
+                  if (n == null || n < 1) return 'Must be >= 1';
+                  return null;
+                },
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 3,
-                child: _buildTextField(
-                  label: 'Number of Digits',
-                  hint: '5',
-                  controller: _billNumberDigitsController,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  onChanged: (_) => setState(() {}),
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'Required';
-                    final n = int.tryParse(v);
-                    if (n == null || n < 3 || n > 10) return 'Between 3-10';
-                    return null;
-                  },
-                ),
+              _buildTextField(
+                label: 'Number of Digits',
+                hint: '5',
+                controller: _billNumberDigitsController,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                onChanged: (_) => setState(() {}),
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty) return 'Required';
+                  final n = int.tryParse(v);
+                  if (n == null || n < 3 || n > 10) return 'Between 3-10';
+                  return null;
+                },
               ),
             ],
           ),
           const SizedBox(height: 12),
-          // Live Bill Number Preview Strip
           Container(
+            width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: const Color(0xFFF8FAFC),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(color: const Color(0xFFE2E8F0)),
             ),
-            child: Row(
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFF64748B)),
-                const SizedBox(width: 8),
                 const Text(
                   'Next Bill Number Preview:',
                   style: TextStyle(
@@ -679,7 +799,6 @@ class _SettingsPageState extends State<SettingsPage> {
                     color: Color(0xFF475569),
                   ),
                 ),
-                const SizedBox(width: 10),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
@@ -716,55 +835,42 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          _buildResponsiveFieldRow(
+            minItemWidth: 220,
             children: [
-              Expanded(
-                flex: 6,
-                child: _buildTextField(
-                  label: 'Business Name *',
-                  hint: 'VIYAN WEIGHBRIDGE',
-                  controller: _businessNameController,
-                  textCapitalization: TextCapitalization.characters,
-                  onChanged: (_) => setState(() {}),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Business name is required' : null,
-                ),
+              _buildTextField(
+                label: 'Business Name *',
+                hint: 'VIYAN WEIGHBRIDGE',
+                controller: _businessNameController,
+                textCapitalization: TextCapitalization.characters,
+                onChanged: (_) => setState(() {}),
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Business name is required' : null,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 4,
-                child: _buildTextField(
-                  label: 'Business Subtitle',
-                  hint: 'Computer Weigh Bridge',
-                  controller: _businessSubtitleController,
-                  onChanged: (_) => setState(() {}),
-                ),
+              _buildTextField(
+                label: 'Business Subtitle',
+                hint: 'Computer Weigh Bridge',
+                controller: _businessSubtitleController,
+                onChanged: (_) => setState(() {}),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          _buildResponsiveFieldRow(
+            minItemWidth: 220,
             children: [
-              Expanded(
-                flex: 4,
-                child: _buildTextField(
-                  label: 'Service Text / Tagline',
-                  hint: '24 HOURS SERVICE',
-                  controller: _serviceTextController,
-                  onChanged: (_) => setState(() {}),
-                ),
+              _buildTextField(
+                label: 'Service Text / Tagline',
+                hint: '24 HOURS SERVICE',
+                controller: _serviceTextController,
+                onChanged: (_) => setState(() {}),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 6,
-                child: _buildTextField(
-                  label: 'GSTIN (Tax ID)',
-                  hint: '33XXXXXXXXXXXXXX',
-                  controller: _gstinController,
-                  textCapitalization: TextCapitalization.characters,
-                  onChanged: (_) => setState(() {}),
-                ),
+              _buildTextField(
+                label: 'GSTIN (Tax ID)',
+                hint: '33XXXXXXXXXXXXXX',
+                controller: _gstinController,
+                textCapitalization: TextCapitalization.characters,
+                onChanged: (_) => setState(() {}),
               ),
             ],
           ),
@@ -777,62 +883,75 @@ class _SettingsPageState extends State<SettingsPage> {
             onChanged: (_) => setState(() {}),
           ),
           const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          _buildResponsiveFieldRow(
+            minItemWidth: 200,
             children: [
-              Expanded(
-                child: _buildTextField(
-                  label: 'Phone Number',
-                  hint: '+91 98765 43210',
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  onChanged: (_) => setState(() {}),
-                ),
+              _buildTextField(
+                label: 'Phone Number',
+                hint: '+91 98765 43210',
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                onChanged: (_) => setState(() {}),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildTextField(
-                  label: 'Email',
-                  hint: 'info@viyanweighbridge.com',
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  onChanged: (_) => setState(() {}),
-                ),
+              _buildTextField(
+                label: 'Email',
+                hint: 'info@viyanweighbridge.com',
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                onChanged: (_) => setState(() {}),
               ),
             ],
           ),
           const SizedBox(height: 12),
-          // Logo Path Selector
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _buildTextField(
-                  label: 'Business Logo Path',
-                  hint: '/Users/.../weighbridge_logo.png',
-                  controller: _logoPathController,
-                  onChanged: (_) => setState(() {}),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final logoField = _buildTextField(
+                label: 'Business Logo Path',
+                hint: '/Users/.../weighbridge_logo.png',
+                controller: _logoPathController,
+                onChanged: (_) => setState(() {}),
+              );
+              final clearButton = OutlinedButton(
+                onPressed: () {
+                  setState(() {
+                    _logoPathController.clear();
+                  });
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF64748B),
+                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Padding(
-                padding: const EdgeInsets.only(top: 22),
-                child: OutlinedButton(
-                  onPressed: () {
-                    setState(() {
-                      _logoPathController.clear();
-                    });
-                  },
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF64748B),
-                    side: const BorderSide(color: Color(0xFFCBD5E1)),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                child: const Text('Clear'),
+              );
+
+              if (constraints.maxWidth < 480) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    logoField,
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: clearButton,
+                    ),
+                  ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: logoField),
+                  const SizedBox(width: 8),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 22),
+                    child: clearButton,
                   ),
-                  child: const Text('Clear'),
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -850,46 +969,68 @@ class _SettingsPageState extends State<SettingsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                flex: 6,
-                child: _buildTextField(
-                  label: 'Receipt Title',
-                  hint: 'WEIGHMENT RECEIPT',
-                  controller: _receiptTitleController,
-                  textCapitalization: TextCapitalization.characters,
-                  onChanged: (_) => setState(() {}),
-                  validator: (v) => (v == null || v.trim().isEmpty) ? 'Title is required' : null,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Padding(
-                padding: const EdgeInsets.only(top: 22),
-                child: Row(
-                  children: [
-                    TextButton.icon(
-                      onPressed: () => _selectAllFields(true),
-                      icon: const Icon(Icons.check_box_outlined, size: 16),
-                      label: const Text('Select All'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFF0D3B82),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                      ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final titleField = _buildTextField(
+                label: 'Receipt Title',
+                hint: 'WEIGHMENT RECEIPT',
+                controller: _receiptTitleController,
+                textCapitalization: TextCapitalization.characters,
+                onChanged: (_) => setState(() {}),
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Title is required' : null,
+              );
+              final actions = Wrap(
+                spacing: 4,
+                runSpacing: 4,
+                children: [
+                  TextButton.icon(
+                    onPressed: () => _selectAllFields(true),
+                    icon: const Icon(Icons.check_box_outlined, size: 16),
+                    label: const Text('Select All'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF0D3B82),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                     ),
-                    TextButton.icon(
-                      onPressed: () => _selectAllFields(false),
-                      icon: const Icon(Icons.clear_rounded, size: 16),
-                      label: const Text('Deselect All'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFF64748B),
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                      ),
+                  ),
+                  TextButton.icon(
+                    onPressed: () => _selectAllFields(false),
+                    icon: const Icon(Icons.clear_rounded, size: 16),
+                    label: const Text('Deselect All'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: const Color(0xFF64748B),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                    ),
+                  ),
+                ],
+              );
+
+              if (constraints.maxWidth < 640) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    titleField,
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: actions,
                     ),
                   ],
-                ),
-              ),
-            ],
+                );
+              }
+
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(flex: 6, child: titleField),
+                  const SizedBox(width: 12),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 22),
+                    child: actions,
+                  ),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 16),
           const Text(
@@ -971,6 +1112,7 @@ class _SettingsPageState extends State<SettingsPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Checkbox(
                 value: _showFooterNote,
@@ -978,13 +1120,19 @@ class _SettingsPageState extends State<SettingsPage> {
                 activeColor: const Color(0xFF0D3B82),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
               ),
-              const Text(
-                'Show Footer Note on Receipt',
-                style: TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF0F172A),
+              const Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 12),
+                  child: Text(
+                    'Show Footer Note on Receipt',
+                    softWrap: true,
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -1034,6 +1182,7 @@ class _SettingsPageState extends State<SettingsPage> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
@@ -1048,27 +1197,30 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Live Receipt Preview',
-                      style: TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Live Receipt Preview',
+                        style: TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF0F172A),
+                        ),
                       ),
-                    ),
-                    Text(
-                      'Reflects template changes in real time',
-                      style: TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 11,
-                        color: Color(0xFF64748B),
+                      Text(
+                        'Reflects template changes in real time',
+                        softWrap: true,
+                        style: TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 11,
+                          color: Color(0xFF64748B),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -1077,9 +1229,19 @@ class _SettingsPageState extends State<SettingsPage> {
           // The Thermal Slip
           Padding(
             padding: const EdgeInsets.all(16),
-            child: Center(
-              child: Container(
-                width: 290,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final available = constraints.maxWidth.isFinite
+                    ? constraints.maxWidth
+                    : 290.0;
+                final slipWidth = available < 290 ? available : 290.0;
+                return Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: slipWidth,
+                      minWidth: slipWidth < 180 ? slipWidth : 180,
+                    ),
+                    child: Container(
                 decoration: BoxDecoration(
                   color: const Color(0xFFFAFAFA),
                   borderRadius: BorderRadius.circular(4),
@@ -1092,7 +1254,10 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ],
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding: EdgeInsets.symmetric(
+                  horizontal: slipWidth < 220 ? 10 : 16,
+                  vertical: 14,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -1113,6 +1278,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     Text(
                       settings.businessName,
                       textAlign: TextAlign.center,
+                      softWrap: true,
                       style: const TextStyle(
                         fontFamily: 'PlusJakartaSans',
                         fontSize: 13,
@@ -1194,6 +1360,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     Text(
                       settings.receiptTitle,
                       textAlign: TextAlign.center,
+                      softWrap: true,
                       style: const TextStyle(
                         fontFamily: 'PlusJakartaSans',
                         fontSize: 11,
@@ -1313,7 +1480,10 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ],
                 ),
-              ),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
         ],
@@ -1341,86 +1511,95 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildDashedDivider() {
-    return Row(
-      children: List.generate(
-        32,
-        (i) => Expanded(
-          child: Container(
-            height: 1,
-            color: i.isEven ? const Color(0xFF94A3B8) : Colors.transparent,
-          ),
-        ),
+    return SizedBox(
+      width: double.infinity,
+      height: 1,
+      child: CustomPaint(
+        painter: _DashedLinePainter(),
       ),
     );
   }
 
   Widget _buildReceiptRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1.2),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 9.5,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF64748B),
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 9.5,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF0F172A),
-              ),
-            ),
-          ),
-        ],
+    return _buildAdaptiveReceiptRow(
+      label: label,
+      value: value,
+      valueStyle: const TextStyle(
+        fontFamily: 'PlusJakartaSans',
+        fontSize: 9.5,
+        fontWeight: FontWeight.w700,
+        color: Color(0xFF0F172A),
       ),
     );
   }
 
   Widget _buildReceiptWeightRow(String label, String value, {bool isBold = false}) {
+    return _buildAdaptiveReceiptRow(
+      label: label,
+      value: value,
+      valueStyle: TextStyle(
+        fontFamily: 'PlusJakartaSans',
+        fontSize: isBold ? 10.5 : 10.0,
+        fontWeight: FontWeight.w800,
+        color: const Color(0xFF0F172A),
+        letterSpacing: 0.3,
+      ),
+    );
+  }
+
+  Widget _buildAdaptiveReceiptRow({
+    required String label,
+    required String value,
+    required TextStyle valueStyle,
+  }) {
+    const labelStyle = TextStyle(
+      fontFamily: 'PlusJakartaSans',
+      fontSize: 9.5,
+      fontWeight: FontWeight.w600,
+      color: Color(0xFF64748B),
+    );
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1.2),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 9.5,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF64748B),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final maxWidth = constraints.maxWidth.isFinite ? constraints.maxWidth : 290.0;
+          if (maxWidth < 160) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: labelStyle),
+                Text(
+                  value,
+                  softWrap: true,
+                  style: valueStyle,
+                ),
+              ],
+            );
+          }
+
+          final labelWidth = (maxWidth * 0.42).clamp(72.0, 100.0);
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: labelWidth,
+                child: Text(
+                  label,
+                  softWrap: true,
+                  style: labelStyle,
+                ),
               ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: isBold ? 10.5 : 10.0,
-                fontWeight: FontWeight.w800,
-                color: const Color(0xFF0F172A),
-                letterSpacing: 0.3,
+              Expanded(
+                child: Text(
+                  value,
+                  softWrap: true,
+                  style: valueStyle,
+                ),
               ),
-            ),
-          ),
-        ],
+            ],
+          );
+        },
       ),
     );
   }
@@ -1434,9 +1613,12 @@ class _SettingsPageState extends State<SettingsPage> {
     required String subtitle,
     required Widget child,
   }) {
-    return Container(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 400;
+        return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.all(compact ? 14 : 20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
@@ -1470,6 +1652,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     Text(
                       title,
+                      softWrap: true,
                       style: const TextStyle(
                         fontFamily: 'PlusJakartaSans',
                         fontSize: 15,
@@ -1480,6 +1663,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
+                      softWrap: true,
                       style: TextStyle(
                         fontFamily: 'PlusJakartaSans',
                         fontSize: 12,
@@ -1497,6 +1681,8 @@ class _SettingsPageState extends State<SettingsPage> {
           child,
         ],
       ),
+        );
+      },
     );
   }
 
@@ -1519,6 +1705,7 @@ class _SettingsPageState extends State<SettingsPage> {
       children: [
         Text(
           label,
+          softWrap: true,
           style: const TextStyle(
             fontFamily: 'PlusJakartaSans',
             fontSize: 12,
@@ -1554,6 +1741,7 @@ class _SettingsPageState extends State<SettingsPage> {
             filled: true,
             fillColor: enabled ? const Color(0xFFF8FAFC) : const Color(0xFFF1F5F9),
             counterText: '',
+            errorMaxLines: 3,
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
@@ -1576,4 +1764,30 @@ class _SettingsPageState extends State<SettingsPage> {
       ],
     );
   }
+}
+
+class _DashedLinePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (size.width <= 0) return;
+    const dashWidth = 4.0;
+    const dashGap = 3.0;
+    final paint = Paint()
+      ..color = const Color(0xFF94A3B8)
+      ..strokeWidth = 1;
+    var x = 0.0;
+    final y = size.height / 2;
+    while (x < size.width) {
+      final endX = x + dashWidth;
+      canvas.drawLine(
+        Offset(x, y),
+        Offset(endX > size.width ? size.width : endX, y),
+        paint,
+      );
+      x += dashWidth + dashGap;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

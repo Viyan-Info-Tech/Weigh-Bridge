@@ -9,6 +9,7 @@ import '../../domain/entities/weighment.dart';
 import '../bloc/bill_bloc.dart';
 import '../bloc/bill_event.dart';
 import '../bloc/bill_state.dart';
+import '../widgets/weighment_slip_dialog.dart';
 
 class PendingPage extends StatefulWidget {
   final VoidCallback? onSwitchToBill;
@@ -39,6 +40,37 @@ class _PendingPageState extends State<PendingPage> {
   void _continueBill(Weighment bill) {
     context.read<BillBloc>().add(LoadPendingBill(bill.id));
     widget.onSwitchToBill?.call();
+  }
+
+  void _showPendingSlipDialog(Weighment bill, BillState state) {
+    Vehicle? vehicle;
+    try {
+      vehicle = state.vehicles.firstWhere((v) => v.id == bill.vehicleId);
+    } catch (_) {}
+
+    Party? party;
+    try {
+      party = state.parties.firstWhere((p) => p.id == bill.partyId);
+    } catch (_) {}
+
+    final materialName = _getMaterialName(state.materials, bill.materialId);
+    final isGrossPending =
+        (bill.tareWeightKg ?? 0) > 0 && bill.grossWeightKg == 0;
+
+    showDialog(
+      context: context,
+      builder: (dialogContext) => WeighmentSlipDialog(
+        bill: bill,
+        vehicle: vehicle,
+        party: party,
+        vehicleTypes: state.vehicleTypes,
+        materialName: materialName,
+        continueLabel: isGrossPending ? 'Gross Weight' : 'Tare Weight',
+        onContinue: () {
+          _continueBill(bill);
+        },
+      ),
+    );
   }
 
   String _getVehicleNumber(List<Vehicle> vehicles, int vehicleId) {
@@ -76,7 +108,9 @@ class _PendingPageState extends State<PendingPage> {
 
   String _formatTimestamp(DateTime dt) {
     if (_isToday(dt)) return DateFormat('hh:mm a').format(dt);
-    if (_isYesterday(dt)) return 'Yesterday, ${DateFormat('hh:mm a').format(dt)}';
+    if (_isYesterday(dt)) {
+      return 'Yesterday, ${DateFormat('hh:mm a').format(dt)}';
+    }
     return DateFormat('dd MMM, hh:mm a').format(dt);
   }
 
@@ -94,20 +128,27 @@ class _PendingPageState extends State<PendingPage> {
             final pagePadding = availableWidth >= 1200
                 ? const EdgeInsets.all(20)
                 : availableWidth >= 900
-                    ? const EdgeInsets.all(16)
-                    : const EdgeInsets.all(12);
+                ? const EdgeInsets.all(16)
+                : const EdgeInsets.all(12);
 
             return BlocBuilder<BillBloc, BillState>(
               builder: (context, state) {
                 final pendingBills = state.pendingBills;
 
                 final filteredBills = pendingBills.where((bill) {
-                  final vehicleNo = _getVehicleNumber(state.vehicles, bill.vehicleId).toLowerCase();
-                  final partyName = _getPartyName(state.parties, bill.partyId).toLowerCase();
+                  final vehicleNo = _getVehicleNumber(
+                    state.vehicles,
+                    bill.vehicleId,
+                  ).toLowerCase();
+                  final partyName = _getPartyName(
+                    state.parties,
+                    bill.partyId,
+                  ).toLowerCase();
                   final billNo = bill.billNumber.toLowerCase();
                   final query = _searchQuery.toLowerCase();
 
-                  final matchesSearch = query.isEmpty ||
+                  final matchesSearch =
+                      query.isEmpty ||
                       vehicleNo.contains(query) ||
                       partyName.contains(query) ||
                       billNo.contains(query);
@@ -119,16 +160,24 @@ class _PendingPageState extends State<PendingPage> {
                   return true;
                 }).toList();
 
-                final totalGrossWeight =
-                    filteredBills.fold<double>(0, (sum, b) => sum + b.grossWeightKg);
-                final totalExpected =
-                    filteredBills.fold<double>(0, (sum, b) => sum + b.amount);
+                final totalFirstWeight = filteredBills.fold<double>(
+                  0,
+                  (sum, b) =>
+                      sum +
+                      (b.grossWeightKg > 0
+                          ? b.grossWeightKg
+                          : (b.tareWeightKg ?? 0)),
+                );
+                final totalExpected = filteredBills.fold<double>(
+                  0,
+                  (sum, b) => sum + b.amount,
+                );
 
                 final headerWidget = _buildPageHeader(filteredBills.length);
                 final summaryCardsWidget = _buildSummaryCards(
                   availableWidth: availableWidth,
                   pendingCount: filteredBills.length,
-                  totalFirstWeightKg: totalGrossWeight,
+                  totalFirstWeightKg: totalFirstWeight,
                   totalExpected: totalExpected,
                 );
 
@@ -150,9 +199,7 @@ class _PendingPageState extends State<PendingPage> {
                     children: [
                       _buildCardHeader(filteredBills.length),
                       _buildSearchAndFilter(),
-                      Expanded(
-                        child: _buildPendingTable(filteredBills, state),
-                      ),
+                      Expanded(child: _buildPendingTable(filteredBills, state)),
                     ],
                   ),
                 );
@@ -185,10 +232,7 @@ class _PendingPageState extends State<PendingPage> {
                       const SizedBox(height: 14),
                       summaryCardsWidget,
                       const SizedBox(height: 16),
-                      SizedBox(
-                        height: 500,
-                        child: cardContent,
-                      ),
+                      SizedBox(height: 500, child: cardContent),
                     ],
                   ),
                 );
@@ -472,7 +516,9 @@ class _PendingPageState extends State<PendingPage> {
                     foregroundColor: const Color(0xFF475569),
                     side: const BorderSide(color: Color(0xFFCBD5E1)),
                     padding: const EdgeInsets.all(8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                   ),
                 )
               else
@@ -489,7 +535,9 @@ class _PendingPageState extends State<PendingPage> {
                       horizontal: isCompact ? 8 : 12,
                       vertical: 8,
                     ),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     textStyle: const TextStyle(
                       fontFamily: 'PlusJakartaSans',
                       fontSize: 12,
@@ -542,7 +590,10 @@ class _PendingPageState extends State<PendingPage> {
                       },
                     )
                   : null,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 0,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
@@ -553,7 +604,10 @@ class _PendingPageState extends State<PendingPage> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFF0F52BA), width: 1.5),
+                borderSide: const BorderSide(
+                  color: Color(0xFF0F52BA),
+                  width: 1.5,
+                ),
               ),
               filled: true,
               fillColor: const Color(0xFFF8FAFC),
@@ -656,10 +710,7 @@ class _PendingPageState extends State<PendingPage> {
               if (constraints.maxWidth < minTableWidth) {
                 return SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
-                  child: SizedBox(
-                    width: minTableWidth,
-                    child: tableContent,
-                  ),
+                  child: SizedBox(width: minTableWidth, child: tableContent),
                 );
               }
               return tableContent;
@@ -689,7 +740,10 @@ class _PendingPageState extends State<PendingPage> {
           Expanded(flex: 26, child: _buildHeaderText('PARTY & MATERIAL')),
           Expanded(flex: 16, child: _buildHeaderText('GROSS WEIGHT')),
           Expanded(flex: 12, child: _buildHeaderText('TIME')),
-          Expanded(flex: 18, child: _buildHeaderText('ACTION', align: TextAlign.right)),
+          Expanded(
+            flex: 18,
+            child: _buildHeaderText('ACTION', align: TextAlign.right),
+          ),
         ],
       ),
     );
@@ -714,7 +768,21 @@ class _PendingPageState extends State<PendingPage> {
     final partyName = _getPartyName(state.parties, bill.partyId);
     final materialName = _getMaterialName(state.materials, bill.materialId);
 
+    final isGrossPending =
+        (bill.tareWeightKg ?? 0) > 0 && bill.grossWeightKg == 0;
+    final actionText = isGrossPending ? 'Gross Weight' : 'Tare Weight';
+    final badgeText = isGrossPending
+        ? 'Gross Weight Pending'
+        : 'Tare Weight Pending';
+    final displayedWeightKg = isGrossPending
+        ? (bill.tareWeightKg ?? 0)
+        : bill.grossWeightKg;
+    final weightSubtitle = isGrossPending
+        ? 'Tare • ₹${bill.amount.toStringAsFixed(0)}'
+        : 'Gross • ₹${bill.amount.toStringAsFixed(0)}';
+
     return _HoverableRow(
+      onTap: () => _showPendingSlipDialog(bill, state),
       child: Row(
         children: [
           // Bill Number
@@ -752,18 +820,25 @@ class _PendingPageState extends State<PendingPage> {
                       ),
                       const SizedBox(height: 2),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 1.5,
+                        ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFFEF3C7),
+                          color: isGrossPending
+                              ? const Color(0xFFE0F2FE)
+                              : const Color(0xFFFEF3C7),
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: const Text(
-                          'Tare Weight Pending',
+                        child: Text(
+                          badgeText,
                           style: TextStyle(
                             fontFamily: 'PlusJakartaSans',
                             fontSize: 9.5,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF92400E),
+                            color: isGrossPending
+                                ? const Color(0xFF0369A1)
+                                : const Color(0xFF92400E),
                           ),
                         ),
                       ),
@@ -855,7 +930,7 @@ class _PendingPageState extends State<PendingPage> {
             ),
           ),
 
-          // Gross Weight
+          // Gross / Tare Weight
           Expanded(
             flex: 16,
             child: Column(
@@ -866,7 +941,7 @@ class _PendingPageState extends State<PendingPage> {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    '${bill.grossWeightKg.toStringAsFixed(0)} kg',
+                    '${displayedWeightKg.toStringAsFixed(0)} kg',
                     style: const TextStyle(
                       fontFamily: 'PlusJakartaSans',
                       fontSize: 13,
@@ -879,7 +954,7 @@ class _PendingPageState extends State<PendingPage> {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Gross • ₹${bill.amount.toStringAsFixed(0)}',
+                    weightSubtitle,
                     style: const TextStyle(
                       fontFamily: 'PlusJakartaSans',
                       fontSize: 10,
@@ -914,12 +989,17 @@ class _PendingPageState extends State<PendingPage> {
               child: FilledButton.icon(
                 onPressed: () => _continueBill(bill),
                 icon: const Icon(Icons.arrow_forward_rounded, size: 14),
-                label: const Text('Tare Weight'),
+                label: Text(actionText),
                 style: FilledButton.styleFrom(
                   backgroundColor: const Color(0xFFD97706),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   textStyle: const TextStyle(
                     fontFamily: 'PlusJakartaSans',
                     fontSize: 11,
@@ -1007,8 +1087,9 @@ class _PendingPageState extends State<PendingPage> {
 
 class _HoverableRow extends StatefulWidget {
   final Widget child;
+  final VoidCallback? onTap;
 
-  const _HoverableRow({required this.child});
+  const _HoverableRow({required this.child, this.onTap});
 
   @override
   State<_HoverableRow> createState() => _HoverableRowState();
@@ -1020,18 +1101,25 @@ class _HoverableRowState extends State<_HoverableRow> {
   @override
   Widget build(BuildContext context) {
     return MouseRegion(
+      cursor: widget.onTap != null
+          ? SystemMouseCursors.click
+          : SystemMouseCursors.basic,
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        decoration: BoxDecoration(
-          color: _isHovered ? const Color(0xFFF8FAFC) : Colors.white,
-          border: const Border(
-            bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          decoration: BoxDecoration(
+            color: _isHovered ? const Color(0xFFF8FAFC) : Colors.white,
+            border: const Border(
+              bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1),
+            ),
           ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: widget.child,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: widget.child,
       ),
     );
   }

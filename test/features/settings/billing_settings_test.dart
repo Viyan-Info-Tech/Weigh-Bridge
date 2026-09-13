@@ -298,5 +298,56 @@ void main() {
 
       await settingsBloc.close();
     });
+
+    testWidgets('settings controls remain visible at minimum desktop sizes',
+        (tester) async {
+      final sizes = <Size>[
+        const Size(1400, 900),
+        const Size(1100, 720),
+        const Size(900, 600),
+        const Size(700, 600),
+        const Size(640, 480),
+      ];
+
+      for (final size in sizes) {
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1.0;
+
+        final settingsBloc = SettingsBloc(
+          getSettingsUseCase: getSettingsUseCase,
+          updateSettingsUseCase: updateSettingsUseCase,
+        );
+        settingsBloc.add(const LoadSettings());
+
+        await tester.pumpWidget(
+          BlocProvider<SettingsBloc>.value(
+            value: settingsBloc,
+            child: const MaterialApp(
+              home: SettingsPage(),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(tester.takeException(), isNull, reason: 'exceptions at $size');
+        expect(find.text('Settings'), findsOneWidget);
+        expect(find.text('Save Settings'), findsOneWidget);
+        expect(find.text('Reset Defaults'), findsOneWidget);
+        expect(find.text('Weight Unit'), findsOneWidget);
+        expect(find.text('Live Receipt Preview'), findsOneWidget);
+
+        await tester.ensureVisible(find.text('Save Settings'));
+        await tester.ensureVisible(find.text('Reset Defaults'));
+
+        await tester.pumpWidget(const SizedBox());
+        await tester.pumpAndSettle();
+        await settingsBloc.close();
+      }
+
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+    });
   });
 }
