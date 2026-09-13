@@ -47,7 +47,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -260,6 +260,21 @@ class AppDatabase extends _$AppDatabase {
 
           if (from < 11) {
             await m.createTable(appSettings);
+          }
+
+          if (from < 12) {
+            final hasFirstWeightType = await customSelect(
+              "SELECT name FROM pragma_table_info('weighments') WHERE name='first_weight_type'",
+            ).getSingleOrNull();
+            if (hasFirstWeightType == null) {
+              await m.addColumn(weighments, weighments.firstWeightType);
+            }
+            final hasSecondWeightType = await customSelect(
+              "SELECT name FROM pragma_table_info('weighments') WHERE name='second_weight_type'",
+            ).getSingleOrNull();
+            if (hasSecondWeightType == null) {
+              await m.addColumn(weighments, weighments.secondWeightType);
+            }
           }
         },
       );

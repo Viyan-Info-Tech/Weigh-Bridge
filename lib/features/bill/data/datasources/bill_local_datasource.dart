@@ -17,7 +17,9 @@ class BillLocalDataSource {
         materialId: weighment.materialId,
         paymentMode: weighment.paymentMode,
         firstWeightKg: weighment.grossWeightKg,
+        firstWeightType: Value(weighment.firstWeightType),
         secondWeightKg: Value(weighment.tareWeightKg),
+        secondWeightType: Value(weighment.secondWeightType),
         netWeightKg: Value(weighment.netWeightKg),
         vehicleCharge: Value(weighment.vehicleCharge),
         amount: Value(weighment.amount),
@@ -32,6 +34,7 @@ class BillLocalDataSource {
       id,
       WeighmentsCompanion(
         secondWeightKg: Value(weighment.tareWeightKg),
+        secondWeightType: Value(weighment.secondWeightType ?? (weighment.firstWeightType == 'TARE' ? 'GROSS' : 'TARE')),
         netWeightKg: Value(weighment.netWeightKg),
         vehicleCharge: Value(weighment.vehicleCharge),
         amount: Value(weighment.amount),
@@ -108,6 +111,8 @@ class BillLocalDataSource {
       amount: record.amount,
       remarks: record.remarks,
       status: record.status,
+      firstWeightType: record.firstWeightType,
+      secondWeightType: record.secondWeightType,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     );

@@ -47,6 +47,9 @@ import '../../features/settings/domain/usecases/get_settings.dart';
 import '../../features/settings/domain/usecases/update_settings.dart';
 import '../../features/settings/presentation/bloc/settings_bloc.dart';
 import '../../features/settings/presentation/bloc/settings_event.dart';
+import '../../features/report/data/datasources/report_local_datasource.dart';
+import '../../features/report/data/repositories/report_repository_impl.dart';
+import '../../features/report/presentation/bloc/report_bloc.dart';
 
 class Injection {
   final AppDatabase database;
@@ -57,6 +60,7 @@ class Injection {
   final VehicleTypeBloc vehicleTypeBloc;
   final MaterialBloc materialBloc;
   final SettingsBloc settingsBloc;
+  final ReportBloc reportBloc;
 
   Injection._({
     required this.database,
@@ -67,6 +71,7 @@ class Injection {
     required this.vehicleTypeBloc,
     required this.materialBloc,
     required this.settingsBloc,
+    required this.reportBloc,
   });
 
   static Future<Injection> init() async {
@@ -204,6 +209,16 @@ class Injection {
     );
     settingsBloc.add(const LoadSettings());
 
+    // Report
+    final reportLocalDataSource = ReportLocalDataSource(database);
+    final reportRepository = ReportRepositoryImpl(reportLocalDataSource);
+    final reportBloc = ReportBloc(
+      reportRepository: reportRepository,
+      partyRepository: partyRepository,
+      vehicleRepository: vehicleRepository,
+      materialRepository: materialItemRepository,
+    );
+
     await _seedInitialData(authLocalDataSource, passwordHasher);
 
     return Injection._(
@@ -215,6 +230,7 @@ class Injection {
       vehicleTypeBloc: vehicleTypeBloc,
       materialBloc: materialBloc,
       settingsBloc: settingsBloc,
+      reportBloc: reportBloc,
     );
   }
 

@@ -2679,6 +2679,22 @@ class $WeighmentsTable extends Weighments
     type: DriftSqlType.double,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _firstWeightTypeMeta = const VerificationMeta(
+    'firstWeightType',
+  );
+  @override
+  late final GeneratedColumn<String> firstWeightType = GeneratedColumn<String>(
+    'first_weight_type',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 20,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('GROSS'),
+  );
   static const VerificationMeta _secondWeightKgMeta = const VerificationMeta(
     'secondWeightKg',
   );
@@ -2688,6 +2704,21 @@ class $WeighmentsTable extends Weighments
     aliasedName,
     true,
     type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _secondWeightTypeMeta = const VerificationMeta(
+    'secondWeightType',
+  );
+  @override
+  late final GeneratedColumn<String> secondWeightType = GeneratedColumn<String>(
+    'second_weight_type',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 20,
+    ),
+    type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
   static const VerificationMeta _netWeightKgMeta = const VerificationMeta(
@@ -2785,7 +2816,9 @@ class $WeighmentsTable extends Weighments
     materialId,
     paymentMode,
     firstWeightKg,
+    firstWeightType,
     secondWeightKg,
+    secondWeightType,
     netWeightKg,
     vehicleCharge,
     amount,
@@ -2863,12 +2896,30 @@ class $WeighmentsTable extends Weighments
     } else if (isInserting) {
       context.missing(_firstWeightKgMeta);
     }
+    if (data.containsKey('first_weight_type')) {
+      context.handle(
+        _firstWeightTypeMeta,
+        firstWeightType.isAcceptableOrUnknown(
+          data['first_weight_type']!,
+          _firstWeightTypeMeta,
+        ),
+      );
+    }
     if (data.containsKey('second_weight_kg')) {
       context.handle(
         _secondWeightKgMeta,
         secondWeightKg.isAcceptableOrUnknown(
           data['second_weight_kg']!,
           _secondWeightKgMeta,
+        ),
+      );
+    }
+    if (data.containsKey('second_weight_type')) {
+      context.handle(
+        _secondWeightTypeMeta,
+        secondWeightType.isAcceptableOrUnknown(
+          data['second_weight_type']!,
+          _secondWeightTypeMeta,
         ),
       );
     }
@@ -2957,9 +3008,17 @@ class $WeighmentsTable extends Weighments
         DriftSqlType.double,
         data['${effectivePrefix}first_weight_kg'],
       )!,
+      firstWeightType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}first_weight_type'],
+      )!,
       secondWeightKg: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}second_weight_kg'],
+      ),
+      secondWeightType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}second_weight_type'],
       ),
       netWeightKg: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
@@ -3006,7 +3065,9 @@ class Weighment extends DataClass implements Insertable<Weighment> {
   final int materialId;
   final String paymentMode;
   final double firstWeightKg;
+  final String firstWeightType;
   final double? secondWeightKg;
+  final String? secondWeightType;
   final double? netWeightKg;
   final double vehicleCharge;
   final double amount;
@@ -3022,7 +3083,9 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     required this.materialId,
     required this.paymentMode,
     required this.firstWeightKg,
+    required this.firstWeightType,
     this.secondWeightKg,
+    this.secondWeightType,
     this.netWeightKg,
     required this.vehicleCharge,
     required this.amount,
@@ -3041,8 +3104,12 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     map['material_id'] = Variable<int>(materialId);
     map['payment_mode'] = Variable<String>(paymentMode);
     map['first_weight_kg'] = Variable<double>(firstWeightKg);
+    map['first_weight_type'] = Variable<String>(firstWeightType);
     if (!nullToAbsent || secondWeightKg != null) {
       map['second_weight_kg'] = Variable<double>(secondWeightKg);
+    }
+    if (!nullToAbsent || secondWeightType != null) {
+      map['second_weight_type'] = Variable<String>(secondWeightType);
     }
     if (!nullToAbsent || netWeightKg != null) {
       map['net_weight_kg'] = Variable<double>(netWeightKg);
@@ -3067,9 +3134,13 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       materialId: Value(materialId),
       paymentMode: Value(paymentMode),
       firstWeightKg: Value(firstWeightKg),
+      firstWeightType: Value(firstWeightType),
       secondWeightKg: secondWeightKg == null && nullToAbsent
           ? const Value.absent()
           : Value(secondWeightKg),
+      secondWeightType: secondWeightType == null && nullToAbsent
+          ? const Value.absent()
+          : Value(secondWeightType),
       netWeightKg: netWeightKg == null && nullToAbsent
           ? const Value.absent()
           : Value(netWeightKg),
@@ -3097,7 +3168,9 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       materialId: serializer.fromJson<int>(json['materialId']),
       paymentMode: serializer.fromJson<String>(json['paymentMode']),
       firstWeightKg: serializer.fromJson<double>(json['firstWeightKg']),
+      firstWeightType: serializer.fromJson<String>(json['firstWeightType']),
       secondWeightKg: serializer.fromJson<double?>(json['secondWeightKg']),
+      secondWeightType: serializer.fromJson<String?>(json['secondWeightType']),
       netWeightKg: serializer.fromJson<double?>(json['netWeightKg']),
       vehicleCharge: serializer.fromJson<double>(json['vehicleCharge']),
       amount: serializer.fromJson<double>(json['amount']),
@@ -3118,7 +3191,9 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       'materialId': serializer.toJson<int>(materialId),
       'paymentMode': serializer.toJson<String>(paymentMode),
       'firstWeightKg': serializer.toJson<double>(firstWeightKg),
+      'firstWeightType': serializer.toJson<String>(firstWeightType),
       'secondWeightKg': serializer.toJson<double?>(secondWeightKg),
+      'secondWeightType': serializer.toJson<String?>(secondWeightType),
       'netWeightKg': serializer.toJson<double?>(netWeightKg),
       'vehicleCharge': serializer.toJson<double>(vehicleCharge),
       'amount': serializer.toJson<double>(amount),
@@ -3137,7 +3212,9 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     int? materialId,
     String? paymentMode,
     double? firstWeightKg,
+    String? firstWeightType,
     Value<double?> secondWeightKg = const Value.absent(),
+    Value<String?> secondWeightType = const Value.absent(),
     Value<double?> netWeightKg = const Value.absent(),
     double? vehicleCharge,
     double? amount,
@@ -3153,9 +3230,13 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     materialId: materialId ?? this.materialId,
     paymentMode: paymentMode ?? this.paymentMode,
     firstWeightKg: firstWeightKg ?? this.firstWeightKg,
+    firstWeightType: firstWeightType ?? this.firstWeightType,
     secondWeightKg: secondWeightKg.present
         ? secondWeightKg.value
         : this.secondWeightKg,
+    secondWeightType: secondWeightType.present
+        ? secondWeightType.value
+        : this.secondWeightType,
     netWeightKg: netWeightKg.present ? netWeightKg.value : this.netWeightKg,
     vehicleCharge: vehicleCharge ?? this.vehicleCharge,
     amount: amount ?? this.amount,
@@ -3181,9 +3262,15 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       firstWeightKg: data.firstWeightKg.present
           ? data.firstWeightKg.value
           : this.firstWeightKg,
+      firstWeightType: data.firstWeightType.present
+          ? data.firstWeightType.value
+          : this.firstWeightType,
       secondWeightKg: data.secondWeightKg.present
           ? data.secondWeightKg.value
           : this.secondWeightKg,
+      secondWeightType: data.secondWeightType.present
+          ? data.secondWeightType.value
+          : this.secondWeightType,
       netWeightKg: data.netWeightKg.present
           ? data.netWeightKg.value
           : this.netWeightKg,
@@ -3208,7 +3295,9 @@ class Weighment extends DataClass implements Insertable<Weighment> {
           ..write('materialId: $materialId, ')
           ..write('paymentMode: $paymentMode, ')
           ..write('firstWeightKg: $firstWeightKg, ')
+          ..write('firstWeightType: $firstWeightType, ')
           ..write('secondWeightKg: $secondWeightKg, ')
+          ..write('secondWeightType: $secondWeightType, ')
           ..write('netWeightKg: $netWeightKg, ')
           ..write('vehicleCharge: $vehicleCharge, ')
           ..write('amount: $amount, ')
@@ -3229,7 +3318,9 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     materialId,
     paymentMode,
     firstWeightKg,
+    firstWeightType,
     secondWeightKg,
+    secondWeightType,
     netWeightKg,
     vehicleCharge,
     amount,
@@ -3249,7 +3340,9 @@ class Weighment extends DataClass implements Insertable<Weighment> {
           other.materialId == this.materialId &&
           other.paymentMode == this.paymentMode &&
           other.firstWeightKg == this.firstWeightKg &&
+          other.firstWeightType == this.firstWeightType &&
           other.secondWeightKg == this.secondWeightKg &&
+          other.secondWeightType == this.secondWeightType &&
           other.netWeightKg == this.netWeightKg &&
           other.vehicleCharge == this.vehicleCharge &&
           other.amount == this.amount &&
@@ -3267,7 +3360,9 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
   final Value<int> materialId;
   final Value<String> paymentMode;
   final Value<double> firstWeightKg;
+  final Value<String> firstWeightType;
   final Value<double?> secondWeightKg;
+  final Value<String?> secondWeightType;
   final Value<double?> netWeightKg;
   final Value<double> vehicleCharge;
   final Value<double> amount;
@@ -3283,7 +3378,9 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     this.materialId = const Value.absent(),
     this.paymentMode = const Value.absent(),
     this.firstWeightKg = const Value.absent(),
+    this.firstWeightType = const Value.absent(),
     this.secondWeightKg = const Value.absent(),
+    this.secondWeightType = const Value.absent(),
     this.netWeightKg = const Value.absent(),
     this.vehicleCharge = const Value.absent(),
     this.amount = const Value.absent(),
@@ -3300,7 +3397,9 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     required int materialId,
     required String paymentMode,
     required double firstWeightKg,
+    this.firstWeightType = const Value.absent(),
     this.secondWeightKg = const Value.absent(),
+    this.secondWeightType = const Value.absent(),
     this.netWeightKg = const Value.absent(),
     this.vehicleCharge = const Value.absent(),
     this.amount = const Value.absent(),
@@ -3322,7 +3421,9 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     Expression<int>? materialId,
     Expression<String>? paymentMode,
     Expression<double>? firstWeightKg,
+    Expression<String>? firstWeightType,
     Expression<double>? secondWeightKg,
+    Expression<String>? secondWeightType,
     Expression<double>? netWeightKg,
     Expression<double>? vehicleCharge,
     Expression<double>? amount,
@@ -3339,7 +3440,9 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
       if (materialId != null) 'material_id': materialId,
       if (paymentMode != null) 'payment_mode': paymentMode,
       if (firstWeightKg != null) 'first_weight_kg': firstWeightKg,
+      if (firstWeightType != null) 'first_weight_type': firstWeightType,
       if (secondWeightKg != null) 'second_weight_kg': secondWeightKg,
+      if (secondWeightType != null) 'second_weight_type': secondWeightType,
       if (netWeightKg != null) 'net_weight_kg': netWeightKg,
       if (vehicleCharge != null) 'vehicle_charge': vehicleCharge,
       if (amount != null) 'amount': amount,
@@ -3358,7 +3461,9 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     Value<int>? materialId,
     Value<String>? paymentMode,
     Value<double>? firstWeightKg,
+    Value<String>? firstWeightType,
     Value<double?>? secondWeightKg,
+    Value<String?>? secondWeightType,
     Value<double?>? netWeightKg,
     Value<double>? vehicleCharge,
     Value<double>? amount,
@@ -3375,7 +3480,9 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
       materialId: materialId ?? this.materialId,
       paymentMode: paymentMode ?? this.paymentMode,
       firstWeightKg: firstWeightKg ?? this.firstWeightKg,
+      firstWeightType: firstWeightType ?? this.firstWeightType,
       secondWeightKg: secondWeightKg ?? this.secondWeightKg,
+      secondWeightType: secondWeightType ?? this.secondWeightType,
       netWeightKg: netWeightKg ?? this.netWeightKg,
       vehicleCharge: vehicleCharge ?? this.vehicleCharge,
       amount: amount ?? this.amount,
@@ -3410,8 +3517,14 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     if (firstWeightKg.present) {
       map['first_weight_kg'] = Variable<double>(firstWeightKg.value);
     }
+    if (firstWeightType.present) {
+      map['first_weight_type'] = Variable<String>(firstWeightType.value);
+    }
     if (secondWeightKg.present) {
       map['second_weight_kg'] = Variable<double>(secondWeightKg.value);
+    }
+    if (secondWeightType.present) {
+      map['second_weight_type'] = Variable<String>(secondWeightType.value);
     }
     if (netWeightKg.present) {
       map['net_weight_kg'] = Variable<double>(netWeightKg.value);
@@ -3447,7 +3560,9 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
           ..write('materialId: $materialId, ')
           ..write('paymentMode: $paymentMode, ')
           ..write('firstWeightKg: $firstWeightKg, ')
+          ..write('firstWeightType: $firstWeightType, ')
           ..write('secondWeightKg: $secondWeightKg, ')
+          ..write('secondWeightType: $secondWeightType, ')
           ..write('netWeightKg: $netWeightKg, ')
           ..write('vehicleCharge: $vehicleCharge, ')
           ..write('amount: $amount, ')
@@ -7041,7 +7156,9 @@ typedef $$WeighmentsTableCreateCompanionBuilder =
       required int materialId,
       required String paymentMode,
       required double firstWeightKg,
+      Value<String> firstWeightType,
       Value<double?> secondWeightKg,
+      Value<String?> secondWeightType,
       Value<double?> netWeightKg,
       Value<double> vehicleCharge,
       Value<double> amount,
@@ -7059,7 +7176,9 @@ typedef $$WeighmentsTableUpdateCompanionBuilder =
       Value<int> materialId,
       Value<String> paymentMode,
       Value<double> firstWeightKg,
+      Value<String> firstWeightType,
       Value<double?> secondWeightKg,
+      Value<String?> secondWeightType,
       Value<double?> netWeightKg,
       Value<double> vehicleCharge,
       Value<double> amount,
@@ -7154,8 +7273,18 @@ class $$WeighmentsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get firstWeightType => $composableBuilder(
+    column: $table.firstWeightType,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<double> get secondWeightKg => $composableBuilder(
     column: $table.secondWeightKg,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get secondWeightType => $composableBuilder(
+    column: $table.secondWeightType,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7293,8 +7422,18 @@ class $$WeighmentsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get firstWeightType => $composableBuilder(
+    column: $table.firstWeightType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<double> get secondWeightKg => $composableBuilder(
     column: $table.secondWeightKg,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get secondWeightType => $composableBuilder(
+    column: $table.secondWeightType,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -7430,8 +7569,18 @@ class $$WeighmentsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get firstWeightType => $composableBuilder(
+    column: $table.firstWeightType,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<double> get secondWeightKg => $composableBuilder(
     column: $table.secondWeightKg,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get secondWeightType => $composableBuilder(
+    column: $table.secondWeightType,
     builder: (column) => column,
   );
 
@@ -7569,7 +7718,9 @@ class $$WeighmentsTableTableManager
                 Value<int> materialId = const Value.absent(),
                 Value<String> paymentMode = const Value.absent(),
                 Value<double> firstWeightKg = const Value.absent(),
+                Value<String> firstWeightType = const Value.absent(),
                 Value<double?> secondWeightKg = const Value.absent(),
+                Value<String?> secondWeightType = const Value.absent(),
                 Value<double?> netWeightKg = const Value.absent(),
                 Value<double> vehicleCharge = const Value.absent(),
                 Value<double> amount = const Value.absent(),
@@ -7585,7 +7736,9 @@ class $$WeighmentsTableTableManager
                 materialId: materialId,
                 paymentMode: paymentMode,
                 firstWeightKg: firstWeightKg,
+                firstWeightType: firstWeightType,
                 secondWeightKg: secondWeightKg,
+                secondWeightType: secondWeightType,
                 netWeightKg: netWeightKg,
                 vehicleCharge: vehicleCharge,
                 amount: amount,
@@ -7603,7 +7756,9 @@ class $$WeighmentsTableTableManager
                 required int materialId,
                 required String paymentMode,
                 required double firstWeightKg,
+                Value<String> firstWeightType = const Value.absent(),
                 Value<double?> secondWeightKg = const Value.absent(),
+                Value<String?> secondWeightType = const Value.absent(),
                 Value<double?> netWeightKg = const Value.absent(),
                 Value<double> vehicleCharge = const Value.absent(),
                 Value<double> amount = const Value.absent(),
@@ -7619,7 +7774,9 @@ class $$WeighmentsTableTableManager
                 materialId: materialId,
                 paymentMode: paymentMode,
                 firstWeightKg: firstWeightKg,
+                firstWeightType: firstWeightType,
                 secondWeightKg: secondWeightKg,
+                secondWeightType: secondWeightType,
                 netWeightKg: netWeightKg,
                 vehicleCharge: vehicleCharge,
                 amount: amount,

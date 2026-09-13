@@ -357,6 +357,8 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       amount: state.amount,
       remarks: state.remarksText.isNotEmpty ? state.remarksText : null,
       status: status,
+      firstWeightType: 'GROSS',
+      secondWeightType: state.tareWeightKg > 0 ? 'TARE' : null,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );

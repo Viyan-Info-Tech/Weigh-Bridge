@@ -12,6 +12,7 @@ import '../../../party/presentation/pages/party_list_page.dart';
 import '../../../vehicle/presentation/pages/vehicles_merged_page.dart';
 import '../../../material/presentation/pages/material_list_page.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
+import '../../../report/presentation/pages/report_page.dart';
 import 'about_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -36,7 +37,7 @@ class _HomePageState extends State<HomePage> {
       const VehiclesMergedPage(),
       const MaterialListPage(),
       PendingPage(onSwitchToBill: () => setState(() => _selectedIndex = 0)),
-      const _ComingSoonPage(title: 'Report'),
+      const ReportPage(),
       const SettingsPage(),
       const AboutPage(),
     ];
@@ -232,43 +233,6 @@ class _HomePageState extends State<HomePage> {
                 ),
         ],
       ],
-    );
-  }
-}
-
-class _ComingSoonPage extends StatelessWidget {
-  final String title;
-
-  const _ComingSoonPage({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.construction, size: 48, color: Colors.grey.shade300),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: Colors.grey.shade600,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Coming soon',
-            style: TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 14,
-              color: Colors.grey.shade400,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
