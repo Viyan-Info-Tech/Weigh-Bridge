@@ -62,6 +62,8 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _showRemarks = true;
   bool _showFooterNote = true;
 
+  bool _isEditing = false;
+  BillingSettings? _savedSettings;
   bool _isInitialized = false;
 
   @override
@@ -94,6 +96,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   void _populateFromSettings(BillingSettings settings) {
+    _savedSettings = settings;
     _weightUnit = settings.weightUnit;
     _billPrefixController.text = settings.billPrefix;
     _billStartingNumberController.text = settings.billStartingNumber.toString();
@@ -125,6 +128,80 @@ class _SettingsPageState extends State<SettingsPage> {
     _showPendingAmount = settings.showPendingAmount;
     _showRemarks = settings.showRemarks;
     _showFooterNote = settings.showFooterNote;
+  }
+
+  void _cancelEditing() {
+    if (_savedSettings != null) {
+      _populateFromSettings(_savedSettings!);
+    }
+    setState(() {
+      _isEditing = false;
+    });
+  }
+
+  void _showResetConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          title: const Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Color(0xFFDC2626), size: 24),
+              SizedBox(width: 10),
+              Text(
+                'Reset Settings?',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            'This will restore all settings to their default values. Your current changes will be lost.',
+            style: TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 13,
+              color: Color(0xFF475569),
+              height: 1.4,
+            ),
+          ),
+          actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFF64748B),
+                side: const BorderSide(color: Color(0xFFCBD5E1)),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _resetToDefaults();
+                setState(() {
+                  _isEditing = true;
+                });
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFDC2626),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                elevation: 0,
+              ),
+              child: const Text('Reset Defaults'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   void _resetToDefaults() {
@@ -287,6 +364,12 @@ class _SettingsPageState extends State<SettingsPage> {
     return BlocConsumer<SettingsBloc, SettingsState>(
       listener: (context, state) {
         if (state.status == SettingsStatus.saved) {
+          if (state.settings != null) {
+            _populateFromSettings(state.settings!);
+          }
+          setState(() {
+            _isEditing = false;
+          });
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Settings saved successfully!'),
@@ -466,15 +549,55 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildActionButtons(bool isSaving) {
+    if (!_isEditing) {
+      return Wrap(
+        spacing: 12,
+        runSpacing: 8,
+        alignment: WrapAlignment.end,
+        children: [
+          OutlinedButton.icon(
+            onPressed: isSaving ? null : _showResetConfirmationDialog,
+            icon: const Icon(Icons.refresh_rounded, size: 16),
+            label: const Text('Reset Defaults'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF64748B),
+              side: const BorderSide(color: Color(0xFFCBD5E1)),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            ),
+          ),
+          ElevatedButton.icon(
+            onPressed: () => setState(() => _isEditing = true),
+            icon: const Icon(Icons.edit_rounded, size: 18),
+            label: const Text(
+              'Edit Settings',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.3,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0D3B82),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              elevation: 2,
+            ),
+          ),
+        ],
+      );
+    }
+
     return Wrap(
       spacing: 12,
       runSpacing: 8,
       alignment: WrapAlignment.end,
       children: [
         OutlinedButton.icon(
-          onPressed: isSaving ? null : _resetToDefaults,
-          icon: const Icon(Icons.refresh_rounded, size: 16),
-          label: const Text('Reset Defaults'),
+          onPressed: isSaving ? null : _cancelEditing,
+          icon: const Icon(Icons.close_rounded, size: 16),
+          label: const Text('Cancel'),
           style: OutlinedButton.styleFrom(
             foregroundColor: const Color(0xFF64748B),
             side: const BorderSide(color: Color(0xFFCBD5E1)),
@@ -493,7 +616,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     strokeWidth: 2,
                   ),
                 )
-              : const Icon(Icons.save_rounded, size: 18),
+              : const Icon(Icons.check_rounded, size: 18),
           label: Text(
             isSaving ? 'Saving...' : 'Save Settings',
             style: const TextStyle(
@@ -503,7 +626,7 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF0D3B82),
+            backgroundColor: const Color(0xFF16A34A),
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -659,7 +782,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }) {
     final isSelected = _weightUnit == value;
     return InkWell(
-      onTap: () => setState(() => _weightUnit = value),
+      onTap: _isEditing ? () => setState(() => _weightUnit = value) : null,
       borderRadius: BorderRadius.circular(10),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
@@ -912,11 +1035,13 @@ class _SettingsPageState extends State<SettingsPage> {
                 onChanged: (_) => setState(() {}),
               );
               final clearButton = OutlinedButton(
-                onPressed: () {
-                  setState(() {
-                    _logoPathController.clear();
-                  });
-                },
+                onPressed: _isEditing
+                    ? () {
+                        setState(() {
+                          _logoPathController.clear();
+                        });
+                      }
+                    : null,
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF64748B),
                   side: const BorderSide(color: Color(0xFFCBD5E1)),
@@ -985,7 +1110,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 runSpacing: 4,
                 children: [
                   TextButton.icon(
-                    onPressed: () => _selectAllFields(true),
+                    onPressed: _isEditing ? () => _selectAllFields(true) : null,
                     icon: const Icon(Icons.check_box_outlined, size: 16),
                     label: const Text('Select All'),
                     style: TextButton.styleFrom(
@@ -994,7 +1119,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                   TextButton.icon(
-                    onPressed: () => _selectAllFields(false),
+                    onPressed: _isEditing ? () => _selectAllFields(false) : null,
                     icon: const Icon(Icons.clear_rounded, size: 16),
                     label: const Text('Deselect All'),
                     style: TextButton.styleFrom(
@@ -1096,7 +1221,7 @@ class _SettingsPageState extends State<SettingsPage> {
         width: isSelected ? 1.5 : 1.0,
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-      onSelected: onChanged,
+      onSelected: _isEditing ? onChanged : null,
     );
   }
 
@@ -1116,7 +1241,7 @@ class _SettingsPageState extends State<SettingsPage> {
             children: [
               Checkbox(
                 value: _showFooterNote,
-                onChanged: (v) => setState(() => _showFooterNote = v ?? true),
+                onChanged: _isEditing ? (v) => setState(() => _showFooterNote = v ?? true) : null,
                 activeColor: const Color(0xFF0D3B82),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
               ),
@@ -1700,6 +1825,8 @@ class _SettingsPageState extends State<SettingsPage> {
     ValueChanged<String>? onChanged,
     FormFieldValidator<String>? validator,
   }) {
+    final effectiveEnabled = enabled && _isEditing;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1716,7 +1843,7 @@ class _SettingsPageState extends State<SettingsPage> {
         const SizedBox(height: 6),
         TextFormField(
           controller: controller,
-          enabled: enabled,
+          enabled: effectiveEnabled,
           maxLines: maxLines,
           maxLength: maxLength,
           keyboardType: keyboardType,
@@ -1724,11 +1851,11 @@ class _SettingsPageState extends State<SettingsPage> {
           inputFormatters: inputFormatters,
           onChanged: onChanged,
           validator: validator,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'PlusJakartaSans',
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF0F172A),
+            color: effectiveEnabled ? const Color(0xFF0F172A) : const Color(0xFF334155),
           ),
           decoration: InputDecoration(
             hintText: hint,
@@ -1739,7 +1866,7 @@ class _SettingsPageState extends State<SettingsPage> {
               color: Colors.grey.shade400,
             ),
             filled: true,
-            fillColor: enabled ? const Color(0xFFF8FAFC) : const Color(0xFFF1F5F9),
+            fillColor: effectiveEnabled ? const Color(0xFFF8FAFC) : const Color(0xFFF1F5F9),
             counterText: '',
             errorMaxLines: 3,
             contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -1750,6 +1877,10 @@ class _SettingsPageState extends State<SettingsPage> {
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+            ),
+            disabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),

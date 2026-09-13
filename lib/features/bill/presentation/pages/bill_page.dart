@@ -165,7 +165,7 @@ class _BillPageState extends State<BillPage> {
             ),
           );
         }
-        if (state.editingBillId != null && state.grossWeightText.isNotEmpty) {
+        if (state.editingBillId != null) {
           _grossWeightController.text = state.grossWeightText;
           _tareWeightController.text = state.tareWeightText;
           _remarksController.text = state.remarksText;
@@ -476,6 +476,7 @@ class _BillPageState extends State<BillPage> {
       selectedMaterial: state.selectedMaterial,
       paymentMode: state.paymentMode,
       isEditing: state.isEditing,
+      editingFirstWeightType: state.editingFirstWeightType,
       grossWeightController: _grossWeightController,
       tareWeightController: _tareWeightController,
       remarksController: _remarksController,

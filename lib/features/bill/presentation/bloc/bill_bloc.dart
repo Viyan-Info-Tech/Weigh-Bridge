@@ -343,6 +343,53 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     final isCompleted = state.grossWeightKg > 0 && state.tareWeightKg > 0;
     final status = isCompleted ? 'completed' : 'pending';
 
+    double firstWeightKg;
+    String firstWeightType;
+    double? secondWeightKg;
+    String? secondWeightType;
+
+    if (state.isEditing) {
+      final origFirstType = state.editingFirstWeightType?.toUpperCase() ??
+          (state.editingFirstWeightKg != null && state.editingFirstWeightKg! > 0
+              ? 'GROSS'
+              : (state.tareWeightKg > 0 ? 'TARE' : 'GROSS'));
+
+      if (origFirstType == 'TARE') {
+        firstWeightKg = state.editingFirstWeightKg ?? state.tareWeightKg;
+        firstWeightType = 'TARE';
+        secondWeightKg = state.grossWeightKg > 0 ? state.grossWeightKg : null;
+        secondWeightType = state.grossWeightKg > 0 ? 'GROSS' : null;
+      } else {
+        firstWeightKg = state.editingFirstWeightKg ?? state.grossWeightKg;
+        firstWeightType = 'GROSS';
+        secondWeightKg = state.tareWeightKg > 0 ? state.tareWeightKg : null;
+        secondWeightType = state.tareWeightKg > 0 ? 'TARE' : null;
+      }
+    } else {
+      // New bill (first weighing)
+      if (state.tareWeightKg > 0 && state.grossWeightKg <= 0) {
+        firstWeightKg = state.tareWeightKg;
+        firstWeightType = 'TARE';
+        secondWeightKg = null;
+        secondWeightType = null;
+      } else if (state.grossWeightKg > 0 && state.tareWeightKg <= 0) {
+        firstWeightKg = state.grossWeightKg;
+        firstWeightType = 'GROSS';
+        secondWeightKg = null;
+        secondWeightType = null;
+      } else {
+        // Both entered directly
+        firstWeightKg = state.grossWeightKg;
+        firstWeightType = 'GROSS';
+        secondWeightKg = state.tareWeightKg > 0 ? state.tareWeightKg : null;
+        secondWeightType = state.tareWeightKg > 0 ? 'TARE' : null;
+      }
+    }
+
+    final netWeight = (state.grossWeightKg > 0 && state.tareWeightKg > 0)
+        ? (state.grossWeightKg - state.tareWeightKg).abs()
+        : null;
+
     final weighment = Weighment(
       id: state.editingBillId ?? 0,
       billNumber: state.currentBillNumber,
@@ -350,15 +397,15 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       vehicleId: state.selectedVehicle!.id,
       materialId: state.selectedMaterial!.id,
       paymentMode: state.paymentMode,
-      grossWeightKg: state.grossWeightKg,
-      tareWeightKg: state.tareWeightKg > 0 ? state.tareWeightKg : null,
-      netWeightKg: isCompleted ? state.netWeightKg : null,
+      firstWeightKg: firstWeightKg,
+      firstWeightType: firstWeightType,
+      secondWeightKg: secondWeightKg,
+      secondWeightType: secondWeightType,
+      netWeightKg: netWeight,
       vehicleCharge: state.vehicleCharge,
       amount: state.amount,
       remarks: state.remarksText.isNotEmpty ? state.remarksText : null,
       status: status,
-      firstWeightType: 'GROSS',
-      secondWeightType: state.tareWeightKg > 0 ? 'TARE' : null,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
@@ -427,30 +474,28 @@ class BillBloc extends Bloc<BillEvent, BillState> {
           weighment.vehicleCharge != defaultCharge &&
           weighment.vehicleCharge > 0;
 
-      final hasGross = weighment.grossWeightKg > 0;
+      final hasGross = (weighment.grossWeightKg ?? 0) > 0;
       final hasTare = (weighment.tareWeightKg ?? 0) > 0;
+      final grossVal = weighment.grossWeightKg ?? 0;
+      final tareVal = weighment.tareWeightKg ?? 0;
 
       emit(
         state.copyWith(
           clearError: true,
           editingBillId: weighment.id,
+          editingFirstWeightType: weighment.firstWeightType,
+          editingFirstWeightKg: weighment.firstWeightKg,
           currentBillNumber: weighment.billNumber,
           selectedParty: party,
           selectedVehicle: vehicle,
           selectedVehicleType: vehicleType,
           selectedMaterial: material,
           paymentMode: weighment.paymentMode,
-          grossWeightText: hasGross
-              ? weighment.grossWeightKg.toStringAsFixed(0)
-              : '',
-          grossWeightKg: weighment.grossWeightKg,
-          tareWeightText: hasTare
-              ? weighment.tareWeightKg!.toStringAsFixed(0)
-              : '',
-          tareWeightKg: weighment.tareWeightKg ?? 0,
-          netWeightKg: (hasGross && hasTare)
-              ? (weighment.grossWeightKg - (weighment.tareWeightKg ?? 0))
-              : 0,
+          grossWeightText: hasGross ? grossVal.toStringAsFixed(0) : '',
+          grossWeightKg: grossVal,
+          tareWeightText: hasTare ? tareVal.toStringAsFixed(0) : '',
+          tareWeightKg: tareVal,
+          netWeightKg: (hasGross && hasTare) ? (grossVal - tareVal).abs() : 0,
           defaultVehicleCharge: defaultCharge,
           vehicleCharge: weighment.vehicleCharge,
           isVehicleChargeManuallyEdited: isManuallyEdited,
@@ -496,6 +541,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
         clearVehicleType: true,
         clearMaterial: true,
         clearEditingBillId: true,
+        clearEditingFirstWeight: true,
         grossWeightText: '',
         tareWeightText: '',
         remarksText: '',

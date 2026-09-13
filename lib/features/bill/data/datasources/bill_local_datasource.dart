@@ -16,9 +16,9 @@ class BillLocalDataSource {
         vehicleId: weighment.vehicleId,
         materialId: weighment.materialId,
         paymentMode: weighment.paymentMode,
-        firstWeightKg: weighment.grossWeightKg,
+        firstWeightKg: weighment.firstWeightKg,
         firstWeightType: Value(weighment.firstWeightType),
-        secondWeightKg: Value(weighment.tareWeightKg),
+        secondWeightKg: Value(weighment.secondWeightKg),
         secondWeightType: Value(weighment.secondWeightType),
         netWeightKg: Value(weighment.netWeightKg),
         vehicleCharge: Value(weighment.vehicleCharge),
@@ -33,8 +33,10 @@ class BillLocalDataSource {
     await _database.billDao.updateWeighment(
       id,
       WeighmentsCompanion(
-        secondWeightKg: Value(weighment.tareWeightKg),
-        secondWeightType: Value(weighment.secondWeightType ?? (weighment.firstWeightType == 'TARE' ? 'GROSS' : 'TARE')),
+        firstWeightKg: Value(weighment.firstWeightKg),
+        firstWeightType: Value(weighment.firstWeightType),
+        secondWeightKg: Value(weighment.secondWeightKg),
+        secondWeightType: Value(weighment.secondWeightType),
         netWeightKg: Value(weighment.netWeightKg),
         vehicleCharge: Value(weighment.vehicleCharge),
         amount: Value(weighment.amount),
@@ -97,6 +99,19 @@ class BillLocalDataSource {
   }
 
   Weighment _toEntity(dynamic record) {
+    var firstWeight = (record.firstWeightKg as num).toDouble();
+    var firstType = (record.firstWeightType as String?) ?? 'GROSS';
+    var secondWeight = (record.secondWeightKg as num?)?.toDouble();
+    var secondType = record.secondWeightType as String?;
+
+    // Self-heal legacy rows where first weight was stored as 0 and second weight had tare weight
+    if (firstWeight == 0 && secondWeight != null && secondWeight > 0) {
+      firstWeight = secondWeight;
+      firstType = 'TARE';
+      secondWeight = null;
+      secondType = null;
+    }
+
     return Weighment(
       id: record.id,
       billNumber: record.billNumber,
@@ -104,17 +119,17 @@ class BillLocalDataSource {
       vehicleId: record.vehicleId,
       materialId: record.materialId,
       paymentMode: record.paymentMode,
-      grossWeightKg: record.firstWeightKg,
-      tareWeightKg: record.secondWeightKg,
-      netWeightKg: record.netWeightKg,
-      vehicleCharge: record.vehicleCharge,
-      amount: record.amount,
-      remarks: record.remarks,
-      status: record.status,
-      firstWeightType: record.firstWeightType,
-      secondWeightType: record.secondWeightType,
-      createdAt: record.createdAt,
-      updatedAt: record.updatedAt,
+      firstWeightKg: firstWeight,
+      firstWeightType: firstType,
+      secondWeightKg: secondWeight,
+      secondWeightType: secondType,
+      netWeightKg: (record.netWeightKg as num?)?.toDouble(),
+      vehicleCharge: (record.vehicleCharge as num).toDouble(),
+      amount: (record.amount as num).toDouble(),
+      remarks: record.remarks as String?,
+      status: record.status as String,
+      createdAt: record.createdAt as DateTime,
+      updatedAt: record.updatedAt as DateTime,
     );
   }
 }

@@ -60,10 +60,9 @@ class WeighmentSlipDialog extends StatelessWidget {
     final dateFormatted = DateFormat('dd/MM/yyyy').format(bill.createdAt);
     final timeFormatted = DateFormat('hh:mm:ss a').format(bill.createdAt);
     final printDate = DateFormat('dd/MM/yyyy HH:mm:ss').format(DateTime.now());
-    final isCompleted = bill.status.toLowerCase() == 'completed';
+    final isCompleted = bill.status.toLowerCase() == 'completed' || bill.isCompleted;
     final isGrossPending =
-        !isCompleted &&
-        ((bill.tareWeightKg ?? 0) > 0 && bill.grossWeightKg == 0);
+        !isCompleted && (bill.firstWeightType.toUpperCase() == 'TARE');
 
     // Check if any basic info rows are enabled
     final hasSerial = activeSettings.showSerialNumber;
@@ -173,7 +172,7 @@ class WeighmentSlipDialog extends StatelessWidget {
                           if (hasGross)
                             _buildWeightRow(
                               'Gross Weight',
-                              '${bill.grossWeightKg.toStringAsFixed(3)} kg',
+                              '${bill.grossWeightKg?.toStringAsFixed(3) ?? '—'} kg',
                             ),
                           if (hasTare)
                             _buildWeightRow(
@@ -186,7 +185,7 @@ class WeighmentSlipDialog extends StatelessWidget {
                             const SizedBox(height: 4),
                             _buildWeightRow(
                               'Net Weight',
-                              '${(bill.netWeightKg ?? (bill.grossWeightKg - (bill.tareWeightKg ?? 0))).toStringAsFixed(3)} kg',
+                              '${(bill.netWeightKg ?? 0).toStringAsFixed(3)} kg',
                             ),
                           ],
                         ] else if (isGrossPending) ...[
@@ -195,7 +194,7 @@ class WeighmentSlipDialog extends StatelessWidget {
                           if (hasTare)
                             _buildWeightRow(
                               'Tare Weight',
-                              '${bill.tareWeightKg!.toStringAsFixed(3)} kg',
+                              '${(bill.tareWeightKg ?? bill.firstWeightKg).toStringAsFixed(3)} kg',
                             ),
                           if (hasGross || hasTare) const SizedBox(height: 4),
                           if (hasNet) ...[
@@ -207,7 +206,7 @@ class WeighmentSlipDialog extends StatelessWidget {
                           if (hasGross)
                             _buildWeightRow(
                               'Gross Weight',
-                              '${bill.grossWeightKg.toStringAsFixed(3)} kg',
+                              '${(bill.grossWeightKg ?? bill.firstWeightKg).toStringAsFixed(3)} kg',
                             ),
                           if (hasTare)
                             _buildWeightRow('Tare Weight', 'PENDING'),
@@ -546,8 +545,8 @@ class WeighmentSlipDialog extends StatelessWidget {
 
   Widget _buildStatusBadge({required bool isGrossPending}) {
     final text = isGrossPending
-        ? 'GROSS WEIGHT PENDING'
-        : 'TARE WEIGHT PENDING';
+        ? 'PENDING • GROSS WT'
+        : 'PENDING • TARE WT';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(

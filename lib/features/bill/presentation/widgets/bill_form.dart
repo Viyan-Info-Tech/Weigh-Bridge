@@ -18,6 +18,7 @@ class BillForm extends StatefulWidget {
   final domain.MaterialItem? selectedMaterial;
   final String paymentMode;
   final bool isEditing;
+  final String? editingFirstWeightType;
   final TextEditingController grossWeightController;
   final TextEditingController tareWeightController;
   final TextEditingController remarksController;
@@ -54,6 +55,7 @@ class BillForm extends StatefulWidget {
     this.selectedMaterial,
     required this.paymentMode,
     this.isEditing = false,
+    this.editingFirstWeightType,
     required this.grossWeightController,
     required this.tareWeightController,
     required this.remarksController,
@@ -99,6 +101,14 @@ class _BillFormState extends State<BillForm> {
         final isCompact = formWidth < 480;
         final isWeightCompact = formWidth < 440;
         final isHeaderCompact = formWidth < 400;
+
+        final bool isGrossEnabled = !widget.isEditing ||
+            widget.editingFirstWeightType?.toUpperCase() == 'TARE';
+        final bool isTareEnabled = !widget.isEditing ||
+            widget.editingFirstWeightType?.toUpperCase() == 'GROSS';
+        final netWeightDisplay = widget.weightValidationError != null || widget.netWeightKg <= 0
+            ? '—'
+            : '${widget.netWeightKg.toStringAsFixed(0)} ${widget.weightUnit}';
 
         return Container(
           padding: EdgeInsets.all(formWidth < 500 ? 16 : 24),
@@ -183,13 +193,14 @@ class _BillFormState extends State<BillForm> {
                       'Gross Weight (${widget.weightUnit}) *',
                       widget.grossWeightController,
                       widget.onGrossWeightChanged,
-                      enabled: !widget.isEditing,
+                      enabled: isGrossEnabled,
                     ),
                     const SizedBox(height: 14),
                     _buildProminentWeightField(
                       'Tare Weight (${widget.weightUnit}) *',
                       widget.tareWeightController,
                       widget.onTareWeightChanged,
+                      enabled: isTareEnabled,
                     ),
                   ],
                 )
@@ -201,7 +212,7 @@ class _BillFormState extends State<BillForm> {
                         'Gross Weight (${widget.weightUnit}) *',
                         widget.grossWeightController,
                         widget.onGrossWeightChanged,
-                        enabled: !widget.isEditing,
+                        enabled: isGrossEnabled,
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -210,6 +221,7 @@ class _BillFormState extends State<BillForm> {
                         'Tare Weight (${widget.weightUnit}) *',
                         widget.tareWeightController,
                         widget.onTareWeightChanged,
+                        enabled: isTareEnabled,
                       ),
                     ),
                   ],
@@ -243,7 +255,7 @@ class _BillFormState extends State<BillForm> {
                   children: [
                     _buildAutoField(
                       'Net Weight (${widget.weightUnit})',
-                      widget.weightValidationError != null ? '—' : '${widget.netWeightKg.toStringAsFixed(0)} ${widget.weightUnit}',
+                      netWeightDisplay,
                     ),
                     const SizedBox(height: 14),
                     _buildVehicleChargeField(),
@@ -255,7 +267,7 @@ class _BillFormState extends State<BillForm> {
                     Expanded(
                       child: _buildAutoField(
                         'Net Weight (${widget.weightUnit})',
-                        widget.weightValidationError != null ? '—' : '${widget.netWeightKg.toStringAsFixed(0)} ${widget.weightUnit}',
+                        netWeightDisplay,
                       ),
                     ),
                     const SizedBox(width: 16),

@@ -172,7 +172,7 @@ class WeightDisplay extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'GROSS: ${grossWeight.toStringAsFixed(0)} $weightUnit',
+                                'GROSS: ${grossWeight > 0 ? '${grossWeight.toStringAsFixed(0)} $weightUnit' : '—'}',
                                 style: const TextStyle(
                                   fontFamily: 'PlusJakartaSans',
                                   fontSize: 8.5,
@@ -181,7 +181,7 @@ class WeightDisplay extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                'TARE: ${tareWeight.toStringAsFixed(0)} $weightUnit',
+                                'TARE: ${tareWeight > 0 ? '${tareWeight.toStringAsFixed(0)} $weightUnit' : '—'}',
                                 style: const TextStyle(
                                   fontFamily: 'PlusJakartaSans',
                                   fontSize: 8.5,
@@ -190,7 +190,7 @@ class WeightDisplay extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                'NET: ${netKg.toStringAsFixed(0)} $weightUnit',
+                                'NET: ${netKg > 0 ? '${netKg.toStringAsFixed(0)} $weightUnit' : '—'}',
                                 style: const TextStyle(
                                   fontFamily: 'PlusJakartaSans',
                                   fontSize: 8.5,

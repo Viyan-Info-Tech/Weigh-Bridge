@@ -54,8 +54,7 @@ class _PendingPageState extends State<PendingPage> {
     } catch (_) {}
 
     final materialName = _getMaterialName(state.materials, bill.materialId);
-    final isGrossPending =
-        (bill.tareWeightKg ?? 0) > 0 && bill.grossWeightKg == 0;
+    final isGrossPending = bill.firstWeightType.toUpperCase() == 'TARE';
 
     showDialog(
       context: context,
@@ -162,11 +161,7 @@ class _PendingPageState extends State<PendingPage> {
 
                 final totalFirstWeight = filteredBills.fold<double>(
                   0,
-                  (sum, b) =>
-                      sum +
-                      (b.grossWeightKg > 0
-                          ? b.grossWeightKg
-                          : (b.tareWeightKg ?? 0)),
+                  (sum, b) => sum + b.firstWeightKg,
                 );
                 final totalExpected = filteredBills.fold<double>(
                   0,
@@ -738,7 +733,7 @@ class _PendingPageState extends State<PendingPage> {
           Expanded(flex: 20, child: _buildHeaderText('BILL NUMBER')),
           Expanded(flex: 18, child: _buildHeaderText('VEHICLE')),
           Expanded(flex: 26, child: _buildHeaderText('PARTY & MATERIAL')),
-          Expanded(flex: 16, child: _buildHeaderText('GROSS WEIGHT')),
+          Expanded(flex: 16, child: _buildHeaderText('FIRST WEIGHT')),
           Expanded(flex: 12, child: _buildHeaderText('TIME')),
           Expanded(
             flex: 18,
@@ -768,15 +763,12 @@ class _PendingPageState extends State<PendingPage> {
     final partyName = _getPartyName(state.parties, bill.partyId);
     final materialName = _getMaterialName(state.materials, bill.materialId);
 
-    final isGrossPending =
-        (bill.tareWeightKg ?? 0) > 0 && bill.grossWeightKg == 0;
+    final isGrossPending = bill.firstWeightType.toUpperCase() == 'TARE';
     final actionText = isGrossPending ? 'Gross Weight' : 'Tare Weight';
     final badgeText = isGrossPending
-        ? 'Gross Weight Pending'
-        : 'Tare Weight Pending';
-    final displayedWeightKg = isGrossPending
-        ? (bill.tareWeightKg ?? 0)
-        : bill.grossWeightKg;
+        ? 'PENDING • GROSS WT'
+        : 'PENDING • TARE WT';
+    final displayedWeightKg = bill.firstWeightKg;
     final weightSubtitle = isGrossPending
         ? 'Tare • ₹${bill.amount.toStringAsFixed(0)}'
         : 'Gross • ₹${bill.amount.toStringAsFixed(0)}';

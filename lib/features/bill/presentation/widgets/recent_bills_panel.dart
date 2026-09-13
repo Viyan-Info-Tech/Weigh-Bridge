@@ -194,9 +194,9 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
       if (!matchesSearch) return false;
 
       if (_filterType == 'COMPLETED') {
-        return bill.status.toLowerCase() == 'completed';
+        return bill.isCompleted;
       } else if (_filterType == 'PENDING') {
-        return bill.status.toLowerCase() == 'pending';
+        return bill.isPending;
       }
       return true;
     }).toList();
@@ -665,11 +665,57 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
     final vehicleNo = _getVehicleNumber(bill.vehicleId);
     final partyName = _getPartyName(bill.partyId);
     final materialName = _getMaterialName(bill.materialId);
-    final isCompleted = bill.status.toLowerCase() == 'completed';
+    final isCompleted = bill.status.toLowerCase() == 'completed' || bill.isCompleted;
+    final isTareFirst = bill.firstWeightType.toUpperCase() == 'TARE';
     final timeStr = DateFormat('hh:mm a').format(bill.createdAt);
     final dateStr = DateFormat('dd MMM').format(bill.createdAt);
     final timestampLabel =
         _isSameDay(bill.createdAt, DateTime.now()) ? timeStr : '$dateStr, $timeStr';
+
+    final String statusBadgeText;
+    final Color statusBadgeBg;
+    final Color statusBadgeColor;
+
+    if (isCompleted) {
+      statusBadgeText = 'COMPLETED';
+      statusBadgeBg = const Color(0xFFDCFCE7);
+      statusBadgeColor = const Color(0xFF16A34A);
+    } else if (isTareFirst) {
+      statusBadgeText = 'PENDING • GROSS WT';
+      statusBadgeBg = const Color(0xFFFEF3C7);
+      statusBadgeColor = const Color(0xFFD97706);
+    } else {
+      statusBadgeText = 'PENDING • TARE WT';
+      statusBadgeBg = const Color(0xFFFEF3C7);
+      statusBadgeColor = const Color(0xFFD97706);
+    }
+
+    final String grossDisplay;
+    final Color? grossColor;
+    final String tareDisplay;
+    final Color? tareColor;
+    final String netDisplay;
+
+    if (isCompleted) {
+      grossDisplay = bill.grossWeightKg != null ? '${bill.grossWeightKg!.toStringAsFixed(0)} kg' : '—';
+      grossColor = null;
+      tareDisplay = bill.tareWeightKg != null ? '${bill.tareWeightKg!.toStringAsFixed(0)} kg' : '—';
+      tareColor = null;
+      netDisplay = bill.netWeightKg != null ? '${bill.netWeightKg!.toStringAsFixed(0)} kg' : '—';
+    } else {
+      netDisplay = '—';
+      if (isTareFirst) {
+        grossDisplay = '—';
+        grossColor = null;
+        tareDisplay = '${bill.firstWeightKg.toStringAsFixed(0)} kg';
+        tareColor = null;
+      } else {
+        grossDisplay = '${bill.firstWeightKg.toStringAsFixed(0)} kg';
+        grossColor = null;
+        tareDisplay = 'Waiting...';
+        tareColor = const Color(0xFFD97706);
+      }
+    }
 
     return Container(
       decoration: BoxDecoration(
@@ -716,20 +762,16 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: isCompleted
-                      ? const Color(0xFFDCFCE7)
-                      : const Color(0xFFFEF3C7),
+                  color: statusBadgeBg,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  isCompleted ? 'COMPLETED' : 'TARE WT PENDING',
+                  statusBadgeText,
                   style: TextStyle(
                     fontFamily: 'PlusJakartaSans',
                     fontSize: 10,
                     fontWeight: FontWeight.w700,
-                    color: isCompleted
-                        ? const Color(0xFF16A34A)
-                        : const Color(0xFFD97706),
+                    color: statusBadgeColor,
                   ),
                 ),
               ),
@@ -829,22 +871,19 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
               children: [
                 _buildWeightCell(
                   'Gross Wt',
-                  '${bill.grossWeightKg.toStringAsFixed(0)} kg',
+                  grossDisplay,
+                  textColor: grossColor,
                 ),
                 _buildVerticalLine(),
                 _buildWeightCell(
                   'Tare Wt',
-                  isCompleted
-                      ? '${bill.tareWeightKg?.toStringAsFixed(0) ?? '—'} kg'
-                      : 'Waiting...',
-                  textColor: isCompleted ? null : const Color(0xFFD97706),
+                  tareDisplay,
+                  textColor: tareColor,
                 ),
                 _buildVerticalLine(),
                 _buildWeightCell(
                   'Net Weight',
-                  isCompleted
-                      ? '${(bill.netWeightKg ?? 0).toStringAsFixed(0)} kg'
-                      : '—',
+                  netDisplay,
                   isBold: true,
                   textColor: const Color(0xFF0D3B82),
                 ),

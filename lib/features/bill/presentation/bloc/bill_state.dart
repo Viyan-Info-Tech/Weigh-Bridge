@@ -43,6 +43,8 @@ class BillState extends Equatable {
 
   final String currentBillNumber;
   final int? editingBillId;
+  final String? editingFirstWeightType;
+  final double? editingFirstWeightKg;
   final String? weightValidationError;
 
   const BillState({
@@ -74,12 +76,14 @@ class BillState extends Equatable {
     this.amount = 0,
     this.currentBillNumber = 'WB-00001',
     this.editingBillId,
+    this.editingFirstWeightType,
+    this.editingFirstWeightKg,
     this.weightValidationError,
   });
 
   bool get isEditing => editingBillId != null;
-  bool get isPending => tareWeightKg <= 0;
-  bool get isCompleted => tareWeightKg > 0;
+  bool get isCompleted => grossWeightKg > 0 && tareWeightKg > 0;
+  bool get isPending => !isCompleted;
 
   DateTime get effectiveBillsDate {
     final d = billsDate ?? DateTime.now();
@@ -132,6 +136,9 @@ class BillState extends Equatable {
     String? currentBillNumber,
     int? editingBillId,
     bool clearEditingBillId = false,
+    String? editingFirstWeightType,
+    double? editingFirstWeightKg,
+    bool clearEditingFirstWeight = false,
     String? weightValidationError,
     bool clearWeightError = false,
   }) {
@@ -164,6 +171,8 @@ class BillState extends Equatable {
       amount: amount ?? this.amount,
       currentBillNumber: currentBillNumber ?? this.currentBillNumber,
       editingBillId: clearEditingBillId ? null : (editingBillId ?? this.editingBillId),
+      editingFirstWeightType: clearEditingFirstWeight ? null : (editingFirstWeightType ?? this.editingFirstWeightType),
+      editingFirstWeightKg: clearEditingFirstWeight ? null : (editingFirstWeightKg ?? this.editingFirstWeightKg),
       weightValidationError: clearWeightError ? null : (weightValidationError ?? this.weightValidationError),
     );
   }
@@ -198,6 +207,8 @@ class BillState extends Equatable {
         amount,
         currentBillNumber,
         editingBillId,
+        editingFirstWeightType,
+        editingFirstWeightKg,
         weightValidationError,
       ];
 }
