@@ -179,58 +179,56 @@ class _BillPageState extends State<BillPage> {
           body: SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                if (constraints.maxWidth >= 1000) {
+                final isTwoColumn = constraints.maxWidth >= 950;
+                final isLargeDesktop = constraints.maxWidth >= 1150;
+                final pagePadding = isLargeDesktop ? 20.0 : (isTwoColumn ? 14.0 : 12.0);
+                final billingFlex = isLargeDesktop ? 58 : 57;
+                final recentBillsFlex = isLargeDesktop ? 42 : 43;
+
+                if (isTwoColumn) {
                   return Padding(
-                    padding: const EdgeInsets.all(20),
+                    padding: EdgeInsets.all(pagePadding),
                     child: Column(
                       children: [
                         _buildTopHeader(state),
-                        const SizedBox(height: 16),
+                        SizedBox(height: isLargeDesktop ? 16 : 12),
                         Expanded(
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                          Expanded(
-                            flex: 57,
-                            child: Padding(
-                              padding: const EdgeInsets.only(right: 12),
-                              child: Column(
-                                children: [
-                                   WeightDisplay(
-                                     netWeightTon: state.netWeightKg / 1000,
-                                     grossWeight: state.grossWeightKg,
-                                     tareWeight: state.tareWeightKg,
-                                     weightUnit: _weightUnit,
-                                   ),
-                                  const SizedBox(height: 16),
-                                  Expanded(
-                                    child: SingleChildScrollView(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.stretch,
-                                        children: [
-                                          _buildBillForm(state),
-                                          const SizedBox(height: 16),
-                                          _buildActionButtons(state),
-                                          const SizedBox(height: 24),
-                                        ],
-                                      ),
+                              Expanded(
+                                flex: billingFlex,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(right: 8),
+                                  child: SingleChildScrollView(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                                      children: [
+                                        WeightDisplay(
+                                          netWeightTon: state.netWeightKg / 1000,
+                                          grossWeight: state.grossWeightKg,
+                                          tareWeight: state.tareWeightKg,
+                                          weightUnit: _weightUnit,
+                                        ),
+                                        const SizedBox(height: 16),
+                                        _buildBillForm(state),
+                                        const SizedBox(height: 16),
+                                        _buildActionButtons(state),
+                                        const SizedBox(height: 24),
+                                      ],
                                     ),
                                   ),
-                                ],
+                                ),
                               ),
-                            ),
-                          ),
                               Container(
                                 width: 1,
-                                margin:
-                                    const EdgeInsets.symmetric(horizontal: 4),
+                                margin: const EdgeInsets.symmetric(horizontal: 4),
                                 color: const Color(0xFFE2E8F0),
                               ),
                               Expanded(
-                                flex: 43,
+                                flex: recentBillsFlex,
                                 child: Padding(
-                                  padding: const EdgeInsets.only(left: 12),
+                                  padding: const EdgeInsets.only(left: 8),
                                   child: RecentBillsPanel(
                                     recentBills: state.recentBills,
                                     billsDate: state.effectiveBillsDate,
@@ -269,7 +267,7 @@ class _BillPageState extends State<BillPage> {
                 }
 
                 return SingleChildScrollView(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.all(pagePadding),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -279,42 +277,42 @@ class _BillPageState extends State<BillPage> {
                         netWeightTon: state.netWeightKg / 1000,
                         grossWeight: state.grossWeightKg,
                         tareWeight: state.tareWeightKg,
+                        weightUnit: _weightUnit,
                       ),
                       const SizedBox(height: 16),
                       _buildBillForm(state),
                       const SizedBox(height: 16),
                       _buildActionButtons(state),
                       const SizedBox(height: 24),
-                      SizedBox(
-                        height: 500,
-                        child: RecentBillsPanel(
-                          recentBills: state.recentBills,
-                          billsDate: state.effectiveBillsDate,
-                          billsStartDate: state.billsStartDate,
-                          billsEndDate: state.billsEndDate,
-                          parties: state.parties,
-                          vehicles: state.vehicles,
-                          vehicleTypes: state.vehicleTypes,
-                          materials: state.materials,
-                          onLoadPendingBill: (billId) {
-                            context.read<BillBloc>().add(LoadPendingBill(billId));
-                          },
-                          onDateChanged: (date) {
-                            context.read<BillBloc>().add(LoadRecentBills(date: date));
-                          },
-                          onDateRangeChanged: (startDate, endDate) {
-                            if (startDate != null && endDate != null) {
-                              context.read<BillBloc>().add(
-                                LoadRecentBills(startDate: startDate, endDate: endDate),
-                              );
-                            } else {
-                              context.read<BillBloc>().add(
-                                const LoadRecentBills(),
-                              );
-                            }
-                          },
-                        ),
+                      RecentBillsPanel(
+                        shrinkWrap: true,
+                        recentBills: state.recentBills,
+                        billsDate: state.effectiveBillsDate,
+                        billsStartDate: state.billsStartDate,
+                        billsEndDate: state.billsEndDate,
+                        parties: state.parties,
+                        vehicles: state.vehicles,
+                        vehicleTypes: state.vehicleTypes,
+                        materials: state.materials,
+                        onLoadPendingBill: (billId) {
+                          context.read<BillBloc>().add(LoadPendingBill(billId));
+                        },
+                        onDateChanged: (date) {
+                          context.read<BillBloc>().add(LoadRecentBills(date: date));
+                        },
+                        onDateRangeChanged: (startDate, endDate) {
+                          if (startDate != null && endDate != null) {
+                            context.read<BillBloc>().add(
+                              LoadRecentBills(startDate: startDate, endDate: endDate),
+                            );
+                          } else {
+                            context.read<BillBloc>().add(
+                              const LoadRecentBills(),
+                            );
+                          }
+                        },
                       ),
+                      const SizedBox(height: 24),
                     ],
                   ),
                 );
@@ -327,77 +325,141 @@ class _BillPageState extends State<BillPage> {
   }
 
   Widget _buildTopHeader(BillState state) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: const Color(0xFF0F52BA).withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(Icons.receipt_long_rounded,
-                color: Color(0xFF0F52BA), size: 20),
-          ),
-          const SizedBox(width: 12),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Viyan Weighbridge',
-                style: TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
-                  letterSpacing: -0.3,
-                ),
-              ),
-              Text(
-                'Billing & Ticket Management',
-                style: TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 12,
-                  color: Color(0xFF64748B),
-                ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 720;
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
-          const Spacer(),
-          const LiveDateTime(),
-          const SizedBox(width: 16),
-          ElevatedButton.icon(
-            onPressed: () => _startNewReceipt(context, state),
-            icon: const Icon(Icons.add_rounded, size: 16),
-            label: const Text('New Receipt'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0D3B82),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              textStyle: const TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
+          child: isNarrow
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0F52BA).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Icon(Icons.receipt_long_rounded,
+                              color: Color(0xFF0F52BA), size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Viyan Weighbridge',
+                                style: TextStyle(
+                                  fontFamily: 'PlusJakartaSans',
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF0F172A),
+                                  letterSpacing: -0.3,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              Text(
+                                'Billing & Ticket Management',
+                                style: TextStyle(
+                                  fontFamily: 'PlusJakartaSans',
+                                  fontSize: 12,
+                                  color: Color(0xFF64748B),
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _buildNewReceiptButton(state),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    const LiveDateTime(),
+                  ],
+                )
+              : Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF0F52BA).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.receipt_long_rounded,
+                          color: Color(0xFF0F52BA), size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    const Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Viyan Weighbridge',
+                            style: TextStyle(
+                              fontFamily: 'PlusJakartaSans',
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F172A),
+                              letterSpacing: -0.3,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            'Billing & Ticket Management',
+                            style: TextStyle(
+                              fontFamily: 'PlusJakartaSans',
+                              fontSize: 12,
+                              color: Color(0xFF64748B),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const Spacer(),
+                    const LiveDateTime(),
+                    const SizedBox(width: 16),
+                    _buildNewReceiptButton(state),
+                  ],
+                ),
+        );
+      },
+    );
+  }
+
+  Widget _buildNewReceiptButton(BillState state) {
+    return ElevatedButton.icon(
+      onPressed: () => _startNewReceipt(context, state),
+      icon: const Icon(Icons.add_rounded, size: 16),
+      label: const Text('New Receipt'),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF0D3B82),
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        textStyle: const TextStyle(
+          fontFamily: 'PlusJakartaSans',
+          fontSize: 12,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }

@@ -84,7 +84,7 @@ class _QuickAddMaterialDialogState extends State<QuickAddMaterialDialog> {
             ),
           ],
         ),
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,

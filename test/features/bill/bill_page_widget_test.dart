@@ -152,6 +152,8 @@ void main() {
         .thenAnswer((_) => Future.value(testVehicles));
     when(() => mockVehicleTypeRepository.getVehicleTypesByStatus(isActive: true))
         .thenAnswer((_) => Future.value(testVehicleTypes));
+    when(() => mockVehicleTypeRepository.getAllVehicleTypes())
+        .thenAnswer((_) => Future.value(testVehicleTypes));
     when(() => mockMaterialRepository.getMaterialsByStatus(isActive: true))
         .thenAnswer((_) => Future.value(testMaterials));
     when(() => mockLoadRecentBillsUseCase())
@@ -302,7 +304,7 @@ void main() {
 
     // Verify dialog opened with bill details
     expect(find.text('VIYAN WEIGHBRIDGE'), findsOneWidget);
-    expect(find.text('Weighment Slip: WB-00001'), findsOneWidget);
+    expect(find.text('WB-00001'), findsWidgets);
     expect(find.text('Print Ticket'), findsOneWidget);
   });
 }

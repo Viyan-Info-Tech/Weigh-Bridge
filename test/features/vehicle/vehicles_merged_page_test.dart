@@ -141,4 +141,102 @@ void main() {
     expect(find.text('Total 1 vehicle'), findsOneWidget);
     expect(find.text('Total 1 type'), findsOneWidget);
   });
+
+  testWidgets('renders perfectly across all desktop window dimensions without RenderFlex overflow', (tester) async {
+    final sizesToTest = [
+      const Size(1920, 1080), // Full HD Large Desktop
+      const Size(1600, 900),  // Standard Desktop
+      const Size(1440, 900),  // MacBook Pro Standard
+      const Size(1366, 768),  // Standard Laptop
+      const Size(1280, 720),  // Compact Laptop
+      const Size(1152, 720),  // Small Desktop
+      const Size(1024, 768),  // Legacy Desktop
+      const Size(960, 720),   // Breakpoint Boundary
+      const Size(900, 700),   // Narrow Desktop Stacked
+      const Size(900, 600),   // Minimum Recommended Desktop Window
+      const Size(800, 600),   // Compact Desktop Constraint
+      const Size(700, 600),   // Small Stacked
+      const Size(640, 480),   // Minimized Window Boundary
+      const Size(1280, 500),  // Short Window Height
+    ];
+
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    for (final size in sizesToTest) {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1.0;
+
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // Ensure no exceptions occurred
+      expect(tester.takeException(), isNull, reason: 'Failed at size: ${size.width}x${size.height}');
+
+      // Key widgets must always be present
+      expect(find.text('Vehicles & Types'), findsOneWidget, reason: 'Header missing at ${size.width}x${size.height}');
+      expect(find.text('Registered Fleet'), findsOneWidget, reason: 'Fleet card missing at ${size.width}x${size.height}');
+      expect(find.text('Vehicle Categories'), findsOneWidget, reason: 'Categories card missing at ${size.width}x${size.height}');
+      expect(find.text('Operational Rate'), findsOneWidget, reason: 'Rate card missing at ${size.width}x${size.height}');
+    }
+  });
+
+  testWidgets('dynamically resizes from wide to narrow to wide without layout exceptions', (tester) async {
+    tester.view.physicalSize = const Size(1600, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    await tester.pumpWidget(createWidgetUnderTest());
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    // Resize down step-by-step
+    final resizeSteps = [
+      const Size(1366, 768),
+      const Size(1152, 720),
+      const Size(960, 720),
+      const Size(900, 700),
+      const Size(800, 600),
+      const Size(700, 550),
+      const Size(900, 600),
+      const Size(1280, 720),
+      const Size(1920, 1080),
+    ];
+
+    for (final step in resizeSteps) {
+      tester.view.physicalSize = step;
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+      expect(tester.takeException(), isNull, reason: 'Exception during resize to ${step.width}x${step.height}');
+    }
+  });
+
+  testWidgets('search and status filter operate correctly in both panels', (tester) async {
+    tester.view.physicalSize = const Size(1280, 720);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() => tester.view.resetPhysicalSize());
+
+    await tester.pumpWidget(createWidgetUnderTest());
+    await tester.pumpAndSettle();
+
+    // Find the first search field (Vehicles) and enter search query
+    final searchFields = find.byType(TextField);
+    expect(searchFields, findsNWidgets(2));
+
+    await tester.enterText(searchFields.first, 'TN31');
+    await tester.pumpAndSettle();
+    verify(() => mockVehicleRepo.searchVehicles('TN31')).called(1);
+
+    // Clear search using clear button
+    final clearButtons = find.byIcon(Icons.clear);
+    expect(clearButtons, findsAtLeastNWidgets(1));
+    await tester.tap(clearButtons.first);
+    await tester.pumpAndSettle();
+
+    // Search in Vehicle Types (second TextField)
+    await tester.enterText(searchFields.last, 'Truck');
+    await tester.pumpAndSettle();
+    verify(() => mockVehicleTypeRepo.searchVehicleTypes('Truck')).called(1);
+  });
 }
+

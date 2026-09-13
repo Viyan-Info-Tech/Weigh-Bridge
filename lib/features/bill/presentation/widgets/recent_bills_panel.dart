@@ -23,6 +23,7 @@ class RecentBillsPanel extends StatefulWidget {
   final ValueChanged<int>? onLoadPendingBill;
   final ValueChanged<DateTime>? onDateChanged;
   final void Function(DateTime? startDate, DateTime? endDate)? onDateRangeChanged;
+  final bool shrinkWrap;
 
   const RecentBillsPanel({
     super.key,
@@ -38,6 +39,7 @@ class RecentBillsPanel extends StatefulWidget {
     this.onLoadPendingBill,
     this.onDateChanged,
     this.onDateRangeChanged,
+    this.shrinkWrap = false,
   });
 
   @override
@@ -152,7 +154,29 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final displayBills = widget.recentBills;
+    final displayBills = widget.recentBills.where((bill) {
+      if (_hasDateRange) {
+        final start = widget.billsStartDate;
+        final end = widget.billsEndDate;
+        final billDate =
+            DateTime(bill.createdAt.year, bill.createdAt.month, bill.createdAt.day);
+        if (start != null && end != null) {
+          final s = DateTime(start.year, start.month, start.day);
+          final e = DateTime(end.year, end.month, end.day);
+          return (billDate.isAfter(s) || billDate.isAtSameMomentAs(s)) &&
+              (billDate.isBefore(e) || billDate.isAtSameMomentAs(e));
+        } else if (start != null) {
+          final s = DateTime(start.year, start.month, start.day);
+          return billDate.isAfter(s) || billDate.isAtSameMomentAs(s);
+        } else if (end != null) {
+          final e = DateTime(end.year, end.month, end.day);
+          return billDate.isBefore(e) || billDate.isAtSameMomentAs(e);
+        }
+        return true;
+      } else {
+        return _isSameDay(bill.createdAt, _selectedDay);
+      }
+    }).toList();
 
     // Filter bills based on search query and status filter
     final filteredBills = displayBills.where((bill) {
@@ -213,246 +237,229 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
       subtitle = 'Weighments for ${DateFormat('dd MMM yyyy').format(_selectedDay)}';
     }
 
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.03),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final panelWidth = constraints.maxWidth;
+        final isCompact = panelWidth < 460;
+
+        return Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // 1. Panel Header with Title & Stats
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF0D3B82).withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.receipt_long_rounded,
-                        color: Color(0xFF0D3B82),
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Recent Billings',
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontFamily: 'PlusJakartaSans',
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF0F172A),
-                              letterSpacing: -0.3,
-                            ),
-                          ),
-                          Text(
-                            subtitle,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontFamily: 'PlusJakartaSans',
-                              fontSize: 12,
-                              color: Colors.grey.shade500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 6,
-                            height: 6,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF22C55E),
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            countLabel,
-                            style: const TextStyle(
-                              fontFamily: 'PlusJakartaSans',
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF334155),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 1. Panel Header with Title & Stats
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  isCompact ? 14 : 20,
+                  isCompact ? 14 : 20,
+                  isCompact ? 14 : 20,
+                  12,
                 ),
-                const SizedBox(height: 16),
-
-                // 2. Summary KPI Metric Row
-                Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: _buildMetricTile(
-                        'Total Bills',
-                        '${displayBills.length}',
-                        const Color(0xFF0D3B82),
-                        Icons.format_list_numbered_rounded,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildMetricTile(
-                        'Net Tonnage',
-                        '${totalNetWeightTon.toStringAsFixed(1)} T',
-                        const Color(0xFF0284C7),
-                        Icons.scale_rounded,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: _buildMetricTile(
-                        'Total Revenue',
-                        '₹${totalRevenue.toStringAsFixed(0)}',
-                        const Color(0xFF16A34A),
-                        Icons.currency_rupee_rounded,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // 3. Search & Filter Bar
-                Row(
-                  children: [
-                    Expanded(
-                      child: SizedBox(
-                        height: 38,
-                        child: TextField(
-                          key: const Key('recent_bills_search_field'),
-                          controller: _searchController,
-                          onChanged: (val) {
-                            setState(() {
-                              _searchQuery = val;
-                            });
-                          },
-                          style: const TextStyle(
-                            fontFamily: 'PlusJakartaSans',
-                            fontSize: 13,
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF0D3B82).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          decoration: InputDecoration(
-                            hintText: 'Search bill #, vehicle, or party...',
-                            hintStyle: TextStyle(
-                              fontFamily: 'PlusJakartaSans',
-                              fontSize: 12,
-                              color: Colors.grey.shade400,
-                            ),
-                            prefixIcon: const Icon(
-                              Icons.search_rounded,
-                              size: 18,
-                              color: Color(0xFF94A3B8),
-                            ),
-                            suffixIcon: _searchQuery.isNotEmpty
-                                ? IconButton(
-                                    icon: const Icon(
-                                      Icons.clear_rounded,
-                                      size: 16,
-                                    ),
-                                    onPressed: () {
-                                      _searchController.clear();
-                                      setState(() {
-                                        _searchQuery = '';
-                                      });
-                                    },
-                                  )
-                                : null,
-                            filled: true,
-                            fillColor: const Color(0xFFF8FAFC),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 0,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(
-                                color: Color(0xFFE2E8F0),
-                              ),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(
-                                color: Color(0xFFE2E8F0),
-                              ),
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(8),
-                              borderSide: const BorderSide(
-                                color: Color(0xFF0D3B82),
-                              ),
-                            ),
+                          child: const Icon(
+                            Icons.receipt_long_rounded,
+                            color: Color(0xFF0D3B82),
+                            size: 20,
                           ),
                         ),
-                      ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Recent Billings',
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: 'PlusJakartaSans',
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF0F172A),
+                                  letterSpacing: -0.3,
+                                ),
+                              ),
+                              Text(
+                                subtitle,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: 'PlusJakartaSans',
+                                  fontSize: 12,
+                                  color: Colors.grey.shade500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                width: 6,
+                                height: 6,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFF22C55E),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                countLabel,
+                                style: const TextStyle(
+                                  fontFamily: 'PlusJakartaSans',
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF334155),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 8),
-                    _buildDateFilterButton(),
-                    const SizedBox(width: 8),
-                    _buildFilterChip('ALL', 'All'),
-                    const SizedBox(width: 4),
-                    _buildFilterChip('COMPLETED', 'Done'),
-                    const SizedBox(width: 4),
-                    _buildFilterChip('PENDING', 'Pending'),
+                    const SizedBox(height: 16),
+
+                    // 2. Summary KPI Metric Row
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildMetricTile(
+                            'Total Bills',
+                            '${displayBills.length}',
+                            const Color(0xFF0D3B82),
+                            Icons.format_list_numbered_rounded,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _buildMetricTile(
+                            'Net Tonnage',
+                            '${totalNetWeightTon.toStringAsFixed(1)} T',
+                            const Color(0xFF0284C7),
+                            Icons.scale_rounded,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _buildMetricTile(
+                            'Total Revenue',
+                            '₹${totalRevenue.toStringAsFixed(0)}',
+                            const Color(0xFF16A34A),
+                            Icons.currency_rupee_rounded,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 3. Search & Filter Bar (Adaptive Layout)
+                    if (isCompact) ...[
+                      SizedBox(
+                        height: 38,
+                        child: _buildSearchTextField(),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          _buildDateFilterButton(),
+                          const Spacer(),
+                          _buildFilterChip('ALL', 'All'),
+                          const SizedBox(width: 4),
+                          _buildFilterChip('COMPLETED', 'Done'),
+                          const SizedBox(width: 4),
+                          _buildFilterChip('PENDING', 'Pending'),
+                        ],
+                      ),
+                    ] else
+                      Row(
+                        children: [
+                          Expanded(
+                            child: SizedBox(
+                              height: 38,
+                              child: _buildSearchTextField(),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          _buildDateFilterButton(),
+                          const SizedBox(width: 8),
+                          _buildFilterChip('ALL', 'All'),
+                          const SizedBox(width: 4),
+                          _buildFilterChip('COMPLETED', 'Done'),
+                          const SizedBox(width: 4),
+                          _buildFilterChip('PENDING', 'Pending'),
+                        ],
+                      ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+              ),
+              const Divider(height: 1, color: Color(0xFFE2E8F0)),
 
-          // 4. Full-Height Scrollable Bills List
-          Expanded(
-            child: filteredBills.isEmpty
-                ? _buildEmptyState()
-                : ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: filteredBills.length,
-                    separatorBuilder: (context, index) =>
-                        const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final bill = filteredBills[index];
-                      return _buildBillCard(bill);
-                    },
-                  ),
+              // 4. Full-Height Scrollable Bills List / Natural Height in Stacked Mode
+              if (widget.shrinkWrap)
+                (filteredBills.isEmpty
+                    ? _buildEmptyState()
+                    : ListView.separated(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        padding: const EdgeInsets.all(16),
+                        itemCount: filteredBills.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 12),
+                        itemBuilder: (context, index) {
+                          final bill = filteredBills[index];
+                          return _buildBillCard(bill);
+                        },
+                      ))
+              else
+                Expanded(
+                  child: filteredBills.isEmpty
+                      ? _buildEmptyState()
+                      : ListView.separated(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: filteredBills.length,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final bill = filteredBills[index];
+                            return _buildBillCard(bill);
+                          },
+                        ),
+                ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -487,13 +494,17 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                     color: Color(0xFF64748B),
                   ),
                 ),
-                Text(
-                  value,
-                  style: TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: accentColor,
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    value,
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: accentColor,
+                    ),
                   ),
                 ),
               ],
@@ -577,6 +588,73 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
             fontSize: 11,
             fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
             color: isSelected ? Colors.white : const Color(0xFF64748B),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchTextField() {
+    return TextField(
+      key: const Key('recent_bills_search_field'),
+      controller: _searchController,
+      onChanged: (val) {
+        setState(() {
+          _searchQuery = val;
+        });
+      },
+      style: const TextStyle(
+        fontFamily: 'PlusJakartaSans',
+        fontSize: 13,
+      ),
+      decoration: InputDecoration(
+        hintText: 'Search bill #, vehicle, or party...',
+        hintStyle: TextStyle(
+          fontFamily: 'PlusJakartaSans',
+          fontSize: 12,
+          color: Colors.grey.shade400,
+        ),
+        prefixIcon: const Icon(
+          Icons.search_rounded,
+          size: 18,
+          color: Color(0xFF94A3B8),
+        ),
+        suffixIcon: _searchQuery.isNotEmpty
+            ? IconButton(
+                icon: const Icon(
+                  Icons.clear_rounded,
+                  size: 16,
+                ),
+                onPressed: () {
+                  _searchController.clear();
+                  setState(() {
+                    _searchQuery = '';
+                  });
+                },
+              )
+            : null,
+        filled: true,
+        fillColor: const Color(0xFFF8FAFC),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 0,
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(
+            color: Color(0xFFE2E8F0),
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(
+            color: Color(0xFFE2E8F0),
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(
+            color: Color(0xFF0D3B82),
           ),
         ),
       ),
@@ -718,6 +796,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
               ),
               const SizedBox(width: 6),
               Container(
+                constraints: const BoxConstraints(maxWidth: 120),
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF1F5F9),
@@ -725,6 +804,8 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                 ),
                 child: Text(
                   materialName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     fontFamily: 'PlusJakartaSans',
                     fontSize: 11,
@@ -856,13 +937,17 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
             ),
           ),
           const SizedBox(height: 2),
-          Text(
-            value,
-            style: TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 12,
-              fontWeight: isBold ? FontWeight.w800 : FontWeight.w600,
-              color: textColor ?? const Color(0xFF1E293B),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              value,
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                fontWeight: isBold ? FontWeight.w800 : FontWeight.w600,
+                color: textColor ?? const Color(0xFF1E293B),
+              ),
             ),
           ),
         ],

@@ -89,7 +89,7 @@ class _QuickAddPartyDialogState extends State<QuickAddPartyDialog> {
             ),
           ],
         ),
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,

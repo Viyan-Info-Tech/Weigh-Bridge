@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart' hide Material;
 import 'package:flutter/services.dart';
 
@@ -92,95 +93,201 @@ class _BillFormState extends State<BillForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              _buildBillNumberBadge(),
-              const SizedBox(width: 16),
-              Expanded(child: _buildPaymentModeDropdown()),
-            ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final formWidth = constraints.maxWidth;
+        final isCompact = formWidth < 480;
+        final isWeightCompact = formWidth < 440;
+        final isHeaderCompact = formWidth < 400;
+
+        return Container(
+          padding: EdgeInsets.all(formWidth < 500 ? 16 : 24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
           ),
-          const SizedBox(height: 20),
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(child: _buildPartyDropdown()),
-              const SizedBox(width: 16),
-              Expanded(child: _buildVehicleDropdown()),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(child: _buildVehicleTypeDisplay()),
-              const SizedBox(width: 16),
-              Expanded(child: _buildMaterialDropdown()),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(child: _buildRemarksField()),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(child: _buildProminentWeightField(
-                  'Gross Weight (${widget.weightUnit}) *', widget.grossWeightController, widget.onGrossWeightChanged, enabled: !widget.isEditing)),
-              const SizedBox(width: 16),
-              Expanded(child: _buildProminentWeightField(
-                  'Tare Weight (${widget.weightUnit}) *', widget.tareWeightController, widget.onTareWeightChanged)),
-            ],
-          ),
-          if (widget.weightValidationError != null) ...[
-            const SizedBox(height: 6),
-            Row(
-              children: [
-                const Icon(Icons.warning_amber_rounded, size: 14, color: Color(0xFFDC2626)),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    widget.weightValidationError!,
-                    style: const TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFFDC2626),
+              // Row 1: Bill Number Badge + Payment Mode
+              if (isHeaderCompact)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildBillNumberBadge(),
+                    const SizedBox(height: 12),
+                    _buildPaymentModeDropdown(),
+                  ],
+                )
+              else
+                Row(
+                  children: [
+                    _buildBillNumberBadge(),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildPaymentModeDropdown()),
+                  ],
+                ),
+              const SizedBox(height: 20),
+
+              // Row 2: Party & Vehicle
+              if (isCompact)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildPartyDropdown(),
+                    const SizedBox(height: 14),
+                    _buildVehicleDropdown(),
+                  ],
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(child: _buildPartyDropdown()),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildVehicleDropdown()),
+                  ],
+                ),
+              const SizedBox(height: 16),
+
+              // Row 3: Vehicle Type & Material
+              if (isCompact)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildVehicleTypeDisplay(),
+                    const SizedBox(height: 14),
+                    _buildMaterialDropdown(),
+                  ],
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(child: _buildVehicleTypeDisplay()),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildMaterialDropdown()),
+                  ],
+                ),
+              const SizedBox(height: 16),
+
+              // Row 4: Remarks
+              _buildRemarksField(),
+              const SizedBox(height: 20),
+
+              // Row 5: Gross & Tare Weight
+              if (isWeightCompact)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildProminentWeightField(
+                      'Gross Weight (${widget.weightUnit}) *',
+                      widget.grossWeightController,
+                      widget.onGrossWeightChanged,
+                      enabled: !widget.isEditing,
                     ),
-                  ),
+                    const SizedBox(height: 14),
+                    _buildProminentWeightField(
+                      'Tare Weight (${widget.weightUnit}) *',
+                      widget.tareWeightController,
+                      widget.onTareWeightChanged,
+                    ),
+                  ],
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildProminentWeightField(
+                        'Gross Weight (${widget.weightUnit}) *',
+                        widget.grossWeightController,
+                        widget.onGrossWeightChanged,
+                        enabled: !widget.isEditing,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildProminentWeightField(
+                        'Tare Weight (${widget.weightUnit}) *',
+                        widget.tareWeightController,
+                        widget.onTareWeightChanged,
+                      ),
+                    ),
+                  ],
+                ),
+              if (widget.weightValidationError != null) ...[
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded, size: 14, color: Color(0xFFDC2626)),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        widget.weightValidationError!,
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFFDC2626),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
-            ),
-          ],
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(child: _buildAutoField(
-                  'Net Weight (${widget.weightUnit})',
-                  widget.weightValidationError != null ? '—' : '${widget.netWeightKg.toStringAsFixed(0)} ${widget.weightUnit}')),
-              const SizedBox(width: 16),
-              Expanded(child: _buildVehicleChargeField()),
+              const SizedBox(height: 16),
+
+              // Row 6: Net Weight & Vehicle Charge
+              if (isWeightCompact)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildAutoField(
+                      'Net Weight (${widget.weightUnit})',
+                      widget.weightValidationError != null ? '—' : '${widget.netWeightKg.toStringAsFixed(0)} ${widget.weightUnit}',
+                    ),
+                    const SizedBox(height: 14),
+                    _buildVehicleChargeField(),
+                  ],
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildAutoField(
+                        'Net Weight (${widget.weightUnit})',
+                        widget.weightValidationError != null ? '—' : '${widget.netWeightKg.toStringAsFixed(0)} ${widget.weightUnit}',
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildVehicleChargeField()),
+                  ],
+                ),
+              const SizedBox(height: 16),
+
+              // Row 7: Amount
+              if (isCompact)
+                _buildAutoField(
+                  'Amount (₹)',
+                  '₹${widget.amount.toStringAsFixed(2)}',
+                  showBadge: false,
+                )
+              else
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildAutoField(
+                        'Amount (₹)',
+                        '₹${widget.amount.toStringAsFixed(2)}',
+                        showBadge: false,
+                      ),
+                    ),
+                    const Spacer(),
+                  ],
+                ),
             ],
           ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(child: _buildAutoField(
-                  'Amount (₹)', '₹${widget.amount.toStringAsFixed(2)}', showBadge: false)),
-              const Spacer(),
-            ],
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -196,6 +303,7 @@ class _BillFormState extends State<BillForm> {
       ),
       child: Text(
         'Bill #${widget.billNumber}',
+        overflow: TextOverflow.ellipsis,
         style: const TextStyle(
           fontFamily: 'PlusJakartaSans',
           fontSize: 14,
@@ -301,14 +409,18 @@ class _BillFormState extends State<BillForm> {
               ),
             ),
             child: widget.selectedParty != null
-                ? Text(
-                    widget.selectedParty!.name,
-                    style: const TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 13,
-                      color: Color(0xFF0F172A),
+                ? Tooltip(
+                    message: widget.selectedParty!.name,
+                    waitDuration: const Duration(milliseconds: 500),
+                    child: Text(
+                      widget.selectedParty!.name,
+                      style: const TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 13,
+                        color: Color(0xFF0F172A),
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   )
                 : Text(
                     'Select party',
@@ -327,7 +439,6 @@ class _BillFormState extends State<BillForm> {
   void _showPartyMenu() async {
     final renderBox = _dropdownKey.currentContext!.findRenderObject() as RenderBox;
     final size = renderBox.size;
-    final offset = renderBox.localToGlobal(Offset.zero);
     final menuWidth = size.width;
 
     final items = <PopupMenuEntry<String>>[];
@@ -386,13 +497,22 @@ class _BillFormState extends State<BillForm> {
       ),
     ));
 
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        renderBox.localToGlobal(Offset.zero, ancestor: overlay),
+        renderBox.localToGlobal(renderBox.size.bottomRight(Offset.zero), ancestor: overlay),
+      ),
+      Offset.zero & overlay.size,
+    );
+
     final result = await showMenu<String>(
       context: _dropdownKey.currentContext!,
-      position: RelativeRect.fromLTRB(
-        offset.dx,
-        offset.dy + size.height,
-        offset.dx + size.width,
-        offset.dy + size.height + 300,
+      position: position,
+      constraints: BoxConstraints(
+        minWidth: renderBox.size.width,
+        maxWidth: math.max(renderBox.size.width, 320.0),
+        maxHeight: 380,
       ),
       items: items,
       elevation: 8,
@@ -454,14 +574,18 @@ class _BillFormState extends State<BillForm> {
               ),
             ),
             child: widget.selectedVehicle != null
-                ? Text(
-                    widget.selectedVehicle!.vehicleNumber,
-                    style: const TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 13,
-                      color: Color(0xFF0F172A),
+                ? Tooltip(
+                    message: widget.selectedVehicle!.vehicleNumber,
+                    waitDuration: const Duration(milliseconds: 500),
+                    child: Text(
+                      widget.selectedVehicle!.vehicleNumber,
+                      style: const TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 13,
+                        color: Color(0xFF0F172A),
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   )
                 : Text(
                     'Select vehicle',
@@ -480,7 +604,6 @@ class _BillFormState extends State<BillForm> {
   void _showVehicleMenu() async {
     final renderBox = _vehicleDropdownKey.currentContext!.findRenderObject() as RenderBox;
     final size = renderBox.size;
-    final offset = renderBox.localToGlobal(Offset.zero);
     final menuWidth = size.width;
 
     final items = <PopupMenuEntry<String>>[];
@@ -539,13 +662,22 @@ class _BillFormState extends State<BillForm> {
       ),
     ));
 
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        renderBox.localToGlobal(Offset.zero, ancestor: overlay),
+        renderBox.localToGlobal(renderBox.size.bottomRight(Offset.zero), ancestor: overlay),
+      ),
+      Offset.zero & overlay.size,
+    );
+
     final result = await showMenu<String>(
       context: _vehicleDropdownKey.currentContext!,
-      position: RelativeRect.fromLTRB(
-        offset.dx,
-        offset.dy + size.height,
-        offset.dx + size.width,
-        offset.dy + size.height + 300,
+      position: position,
+      constraints: BoxConstraints(
+        minWidth: renderBox.size.width,
+        maxWidth: math.max(renderBox.size.width, 320.0),
+        maxHeight: 380,
       ),
       items: items,
       elevation: 8,
@@ -584,15 +716,20 @@ class _BillFormState extends State<BillForm> {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: const Color(0xFFE2E8F0)),
           ),
-          child: Text(
-            typeName,
-            style: TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 13,
-              fontWeight: widget.selectedVehicleType != null ? FontWeight.w600 : FontWeight.w400,
-              color: widget.selectedVehicleType != null
-                  ? const Color(0xFF0F172A)
-                  : Colors.grey.shade400,
+          child: Tooltip(
+            message: typeName,
+            waitDuration: const Duration(milliseconds: 500),
+            child: Text(
+              typeName,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 13,
+                fontWeight: widget.selectedVehicleType != null ? FontWeight.w600 : FontWeight.w400,
+                color: widget.selectedVehicleType != null
+                    ? const Color(0xFF0F172A)
+                    : Colors.grey.shade400,
+              ),
             ),
           ),
         ),
@@ -646,14 +783,18 @@ class _BillFormState extends State<BillForm> {
               ),
             ),
             child: widget.selectedMaterial != null
-                ? Text(
-                    widget.selectedMaterial!.name,
-                    style: const TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 13,
-                      color: Color(0xFF0F172A),
+                ? Tooltip(
+                    message: widget.selectedMaterial!.name,
+                    waitDuration: const Duration(milliseconds: 500),
+                    child: Text(
+                      widget.selectedMaterial!.name,
+                      style: const TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 13,
+                        color: Color(0xFF0F172A),
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    overflow: TextOverflow.ellipsis,
                   )
                 : Text(
                     'Select material',
@@ -672,7 +813,6 @@ class _BillFormState extends State<BillForm> {
   void _showMaterialMenu() async {
     final renderBox = _materialDropdownKey.currentContext!.findRenderObject() as RenderBox;
     final size = renderBox.size;
-    final offset = renderBox.localToGlobal(Offset.zero);
     final menuWidth = size.width;
 
     final items = <PopupMenuEntry<String>>[];
@@ -728,13 +868,22 @@ class _BillFormState extends State<BillForm> {
       ),
     ));
 
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        renderBox.localToGlobal(Offset.zero, ancestor: overlay),
+        renderBox.localToGlobal(renderBox.size.bottomRight(Offset.zero), ancestor: overlay),
+      ),
+      Offset.zero & overlay.size,
+    );
+
     final result = await showMenu<String>(
       context: _materialDropdownKey.currentContext!,
-      position: RelativeRect.fromLTRB(
-        offset.dx,
-        offset.dy + size.height,
-        offset.dx + size.width,
-        offset.dy + size.height + 300,
+      position: position,
+      constraints: BoxConstraints(
+        minWidth: renderBox.size.width,
+        maxWidth: math.max(renderBox.size.width, 320.0),
+        maxHeight: 380,
       ),
       items: items,
       elevation: 8,
@@ -944,6 +1093,7 @@ class _BillFormState extends State<BillForm> {
                 ? IconButton(
                     icon: const Icon(Icons.restart_alt_rounded, size: 18),
                     color: const Color(0xFF7C3AED),
+                    visualDensity: VisualDensity.compact,
                     tooltip: 'Reset to default (\u20B9${widget.defaultVehicleCharge.toStringAsFixed(0)})',
                     onPressed: widget.onResetVehicleCharge,
                   )

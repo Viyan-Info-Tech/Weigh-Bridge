@@ -85,76 +85,116 @@ class _PendingPageState extends State<PendingPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: BlocBuilder<BillBloc, BillState>(
-            builder: (context, state) {
-              final pendingBills = state.pendingBills;
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final availableWidth = constraints.maxWidth;
+            final availableHeight = constraints.maxHeight;
 
-              final filteredBills = pendingBills.where((bill) {
-                final vehicleNo = _getVehicleNumber(state.vehicles, bill.vehicleId).toLowerCase();
-                final partyName = _getPartyName(state.parties, bill.partyId).toLowerCase();
-                final billNo = bill.billNumber.toLowerCase();
-                final query = _searchQuery.toLowerCase();
+            final isShortHeight = availableHeight < 620;
+            final pagePadding = availableWidth >= 1200
+                ? const EdgeInsets.all(20)
+                : availableWidth >= 900
+                    ? const EdgeInsets.all(16)
+                    : const EdgeInsets.all(12);
 
-                final matchesSearch = query.isEmpty ||
-                    vehicleNo.contains(query) ||
-                    partyName.contains(query) ||
-                    billNo.contains(query);
+            return BlocBuilder<BillBloc, BillState>(
+              builder: (context, state) {
+                final pendingBills = state.pendingBills;
 
-                if (!matchesSearch) return false;
+                final filteredBills = pendingBills.where((bill) {
+                  final vehicleNo = _getVehicleNumber(state.vehicles, bill.vehicleId).toLowerCase();
+                  final partyName = _getPartyName(state.parties, bill.partyId).toLowerCase();
+                  final billNo = bill.billNumber.toLowerCase();
+                  final query = _searchQuery.toLowerCase();
 
-                if (_dateFilter == 'TODAY') return _isToday(bill.createdAt);
-                if (_dateFilter == 'OLDER') return !_isToday(bill.createdAt);
-                return true;
-              }).toList();
+                  final matchesSearch = query.isEmpty ||
+                      vehicleNo.contains(query) ||
+                      partyName.contains(query) ||
+                      billNo.contains(query);
 
-              final totalGrossWeight =
-                  filteredBills.fold<double>(0, (sum, b) => sum + b.grossWeightKg);
-              final totalExpected =
-                  filteredBills.fold<double>(0, (sum, b) => sum + b.amount);
+                  if (!matchesSearch) return false;
 
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildPageHeader(filteredBills.length),
-                  const SizedBox(height: 16),
-                  _buildSummaryCards(
-                    pendingCount: filteredBills.length,
-                    totalFirstWeightKg: totalGrossWeight,
-                    totalExpected: totalExpected,
+                  if (_dateFilter == 'TODAY') return _isToday(bill.createdAt);
+                  if (_dateFilter == 'OLDER') return !_isToday(bill.createdAt);
+                  return true;
+                }).toList();
+
+                final totalGrossWeight =
+                    filteredBills.fold<double>(0, (sum, b) => sum + b.grossWeightKg);
+                final totalExpected =
+                    filteredBills.fold<double>(0, (sum, b) => sum + b.amount);
+
+                final headerWidget = _buildPageHeader(filteredBills.length);
+                final summaryCardsWidget = _buildSummaryCards(
+                  availableWidth: availableWidth,
+                  pendingCount: filteredBills.length,
+                  totalFirstWeightKg: totalGrossWeight,
+                  totalExpected: totalExpected,
+                );
+
+                final cardContent = Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF0F172A).withValues(alpha: 0.03),
-                            blurRadius: 10,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildCardHeader(filteredBills.length),
+                      _buildSearchAndFilter(),
+                      Expanded(
+                        child: _buildPendingTable(filteredBills, state),
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildCardHeader(filteredBills.length),
-                          _buildSearchAndFilter(),
-                          Expanded(
-                            child: _buildPendingTable(filteredBills, state),
-                          ),
-                        ],
-                      ),
+                    ],
+                  ),
+                );
+
+                // If height is normal, fit inside viewport with Expanded card
+                if (!isShortHeight) {
+                  return Padding(
+                    padding: pagePadding,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        headerWidget,
+                        const SizedBox(height: 16),
+                        summaryCardsWidget,
+                        const SizedBox(height: 16),
+                        Expanded(child: cardContent),
+                      ],
                     ),
+                  );
+                }
+
+                // If height is short (< 620px), enable outer SingleChildScrollView
+                // with a comfortable bounded card height (500px)
+                return SingleChildScrollView(
+                  padding: pagePadding,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      headerWidget,
+                      const SizedBox(height: 14),
+                      summaryCardsWidget,
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        height: 500,
+                        child: cardContent,
+                      ),
+                    ],
                   ),
-                ],
-              );
-            },
-          ),
+                );
+              },
+            );
+          },
         ),
       ),
     );
@@ -176,69 +216,109 @@ class _PendingPageState extends State<PendingPage> {
           ),
         ),
         const SizedBox(width: 14),
-        const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Pending Weighments',
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF0F172A),
-                letterSpacing: -0.2,
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Pending Weighments',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                  letterSpacing: -0.2,
+                ),
               ),
-            ),
-            SizedBox(height: 2),
-            Text(
-              'Vehicles waiting for tare weighing to complete the bill',
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 12,
-                color: Color(0xFF64748B),
+              SizedBox(height: 2),
+              Text(
+                'Vehicles waiting for tare weighing to complete the bill',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 12,
+                  color: Color(0xFF64748B),
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ],
     );
   }
 
   Widget _buildSummaryCards({
+    required double availableWidth,
     required int pendingCount,
     required double totalFirstWeightKg,
     required double totalExpected,
   }) {
-    return Row(
-      children: [
-        _buildStatCard(
-          icon: Icons.timer_outlined,
-          iconColor: const Color(0xFFD97706),
-          iconBg: const Color(0xFFFFF7ED),
-          label: 'Pending Queue',
-          value: '$pendingCount',
-          subtext: 'Awaiting Tare Weight',
-        ),
-        const SizedBox(width: 14),
-        _buildStatCard(
-          icon: Icons.scale_rounded,
-          iconColor: const Color(0xFF0F52BA),
-          iconBg: const Color(0xFFEFF6FF),
-          label: 'Gross Weight Captured',
-          value: '${totalFirstWeightKg.toStringAsFixed(0)} kg',
-          subtext: 'Gross weight captured',
-        ),
-        const SizedBox(width: 14),
-        _buildStatCard(
-          icon: Icons.currency_rupee_rounded,
-          iconColor: const Color(0xFF16A34A),
-          iconBg: const Color(0xFFF0FDF4),
-          label: 'Expected Charges',
-          value: '₹ ${totalExpected.toStringAsFixed(0)}',
-          subtext: 'Estimated billing amount',
-        ),
-      ],
+    final cardQueue = _buildStatCard(
+      icon: Icons.timer_outlined,
+      iconColor: const Color(0xFFD97706),
+      iconBg: const Color(0xFFFFF7ED),
+      label: 'Pending Queue',
+      value: '$pendingCount',
+      subtext: 'Awaiting Tare Weight',
     );
+
+    final cardWeight = _buildStatCard(
+      icon: Icons.scale_rounded,
+      iconColor: const Color(0xFF0F52BA),
+      iconBg: const Color(0xFFEFF6FF),
+      label: 'Gross Weight Captured',
+      value: '${totalFirstWeightKg.toStringAsFixed(0)} kg',
+      subtext: 'Gross weight captured',
+    );
+
+    final cardExpected = _buildStatCard(
+      icon: Icons.currency_rupee_rounded,
+      iconColor: const Color(0xFF16A34A),
+      iconBg: const Color(0xFFF0FDF4),
+      label: 'Expected Charges',
+      value: '₹ ${totalExpected.toStringAsFixed(0)}',
+      subtext: 'Estimated billing amount',
+    );
+
+    // Responsive layout:
+    // >= 860px: 3 cards in 1 row
+    // 600px - 859px: 2 cards on row 1, 1 card on row 2
+    // < 600px: 3 cards stacked vertically
+    if (availableWidth >= 860) {
+      return Row(
+        children: [
+          Expanded(child: cardQueue),
+          const SizedBox(width: 14),
+          Expanded(child: cardWeight),
+          const SizedBox(width: 14),
+          Expanded(child: cardExpected),
+        ],
+      );
+    } else if (availableWidth >= 600) {
+      return Column(
+        children: [
+          Row(
+            children: [
+              Expanded(child: cardQueue),
+              const SizedBox(width: 12),
+              Expanded(child: cardWeight),
+            ],
+          ),
+          const SizedBox(height: 10),
+          cardExpected,
+        ],
+      );
+    } else {
+      return Column(
+        children: [
+          cardQueue,
+          const SizedBox(height: 10),
+          cardWeight,
+          const SizedBox(height: 10),
+          cardExpected,
+        ],
+      );
+    }
   }
 
   Widget _buildStatCard({
@@ -249,50 +329,52 @@ class _PendingPageState extends State<PendingPage> {
     required String value,
     required String subtext,
   }) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF0F172A).withValues(alpha: 0.02),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.02),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: iconBg,
+              borderRadius: BorderRadius.circular(10),
             ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: iconBg,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(icon, color: iconColor, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF64748B),
-                    ),
+            child: Icon(icon, color: iconColor, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF64748B),
                   ),
-                  const SizedBox(height: 2),
-                  Row(
-                    children: [
-                      Text(
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Row(
+                  children: [
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
                         value,
                         style: const TextStyle(
                           fontFamily: 'PlusJakartaSans',
@@ -301,193 +383,246 @@ class _PendingPageState extends State<PendingPage> {
                           color: Color(0xFF0F172A),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Flexible(
-                        child: Text(
-                          subtext,
-                          style: const TextStyle(
-                            fontFamily: 'PlusJakartaSans',
-                            fontSize: 11,
-                            color: Color(0xFF94A3B8),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        subtext,
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 11,
+                          color: Color(0xFF94A3B8),
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ],
-                  ),
-                ],
-              ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildCardHeader(int count) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(7),
-            decoration: BoxDecoration(
-              color: const Color(0xFFD97706).withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.pending_actions_outlined,
-              color: Color(0xFFD97706),
-              size: 16,
-            ),
-          ),
-          const SizedBox(width: 10),
-          const Text(
-            'Pending Bills',
-            style: TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 15,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF0F172A),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF1F5F9),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              '$count',
-              style: const TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF475569),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cardWidth = constraints.maxWidth;
+        final isCompact = cardWidth < 360;
+        final isVeryCompact = cardWidth < 290;
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFD97706).withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.pending_actions_outlined,
+                  color: Color(0xFFD97706),
+                  size: 16,
+                ),
               ),
-            ),
-          ),
-          const Spacer(),
-          OutlinedButton.icon(
-            onPressed: () {
-              context.read<BillBloc>().add(const LoadPendingBills());
-            },
-            icon: const Icon(Icons.refresh_rounded, size: 15),
-            label: const Text('Refresh'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF475569),
-              side: const BorderSide(color: Color(0xFFCBD5E1)),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              textStyle: const TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+              const SizedBox(width: 10),
+              const Flexible(
+                child: Text(
+                  'Pending Bills',
+                  style: TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0F172A),
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$count',
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF475569),
+                  ),
+                ),
+              ),
+              const Spacer(),
+              if (isVeryCompact)
+                IconButton.outlined(
+                  onPressed: () {
+                    context.read<BillBloc>().add(const LoadPendingBills());
+                  },
+                  icon: const Icon(Icons.refresh_rounded, size: 16),
+                  tooltip: 'Refresh',
+                  style: IconButton.styleFrom(
+                    foregroundColor: const Color(0xFF475569),
+                    side: const BorderSide(color: Color(0xFFCBD5E1)),
+                    padding: const EdgeInsets.all(8),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                )
+              else
+                OutlinedButton.icon(
+                  onPressed: () {
+                    context.read<BillBloc>().add(const LoadPendingBills());
+                  },
+                  icon: const Icon(Icons.refresh_rounded, size: 15),
+                  label: const Text('Refresh'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF475569),
+                    side: const BorderSide(color: Color(0xFFCBD5E1)),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isCompact ? 8 : 12,
+                      vertical: 8,
+                    ),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    textStyle: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _buildSearchAndFilter() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      child: Row(
-        children: [
-          Expanded(
-            child: SizedBox(
-              height: 38,
-              child: TextField(
-                controller: _searchController,
-                onChanged: (value) {
-                  setState(() => _searchQuery = value);
-                },
-                style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12),
-                decoration: InputDecoration(
-                  hintText: 'Search by bill #, vehicle, or party...',
-                  hintStyle: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 12,
-                    color: Color(0xFF94A3B8),
-                  ),
-                  prefixIcon: const Icon(
-                    Icons.search_rounded,
-                    color: Color(0xFF94A3B8),
-                    size: 18,
-                  ),
-                  suffixIcon: _searchController.text.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(
-                            Icons.clear,
-                            size: 16,
-                            color: Color(0xFF94A3B8),
-                          ),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() => _searchQuery = '');
-                          },
-                        )
-                      : null,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFF0F52BA), width: 1.5),
-                  ),
-                  filled: true,
-                  fillColor: const Color(0xFFF8FAFC),
-                ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isNarrow = constraints.maxWidth < 500;
+
+        final searchField = SizedBox(
+          height: 38,
+          child: TextField(
+            controller: _searchController,
+            onChanged: (value) {
+              setState(() => _searchQuery = value);
+            },
+            style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12),
+            decoration: InputDecoration(
+              hintText: 'Search by bill #, vehicle, or party...',
+              hintStyle: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                color: Color(0xFF94A3B8),
               ),
+              prefixIcon: const Icon(
+                Icons.search_rounded,
+                color: Color(0xFF94A3B8),
+                size: 18,
+              ),
+              suffixIcon: _searchController.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(
+                        Icons.clear,
+                        size: 16,
+                        color: Color(0xFF94A3B8),
+                      ),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() => _searchQuery = '');
+                      },
+                    )
+                  : null,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFF0F52BA), width: 1.5),
+              ),
+              filled: true,
+              fillColor: const Color(0xFFF8FAFC),
             ),
           ),
-          const SizedBox(width: 10),
-          Container(
-            height: 38,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF8FAFC),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFE2E8F0)),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: _dateFilter,
-                icon: const Icon(
-                  Icons.keyboard_arrow_down_rounded,
-                  size: 18,
-                  color: Color(0xFF64748B),
-                ),
-                style: const TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 12,
-                  color: Color(0xFF334155),
-                  fontWeight: FontWeight.w500,
-                ),
-                items: const [
-                  DropdownMenuItem(value: 'ALL', child: Text('All Time')),
-                  DropdownMenuItem(value: 'TODAY', child: Text('Today')),
-                  DropdownMenuItem(value: 'OLDER', child: Text('Older')),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
-                    setState(() => _dateFilter = value);
-                  }
-                },
+        );
+
+        final filterDropdown = Container(
+          height: 38,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _dateFilter,
+              isExpanded: isNarrow,
+              icon: const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 18,
+                color: Color(0xFF64748B),
               ),
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                color: Color(0xFF334155),
+                fontWeight: FontWeight.w500,
+              ),
+              items: const [
+                DropdownMenuItem(value: 'ALL', child: Text('All Time')),
+                DropdownMenuItem(value: 'TODAY', child: Text('Today')),
+                DropdownMenuItem(value: 'OLDER', child: Text('Older')),
+              ],
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() => _dateFilter = value);
+                }
+              },
             ),
           ),
-        ],
-      ),
+        );
+
+        if (isNarrow) {
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                searchField,
+                const SizedBox(height: 8),
+                filterDropdown,
+              ],
+            ),
+          );
+        }
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          child: Row(
+            children: [
+              Expanded(child: searchField),
+              const SizedBox(width: 10),
+              filterDropdown,
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -496,7 +631,7 @@ class _PendingPageState extends State<PendingPage> {
       return _buildEmptyState();
     }
 
-    const minTableWidth = 720.0;
+    const minTableWidth = 800.0;
 
     return Column(
       children: [
@@ -549,8 +684,8 @@ class _PendingPageState extends State<PendingPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          Expanded(flex: 18, child: _buildHeaderText('BILL NUMBER')),
-          Expanded(flex: 20, child: _buildHeaderText('VEHICLE')),
+          Expanded(flex: 20, child: _buildHeaderText('BILL NUMBER')),
+          Expanded(flex: 18, child: _buildHeaderText('VEHICLE')),
           Expanded(flex: 26, child: _buildHeaderText('PARTY & MATERIAL')),
           Expanded(flex: 16, child: _buildHeaderText('GROSS WEIGHT')),
           Expanded(flex: 12, child: _buildHeaderText('TIME')),
@@ -584,7 +719,7 @@ class _PendingPageState extends State<PendingPage> {
         children: [
           // Bill Number
           Expanded(
-            flex: 18,
+            flex: 20,
             child: Row(
               children: [
                 Container(
@@ -641,7 +776,7 @@ class _PendingPageState extends State<PendingPage> {
 
           // Vehicle Number
           Expanded(
-            flex: 20,
+            flex: 18,
             child: Row(
               children: [
                 Container(
@@ -727,21 +862,29 @@ class _PendingPageState extends State<PendingPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  '${bill.grossWeightKg.toStringAsFixed(0)} kg',
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF0F172A),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '${bill.grossWeightKg.toStringAsFixed(0)} kg',
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF0F172A),
+                    ),
                   ),
                 ),
-                Text(
-                  'Gross • ₹${bill.amount.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 10,
-                    color: Color(0xFF64748B),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Gross • ₹${bill.amount.toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 10,
+                      color: Color(0xFF64748B),
+                    ),
                   ),
                 ),
               ],

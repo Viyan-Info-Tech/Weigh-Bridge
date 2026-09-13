@@ -1,3 +1,4 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../../../core/utils/text_formatters.dart';
@@ -90,7 +91,6 @@ class _QuickAddVehicleDialogState extends State<QuickAddVehicleDialog> {
 
     final renderBox = _typeDropdownKey.currentContext!.findRenderObject() as RenderBox;
     final size = renderBox.size;
-    final offset = renderBox.localToGlobal(Offset.zero);
     final menuWidth = size.width;
 
     final items = <PopupMenuEntry<String>>[];
@@ -150,13 +150,22 @@ class _QuickAddVehicleDialogState extends State<QuickAddVehicleDialog> {
       ),
     ));
 
+    final overlay = Overlay.of(context).context.findRenderObject() as RenderBox;
+    final position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        renderBox.localToGlobal(Offset.zero, ancestor: overlay),
+        renderBox.localToGlobal(renderBox.size.bottomRight(Offset.zero), ancestor: overlay),
+      ),
+      Offset.zero & overlay.size,
+    );
+
     final result = await showMenu<String>(
       context: _typeDropdownKey.currentContext!,
-      position: RelativeRect.fromLTRB(
-        offset.dx,
-        offset.dy + size.height + 4,
-        offset.dx + size.width,
-        offset.dy + size.height + 300,
+      position: position,
+      constraints: BoxConstraints(
+        minWidth: renderBox.size.width,
+        maxWidth: math.max(renderBox.size.width, 280),
+        maxHeight: 350,
       ),
       items: items,
       elevation: 8,
@@ -208,7 +217,7 @@ class _QuickAddVehicleDialogState extends State<QuickAddVehicleDialog> {
             ),
           ],
         ),
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,
