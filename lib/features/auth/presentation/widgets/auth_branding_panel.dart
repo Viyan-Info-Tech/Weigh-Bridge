@@ -209,7 +209,7 @@ class AuthBrandingPanel extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 Text(
-                  '© 2025 Viyan Weighbridge. All rights reserved.',
+                  '© 2026 Viyan Weighbridge. All rights reserved.',
                   style: TextStyle(
                     fontFamily: 'PlusJakartaSans',
                     fontSize: 12,

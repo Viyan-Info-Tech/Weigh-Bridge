@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../../party/domain/entities/party.dart';
 
@@ -220,20 +221,37 @@ class _QuickAddPartyDialogState extends State<QuickAddPartyDialog> {
 
                 const SizedBox(height: 16),
 
-                // Contact Person
-                _buildLabel('Contact Person', isRequired: false),
+                // Contact Person Name
+                _buildLabel('Contact person name', isRequired: true),
                 const SizedBox(height: 7),
                 TextFormField(
                   controller: _contactController,
                   enabled: !_isLoading,
                   textCapitalization: TextCapitalization.words,
+                  keyboardType: TextInputType.name,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(
+                      RegExp(r'[a-zA-Z ]'),
+                    ),
+                  ],
                   style: const TextStyle(
                     fontFamily: 'PlusJakartaSans',
                     fontSize: 13.5,
                     fontWeight: FontWeight.w500,
                     color: Color(0xFF0F172A),
                   ),
-                  decoration: _inputDecoration('Enter contact person'),
+                  decoration: _inputDecoration('Enter contact person name'),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Name is required';
+                    }
+
+                    if (!RegExp(r'^[a-zA-Z ]+$').hasMatch(value.trim())) {
+                      return 'Name can contain letters only';
+                    }
+
+                    return null;
+                  },
                   onFieldSubmitted: (_) => _onSave(),
                   onChanged: (_) {
                     if (_errorMessage != null) {

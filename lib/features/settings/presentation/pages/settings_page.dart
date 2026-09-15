@@ -9,6 +9,7 @@ import '../../domain/entities/billing_settings.dart';
 import '../bloc/settings_bloc.dart';
 import '../bloc/settings_event.dart';
 import '../bloc/settings_state.dart';
+import '../../../../core/utils/text_formatters.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -29,9 +30,15 @@ class _SettingsPageState extends State<SettingsPage> {
   final _billNumberDigitsController = TextEditingController(text: '5');
 
   // Business Info Controllers
-  final _businessNameController = TextEditingController(text: 'VIYAN WEIGHBRIDGE');
-  final _businessSubtitleController = TextEditingController(text: 'Computer Weigh Bridge');
-  final _serviceTextController = TextEditingController(text: '24 HOURS SERVICE');
+  final _businessNameController = TextEditingController(
+    text: 'VIYAN WEIGHBRIDGE',
+  );
+  final _businessSubtitleController = TextEditingController(
+    text: 'Computer Weigh Bridge',
+  );
+  final _serviceTextController = TextEditingController(
+    text: '24 HOURS SERVICE',
+  );
   final _addressController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
@@ -39,7 +46,9 @@ class _SettingsPageState extends State<SettingsPage> {
   final _logoPathController = TextEditingController();
 
   // Receipt Content
-  final _receiptTitleController = TextEditingController(text: 'WEIGHMENT RECEIPT');
+  final _receiptTitleController = TextEditingController(
+    text: 'WEIGHMENT RECEIPT',
+  );
   final _footerNoteController = TextEditingController(
     text: 'Please check the weight before leaving the weighbridge.',
   );
@@ -144,10 +153,16 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
           title: const Row(
             children: [
-              Icon(Icons.warning_amber_rounded, color: Color(0xFFDC2626), size: 24),
+              Icon(
+                Icons.warning_amber_rounded,
+                color: Color(0xFFDC2626),
+                size: 24,
+              ),
               SizedBox(width: 10),
               Text(
                 'Reset Settings?',
@@ -169,15 +184,23 @@ class _SettingsPageState extends State<SettingsPage> {
               height: 1.4,
             ),
           ),
-          actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          actionsPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
           actions: [
             OutlinedButton(
               onPressed: () => Navigator.of(context).pop(),
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFF64748B),
                 side: const BorderSide(color: Color(0xFFCBD5E1)),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
               child: const Text('Cancel'),
             ),
@@ -192,8 +215,13 @@ class _SettingsPageState extends State<SettingsPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFDC2626),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 elevation: 0,
               ),
               child: const Text('Reset Defaults'),
@@ -219,7 +247,8 @@ class _SettingsPageState extends State<SettingsPage> {
       _gstinController.text = '';
       _logoPathController.text = '';
       _receiptTitleController.text = 'WEIGHMENT RECEIPT';
-      _footerNoteController.text = 'Please check the weight before leaving the weighbridge.';
+      _footerNoteController.text =
+          'Please check the weight before leaving the weighbridge.';
 
       _showSerialNumber = true;
       _showDate = true;
@@ -262,8 +291,11 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   String get _currentBillPreview {
-    final prefix = _billPrefixController.text.trim().isEmpty ? 'WB' : _billPrefixController.text.trim();
-    final startNum = int.tryParse(_billStartingNumberController.text.trim()) ?? 1;
+    final prefix = _billPrefixController.text.trim().isEmpty
+        ? 'WB'
+        : _billPrefixController.text.trim();
+    final startNum =
+        int.tryParse(_billStartingNumberController.text.trim()) ?? 1;
     final digits = int.tryParse(_billNumberDigitsController.text.trim()) ?? 5;
     return '$prefix-${startNum.toString().padLeft(digits, '0')}';
   }
@@ -272,7 +304,9 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please correct the validation errors in the settings form'),
+          content: Text(
+            'Please correct the validation errors in the settings form',
+          ),
           backgroundColor: Color(0xFFDC2626),
           behavior: SnackBarBehavior.floating,
         ),
@@ -280,23 +314,44 @@ class _SettingsPageState extends State<SettingsPage> {
       return;
     }
 
-    final startNum = int.tryParse(_billStartingNumberController.text.trim()) ?? 1;
+    final startNum =
+        int.tryParse(_billStartingNumberController.text.trim()) ?? 1;
     final digits = int.tryParse(_billNumberDigitsController.text.trim()) ?? 5;
 
     final updated = BillingSettings(
       weightUnit: _weightUnit,
-      billPrefix: _billPrefixController.text.trim().isEmpty ? 'WB' : _billPrefixController.text.trim().toUpperCase(),
+      billPrefix: _billPrefixController.text.trim().isEmpty
+          ? 'WB'
+          : _billPrefixController.text.trim().toUpperCase(),
       billStartingNumber: startNum,
       billNumberDigits: digits,
-      businessName: _businessNameController.text.trim().isEmpty ? 'VIYAN WEIGHBRIDGE' : _businessNameController.text.trim(),
-      businessSubtitle: _businessSubtitleController.text.trim().isEmpty ? null : _businessSubtitleController.text.trim(),
-      serviceText: _serviceTextController.text.trim().isEmpty ? null : _serviceTextController.text.trim(),
-      address: _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
-      phoneNumber: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
-      email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
-      gstin: _gstinController.text.trim().isEmpty ? null : _gstinController.text.trim().toUpperCase(),
-      logoPath: _logoPathController.text.trim().isEmpty ? null : _logoPathController.text.trim(),
-      receiptTitle: _receiptTitleController.text.trim().isEmpty ? 'WEIGHMENT RECEIPT' : _receiptTitleController.text.trim(),
+      businessName: _businessNameController.text.trim().isEmpty
+          ? 'VIYAN WEIGHBRIDGE'
+          : _businessNameController.text.trim(),
+      businessSubtitle: _businessSubtitleController.text.trim().isEmpty
+          ? null
+          : _businessSubtitleController.text.trim(),
+      serviceText: _serviceTextController.text.trim().isEmpty
+          ? null
+          : _serviceTextController.text.trim(),
+      address: _addressController.text.trim().isEmpty
+          ? null
+          : _addressController.text.trim(),
+      phoneNumber: _phoneController.text.trim().isEmpty
+          ? null
+          : _phoneController.text.trim(),
+      email: _emailController.text.trim().isEmpty
+          ? null
+          : _emailController.text.trim(),
+      gstin: _gstinController.text.trim().isEmpty
+          ? null
+          : _gstinController.text.trim().toUpperCase(),
+      logoPath: _logoPathController.text.trim().isEmpty
+          ? null
+          : _logoPathController.text.trim(),
+      receiptTitle: _receiptTitleController.text.trim().isEmpty
+          ? 'WEIGHMENT RECEIPT'
+          : _receiptTitleController.text.trim(),
       showSerialNumber: _showSerialNumber,
       showDate: _showDate,
       showTime: _showTime,
@@ -313,7 +368,9 @@ class _SettingsPageState extends State<SettingsPage> {
       showPendingAmount: _showPendingAmount,
       showRemarks: _showRemarks,
       showFooterNote: _showFooterNote,
-      footerNote: _footerNoteController.text.trim().isEmpty ? null : _footerNoteController.text.trim(),
+      footerNote: _footerNoteController.text.trim().isEmpty
+          ? null
+          : _footerNoteController.text.trim(),
       updatedAt: DateTime.now(),
     );
 
@@ -321,23 +378,44 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   BillingSettings _buildCurrentSettingsSnapshot() {
-    final startNum = int.tryParse(_billStartingNumberController.text.trim()) ?? 1;
+    final startNum =
+        int.tryParse(_billStartingNumberController.text.trim()) ?? 1;
     final digits = int.tryParse(_billNumberDigitsController.text.trim()) ?? 5;
 
     return BillingSettings(
       weightUnit: _weightUnit,
-      billPrefix: _billPrefixController.text.trim().isEmpty ? 'WB' : _billPrefixController.text.trim().toUpperCase(),
+      billPrefix: _billPrefixController.text.trim().isEmpty
+          ? 'WB'
+          : _billPrefixController.text.trim().toUpperCase(),
       billStartingNumber: startNum,
       billNumberDigits: digits,
-      businessName: _businessNameController.text.trim().isEmpty ? 'VIYAN WEIGHBRIDGE' : _businessNameController.text.trim(),
-      businessSubtitle: _businessSubtitleController.text.trim().isEmpty ? null : _businessSubtitleController.text.trim(),
-      serviceText: _serviceTextController.text.trim().isEmpty ? null : _serviceTextController.text.trim(),
-      address: _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
-      phoneNumber: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
-      email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
-      gstin: _gstinController.text.trim().isEmpty ? null : _gstinController.text.trim().toUpperCase(),
-      logoPath: _logoPathController.text.trim().isEmpty ? null : _logoPathController.text.trim(),
-      receiptTitle: _receiptTitleController.text.trim().isEmpty ? 'WEIGHMENT RECEIPT' : _receiptTitleController.text.trim(),
+      businessName: _businessNameController.text.trim().isEmpty
+          ? 'VIYAN WEIGHBRIDGE'
+          : _businessNameController.text.trim(),
+      businessSubtitle: _businessSubtitleController.text.trim().isEmpty
+          ? null
+          : _businessSubtitleController.text.trim(),
+      serviceText: _serviceTextController.text.trim().isEmpty
+          ? null
+          : _serviceTextController.text.trim(),
+      address: _addressController.text.trim().isEmpty
+          ? null
+          : _addressController.text.trim(),
+      phoneNumber: _phoneController.text.trim().isEmpty
+          ? null
+          : _phoneController.text.trim(),
+      email: _emailController.text.trim().isEmpty
+          ? null
+          : _emailController.text.trim(),
+      gstin: _gstinController.text.trim().isEmpty
+          ? null
+          : _gstinController.text.trim().toUpperCase(),
+      logoPath: _logoPathController.text.trim().isEmpty
+          ? null
+          : _logoPathController.text.trim(),
+      receiptTitle: _receiptTitleController.text.trim().isEmpty
+          ? 'WEIGHMENT RECEIPT'
+          : _receiptTitleController.text.trim(),
       showSerialNumber: _showSerialNumber,
       showDate: _showDate,
       showTime: _showTime,
@@ -354,7 +432,9 @@ class _SettingsPageState extends State<SettingsPage> {
       showPendingAmount: _showPendingAmount,
       showRemarks: _showRemarks,
       showFooterNote: _showFooterNote,
-      footerNote: _footerNoteController.text.trim().isEmpty ? null : _footerNoteController.text.trim(),
+      footerNote: _footerNoteController.text.trim().isEmpty
+          ? null
+          : _footerNoteController.text.trim(),
       updatedAt: DateTime.now(),
     );
   }
@@ -377,7 +457,8 @@ class _SettingsPageState extends State<SettingsPage> {
               behavior: SnackBarBehavior.floating,
             ),
           );
-        } else if (state.status == SettingsStatus.error && state.errorMessage != null) {
+        } else if (state.status == SettingsStatus.error &&
+            state.errorMessage != null) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.errorMessage!),
@@ -385,7 +466,9 @@ class _SettingsPageState extends State<SettingsPage> {
               behavior: SnackBarBehavior.floating,
             ),
           );
-        } else if (state.status == SettingsStatus.loaded && !_isInitialized && state.settings != null) {
+        } else if (state.status == SettingsStatus.loaded &&
+            !_isInitialized &&
+            state.settings != null) {
           _populateFromSettings(state.settings!);
           setState(() {
             _isInitialized = true;
@@ -410,8 +493,8 @@ class _SettingsPageState extends State<SettingsPage> {
                       final horizontalPadding = compact
                           ? 12.0
                           : width < 960
-                              ? 16.0
-                              : 24.0;
+                          ? 16.0
+                          : 24.0;
                       final verticalPadding = compact ? 12.0 : 16.0;
                       final useTwoColumns = _shouldUseTwoColumns(
                         width,
@@ -563,7 +646,9 @@ class _SettingsPageState extends State<SettingsPage> {
               foregroundColor: const Color(0xFF64748B),
               side: const BorderSide(color: Color(0xFFCBD5E1)),
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
           ElevatedButton.icon(
@@ -581,7 +666,9 @@ class _SettingsPageState extends State<SettingsPage> {
               backgroundColor: const Color(0xFF0D3B82),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
               elevation: 2,
             ),
           ),
@@ -602,7 +689,9 @@ class _SettingsPageState extends State<SettingsPage> {
             foregroundColor: const Color(0xFF64748B),
             side: const BorderSide(color: Color(0xFFCBD5E1)),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         ),
         ElevatedButton.icon(
@@ -629,7 +718,9 @@ class _SettingsPageState extends State<SettingsPage> {
             backgroundColor: const Color(0xFF16A34A),
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
             elevation: 2,
           ),
         ),
@@ -643,9 +734,7 @@ class _SettingsPageState extends State<SettingsPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        border: const Border(
-          bottom: BorderSide(color: Color(0xFFE2E8F0)),
-        ),
+        border: const Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -737,7 +826,8 @@ class _SettingsPageState extends State<SettingsPage> {
       iconBg: const Color(0xFFEFF6FF),
       iconColor: const Color(0xFF2563EB),
       title: 'Weight Unit',
-      subtitle: 'Select the primary unit for scale measurements across the application',
+      subtitle:
+          'Select the primary unit for scale measurements across the application',
       child: LayoutBuilder(
         builder: (context, constraints) {
           final stackTiles = constraints.maxWidth < 420;
@@ -755,11 +845,7 @@ class _SettingsPageState extends State<SettingsPage> {
           if (stackTiles) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                kgTile,
-                const SizedBox(height: 12),
-                tonTile,
-              ],
+              children: [kgTile, const SizedBox(height: 12), tonTile],
             );
           }
 
@@ -788,10 +874,14 @@ class _SettingsPageState extends State<SettingsPage> {
         duration: const Duration(milliseconds: 180),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF0D3B82).withValues(alpha: 0.05) : const Color(0xFFF8FAFC),
+          color: isSelected
+              ? const Color(0xFF0D3B82).withValues(alpha: 0.05)
+              : const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: isSelected ? const Color(0xFF0D3B82) : const Color(0xFFE2E8F0),
+            color: isSelected
+                ? const Color(0xFF0D3B82)
+                : const Color(0xFFE2E8F0),
             width: isSelected ? 1.8 : 1.0,
           ),
         ),
@@ -803,7 +893,9 @@ class _SettingsPageState extends State<SettingsPage> {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color: isSelected ? const Color(0xFF0D3B82) : const Color(0xFF94A3B8),
+                  color: isSelected
+                      ? const Color(0xFF0D3B82)
+                      : const Color(0xFF94A3B8),
                   width: isSelected ? 5.5 : 1.5,
                 ),
               ),
@@ -819,7 +911,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     style: TextStyle(
                       fontFamily: 'PlusJakartaSans',
                       fontSize: 13,
-                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w600,
                       color: const Color(0xFF0F172A),
                     ),
                   ),
@@ -849,7 +943,8 @@ class _SettingsPageState extends State<SettingsPage> {
       iconBg: const Color(0xFFF5F3FF),
       iconColor: const Color(0xFF7C3AED),
       title: 'Bill Number Settings',
-      subtitle: 'Define the format and starting sequence for generated weighment bills',
+      subtitle:
+          'Define the format and starting sequence for generated weighment bills',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -866,7 +961,8 @@ class _SettingsPageState extends State<SettingsPage> {
                   FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
                 ],
                 onChanged: (_) => setState(() {}),
-                validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Required' : null,
               ),
               _buildTextField(
                 label: 'Starting Number',
@@ -912,7 +1008,11 @@ class _SettingsPageState extends State<SettingsPage> {
               runSpacing: 8,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                const Icon(Icons.info_outline_rounded, size: 16, color: Color(0xFF64748B)),
+                const Icon(
+                  Icons.info_outline_rounded,
+                  size: 16,
+                  color: Color(0xFF64748B),
+                ),
                 const Text(
                   'Next Bill Number Preview:',
                   style: TextStyle(
@@ -923,7 +1023,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF0D3B82),
                     borderRadius: BorderRadius.circular(6),
@@ -967,8 +1070,9 @@ class _SettingsPageState extends State<SettingsPage> {
                 controller: _businessNameController,
                 textCapitalization: TextCapitalization.characters,
                 onChanged: (_) => setState(() {}),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Business name is required' : null,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'Business name is required'
+                    : null,
               ),
               _buildTextField(
                 label: 'Business Subtitle',
@@ -993,6 +1097,26 @@ class _SettingsPageState extends State<SettingsPage> {
                 hint: '33XXXXXXXXXXXXXX',
                 controller: _gstinController,
                 textCapitalization: TextCapitalization.characters,
+                inputFormatters: [GSTNumberFormatter()],
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return null; // GSTIN is optional
+                  }
+
+                  final gst = value.trim().toUpperCase();
+
+                  if (gst.length != 15) {
+                    return 'GST number must be 15 characters';
+                  }
+
+                  if (!RegExp(
+                    r'^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$',
+                  ).hasMatch(gst)) {
+                    return 'Enter a valid GST number';
+                  }
+
+                  return null;
+                },
                 onChanged: (_) => setState(() {}),
               ),
             ],
@@ -1010,10 +1134,16 @@ class _SettingsPageState extends State<SettingsPage> {
             minItemWidth: 200,
             children: [
               _buildTextField(
-                label: 'Phone Number',
-                hint: '+91 98765 43210',
+                label: 'Phone Number *',
+                hint: '9876543210',
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
+                maxLength: 10,
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(10),
+                ],
+                validator: validateIndianMobileNumber,
                 onChanged: (_) => setState(() {}),
               ),
               _buildTextField(
@@ -1045,8 +1175,13 @@ class _SettingsPageState extends State<SettingsPage> {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF64748B),
                   side: const BorderSide(color: Color(0xFFCBD5E1)),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                 ),
                 child: const Text('Clear'),
               );
@@ -1057,10 +1192,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     logoField,
                     const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: clearButton,
-                    ),
+                    Align(alignment: Alignment.centerRight, child: clearButton),
                   ],
                 );
               }
@@ -1090,7 +1222,8 @@ class _SettingsPageState extends State<SettingsPage> {
       iconBg: const Color(0xFFFEF3C7),
       iconColor: const Color(0xFFD97706),
       title: 'Receipt & Ticket Content',
-      subtitle: 'Customize the document title and select which fields appear on the printed receipt',
+      subtitle:
+          'Customize the document title and select which fields appear on the printed receipt',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1102,8 +1235,9 @@ class _SettingsPageState extends State<SettingsPage> {
                 controller: _receiptTitleController,
                 textCapitalization: TextCapitalization.characters,
                 onChanged: (_) => setState(() {}),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Title is required' : null,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'Title is required'
+                    : null,
               );
               final actions = Wrap(
                 spacing: 4,
@@ -1115,16 +1249,24 @@ class _SettingsPageState extends State<SettingsPage> {
                     label: const Text('Select All'),
                     style: TextButton.styleFrom(
                       foregroundColor: const Color(0xFF0D3B82),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
                     ),
                   ),
                   TextButton.icon(
-                    onPressed: _isEditing ? () => _selectAllFields(false) : null,
+                    onPressed: _isEditing
+                        ? () => _selectAllFields(false)
+                        : null,
                     icon: const Icon(Icons.clear_rounded, size: 16),
                     label: const Text('Deselect All'),
                     style: TextButton.styleFrom(
                       foregroundColor: const Color(0xFF64748B),
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
                     ),
                   ),
                 ],
@@ -1136,10 +1278,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   children: [
                     titleField,
                     const SizedBox(height: 8),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: actions,
-                    ),
+                    Align(alignment: Alignment.centerRight, child: actions),
                   ],
                 );
               }
@@ -1180,21 +1319,81 @@ class _SettingsPageState extends State<SettingsPage> {
               spacing: 8,
               runSpacing: 8,
               children: [
-                _buildToggleChip('Serial Number', _showSerialNumber, (v) => setState(() => _showSerialNumber = v)),
-                _buildToggleChip('Date', _showDate, (v) => setState(() => _showDate = v)),
-                _buildToggleChip('Time', _showTime, (v) => setState(() => _showTime = v)),
-                _buildToggleChip('Vehicle Number', _showVehicleNumber, (v) => setState(() => _showVehicleNumber = v)),
-                _buildToggleChip('Material', _showMaterial, (v) => setState(() => _showMaterial = v)),
-                _buildToggleChip('Party', _showParty, (v) => setState(() => _showParty = v)),
-                _buildToggleChip('Vehicle Type', _showVehicleType, (v) => setState(() => _showVehicleType = v)),
-                _buildToggleChip('Gross Weight', _showGrossWeight, (v) => setState(() => _showGrossWeight = v)),
-                _buildToggleChip('Tare Weight', _showTareWeight, (v) => setState(() => _showTareWeight = v)),
-                _buildToggleChip('Net Weight', _showNetWeight, (v) => setState(() => _showNetWeight = v)),
-                _buildToggleChip('Amount', _showAmount, (v) => setState(() => _showAmount = v)),
-                _buildToggleChip('Payment Mode', _showPaymentMode, (v) => setState(() => _showPaymentMode = v)),
-                _buildToggleChip('Cash Received', _showCashReceived, (v) => setState(() => _showCashReceived = v)),
-                _buildToggleChip('Pending Amount', _showPendingAmount, (v) => setState(() => _showPendingAmount = v)),
-                _buildToggleChip('Remarks', _showRemarks, (v) => setState(() => _showRemarks = v)),
+                _buildToggleChip(
+                  'Serial Number',
+                  _showSerialNumber,
+                  (v) => setState(() => _showSerialNumber = v),
+                ),
+                _buildToggleChip(
+                  'Date',
+                  _showDate,
+                  (v) => setState(() => _showDate = v),
+                ),
+                _buildToggleChip(
+                  'Time',
+                  _showTime,
+                  (v) => setState(() => _showTime = v),
+                ),
+                _buildToggleChip(
+                  'Vehicle Number',
+                  _showVehicleNumber,
+                  (v) => setState(() => _showVehicleNumber = v),
+                ),
+                _buildToggleChip(
+                  'Material',
+                  _showMaterial,
+                  (v) => setState(() => _showMaterial = v),
+                ),
+                _buildToggleChip(
+                  'Party',
+                  _showParty,
+                  (v) => setState(() => _showParty = v),
+                ),
+                _buildToggleChip(
+                  'Vehicle Type',
+                  _showVehicleType,
+                  (v) => setState(() => _showVehicleType = v),
+                ),
+                _buildToggleChip(
+                  'Gross Weight',
+                  _showGrossWeight,
+                  (v) => setState(() => _showGrossWeight = v),
+                ),
+                _buildToggleChip(
+                  'Tare Weight',
+                  _showTareWeight,
+                  (v) => setState(() => _showTareWeight = v),
+                ),
+                _buildToggleChip(
+                  'Net Weight',
+                  _showNetWeight,
+                  (v) => setState(() => _showNetWeight = v),
+                ),
+                _buildToggleChip(
+                  'Amount',
+                  _showAmount,
+                  (v) => setState(() => _showAmount = v),
+                ),
+                _buildToggleChip(
+                  'Payment Mode',
+                  _showPaymentMode,
+                  (v) => setState(() => _showPaymentMode = v),
+                ),
+                _buildToggleChip(
+                  'Cash Received',
+                  _showCashReceived,
+                  (v) => setState(() => _showCashReceived = v),
+                ),
+                _buildToggleChip(
+                  'Pending Amount',
+                  _showPendingAmount,
+                  (v) => setState(() => _showPendingAmount = v),
+                ),
+                _buildToggleChip(
+                  'Remarks',
+                  _showRemarks,
+                  (v) => setState(() => _showRemarks = v),
+                ),
               ],
             ),
           ),
@@ -1203,7 +1402,11 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildToggleChip(String label, bool isSelected, ValueChanged<bool> onChanged) {
+  Widget _buildToggleChip(
+    String label,
+    bool isSelected,
+    ValueChanged<bool> onChanged,
+  ) {
     return FilterChip(
       selected: isSelected,
       label: Text(label),
@@ -1232,7 +1435,8 @@ class _SettingsPageState extends State<SettingsPage> {
       iconBg: const Color(0xFFECFDF5),
       iconColor: const Color(0xFF059669),
       title: 'Footer Settings',
-      subtitle: 'Disclaimer or notice printed at the bottom of the weighment slip',
+      subtitle:
+          'Disclaimer or notice printed at the bottom of the weighment slip',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1241,9 +1445,13 @@ class _SettingsPageState extends State<SettingsPage> {
             children: [
               Checkbox(
                 value: _showFooterNote,
-                onChanged: _isEditing ? (v) => setState(() => _showFooterNote = v ?? true) : null,
+                onChanged: _isEditing
+                    ? (v) => setState(() => _showFooterNote = v ?? true)
+                    : null,
                 activeColor: const Color(0xFF0D3B82),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(4),
+                ),
               ),
               const Expanded(
                 child: Padding(
@@ -1279,7 +1487,8 @@ class _SettingsPageState extends State<SettingsPage> {
   // Right Side: Live Thermal Receipt Preview
   Widget _buildLivePreviewCard() {
     final settings = _buildCurrentSettingsSnapshot();
-    final hasLogo = settings.logoPath != null &&
+    final hasLogo =
+        settings.logoPath != null &&
         settings.logoPath!.trim().isNotEmpty &&
         File(settings.logoPath!).existsSync();
 
@@ -1367,244 +1576,294 @@ class _SettingsPageState extends State<SettingsPage> {
                       minWidth: slipWidth < 180 ? slipWidth : 180,
                     ),
                     child: Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFAFAFA),
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: const Color(0xFFCBD5E1), width: 0.8),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.06),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                padding: EdgeInsets.symmetric(
-                  horizontal: slipWidth < 220 ? 10 : 16,
-                  vertical: 14,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Business Logo & Header
-                    if (hasLogo)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 6),
-                        child: Image.file(
-                          File(settings.logoPath!),
-                          height: 32,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, _, _) => _buildScaleBadge(),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFAFAFA),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(
+                          color: const Color(0xFFCBD5E1),
+                          width: 0.8,
                         ),
-                      )
-                    else
-                      _buildScaleBadge(),
-                    const SizedBox(height: 4),
-                    Text(
-                      settings.businessName,
-                      textAlign: TextAlign.center,
-                      softWrap: true,
-                      style: const TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF0F172A),
-                        letterSpacing: 1.0,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.06),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
                       ),
-                    ),
-                    if (settings.businessSubtitle != null && settings.businessSubtitle!.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        settings.businessSubtitle!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 9,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF64748B),
-                        ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: slipWidth < 220 ? 10 : 16,
+                        vertical: 14,
                       ),
-                    ],
-                    if (settings.serviceText != null && settings.serviceText!.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        settings.serviceText!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 8,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF475569),
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                    if (settings.address != null && settings.address!.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        settings.address!,
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 7.5,
-                          color: Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-                    if (settings.phoneNumber != null && settings.phoneNumber!.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        'Ph: ${settings.phoneNumber}',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 7.5,
-                          color: Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-                    if (settings.gstin != null && settings.gstin!.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Text(
-                        'GSTIN: ${settings.gstin}',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 7.5,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF64748B),
-                        ),
-                      ),
-                    ],
-
-                    const SizedBox(height: 6),
-                    _buildDashedDivider(),
-                    const SizedBox(height: 6),
-
-                    // Receipt Title
-                    Text(
-                      settings.receiptTitle,
-                      textAlign: TextAlign.center,
-                      softWrap: true,
-                      style: const TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 11,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F172A),
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-
-                    // Info Rows
-                    if (_showSerialNumber || _showDate || _showTime) ...[
-                      _buildDashedDivider(),
-                      const SizedBox(height: 4),
-                      if (_showSerialNumber) _buildReceiptRow('SL.NO.', _currentBillPreview),
-                      if (_showDate) _buildReceiptRow('Date', dateFormatted),
-                      if (_showTime) _buildReceiptRow('Time', timeFormatted),
-                      const SizedBox(height: 4),
-                    ],
-
-                    if (_showVehicleNumber || _showMaterial || _showParty || _showVehicleType) ...[
-                      _buildDashedDivider(),
-                      const SizedBox(height: 4),
-                      if (_showVehicleNumber) _buildReceiptRow('Vehicle No.', 'TN 01 AB 1234'),
-                      if (_showMaterial) _buildReceiptRow('Material', 'Crushed Stone (Gravel)'),
-                      if (_showParty) _buildReceiptRow('Party', 'UltraTech Cement Ltd.'),
-                      if (_showVehicleType) _buildReceiptRow('Vehicle Type', '10 Wheeler Truck'),
-                      const SizedBox(height: 4),
-                    ],
-
-                    if (_showGrossWeight || _showTareWeight || _showNetWeight) ...[
-                      _buildDashedDivider(),
-                      const SizedBox(height: 4),
-                      if (_showGrossWeight)
-                        _buildReceiptWeightRow('Gross Weight', _weightUnit == 'kg' ? '28,450 kg' : '28.450 ton'),
-                      if (_showTareWeight)
-                        _buildReceiptWeightRow('Tare Weight', _weightUnit == 'kg' ? '10,200 kg' : '10.200 ton'),
-                      if (_showNetWeight) ...[
-                        const SizedBox(height: 2),
-                        _buildDashedDivider(),
-                        const SizedBox(height: 2),
-                        _buildReceiptWeightRow(
-                          'Net Weight',
-                          _weightUnit == 'kg' ? '18,250 kg' : '18.250 ton',
-                          isBold: true,
-                        ),
-                      ],
-                      const SizedBox(height: 4),
-                    ],
-
-                    if (_showAmount || _showPaymentMode || _showCashReceived || _showPendingAmount) ...[
-                      _buildDashedDivider(),
-                      const SizedBox(height: 4),
-                      if (_showAmount) _buildReceiptRow('Amount', 'Rs. 350.00'),
-                      if (_showPaymentMode) _buildReceiptRow('Payment', 'CASH'),
-                      if (_showCashReceived) _buildReceiptRow('Cash Received', 'Rs. 350.00'),
-                      if (_showPendingAmount) _buildReceiptRow('Pending', 'Rs. 0.00'),
-                      const SizedBox(height: 4),
-                    ],
-
-                    if (_showRemarks) ...[
-                      _buildDashedDivider(),
-                      const SizedBox(height: 4),
-                      const Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          // Business Logo & Header
+                          if (hasLogo)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 6),
+                              child: Image.file(
+                                File(settings.logoPath!),
+                                height: 32,
+                                fit: BoxFit.contain,
+                                errorBuilder: (_, _, _) => _buildScaleBadge(),
+                              ),
+                            )
+                          else
+                            _buildScaleBadge(),
+                          const SizedBox(height: 4),
                           Text(
-                            'Note: ',
-                            style: TextStyle(
+                            settings.businessName,
+                            textAlign: TextAlign.center,
+                            softWrap: true,
+                            style: const TextStyle(
                               fontFamily: 'PlusJakartaSans',
-                              fontSize: 8.5,
-                              fontWeight: FontWeight.w700,
-                              color: Color(0xFF475569),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w900,
+                              color: Color(0xFF0F172A),
+                              letterSpacing: 1.0,
                             ),
                           ),
-                          Expanded(
-                            child: Text(
-                              'Standard delivery weighment',
-                              style: TextStyle(
+                          if (settings.businessSubtitle != null &&
+                              settings.businessSubtitle!.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              settings.businessSubtitle!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
                                 fontFamily: 'PlusJakartaSans',
-                                fontSize: 8.5,
+                                fontSize: 9,
+                                fontWeight: FontWeight.w600,
                                 color: Color(0xFF64748B),
+                              ),
+                            ),
+                          ],
+                          if (settings.serviceText != null &&
+                              settings.serviceText!.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              settings.serviceText!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontFamily: 'PlusJakartaSans',
+                                fontSize: 8,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF475569),
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                          if (settings.address != null &&
+                              settings.address!.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              settings.address!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontFamily: 'PlusJakartaSans',
+                                fontSize: 7.5,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                          ],
+                          if (settings.phoneNumber != null &&
+                              settings.phoneNumber!.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              'Ph: ${settings.phoneNumber}',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontFamily: 'PlusJakartaSans',
+                                fontSize: 7.5,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                          ],
+                          if (settings.gstin != null &&
+                              settings.gstin!.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              'GSTIN: ${settings.gstin}',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontFamily: 'PlusJakartaSans',
+                                fontSize: 7.5,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                          ],
+
+                          const SizedBox(height: 6),
+                          _buildDashedDivider(),
+                          const SizedBox(height: 6),
+
+                          // Receipt Title
+                          Text(
+                            settings.receiptTitle,
+                            textAlign: TextAlign.center,
+                            softWrap: true,
+                            style: const TextStyle(
+                              fontFamily: 'PlusJakartaSans',
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F172A),
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+
+                          // Info Rows
+                          if (_showSerialNumber || _showDate || _showTime) ...[
+                            _buildDashedDivider(),
+                            const SizedBox(height: 4),
+                            if (_showSerialNumber)
+                              _buildReceiptRow('SL.NO.', _currentBillPreview),
+                            if (_showDate)
+                              _buildReceiptRow('Date', dateFormatted),
+                            if (_showTime)
+                              _buildReceiptRow('Time', timeFormatted),
+                            const SizedBox(height: 4),
+                          ],
+
+                          if (_showVehicleNumber ||
+                              _showMaterial ||
+                              _showParty ||
+                              _showVehicleType) ...[
+                            _buildDashedDivider(),
+                            const SizedBox(height: 4),
+                            if (_showVehicleNumber)
+                              _buildReceiptRow('Vehicle No.', 'TN 01 AB 1234'),
+                            if (_showMaterial)
+                              _buildReceiptRow(
+                                'Material',
+                                'Crushed Stone (Gravel)',
+                              ),
+                            if (_showParty)
+                              _buildReceiptRow(
+                                'Party',
+                                'UltraTech Cement Ltd.',
+                              ),
+                            if (_showVehicleType)
+                              _buildReceiptRow(
+                                'Vehicle Type',
+                                '10 Wheeler Truck',
+                              ),
+                            const SizedBox(height: 4),
+                          ],
+
+                          if (_showGrossWeight ||
+                              _showTareWeight ||
+                              _showNetWeight) ...[
+                            _buildDashedDivider(),
+                            const SizedBox(height: 4),
+                            if (_showGrossWeight)
+                              _buildReceiptWeightRow(
+                                'Gross Weight',
+                                _weightUnit == 'kg'
+                                    ? '28,450 kg'
+                                    : '28.450 ton',
+                              ),
+                            if (_showTareWeight)
+                              _buildReceiptWeightRow(
+                                'Tare Weight',
+                                _weightUnit == 'kg'
+                                    ? '10,200 kg'
+                                    : '10.200 ton',
+                              ),
+                            if (_showNetWeight) ...[
+                              const SizedBox(height: 2),
+                              _buildDashedDivider(),
+                              const SizedBox(height: 2),
+                              _buildReceiptWeightRow(
+                                'Net Weight',
+                                _weightUnit == 'kg'
+                                    ? '18,250 kg'
+                                    : '18.250 ton',
+                                isBold: true,
+                              ),
+                            ],
+                            const SizedBox(height: 4),
+                          ],
+
+                          if (_showAmount ||
+                              _showPaymentMode ||
+                              _showCashReceived ||
+                              _showPendingAmount) ...[
+                            _buildDashedDivider(),
+                            const SizedBox(height: 4),
+                            if (_showAmount)
+                              _buildReceiptRow('Amount', 'Rs. 350.00'),
+                            if (_showPaymentMode)
+                              _buildReceiptRow('Payment', 'CASH'),
+                            if (_showCashReceived)
+                              _buildReceiptRow('Cash Received', 'Rs. 350.00'),
+                            if (_showPendingAmount)
+                              _buildReceiptRow('Pending', 'Rs. 0.00'),
+                            const SizedBox(height: 4),
+                          ],
+
+                          if (_showRemarks) ...[
+                            _buildDashedDivider(),
+                            const SizedBox(height: 4),
+                            const Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Note: ',
+                                  style: TextStyle(
+                                    fontFamily: 'PlusJakartaSans',
+                                    fontSize: 8.5,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF475569),
+                                  ),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    'Standard delivery weighment',
+                                    style: TextStyle(
+                                      fontFamily: 'PlusJakartaSans',
+                                      fontSize: 8.5,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                          ],
+
+                          if (_showFooterNote &&
+                              settings.footerNote != null &&
+                              settings.footerNote!.isNotEmpty) ...[
+                            _buildDashedDivider(),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Note: ${settings.footerNote!}',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontFamily: 'PlusJakartaSans',
+                                fontSize: 8,
+                                color: Color(0xFF94A3B8),
+                                height: 1.3,
+                              ),
+                            ),
+                          ],
+
+                          const SizedBox(height: 8),
+                          Center(
+                            child: Text(
+                              '* $timestamp *',
+                              style: const TextStyle(
+                                fontFamily: 'PlusJakartaSans',
+                                fontSize: 7,
+                                fontWeight: FontWeight.w500,
+                                color: Color(0xFF94A3B8),
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
-                    ],
-
-                    if (_showFooterNote && settings.footerNote != null && settings.footerNote!.isNotEmpty) ...[
-                      _buildDashedDivider(),
-                      const SizedBox(height: 6),
-                      Text(
-                        'Note: ${settings.footerNote!}',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 8,
-                          color: Color(0xFF94A3B8),
-                          height: 1.3,
-                        ),
-                      ),
-                    ],
-
-                    const SizedBox(height: 8),
-                    Center(
-                      child: Text(
-                        '* $timestamp *',
-                        style: const TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 7,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF94A3B8),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
                     ),
                   ),
                 );
@@ -1626,11 +1885,7 @@ class _SettingsPageState extends State<SettingsPage> {
           shape: BoxShape.circle,
           border: Border.all(color: const Color(0xFF38BDF8), width: 1),
         ),
-        child: const Icon(
-          Icons.scale_rounded,
-          color: Colors.white,
-          size: 15,
-        ),
+        child: const Icon(Icons.scale_rounded, color: Colors.white, size: 15),
       ),
     );
   }
@@ -1639,9 +1894,7 @@ class _SettingsPageState extends State<SettingsPage> {
     return SizedBox(
       width: double.infinity,
       height: 1,
-      child: CustomPaint(
-        painter: _DashedLinePainter(),
-      ),
+      child: CustomPaint(painter: _DashedLinePainter()),
     );
   }
 
@@ -1658,7 +1911,11 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Widget _buildReceiptWeightRow(String label, String value, {bool isBold = false}) {
+  Widget _buildReceiptWeightRow(
+    String label,
+    String value, {
+    bool isBold = false,
+  }) {
     return _buildAdaptiveReceiptRow(
       label: label,
       value: value,
@@ -1688,17 +1945,15 @@ class _SettingsPageState extends State<SettingsPage> {
       padding: const EdgeInsets.symmetric(vertical: 1.2),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final maxWidth = constraints.maxWidth.isFinite ? constraints.maxWidth : 290.0;
+          final maxWidth = constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : 290.0;
           if (maxWidth < 160) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(label, style: labelStyle),
-                Text(
-                  value,
-                  softWrap: true,
-                  style: valueStyle,
-                ),
+                Text(value, softWrap: true, style: valueStyle),
               ],
             );
           }
@@ -1709,19 +1964,9 @@ class _SettingsPageState extends State<SettingsPage> {
             children: [
               SizedBox(
                 width: labelWidth,
-                child: Text(
-                  label,
-                  softWrap: true,
-                  style: labelStyle,
-                ),
+                child: Text(label, softWrap: true, style: labelStyle),
               ),
-              Expanded(
-                child: Text(
-                  value,
-                  softWrap: true,
-                  style: valueStyle,
-                ),
-              ),
+              Expanded(child: Text(value, softWrap: true, style: valueStyle)),
             ],
           );
         },
@@ -1742,70 +1987,70 @@ class _SettingsPageState extends State<SettingsPage> {
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 400;
         return Container(
-      width: double.infinity,
-      padding: EdgeInsets.all(compact ? 14 : 20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: iconBg,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, color: iconColor, size: 18),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      softWrap: true,
-                      style: const TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF0F172A),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      softWrap: true,
-                      style: TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 12,
-                        color: Colors.grey.shade500,
-                      ),
-                    ),
-                  ],
-                ),
+          width: double.infinity,
+          padding: EdgeInsets.all(compact ? 14 : 20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.02),
+                blurRadius: 8,
+                offset: const Offset(0, 3),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
-          const SizedBox(height: 16),
-          child,
-        ],
-      ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: iconBg,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(icon, color: iconColor, size: 18),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          softWrap: true,
+                          style: const TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF0F172A),
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          softWrap: true,
+                          style: TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontSize: 12,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Divider(height: 1, color: Color(0xFFF1F5F9)),
+              const SizedBox(height: 16),
+              child,
+            ],
+          ),
         );
       },
     );
@@ -1855,7 +2100,9 @@ class _SettingsPageState extends State<SettingsPage> {
             fontFamily: 'PlusJakartaSans',
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: effectiveEnabled ? const Color(0xFF0F172A) : const Color(0xFF334155),
+            color: effectiveEnabled
+                ? const Color(0xFF0F172A)
+                : const Color(0xFF334155),
           ),
           decoration: InputDecoration(
             hintText: hint,
@@ -1866,10 +2113,15 @@ class _SettingsPageState extends State<SettingsPage> {
               color: Colors.grey.shade400,
             ),
             filled: true,
-            fillColor: effectiveEnabled ? const Color(0xFFF8FAFC) : const Color(0xFFF1F5F9),
+            fillColor: effectiveEnabled
+                ? const Color(0xFFF8FAFC)
+                : const Color(0xFFF1F5F9),
             counterText: '',
             errorMaxLines: 3,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 10,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
@@ -1884,7 +2136,10 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF0D3B82), width: 1.6),
+              borderSide: const BorderSide(
+                color: Color(0xFF0D3B82),
+                width: 1.6,
+              ),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),

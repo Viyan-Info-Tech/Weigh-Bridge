@@ -71,7 +71,7 @@ void main() {
     expect(find.text('Better\nInsights'), findsOneWidget);
     expect(find.text('Secure\n& Reliable'), findsOneWidget);
     expect(find.text('Weigh Today\nBuild Tomorrow'), findsOneWidget);
-    expect(find.text('© 2025 Viyan Weighbridge. All rights reserved.'),
+    expect(find.text('© 2026 Viyan Weighbridge. All rights reserved.'),
         findsOneWidget);
 
     // Verify Form elements on right

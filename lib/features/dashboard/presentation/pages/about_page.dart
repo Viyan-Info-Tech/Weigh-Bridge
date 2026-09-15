@@ -20,6 +20,8 @@ class AboutPage extends StatelessWidget {
               const SizedBox(height: 24),
               _buildCompanyCard(),
               const SizedBox(height: 20),
+              _buildContactCard(context),
+              const SizedBox(height: 20),
               _buildMissionsRow(),
               const SizedBox(height: 20),
               _buildValues(),
@@ -317,6 +319,120 @@ class AboutPage extends StatelessWidget {
     );
   }
 
+  Widget _buildContactCard(BuildContext context) {
+    return _buildCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Contact Us',
+            style: TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF0F172A),
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildContactItem(
+            icon: Icons.phone_outlined,
+            label: 'Phone',
+            value: '+91 6379723465',
+            onTap: () => _copyToClipboard(context, '+91 6379723465'),
+          ),
+          const SizedBox(height: 10),
+          _buildContactItem(
+            icon: Icons.email_outlined,
+            label: 'Email',
+            value: 'viyanninfo@gmail.com',
+            onTap: () => _copyToClipboard(context, 'viyanninfo@gmail.com'),
+          ),
+          const SizedBox(height: 10),
+          _buildContactItem(
+            icon: Icons.email_outlined,
+            label: 'Support Email',
+            value: 'rithiknathan@gmail.com',
+            onTap: () => _copyToClipboard(context, 'rithiknathan@gmail.com'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContactItem({
+    required IconData icon,
+    required String label,
+    required String value,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFE2E8F0)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0D3B82).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, size: 16, color: const Color(0xFF0D3B82)),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.content_copy, size: 14, color: Color(0xFF94A3B8)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _copyToClipboard(BuildContext context, String value) {
+    Clipboard.setData(ClipboardData(text: value));
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$value copied to clipboard'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+    }
+  }
+
   Widget _buildFooter(BuildContext context) {
     return _buildCard(
       padding: const EdgeInsets.all(16),
@@ -333,7 +449,7 @@ class AboutPage extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '© 2025 Viyan Weighbridge Solution. All rights reserved.',
+            '© 2026 Viyan Weighbridge Solution. All rights reserved.',
             style: TextStyle(
               fontFamily: 'PlusJakartaSans',
               fontSize: 11,

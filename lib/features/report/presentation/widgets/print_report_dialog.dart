@@ -28,11 +28,8 @@ class PrintReportDialog extends StatelessWidget {
   }) {
     return showDialog<void>(
       context: context,
-      builder: (dialogContext) => PrintReportDialog(
-        records: records,
-        summary: summary,
-        filter: filter,
-      ),
+      builder: (dialogContext) =>
+          PrintReportDialog(records: records, summary: summary, filter: filter),
     );
   }
 
@@ -40,7 +37,9 @@ class PrintReportDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd/MM/yyyy');
     final timeFormat = DateFormat('hh:mm a');
-    final printDateTime = DateFormat('dd/MM/yyyy HH:mm:ss').format(DateTime.now());
+    final printDateTime = DateFormat(
+      'dd/MM/yyyy HH:mm:ss',
+    ).format(DateTime.now());
 
     String filterDateLabel = filter.datePreset.label;
     if (filter.datePreset == DateRangePreset.custom &&
@@ -60,7 +59,6 @@ class PrintReportDialog extends StatelessWidget {
       child: BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, settingsState) {
           final settings = settingsState.settings;
-          final businessName = settings?.businessName ?? 'VIYAN WEIGHBRIDGE';
           final address = settings?.address ?? '';
           final phone = settings?.phoneNumber ?? '';
           final gstin = settings?.gstin ?? '';
@@ -114,9 +112,9 @@ class PrintReportDialog extends StatelessWidget {
                           Center(
                             child: Column(
                               children: [
-                                Text(
-                                  businessName.toUpperCase(),
-                                  style: const TextStyle(
+                                const Text(
+                                  'REPORT ANALYSIS',
+                                  style: TextStyle(
                                     fontFamily: 'PlusJakartaSans',
                                     fontSize: 18,
                                     fontWeight: FontWeight.w800,
@@ -149,7 +147,10 @@ class PrintReportDialog extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          const Divider(thickness: 1.5, color: Color(0xFF0F172A)),
+                          const Divider(
+                            thickness: 1.5,
+                            color: Color(0xFF0F172A),
+                          ),
                           const SizedBox(height: 8),
 
                           // Report Info
@@ -235,10 +236,26 @@ class PrintReportDialog extends StatelessWidget {
                                   _cell('VEHICLE', isHeader: true),
                                   _cell('PARTY', isHeader: true),
                                   _cell('MATERIAL', isHeader: true),
-                                  _cell('GROSS (kg)', isHeader: true, align: TextAlign.right),
-                                  _cell('TARE (kg)', isHeader: true, align: TextAlign.right),
-                                  _cell('NET (kg)', isHeader: true, align: TextAlign.right),
-                                  _cell('AMT (₹)', isHeader: true, align: TextAlign.right),
+                                  _cell(
+                                    'GROSS (kg)',
+                                    isHeader: true,
+                                    align: TextAlign.right,
+                                  ),
+                                  _cell(
+                                    'TARE (kg)',
+                                    isHeader: true,
+                                    align: TextAlign.right,
+                                  ),
+                                  _cell(
+                                    'NET (kg)',
+                                    isHeader: true,
+                                    align: TextAlign.right,
+                                  ),
+                                  _cell(
+                                    'AMT (₹)',
+                                    isHeader: true,
+                                    align: TextAlign.right,
+                                  ),
                                   _cell('STATUS', isHeader: true),
                                 ],
                               ),
@@ -247,14 +264,30 @@ class PrintReportDialog extends StatelessWidget {
                                 (r) => TableRow(
                                   children: [
                                     _cell(r.billNumber, bold: true),
-                                    _cell('${dateFormat.format(r.createdAt)} ${timeFormat.format(r.createdAt)}'),
+                                    _cell(
+                                      '${dateFormat.format(r.createdAt)} ${timeFormat.format(r.createdAt)}',
+                                    ),
                                     _cell(r.vehicleNumber),
                                     _cell(r.partyName),
                                     _cell(r.materialName),
-                                    _cell(r.grossWeightKg?.toStringAsFixed(0) ?? '—', align: TextAlign.right),
-                                    _cell(r.tareWeightKg?.toStringAsFixed(0) ?? '—', align: TextAlign.right),
-                                    _cell(r.netWeightKg?.toStringAsFixed(0) ?? '—', align: TextAlign.right, bold: true),
-                                    _cell('₹${r.amount.toStringAsFixed(0)}', align: TextAlign.right),
+                                    _cell(
+                                      r.grossWeightKg?.toStringAsFixed(0) ??
+                                          '—',
+                                      align: TextAlign.right,
+                                    ),
+                                    _cell(
+                                      r.tareWeightKg?.toStringAsFixed(0) ?? '—',
+                                      align: TextAlign.right,
+                                    ),
+                                    _cell(
+                                      r.netWeightKg?.toStringAsFixed(0) ?? '—',
+                                      align: TextAlign.right,
+                                      bold: true,
+                                    ),
+                                    _cell(
+                                      '₹${r.amount.toStringAsFixed(0)}',
+                                      align: TextAlign.right,
+                                    ),
                                     _cell(r.displayStatus),
                                   ],
                                 ),
@@ -268,17 +301,34 @@ class PrintReportDialog extends StatelessWidget {
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: const Color(0xFFF8FAFC),
-                              border: Border.all(color: const Color(0xFFE2E8F0)),
+                              border: Border.all(
+                                color: const Color(0xFFE2E8F0),
+                              ),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
-                                _summaryItem('Total Bills', '${summary.totalBills}'),
-                                _summaryItem('Total Gross', '${summary.totalGrossTons} T'),
-                                _summaryItem('Total Net', '${summary.totalNetTons} T'),
-                                _summaryItem('Total Revenue', '₹${summary.totalRevenue.toStringAsFixed(0)}'),
-                                _summaryItem('Pending', '${summary.pendingCount}'),
+                                _summaryItem(
+                                  'Total Bills',
+                                  '${summary.totalBills}',
+                                ),
+                                _summaryItem(
+                                  'Total Gross',
+                                  '${summary.totalGrossTons} T',
+                                ),
+                                _summaryItem(
+                                  'Total Net',
+                                  '${summary.totalNetTons} T',
+                                ),
+                                _summaryItem(
+                                  'Total Revenue',
+                                  '₹${summary.totalRevenue.toStringAsFixed(0)}',
+                                ),
+                                _summaryItem(
+                                  'Pending',
+                                  '${summary.pendingCount}',
+                                ),
                               ],
                             ),
                           ),
@@ -298,8 +348,13 @@ class PrintReportDialog extends StatelessWidget {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: const Color(0xFF475569),
                         side: const BorderSide(color: Color(0xFFCBD5E1)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 12,
+                        ),
                       ),
                       child: const Text('Close'),
                     ),
@@ -311,14 +366,22 @@ class PrintReportDialog extends StatelessWidget {
                           SnackBar(
                             content: Row(
                               children: [
-                                const Icon(Icons.print, color: Colors.white, size: 18),
+                                const Icon(
+                                  Icons.print,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
                                 const SizedBox(width: 8),
-                                Text('Print job sent for Weighment Report (${records.length} records)'),
+                                Text(
+                                  'Print job sent for Weighment Report (${records.length} records)',
+                                ),
                               ],
                             ),
                             backgroundColor: const Color(0xFF0284C7),
                             behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                           ),
                         );
                       },
@@ -327,8 +390,13 @@ class PrintReportDialog extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF0284C7),
                         foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
                       ),
                     ),
                   ],

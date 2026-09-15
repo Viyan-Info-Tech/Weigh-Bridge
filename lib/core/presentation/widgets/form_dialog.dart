@@ -69,7 +69,11 @@ class FormDialogTextField extends StatelessWidget {
   final bool isRequired;
   final String? hintText;
   final int maxLines;
+  final int? minLines;
+  final TextInputAction? textInputAction;
   final List<TextInputFormatter>? inputFormatters;
+  final TextInputType? keyboardType;
+  final String? Function(String?)? validator;
 
   const FormDialogTextField({
     super.key,
@@ -79,11 +83,24 @@ class FormDialogTextField extends StatelessWidget {
     this.isRequired = false,
     this.hintText,
     this.maxLines = 1,
+    this.minLines,
+    this.textInputAction,
     this.inputFormatters,
+    this.keyboardType,
+    this.validator,
   });
 
   @override
   Widget build(BuildContext context) {
+    final effectiveKeyboardType = keyboardType ??
+        (isNumeric
+            ? TextInputType.number
+            : (maxLines > 1 ? TextInputType.multiline : TextInputType.text));
+    final effectiveTextInputAction = textInputAction ??
+        (effectiveKeyboardType == TextInputType.multiline
+            ? TextInputAction.newline
+            : null);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -100,11 +117,15 @@ class FormDialogTextField extends StatelessWidget {
         TextFormField(
           controller: controller,
           maxLines: maxLines,
-          keyboardType: isNumeric ? TextInputType.number : TextInputType.text,
+          minLines: minLines,
+          keyboardType: effectiveKeyboardType,
+          textInputAction: effectiveTextInputAction,
           inputFormatters: inputFormatters ?? (isNumeric ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))] : null),
+          validator: validator,
           style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13),
           decoration: InputDecoration(
             hintText: hintText,
+            alignLabelWithHint: true,
             hintStyle: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, color: Colors.grey.shade400),
             contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),

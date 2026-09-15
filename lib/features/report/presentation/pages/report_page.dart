@@ -720,6 +720,7 @@ class _ReportPageState extends State<ReportPage> {
                         DropdownMenuItem(value: 'all', child: Text('All Modes')),
                         DropdownMenuItem(value: 'cash', child: Text('Cash')),
                         DropdownMenuItem(value: 'credit', child: Text('Credit')),
+                        DropdownMenuItem(value: 'upi', child: Text('UPI')),
                       ],
                     ),
                   ),
