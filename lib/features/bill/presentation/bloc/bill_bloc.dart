@@ -69,6 +69,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     on<ResetVehicleCharge>(_onResetVehicleCharge);
     on<SaveBillRequested>(_onSaveBillRequested);
     on<SaveAndPrintBillRequested>(_onSaveAndPrintBillRequested);
+    on<PrintReceiptDismissed>(_onPrintReceiptDismissed);
     on<LoadPendingBill>(_onLoadPendingBill);
     on<LoadPendingBills>(_onLoadPendingBills);
     on<ClearBillRequested>(_onClearBillRequested);
@@ -342,11 +343,20 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     emit(state.copyWith(status: BillScreenStatus.printing, clearError: true));
 
     try {
-      await _saveOrUpdateBill(emit);
+      final savedData = await _saveOrUpdateBill(emit);
       if (emit.isDone) return;
       final bills = await _loadBillsFor(state.effectiveBillsDate);
       if (emit.isDone) return;
-      emit(state.copyWith(status: BillScreenStatus.saved, recentBills: bills));
+      emit(
+        state.copyWith(
+          status: BillScreenStatus.printing,
+          recentBills: bills,
+          printReceiptBill: savedData.bill,
+          printReceiptVehicle: savedData.vehicle,
+          printReceiptParty: savedData.party,
+          printReceiptMaterialName: savedData.materialName,
+        ),
+      );
     } catch (e) {
       if (emit.isDone) return;
       emit(
@@ -358,9 +368,21 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     }
   }
 
-  Future<void> _saveOrUpdateBill(Emitter<BillState> emit) async {
+  void _onPrintReceiptDismissed(
+    PrintReceiptDismissed event,
+    Emitter<BillState> emit,
+  ) {
+    emit(state.copyWith(clearPrintReceipt: true, status: BillScreenStatus.loaded));
+  }
+
+  Future<({Weighment bill, Vehicle? vehicle, Party? party, String materialName})> _saveOrUpdateBill(Emitter<BillState> emit) async {
     final isCompleted = state.grossWeightKg > 0 && state.tareWeightKg > 0;
     final status = isCompleted ? 'completed' : 'pending';
+
+    final savedVehicle = state.selectedVehicle;
+    final savedParty = state.selectedParty;
+    final savedMaterialName = state.selectedMaterial?.name ?? '—';
+    final createdAt = state.isEditing ? (state.editingBillCreatedAt ?? DateTime.now()) : DateTime.now();
 
     double firstWeightKg;
     String firstWeightType;
@@ -409,8 +431,10 @@ class BillBloc extends Bloc<BillEvent, BillState> {
         ? (state.grossWeightKg - state.tareWeightKg).abs()
         : null;
 
+    int savedId = state.editingBillId ?? 0;
+
     final weighment = Weighment(
-      id: state.editingBillId ?? 0,
+      id: savedId,
       billNumber: state.currentBillNumber,
       partyId: state.selectedParty!.id,
       vehicleId: state.selectedVehicle!.id,
@@ -426,15 +450,36 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       remarks: state.remarksText.isNotEmpty ? state.remarksText : null,
       status: status,
       weightUnit: state.weightUnit,
-      createdAt: DateTime.now(),
+      createdAt: createdAt,
       updatedAt: DateTime.now(),
     );
 
     if (state.isEditing) {
       await _saveBillUseCase.updateWeighment(state.editingBillId!, weighment);
     } else {
-      await _saveBillUseCase(weighment);
+      savedId = await _saveBillUseCase(weighment);
     }
+
+    final savedWeighment = Weighment(
+      id: savedId,
+      billNumber: weighment.billNumber,
+      partyId: weighment.partyId,
+      vehicleId: weighment.vehicleId,
+      materialId: weighment.materialId,
+      paymentMode: weighment.paymentMode,
+      firstWeightKg: weighment.firstWeightKg,
+      firstWeightType: weighment.firstWeightType,
+      secondWeightKg: weighment.secondWeightKg,
+      secondWeightType: weighment.secondWeightType,
+      netWeightKg: weighment.explicitNetWeightKg,
+      vehicleCharge: weighment.vehicleCharge,
+      amount: weighment.amount,
+      remarks: weighment.remarks,
+      status: weighment.status,
+      weightUnit: weighment.weightUnit,
+      createdAt: weighment.createdAt,
+      updatedAt: weighment.updatedAt,
+    );
 
     final nextBillNumber = await _generateBillNumberUseCase();
     String unit = 'ton';
@@ -443,6 +488,13 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       unit = settings.weightUnit;
     }
     _resetForm(emit, nextBillNumber: nextBillNumber, weightUnit: unit);
+
+    return (
+      bill: savedWeighment,
+      vehicle: savedVehicle,
+      party: savedParty,
+      materialName: savedMaterialName,
+    );
   }
 
   Future<void> _onLoadPendingBill(
@@ -527,6 +579,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
           amount: weighment.amount,
           remarksText: weighment.remarks ?? '',
           weightUnit: weighment.weightUnit,
+          editingBillCreatedAt: weighment.createdAt,
         ),
       );
       _recalculate(emit);
@@ -573,6 +626,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
         clearMaterial: true,
         clearEditingBillId: true,
         clearEditingFirstWeight: true,
+        clearEditingBillCreatedAt: true,
         grossWeightText: '',
         tareWeightText: '',
         remarksText: '',

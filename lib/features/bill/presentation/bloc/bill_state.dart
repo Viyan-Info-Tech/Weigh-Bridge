@@ -45,8 +45,14 @@ class BillState extends Equatable {
   final int? editingBillId;
   final String? editingFirstWeightType;
   final double? editingFirstWeightKg;
+  final DateTime? editingBillCreatedAt;
   final String? weightValidationError;
   final String weightUnit;
+
+  final Weighment? printReceiptBill;
+  final Vehicle? printReceiptVehicle;
+  final Party? printReceiptParty;
+  final String? printReceiptMaterialName;
 
   const BillState({
     this.status = BillScreenStatus.initial,
@@ -79,8 +85,13 @@ class BillState extends Equatable {
     this.editingBillId,
     this.editingFirstWeightType,
     this.editingFirstWeightKg,
+    this.editingBillCreatedAt,
     this.weightValidationError,
     this.weightUnit = 'ton',
+    this.printReceiptBill,
+    this.printReceiptVehicle,
+    this.printReceiptParty,
+    this.printReceiptMaterialName,
   });
 
   bool get isEditing => editingBillId != null;
@@ -144,6 +155,13 @@ class BillState extends Equatable {
     String? weightValidationError,
     bool clearWeightError = false,
     String? weightUnit,
+    Weighment? printReceiptBill,
+    Vehicle? printReceiptVehicle,
+    Party? printReceiptParty,
+    String? printReceiptMaterialName,
+    bool clearPrintReceipt = false,
+    DateTime? editingBillCreatedAt,
+    bool clearEditingBillCreatedAt = false,
   }) {
     return BillState(
       status: status ?? this.status,
@@ -176,8 +194,13 @@ class BillState extends Equatable {
       editingBillId: clearEditingBillId ? null : (editingBillId ?? this.editingBillId),
       editingFirstWeightType: clearEditingFirstWeight ? null : (editingFirstWeightType ?? this.editingFirstWeightType),
       editingFirstWeightKg: clearEditingFirstWeight ? null : (editingFirstWeightKg ?? this.editingFirstWeightKg),
+      editingBillCreatedAt: clearEditingBillCreatedAt ? null : (editingBillCreatedAt ?? this.editingBillCreatedAt),
       weightValidationError: clearWeightError ? null : (weightValidationError ?? this.weightValidationError),
       weightUnit: weightUnit ?? this.weightUnit,
+      printReceiptBill: clearPrintReceipt ? null : (printReceiptBill ?? this.printReceiptBill),
+      printReceiptVehicle: clearPrintReceipt ? null : (printReceiptVehicle ?? this.printReceiptVehicle),
+      printReceiptParty: clearPrintReceipt ? null : (printReceiptParty ?? this.printReceiptParty),
+      printReceiptMaterialName: clearPrintReceipt ? null : (printReceiptMaterialName ?? this.printReceiptMaterialName),
     );
   }
 
@@ -213,7 +236,12 @@ class BillState extends Equatable {
         editingBillId,
         editingFirstWeightType,
         editingFirstWeightKg,
+        editingBillCreatedAt,
         weightValidationError,
         weightUnit,
+        printReceiptBill,
+        printReceiptVehicle,
+        printReceiptParty,
+        printReceiptMaterialName,
       ];
 }

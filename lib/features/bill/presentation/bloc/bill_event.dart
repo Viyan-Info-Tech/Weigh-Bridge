@@ -101,6 +101,10 @@ class SaveAndPrintBillRequested extends BillEvent {
   const SaveAndPrintBillRequested();
 }
 
+class PrintReceiptDismissed extends BillEvent {
+  const PrintReceiptDismissed();
+}
+
 class LoadPendingBill extends BillEvent {
   final int billId;
   const LoadPendingBill(this.billId);

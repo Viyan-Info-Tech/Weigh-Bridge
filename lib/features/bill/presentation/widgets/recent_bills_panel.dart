@@ -23,6 +23,7 @@ class RecentBillsPanel extends StatefulWidget {
   final ValueChanged<int>? onLoadPendingBill;
   final ValueChanged<DateTime>? onDateChanged;
   final void Function(DateTime? startDate, DateTime? endDate)? onDateRangeChanged;
+  final FocusNode? searchFocusNode;
   final bool shrinkWrap;
 
   const RecentBillsPanel({
@@ -39,6 +40,7 @@ class RecentBillsPanel extends StatefulWidget {
     this.onLoadPendingBill,
     this.onDateChanged,
     this.onDateRangeChanged,
+    this.searchFocusNode,
     this.shrinkWrap = false,
   });
 
@@ -598,6 +600,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
     return TextField(
       key: const Key('recent_bills_search_field'),
       controller: _searchController,
+      focusNode: widget.searchFocusNode,
       onChanged: (val) {
         setState(() {
           _searchQuery = val;

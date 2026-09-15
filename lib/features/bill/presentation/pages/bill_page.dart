@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../bloc/bill_bloc.dart';
@@ -11,6 +12,7 @@ import '../widgets/quick_add_vehicle_dialog.dart';
 import '../widgets/quick_add_material_dialog.dart';
 import '../widgets/recent_bills_panel.dart';
 import '../widgets/live_date_time.dart';
+import '../widgets/weighment_slip_dialog.dart';
 
 class BillPage extends StatefulWidget {
   const BillPage({super.key});
@@ -25,6 +27,16 @@ class _BillPageState extends State<BillPage> {
   late final TextEditingController _remarksController;
   late final TextEditingController _vehicleChargeController;
 
+  late final FocusNode _partyFocusNode;
+  late final FocusNode _vehicleFocusNode;
+  late final FocusNode _materialFocusNode;
+  late final FocusNode _remarksFocusNode;
+  late final FocusNode _grossWeightFocusNode;
+  late final FocusNode _tareWeightFocusNode;
+  late final FocusNode _vehicleChargeFocusNode;
+  late final FocusNode _paymentModeFocusNode;
+  late final FocusNode _searchFocusNode;
+
   @override
   void initState() {
     super.initState();
@@ -32,9 +44,21 @@ class _BillPageState extends State<BillPage> {
     _tareWeightController = TextEditingController();
     _remarksController = TextEditingController();
     _vehicleChargeController = TextEditingController();
+
+    _partyFocusNode = FocusNode(debugLabel: 'partyFocusNode');
+    _vehicleFocusNode = FocusNode(debugLabel: 'vehicleFocusNode');
+    _materialFocusNode = FocusNode(debugLabel: 'materialFocusNode');
+    _remarksFocusNode = FocusNode(debugLabel: 'remarksFocusNode');
+    _grossWeightFocusNode = FocusNode(debugLabel: 'grossWeightFocusNode');
+    _tareWeightFocusNode = FocusNode(debugLabel: 'tareWeightFocusNode');
+    _vehicleChargeFocusNode = FocusNode(debugLabel: 'vehicleChargeFocusNode');
+    _paymentModeFocusNode = FocusNode(debugLabel: 'paymentModeFocusNode');
+    _searchFocusNode = FocusNode(debugLabel: 'searchFocusNode');
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<BillBloc>().add(const LoadBillScreen());
+        _partyFocusNode.requestFocus();
       }
     });
   }
@@ -45,6 +69,16 @@ class _BillPageState extends State<BillPage> {
     _tareWeightController.dispose();
     _remarksController.dispose();
     _vehicleChargeController.dispose();
+
+    _partyFocusNode.dispose();
+    _vehicleFocusNode.dispose();
+    _materialFocusNode.dispose();
+    _remarksFocusNode.dispose();
+    _grossWeightFocusNode.dispose();
+    _tareWeightFocusNode.dispose();
+    _vehicleChargeFocusNode.dispose();
+    _paymentModeFocusNode.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -53,6 +87,25 @@ class _BillPageState extends State<BillPage> {
     _tareWeightController.clear();
     _remarksController.clear();
     _vehicleChargeController.clear();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _partyFocusNode.requestFocus();
+      }
+    });
+  }
+
+  void _saveTicket(BuildContext context, BillState state) {
+    final isSaving = state.status == BillScreenStatus.saving || state.status == BillScreenStatus.printing;
+    if (!isSaving && !state.hasWeightError) {
+      context.read<BillBloc>().add(const SaveBillRequested());
+    }
+  }
+
+  void _saveAndPrintTicket(BuildContext context, BillState state) {
+    final isSaving = state.status == BillScreenStatus.saving || state.status == BillScreenStatus.printing;
+    if (!isSaving && !state.hasWeightError) {
+      context.read<BillBloc>().add(const SaveAndPrintBillRequested());
+    }
   }
 
   bool _hasUnsavedData(BillState state) {
@@ -108,8 +161,29 @@ class _BillPageState extends State<BillPage> {
       listenWhen: (prev, curr) =>
           prev.status != curr.status ||
           prev.editingBillId != curr.editingBillId ||
-          prev.currentBillNumber != curr.currentBillNumber,
+          prev.currentBillNumber != curr.currentBillNumber ||
+          (curr.status == BillScreenStatus.printing && curr.printReceiptBill != null),
       listener: (context, state) {
+        if (state.status == BillScreenStatus.printing &&
+            state.printReceiptBill != null) {
+          _syncControllersAfterReset();
+          final bill = state.printReceiptBill!;
+          final vehicle = state.printReceiptVehicle;
+          final party = state.printReceiptParty;
+          final materialName = state.printReceiptMaterialName ?? '—';
+          final vehicleTypes = state.vehicleTypes;
+          context.read<BillBloc>().add(const PrintReceiptDismissed());
+          showDialog(
+            context: context,
+            builder: (dialogContext) => WeighmentSlipDialog(
+              bill: bill,
+              vehicle: vehicle,
+              party: party,
+              vehicleTypes: vehicleTypes,
+              materialName: materialName,
+            ),
+          );
+        }
         if (state.status == BillScreenStatus.saved) {
           _syncControllersAfterReset();
           ScaffoldMessenger.of(context).showSnackBar(
@@ -168,154 +242,186 @@ class _BillPageState extends State<BillPage> {
                   ? state.vehicleCharge.toStringAsFixed(0)
                   : state.vehicleCharge.toStringAsFixed(2))
               : '';
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              if (state.editingFirstWeightType?.toUpperCase() == 'GROSS') {
+                _tareWeightFocusNode.requestFocus();
+              } else {
+                _grossWeightFocusNode.requestFocus();
+              }
+            }
+          });
         } else if (state.editingBillId == null) {
           _syncControllersAfterReset();
         }
       },
       builder: (context, state) {
-        return Scaffold(
-          backgroundColor: const Color(0xFFF8FAFC),
-          body: SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final isTwoColumn = constraints.maxWidth >= 950;
-                final isLargeDesktop = constraints.maxWidth >= 1150;
-                final pagePadding = isLargeDesktop ? 20.0 : (isTwoColumn ? 14.0 : 12.0);
-                final billingFlex = isLargeDesktop ? 58 : 57;
-                final recentBillsFlex = isLargeDesktop ? 42 : 43;
+        return CallbackShortcuts(
+          bindings: <ShortcutActivator, VoidCallback>{
+            const SingleActivator(LogicalKeyboardKey.keyN, control: true): () => _startNewReceipt(context, state),
+            const SingleActivator(LogicalKeyboardKey.keyN, meta: true): () => _startNewReceipt(context, state),
+            const SingleActivator(LogicalKeyboardKey.keyS, control: true): () => _saveTicket(context, state),
+            const SingleActivator(LogicalKeyboardKey.keyS, meta: true): () => _saveTicket(context, state),
+            const SingleActivator(LogicalKeyboardKey.f9): () => _saveTicket(context, state),
+            const SingleActivator(LogicalKeyboardKey.keyP, control: true): () => _saveAndPrintTicket(context, state),
+            const SingleActivator(LogicalKeyboardKey.keyP, meta: true): () => _saveAndPrintTicket(context, state),
+            const SingleActivator(LogicalKeyboardKey.f10): () => _saveAndPrintTicket(context, state),
+            const SingleActivator(LogicalKeyboardKey.keyF, control: true): () => _searchFocusNode.requestFocus(),
+            const SingleActivator(LogicalKeyboardKey.keyF, meta: true): () => _searchFocusNode.requestFocus(),
+            const SingleActivator(LogicalKeyboardKey.f2): () => _partyFocusNode.requestFocus(),
+            const SingleActivator(LogicalKeyboardKey.f3): () => _vehicleFocusNode.requestFocus(),
+            const SingleActivator(LogicalKeyboardKey.f4): () => _materialFocusNode.requestFocus(),
+            const SingleActivator(LogicalKeyboardKey.f5): () => context.read<BillBloc>().add(const LoadRecentBills()),
+            const SingleActivator(LogicalKeyboardKey.f6): () => _grossWeightFocusNode.requestFocus(),
+            const SingleActivator(LogicalKeyboardKey.f7): () => _tareWeightFocusNode.requestFocus(),
+            const SingleActivator(LogicalKeyboardKey.f8): () => _vehicleChargeFocusNode.requestFocus(),
+          },
+          child: Scaffold(
+            backgroundColor: const Color(0xFFF8FAFC),
+            body: SafeArea(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final isTwoColumn = constraints.maxWidth >= 950;
+                  final isLargeDesktop = constraints.maxWidth >= 1150;
+                  final pagePadding = isLargeDesktop ? 20.0 : (isTwoColumn ? 14.0 : 12.0);
+                  final billingFlex = isLargeDesktop ? 58 : 57;
+                  final recentBillsFlex = isLargeDesktop ? 42 : 43;
 
-                if (isTwoColumn) {
-                  return Padding(
-                    padding: EdgeInsets.all(pagePadding),
-                    child: Column(
-                      children: [
-                        _buildTopHeader(state),
-                        SizedBox(height: isLargeDesktop ? 16 : 12),
-                        Expanded(
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Expanded(
-                                flex: billingFlex,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(right: 8),
-                                  child: SingleChildScrollView(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                                      children: [
-                                        WeightDisplay(
-                                          netWeightTon: state.netWeightKg / 1000,
-                                          grossWeight: state.grossWeightKg,
-                                          tareWeight: state.tareWeightKg,
-                                          weightUnit: state.weightUnit,
-                                        ),
-                                        const SizedBox(height: 16),
-                                        _buildBillForm(state),
-                                        const SizedBox(height: 16),
-                                        _buildActionButtons(state),
-                                        const SizedBox(height: 24),
-                                      ],
+                  if (isTwoColumn) {
+                    return Padding(
+                      padding: EdgeInsets.all(pagePadding),
+                      child: Column(
+                        children: [
+                          _buildTopHeader(state),
+                          SizedBox(height: isLargeDesktop ? 16 : 12),
+                          Expanded(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Expanded(
+                                  flex: billingFlex,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(right: 8),
+                                    child: SingleChildScrollView(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                                        children: [
+                                          WeightDisplay(
+                                            netWeightTon: state.netWeightKg / 1000,
+                                            grossWeight: state.grossWeightKg,
+                                            tareWeight: state.tareWeightKg,
+                                            weightUnit: state.weightUnit,
+                                          ),
+                                          const SizedBox(height: 16),
+                                          _buildBillForm(state),
+                                          const SizedBox(height: 16),
+                                          _buildActionButtons(state),
+                                          const SizedBox(height: 24),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                              Container(
-                                width: 1,
-                                margin: const EdgeInsets.symmetric(horizontal: 4),
-                                color: const Color(0xFFE2E8F0),
-                              ),
-                              Expanded(
-                                flex: recentBillsFlex,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(left: 8),
-                                  child: RecentBillsPanel(
-                                    recentBills: state.recentBills,
-                                    billsDate: state.effectiveBillsDate,
-                                    billsStartDate: state.billsStartDate,
-                                    billsEndDate: state.billsEndDate,
-                                    parties: state.parties,
-                                    vehicles: state.vehicles,
-                                    vehicleTypes: state.vehicleTypes,
-                                    materials: state.materials,
-                                    onLoadPendingBill: (billId) {
-                                      context.read<BillBloc>().add(LoadPendingBill(billId));
-                                    },
-                                    onDateChanged: (date) {
-                                      context.read<BillBloc>().add(LoadRecentBills(date: date));
-                                    },
-                                    onDateRangeChanged: (startDate, endDate) {
-                                      if (startDate != null && endDate != null) {
-                                        context.read<BillBloc>().add(
-                                          LoadRecentBills(startDate: startDate, endDate: endDate),
-                                        );
-                                      } else {
-                                        context.read<BillBloc>().add(
-                                          const LoadRecentBills(),
-                                        );
-                                      }
-                                    },
+                                Container(
+                                  width: 1,
+                                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                                  color: const Color(0xFFE2E8F0),
+                                ),
+                                Expanded(
+                                  flex: recentBillsFlex,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(left: 8),
+                                    child: RecentBillsPanel(
+                                      searchFocusNode: _searchFocusNode,
+                                      recentBills: state.recentBills,
+                                      billsDate: state.effectiveBillsDate,
+                                      billsStartDate: state.billsStartDate,
+                                      billsEndDate: state.billsEndDate,
+                                      parties: state.parties,
+                                      vehicles: state.vehicles,
+                                      vehicleTypes: state.vehicleTypes,
+                                      materials: state.materials,
+                                      onLoadPendingBill: (billId) {
+                                        context.read<BillBloc>().add(LoadPendingBill(billId));
+                                      },
+                                      onDateChanged: (date) {
+                                        context.read<BillBloc>().add(LoadRecentBills(date: date));
+                                      },
+                                      onDateRangeChanged: (startDate, endDate) {
+                                        if (startDate != null && endDate != null) {
+                                          context.read<BillBloc>().add(
+                                            LoadRecentBills(startDate: startDate, endDate: endDate),
+                                          );
+                                        } else {
+                                          context.read<BillBloc>().add(
+                                            const LoadRecentBills(),
+                                          );
+                                        }
+                                      },
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  return SingleChildScrollView(
+                    padding: EdgeInsets.all(pagePadding),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildTopHeader(state),
+                        const SizedBox(height: 16),
+                        WeightDisplay(
+                          netWeightTon: state.netWeightKg / 1000,
+                          grossWeight: state.grossWeightKg,
+                          tareWeight: state.tareWeightKg,
+                          weightUnit: state.weightUnit,
                         ),
+                        const SizedBox(height: 16),
+                        _buildBillForm(state),
+                        const SizedBox(height: 16),
+                        _buildActionButtons(state),
+                        const SizedBox(height: 24),
+                        RecentBillsPanel(
+                          searchFocusNode: _searchFocusNode,
+                          shrinkWrap: true,
+                          recentBills: state.recentBills,
+                          billsDate: state.effectiveBillsDate,
+                          billsStartDate: state.billsStartDate,
+                          billsEndDate: state.billsEndDate,
+                          parties: state.parties,
+                          vehicles: state.vehicles,
+                          vehicleTypes: state.vehicleTypes,
+                          materials: state.materials,
+                          onLoadPendingBill: (billId) {
+                            context.read<BillBloc>().add(LoadPendingBill(billId));
+                          },
+                          onDateChanged: (date) {
+                            context.read<BillBloc>().add(LoadRecentBills(date: date));
+                          },
+                          onDateRangeChanged: (startDate, endDate) {
+                            if (startDate != null && endDate != null) {
+                              context.read<BillBloc>().add(
+                                LoadRecentBills(startDate: startDate, endDate: endDate),
+                              );
+                            } else {
+                              context.read<BillBloc>().add(
+                                const LoadRecentBills(),
+                              );
+                            }
+                          },
+                        ),
+                        const SizedBox(height: 24),
                       ],
                     ),
                   );
-                }
-
-                return SingleChildScrollView(
-                  padding: EdgeInsets.all(pagePadding),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      _buildTopHeader(state),
-                      const SizedBox(height: 16),
-                      WeightDisplay(
-                        netWeightTon: state.netWeightKg / 1000,
-                        grossWeight: state.grossWeightKg,
-                        tareWeight: state.tareWeightKg,
-                        weightUnit: state.weightUnit,
-                      ),
-                      const SizedBox(height: 16),
-                      _buildBillForm(state),
-                      const SizedBox(height: 16),
-                      _buildActionButtons(state),
-                      const SizedBox(height: 24),
-                      RecentBillsPanel(
-                        shrinkWrap: true,
-                        recentBills: state.recentBills,
-                        billsDate: state.effectiveBillsDate,
-                        billsStartDate: state.billsStartDate,
-                        billsEndDate: state.billsEndDate,
-                        parties: state.parties,
-                        vehicles: state.vehicles,
-                        vehicleTypes: state.vehicleTypes,
-                        materials: state.materials,
-                        onLoadPendingBill: (billId) {
-                          context.read<BillBloc>().add(LoadPendingBill(billId));
-                        },
-                        onDateChanged: (date) {
-                          context.read<BillBloc>().add(LoadRecentBills(date: date));
-                        },
-                        onDateRangeChanged: (startDate, endDate) {
-                          if (startDate != null && endDate != null) {
-                            context.read<BillBloc>().add(
-                              LoadRecentBills(startDate: startDate, endDate: endDate),
-                            );
-                          } else {
-                            context.read<BillBloc>().add(
-                              const LoadRecentBills(),
-                            );
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 24),
-                    ],
-                  ),
-                );
-              },
+                },
+              ),
             ),
           ),
         );
@@ -446,7 +552,7 @@ class _BillPageState extends State<BillPage> {
     return ElevatedButton.icon(
       onPressed: () => _startNewReceipt(context, state),
       icon: const Icon(Icons.add_rounded, size: 16),
-      label: const Text('New Receipt'),
+      label: const Text('New Receipt (Ctrl+N)'),
       style: ElevatedButton.styleFrom(
         backgroundColor: const Color(0xFF0D3B82),
         foregroundColor: Colors.white,
@@ -487,6 +593,14 @@ class _BillPageState extends State<BillPage> {
       amount: state.amount,
       weightUnit: state.weightUnit,
       weightValidationError: state.weightValidationError,
+      partyFocusNode: _partyFocusNode,
+      vehicleFocusNode: _vehicleFocusNode,
+      materialFocusNode: _materialFocusNode,
+      remarksFocusNode: _remarksFocusNode,
+      grossWeightFocusNode: _grossWeightFocusNode,
+      tareWeightFocusNode: _tareWeightFocusNode,
+      vehicleChargeFocusNode: _vehicleChargeFocusNode,
+      paymentModeFocusNode: _paymentModeFocusNode,
       onPartyChanged: (party) =>
           context.read<BillBloc>().add(PartySelected(party)),
       onVehicleChanged: (vehicle) =>
@@ -583,7 +697,7 @@ class _BillPageState extends State<BillPage> {
           ElevatedButton.icon(
             onPressed: isDisabled
                 ? null
-                : () => context.read<BillBloc>().add(const SaveBillRequested()),
+                : () => _saveTicket(context, state),
             icon: isSaving
                 ? const SizedBox.shrink()
                 : Icon(state.isEditing ? Icons.check_circle_outline : Icons.save_outlined, size: 16),
@@ -594,7 +708,7 @@ class _BillPageState extends State<BillPage> {
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white),
                   )
-                : Text(state.isEditing ? 'Complete Weighment' : 'Save Ticket'),
+                : Text(state.isEditing ? 'Complete Weighment (F9)' : 'Save Ticket (F9)'),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF0D3B82),
               foregroundColor: Colors.white,
@@ -607,10 +721,10 @@ class _BillPageState extends State<BillPage> {
           ElevatedButton.icon(
             onPressed: isDisabled
                 ? null
-                : () => context.read<BillBloc>().add(const SaveAndPrintBillRequested()),
+                : () => _saveAndPrintTicket(context, state),
             icon: isSaving
                 ? const SizedBox.shrink()
-                : Icon(state.isEditing ? Icons.print_rounded : Icons.print_rounded, size: 16),
+                : const Icon(Icons.print_rounded, size: 16),
             label: isSaving
                 ? const SizedBox(
                     height: 18,
@@ -618,7 +732,7 @@ class _BillPageState extends State<BillPage> {
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white),
                   )
-                : Text(state.isEditing ? 'Complete & Print Slip' : 'Save & Print Slip'),
+                : Text(state.isEditing ? 'Complete & Print (F10)' : 'Save & Print Slip (F10)'),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF16A34A),
               foregroundColor: Colors.white,

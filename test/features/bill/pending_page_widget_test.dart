@@ -276,7 +276,7 @@ void main() {
       expect(find.text('WB-00001'), findsOneWidget);
       expect(find.text('MH 12 AB 1234'), findsWidgets);
       expect(find.text('UltraTech Cement'), findsWidgets);
-      expect(find.text('Tare Weight Pending'), findsWidgets);
+      expect(find.text('PENDING • TARE WT'), findsWidgets);
       expect(find.text('Tare Weight'), findsWidgets);
 
       // Verify footer
