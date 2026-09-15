@@ -30,6 +30,7 @@ class BillForm extends StatefulWidget {
   final double amount;
   final String weightUnit;
   final String? weightValidationError;
+  final bool isReady;
 
   final FocusNode? partyFocusNode;
   final FocusNode? vehicleFocusNode;
@@ -78,6 +79,7 @@ class BillForm extends StatefulWidget {
     required this.amount,
     this.weightUnit = 'kg',
     this.weightValidationError,
+    this.isReady = true,
     this.partyFocusNode,
     this.vehicleFocusNode,
     this.materialFocusNode,
@@ -106,7 +108,6 @@ class BillForm extends StatefulWidget {
 }
 
 class _BillFormState extends State<BillForm> {
-
   TextEditingController? _internalVehicleChargeController;
 
   TextEditingController get _effectiveVehicleChargeController =>
@@ -128,8 +129,9 @@ class _BillFormState extends State<BillForm> {
     if (widget.vehicleChargeController != null &&
         widget.vehicleChargeController!.text.isEmpty &&
         widget.vehicleCharge > 0) {
-      widget.vehicleChargeController!.text =
-          _formatCharge(widget.vehicleCharge);
+      widget.vehicleChargeController!.text = _formatCharge(
+        widget.vehicleCharge,
+      );
     }
   }
 
@@ -175,16 +177,21 @@ class _BillFormState extends State<BillForm> {
         final isWeightCompact = formWidth < 440;
         final isHeaderCompact = formWidth < 400;
 
-        final bool isGrossEnabled = !widget.isEditing ||
-            widget.editingFirstWeightType?.toUpperCase() == 'TARE';
-        final bool isTareEnabled = !widget.isEditing ||
-            widget.editingFirstWeightType?.toUpperCase() == 'GROSS';
+        final bool isGrossEnabled =
+            widget.isReady &&
+            (!widget.isEditing ||
+                widget.editingFirstWeightType?.toUpperCase() == 'TARE');
+        final bool isTareEnabled =
+            widget.isReady &&
+            (!widget.isEditing ||
+                widget.editingFirstWeightType?.toUpperCase() == 'GROSS');
         final isKg = widget.weightUnit.toLowerCase() == 'kg';
-        final netWeightDisplay = widget.weightValidationError != null || widget.netWeightKg <= 0
+        final netWeightDisplay =
+            widget.weightValidationError != null || widget.netWeightKg <= 0
             ? '—'
             : (isKg
-                ? '${widget.netWeightKg.toStringAsFixed(0)} kg'
-                : '${(widget.netWeightKg / 1000).toStringAsFixed(3)} ton');
+                  ? '${widget.netWeightKg.toStringAsFixed(0)} kg'
+                  : '${(widget.netWeightKg / 1000).toStringAsFixed(3)} ton');
 
         return Container(
           padding: EdgeInsets.all(formWidth < 500 ? 16 : 24),
@@ -322,7 +329,11 @@ class _BillFormState extends State<BillForm> {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    const Icon(Icons.warning_amber_rounded, size: 14, color: Color(0xFFDC2626)),
+                    const Icon(
+                      Icons.warning_amber_rounded,
+                      size: 14,
+                      color: Color(0xFFDC2626),
+                    ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Text(
@@ -440,8 +451,10 @@ class _BillFormState extends State<BillForm> {
           isExpanded: true,
           isDense: true,
           decoration: InputDecoration(
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 8,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(color: Colors.grey.shade300),
@@ -452,13 +465,25 @@ class _BillFormState extends State<BillForm> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF0D3B82), width: 2.0),
+              borderSide: const BorderSide(
+                color: Color(0xFF0D3B82),
+                width: 2.0,
+              ),
             ),
           ),
           items: const [
-            DropdownMenuItem(value: 'Cash', child: Text('Cash', overflow: TextOverflow.ellipsis)),
-            DropdownMenuItem(value: 'Credit', child: Text('Credit', overflow: TextOverflow.ellipsis)),
-            DropdownMenuItem(value: 'UPI', child: Text('UPI', overflow: TextOverflow.ellipsis)),
+            DropdownMenuItem(
+              value: 'Cash',
+              child: Text('Cash', overflow: TextOverflow.ellipsis),
+            ),
+            DropdownMenuItem(
+              value: 'Credit',
+              child: Text('Credit', overflow: TextOverflow.ellipsis),
+            ),
+            DropdownMenuItem(
+              value: 'UPI',
+              child: Text('UPI', overflow: TextOverflow.ellipsis),
+            ),
           ],
           onChanged: (value) {
             if (value != null) widget.onPaymentModeChanged(value);
@@ -469,7 +494,7 @@ class _BillFormState extends State<BillForm> {
   }
 
   Widget _buildWeightUnitDropdown() {
-    final isLocked = widget.isEditing;
+    final isLocked = widget.isEditing || !widget.isReady;
     final currentUnit = widget.weightUnit.toLowerCase() == 'ton' ? 'ton' : 'kg';
 
     return Column(
@@ -488,7 +513,11 @@ class _BillFormState extends State<BillForm> {
             ),
             if (isLocked) ...[
               const SizedBox(width: 4),
-              Icon(Icons.lock_outline_rounded, size: 13, color: Colors.grey.shade500),
+              Icon(
+                Icons.lock_outline_rounded,
+                size: 13,
+                color: Colors.grey.shade500,
+              ),
             ],
           ],
         ),
@@ -505,8 +534,10 @@ class _BillFormState extends State<BillForm> {
             decoration: InputDecoration(
               fillColor: isLocked ? const Color(0xFFF8FAFC) : Colors.white,
               filled: true,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 8,
+              ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
                 borderSide: BorderSide(color: Colors.grey.shade300),
@@ -525,8 +556,14 @@ class _BillFormState extends State<BillForm> {
               ),
             ),
             items: const [
-              DropdownMenuItem(value: 'kg', child: Text('Kilogram (kg)', overflow: TextOverflow.ellipsis)),
-              DropdownMenuItem(value: 'ton', child: Text('Tonne (ton)', overflow: TextOverflow.ellipsis)),
+              DropdownMenuItem(
+                value: 'kg',
+                child: Text('Kilogram (kg)', overflow: TextOverflow.ellipsis),
+              ),
+              DropdownMenuItem(
+                value: 'ton',
+                child: Text('Tonne (ton)', overflow: TextOverflow.ellipsis),
+              ),
             ],
             onChanged: isLocked
                 ? null
@@ -567,7 +604,9 @@ class _BillFormState extends State<BillForm> {
       itemLabel: (v) => v.vehicleNumber,
       hintText: 'Select or type vehicle...',
       addNewLabel: 'Add Vehicle',
-      onAddNew: widget.onAddVehicle != null ? () => widget.onAddVehicle!() : null,
+      onAddNew: widget.onAddVehicle != null
+          ? () => widget.onAddVehicle!()
+          : null,
       enabled: !widget.isEditing,
       focusNode: widget.vehicleFocusNode,
       nextFocusNode: widget.materialFocusNode,
@@ -607,7 +646,9 @@ class _BillFormState extends State<BillForm> {
               style: TextStyle(
                 fontFamily: 'PlusJakartaSans',
                 fontSize: 13,
-                fontWeight: widget.selectedVehicleType != null ? FontWeight.w600 : FontWeight.w400,
+                fontWeight: widget.selectedVehicleType != null
+                    ? FontWeight.w600
+                    : FontWeight.w400,
                 color: widget.selectedVehicleType != null
                     ? const Color(0xFF0F172A)
                     : Colors.grey.shade400,
@@ -628,7 +669,9 @@ class _BillFormState extends State<BillForm> {
       itemLabel: (m) => m.name,
       hintText: 'Select or type material...',
       addNewLabel: 'Add Material',
-      onAddNew: widget.onAddMaterial != null ? () => widget.onAddMaterial!() : null,
+      onAddNew: widget.onAddMaterial != null
+          ? () => widget.onAddMaterial!()
+          : null,
       enabled: !widget.isEditing,
       focusNode: widget.materialFocusNode,
       nextFocusNode: widget.remarksFocusNode,
@@ -637,12 +680,12 @@ class _BillFormState extends State<BillForm> {
   }
 
   Widget _buildProminentWeightField(
-      String label,
-      TextEditingController controller,
-      ValueChanged<String> onChanged, {
-      bool enabled = true,
-      FocusNode? focusNode,
-      FocusNode? nextFocusNode,
+    String label,
+    TextEditingController controller,
+    ValueChanged<String> onChanged, {
+    bool enabled = true,
+    FocusNode? focusNode,
+    FocusNode? nextFocusNode,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -682,27 +725,25 @@ class _BillFormState extends State<BillForm> {
               fontSize: 16,
               color: Colors.grey.shade300,
             ),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 14,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide:
-                  BorderSide(color: Colors.grey.shade300, width: 1.5),
+              borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide:
-                  BorderSide(color: Colors.grey.shade300, width: 1.5),
+              borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
             ),
             disabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide:
-                  BorderSide(color: Colors.grey.shade200, width: 1.5),
+              borderSide: BorderSide(color: Colors.grey.shade200, width: 1.5),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide:
-                  const BorderSide(color: Color(0xFF0D3B82), width: 2),
+              borderSide: const BorderSide(color: Color(0xFF0D3B82), width: 2),
             ),
             filled: true,
             fillColor: enabled ? Colors.white : const Color(0xFFF8FAFC),
@@ -854,30 +895,31 @@ class _BillFormState extends State<BillForm> {
                     icon: const Icon(Icons.restart_alt_rounded, size: 18),
                     color: const Color(0xFF7C3AED),
                     visualDensity: VisualDensity.compact,
-                    tooltip: 'Reset to default (\u20B9${_formatCharge(widget.defaultVehicleCharge)})',
+                    tooltip:
+                        'Reset to default (\u20B9${_formatCharge(widget.defaultVehicleCharge)})',
                     onPressed: () {
                       widget.onResetVehicleCharge();
-                      _effectiveVehicleChargeController.text =
-                          _formatCharge(widget.defaultVehicleCharge);
+                      _effectiveVehicleChargeController.text = _formatCharge(
+                        widget.defaultVehicleCharge,
+                      );
                     },
                   )
                 : null,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 14,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide:
-                  BorderSide(color: Colors.grey.shade300, width: 1.5),
+              borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide:
-                  BorderSide(color: Colors.grey.shade300, width: 1.5),
+              borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide:
-                  const BorderSide(color: Color(0xFF0D3B82), width: 2),
+              borderSide: const BorderSide(color: Color(0xFF0D3B82), width: 2),
             ),
             filled: true,
             fillColor: Colors.white,
@@ -917,10 +959,7 @@ class _BillFormState extends State<BillForm> {
           onChanged: widget.onRemarksChanged,
           enabled: !widget.isEditing,
           maxLines: 1,
-          style: const TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            fontSize: 13,
-          ),
+          style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13),
           decoration: InputDecoration(
             hintText: 'Optional remarks',
             hintStyle: TextStyle(
@@ -928,8 +967,10 @@ class _BillFormState extends State<BillForm> {
               fontSize: 13,
               color: Colors.grey.shade400,
             ),
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(color: Colors.grey.shade300),
@@ -940,8 +981,10 @@ class _BillFormState extends State<BillForm> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide:
-                  const BorderSide(color: Color(0xFF0D3B82), width: 2.0),
+              borderSide: const BorderSide(
+                color: Color(0xFF0D3B82),
+                width: 2.0,
+              ),
             ),
             isDense: true,
           ),

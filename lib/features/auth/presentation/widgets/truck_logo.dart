@@ -1,7 +1,61 @@
 import 'package:flutter/material.dart';
 
-/// A custom-painted vector logo depicting a truck on a weighbridge platform,
-/// matching the brand mark in the top-left of the login screen.
+/// The official brand logo for Viyan Weighbridge.
+/// Renders the high-tech stylized 'V' monogram emblem with a vector fallback.
+class ViyanWeighbridgeLogo extends StatelessWidget {
+  final double size;
+  final bool withBackground;
+  final bool withGlow;
+  final Color? tintColor;
+
+  const ViyanWeighbridgeLogo({
+    super.key,
+    this.size = 52,
+    this.withBackground = true,
+    this.withGlow = true,
+    this.tintColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final borderRadius = BorderRadius.circular(size * 0.22);
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        borderRadius: borderRadius,
+        boxShadow: withGlow
+            ? [
+                BoxShadow(
+                  color: const Color(0xFF00F5FF).withValues(alpha: 0.35),
+                  blurRadius: size * 0.25,
+                  offset: const Offset(0, 2),
+                ),
+                BoxShadow(
+                  color: const Color(0xFF0D3B82).withValues(alpha: 0.3),
+                  blurRadius: size * 0.4,
+                  offset: const Offset(0, 4),
+                ),
+              ]
+            : null,
+      ),
+      child: ClipRRect(
+        borderRadius: borderRadius,
+        child: Image.asset(
+          'assets/images/viyan_logo.png',
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) => CustomPaint(
+            size: Size(size, size),
+            painter: _ViyanVLogoPainter(color: tintColor ?? const Color(0xFF00F5FF)),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Backwards-compatible alias for existing references
 class TruckWeighbridgeLogo extends StatelessWidget {
   final double size;
   final Color color;
@@ -14,161 +68,87 @@ class TruckWeighbridgeLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size(size, size * 0.95),
-      painter: _TruckLogoPainter(color: color),
+    return ViyanWeighbridgeLogo(
+      size: size,
+      withGlow: true,
+      tintColor: color,
     );
   }
 }
 
-class _TruckLogoPainter extends CustomPainter {
+/// High-tech vector fallback painter for the Viyan 'V' monogram emblem
+class _ViyanVLogoPainter extends CustomPainter {
   final Color color;
 
-  _TruckLogoPainter({required this.color});
+  _ViyanVLogoPainter({required this.color});
 
   @override
   void paint(Canvas canvas, Size size) {
-    final strokePaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = size.width * 0.055
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    final fillPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.fill;
-
     final w = size.width;
     final h = size.height;
 
-    // 1. Truck Cab Outline
-    final cabPath = Path();
-    final cabLeft = w * 0.18;
-    final cabRight = w * 0.82;
-    final cabTop = h * 0.12;
-    final cabBottom = h * 0.72;
-    final r = w * 0.08;
-
-    cabPath.moveTo(cabLeft + r, cabTop);
-    cabPath.lineTo(cabRight - r, cabTop);
-    cabPath.arcToPoint(
-      Offset(cabRight, cabTop + r),
-      radius: Radius.circular(r),
+    // Dark rounded squircle background
+    final bgPaint = Paint()..color = const Color(0xFF07111E);
+    final bgRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, w, h),
+      Radius.circular(w * 0.22),
     );
-    cabPath.lineTo(cabRight, cabBottom);
-    cabPath.lineTo(cabLeft, cabBottom);
-    cabPath.lineTo(cabLeft, cabTop + r);
-    cabPath.arcToPoint(Offset(cabLeft + r, cabTop), radius: Radius.circular(r));
-    canvas.drawPath(cabPath, strokePaint);
+    canvas.drawRRect(bgRect, bgPaint);
 
-    // 2. Windshield
-    final windshieldR = RRect.fromRectAndRadius(
-      Rect.fromLTWH(w * 0.26, h * 0.22, w * 0.48, h * 0.22),
-      Radius.circular(w * 0.04),
-    );
-    canvas.drawRRect(windshieldR, strokePaint);
-
-    // 3. Grille (Horizontal lines)
-    final grillePaint = Paint()
-      ..color = color
+    // Border
+    final borderPaint = Paint()
+      ..color = const Color(0xFF00F5FF).withValues(alpha: 0.4)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = size.width * 0.045
-      ..strokeCap = StrokeCap.round;
+      ..strokeWidth = w * 0.03;
+    canvas.drawRRect(bgRect, borderPaint);
 
-    canvas.drawLine(
-      Offset(w * 0.35, h * 0.54),
-      Offset(w * 0.65, h * 0.54),
-      grillePaint,
-    );
-    canvas.drawLine(
-      Offset(w * 0.35, h * 0.62),
-      Offset(w * 0.65, h * 0.62),
-      grillePaint,
-    );
+    // Outer V wing path
+    final outerVPath = Path()
+      ..moveTo(w * 0.18, h * 0.24)
+      ..lineTo(w * 0.36, h * 0.24)
+      ..lineTo(w * 0.50, h * 0.65)
+      ..lineTo(w * 0.64, h * 0.24)
+      ..lineTo(w * 0.82, h * 0.24)
+      ..lineTo(w * 0.58, h * 0.82)
+      ..lineTo(w * 0.42, h * 0.82)
+      ..close();
 
-    // 4. Headlights (round or capsule dots on sides)
-    canvas.drawCircle(Offset(w * 0.24, h * 0.60), w * 0.035, fillPaint);
-    canvas.drawCircle(Offset(w * 0.76, h * 0.60), w * 0.035, fillPaint);
+    // Inner glow
+    final glowPaint = Paint()
+      ..color = const Color(0xFF00F5FF).withValues(alpha: 0.6)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
+    canvas.drawPath(outerVPath, glowPaint);
 
-    // 5. Side mirrors
-    final mirrorPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = size.width * 0.045
-      ..strokeCap = StrokeCap.round;
+    // Core V
+    final vPaint = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          Color(0xFFE2E8F0),
+          Color(0xFF00F5FF),
+          Color(0xFF0D3B82),
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, w, h));
+    canvas.drawPath(outerVPath, vPaint);
 
-    // Left mirror
-    canvas.drawLine(
-      Offset(cabLeft, h * 0.26),
-      Offset(w * 0.08, h * 0.26),
-      mirrorPaint,
-    );
-    canvas.drawLine(
-      Offset(w * 0.08, h * 0.22),
-      Offset(w * 0.08, h * 0.38),
-      mirrorPaint,
-    );
+    // Center precision chevron
+    final innerChevron = Path()
+      ..moveTo(w * 0.40, h * 0.36)
+      ..lineTo(w * 0.50, h * 0.52)
+      ..lineTo(w * 0.60, h * 0.36)
+      ..lineTo(w * 0.54, h * 0.36)
+      ..lineTo(w * 0.50, h * 0.44)
+      ..lineTo(w * 0.46, h * 0.36)
+      ..close();
 
-    // Right mirror
-    canvas.drawLine(
-      Offset(cabRight, h * 0.26),
-      Offset(w * 0.92, h * 0.26),
-      mirrorPaint,
-    );
-    canvas.drawLine(
-      Offset(w * 0.92, h * 0.22),
-      Offset(w * 0.92, h * 0.38),
-      mirrorPaint,
-    );
-
-    // 6. Wheels (left and right at bottom)
-    final wheelLeft = RRect.fromRectAndRadius(
-      Rect.fromLTWH(w * 0.08, h * 0.58, w * 0.09, h * 0.24),
-      Radius.circular(w * 0.03),
-    );
-    final wheelRight = RRect.fromRectAndRadius(
-      Rect.fromLTWH(w * 0.83, h * 0.58, w * 0.09, h * 0.24),
-      Radius.circular(w * 0.03),
-    );
-    canvas.drawRRect(wheelLeft, fillPaint);
-    canvas.drawRRect(wheelRight, fillPaint);
-
-    // 7. Weighbridge Platform Bar (Scale deck underneath)
-    final platformPaint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = size.width * 0.065
-      ..strokeCap = StrokeCap.round;
-
-    canvas.drawLine(
-      Offset(w * 0.04, h * 0.86),
-      Offset(w * 0.96, h * 0.86),
-      platformPaint,
-    );
-
-    // Load cell / base stands below the platform
-    final standPaint = Paint()
-      ..color = color
+    final chevronPaint = Paint()
+      ..color = const Color(0xFF00F5FF)
       ..style = PaintingStyle.fill;
-
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(w * 0.16, h * 0.89, w * 0.12, h * 0.08),
-        Radius.circular(w * 0.015),
-      ),
-      standPaint,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(w * 0.72, h * 0.89, w * 0.12, h * 0.08),
-        Radius.circular(w * 0.015),
-      ),
-      standPaint,
-    );
+    canvas.drawPath(innerChevron, chevronPaint);
   }
 
   @override
-  bool shouldRepaint(covariant _TruckLogoPainter oldDelegate) =>
+  bool shouldRepaint(covariant _ViyanVLogoPainter oldDelegate) =>
       oldDelegate.color != color;
 }

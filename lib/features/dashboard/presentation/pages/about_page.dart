@@ -39,27 +39,7 @@ class AboutPage extends StatelessWidget {
   Widget _buildHeader() {
     return Row(
       children: [
-        Container(
-          width: 56,
-          height: 56,
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFFD0E1F4), width: 1.8),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF0D3B82).withValues(alpha: 0.08),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: const TruckWeighbridgeLogo(
-            color: Color(0xFF0D3B82),
-            size: 32,
-          ),
-        ),
+        const ViyanWeighbridgeLogo(size: 56),
         const SizedBox(width: 16),
         Expanded(
           child: Column(

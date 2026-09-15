@@ -4,7 +4,7 @@ import 'package:weighbridge/features/bill/presentation/widgets/weight_display.da
 
 void main() {
   Widget buildTestWidget({
-    double netWeightTon = 0,
+    double netWeightKg = 0,
     double grossWeight = 0,
     double tareWeight = 0,
     String weightUnit = 'kg',
@@ -16,7 +16,7 @@ void main() {
             width: 800,
             height: 350,
             child: WeightDisplay(
-              netWeightTon: netWeightTon,
+              netWeightKg: netWeightKg,
               grossWeight: grossWeight,
               tareWeight: tareWeight,
               weightUnit: weightUnit,
@@ -46,7 +46,7 @@ void main() {
 
     testWidgets('displays correct weight values when provided', (tester) async {
       await tester.pumpWidget(buildTestWidget(
-        netWeightTon: 5.0,
+        netWeightKg: 5000,
         grossWeight: 3000,
         tareWeight: 8000,
       ));

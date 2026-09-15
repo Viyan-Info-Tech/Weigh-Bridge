@@ -108,10 +108,10 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       final billNumber = await _generateBillNumberUseCase();
       if (emit.isDone) return;
 
-      String unit = 'ton';
+      String unit = 'kg';
       if (_settingsRepository != null) {
         final settings = await _settingsRepository.getSettings();
-        unit = settings.weightUnit;
+        unit = _normalizeUnit(settings.weightUnit);
       }
 
       emit(
@@ -167,17 +167,28 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     emit(state.copyWith(selectedMaterial: event.material, clearError: true));
   }
 
+  String _normalizeUnit(String unit) {
+    final value = unit.trim().toLowerCase();
+    if (value == 'ton' ||
+        value == 'tonne' ||
+        value == 'tonnes' ||
+        value == 't') {
+      return 'ton';
+    }
+    return 'kg';
+  }
+
   double _toKg(double value, [String? unit]) {
-    final u = (unit ?? state.weightUnit).toLowerCase();
-    if (u == 'ton' || u == 'tonne') {
+    final u = _normalizeUnit(unit ?? state.weightUnit);
+    if (u == 'ton') {
       return value * 1000;
     }
     return value;
   }
 
   double _fromKg(double kg, [String? unit]) {
-    final u = (unit ?? state.weightUnit).toLowerCase();
-    if (u == 'ton' || u == 'tonne') {
+    final u = _normalizeUnit(unit ?? state.weightUnit);
+    if (u == 'ton') {
       return kg / 1000;
     }
     return kg;
@@ -187,6 +198,10 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     GrossWeightChanged event,
     Emitter<BillState> emit,
   ) {
+    if (state.status == BillScreenStatus.initial ||
+        state.status == BillScreenStatus.loading) {
+      return;
+    }
     final displayValue = double.tryParse(event.value) ?? 0;
     final kgValue = _toKg(displayValue);
     emit(
@@ -200,6 +215,10 @@ class BillBloc extends Bloc<BillEvent, BillState> {
   }
 
   void _onTareWeightChanged(TareWeightChanged event, Emitter<BillState> emit) {
+    if (state.status == BillScreenStatus.initial ||
+        state.status == BillScreenStatus.loading) {
+      return;
+    }
     final displayValue = double.tryParse(event.value) ?? 0;
     final kgValue = _toKg(displayValue);
     emit(
@@ -223,35 +242,44 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     emit(state.copyWith(paymentMode: event.value));
   }
 
-  void _onWeightUnitChanged(
-    WeightUnitChanged event,
-    Emitter<BillState> emit,
-  ) {
+  void _onWeightUnitChanged(WeightUnitChanged event, Emitter<BillState> emit) {
     // Historical bill unit is immutable
     if (state.isEditing) {
       return;
     }
 
-    final oldUnit = state.weightUnit;
-    final newUnit = event.value;
-    if (oldUnit.toLowerCase() == newUnit.toLowerCase()) return;
+    final oldUnit = _normalizeUnit(state.weightUnit);
+    final newUnit = _normalizeUnit(event.value);
+    if (oldUnit == newUnit) return;
 
-    String newGrossText = state.grossWeightText;
-    String newTareText = state.tareWeightText;
-    final isNewTon = newUnit.toLowerCase() == 'ton' || newUnit.toLowerCase() == 'tonne';
+    print('========== WEIGHT UNIT CHANGE ==========');
+    print('OLD UNIT       : $oldUnit');
+    print('NEW UNIT       : $newUnit');
+    print('GROSS TEXT     : ${state.grossWeightText}');
+    print('TARE TEXT      : ${state.tareWeightText}');
+    print('GROSS KG       : ${state.grossWeightKg}');
+    print('TARE KG        : ${state.tareWeightKg}');
+    print('NET KG         : ${state.netWeightKg}');
 
-    if (state.grossWeightKg > 0) {
-      final grossDisplay = _fromKg(state.grossWeightKg, newUnit);
-      newGrossText = isNewTon
-          ? grossDisplay.toStringAsFixed(3)
-          : grossDisplay.toStringAsFixed(0);
-    }
-    if (state.tareWeightKg > 0) {
-      final tareDisplay = _fromKg(state.tareWeightKg, newUnit);
-      newTareText = isNewTon
-          ? tareDisplay.toStringAsFixed(3)
-          : tareDisplay.toStringAsFixed(0);
-    }
+    final newGrossKg = state.grossWeightKg;
+    final newTareKg = state.tareWeightKg;
+    final isNewTon = newUnit == 'ton';
+
+    final newGrossText = newGrossKg > 0
+        ? (isNewTon
+              ? (newGrossKg / 1000).toStringAsFixed(3)
+              : newGrossKg.toStringAsFixed(0))
+        : '';
+
+    final newTareText = newTareKg > 0
+        ? (isNewTon
+              ? (newTareKg / 1000).toStringAsFixed(3)
+              : newTareKg.toStringAsFixed(0))
+        : '';
+
+    print('NEW GROSS TEXT: $newGrossText');
+    print('NEW TARE TEXT : $newTareText');
+    print('========================================');
 
     emit(
       state.copyWith(
@@ -423,17 +451,24 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     PrintReceiptDismissed event,
     Emitter<BillState> emit,
   ) {
-    emit(state.copyWith(clearPrintReceipt: true, status: BillScreenStatus.loaded));
+    emit(
+      state.copyWith(clearPrintReceipt: true, status: BillScreenStatus.loaded),
+    );
   }
 
-  Future<({Weighment bill, Vehicle? vehicle, Party? party, String materialName})> _saveOrUpdateBill(Emitter<BillState> emit) async {
+  Future<
+    ({Weighment bill, Vehicle? vehicle, Party? party, String materialName})
+  >
+  _saveOrUpdateBill(Emitter<BillState> emit) async {
     final isCompleted = state.grossWeightKg > 0 && state.tareWeightKg > 0;
     final status = isCompleted ? 'completed' : 'pending';
 
     final savedVehicle = state.selectedVehicle;
     final savedParty = state.selectedParty;
     final savedMaterialName = state.selectedMaterial?.name ?? '—';
-    final createdAt = state.isEditing ? (state.editingBillCreatedAt ?? DateTime.now()) : DateTime.now();
+    final createdAt = state.isEditing
+        ? (state.editingBillCreatedAt ?? DateTime.now())
+        : DateTime.now();
 
     double firstWeightKg;
     String firstWeightType;
@@ -441,7 +476,8 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     String? secondWeightType;
 
     if (state.isEditing) {
-      final origFirstType = state.editingFirstWeightType?.toUpperCase() ??
+      final origFirstType =
+          state.editingFirstWeightType?.toUpperCase() ??
           (state.editingFirstWeightKg != null && state.editingFirstWeightKg! > 0
               ? 'GROSS'
               : (state.tareWeightKg > 0 ? 'TARE' : 'GROSS'));
@@ -533,10 +569,10 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     );
 
     final nextBillNumber = await _generateBillNumberUseCase();
-    String unit = 'ton';
+    String unit = 'kg';
     if (_settingsRepository != null) {
       final settings = await _settingsRepository.getSettings();
-      unit = settings.weightUnit;
+      unit = _normalizeUnit(settings.weightUnit);
     }
     _resetForm(emit, nextBillNumber: nextBillNumber, weightUnit: unit);
 
@@ -607,8 +643,8 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       final grossVal = weighment.grossWeightKg ?? 0;
       final tareVal = weighment.tareWeightKg ?? 0;
 
-      final unit = weighment.weightUnit;
-      final isTon = unit.toLowerCase() == 'ton' || unit.toLowerCase() == 'tonne';
+      final unit = _normalizeUnit(weighment.weightUnit);
+      final isTon = unit == 'ton';
       final grossDisplay = _fromKg(grossVal, unit);
       final tareDisplay = _fromKg(tareVal, unit);
 
@@ -626,14 +662,14 @@ class BillBloc extends Bloc<BillEvent, BillState> {
           paymentMode: weighment.paymentMode,
           grossWeightText: hasGross
               ? (isTon
-                  ? grossDisplay.toStringAsFixed(3)
-                  : grossDisplay.toStringAsFixed(0))
+                    ? grossDisplay.toStringAsFixed(3)
+                    : grossDisplay.toStringAsFixed(0))
               : '',
           grossWeightKg: grossVal,
           tareWeightText: hasTare
               ? (isTon
-                  ? tareDisplay.toStringAsFixed(3)
-                  : tareDisplay.toStringAsFixed(0))
+                    ? tareDisplay.toStringAsFixed(3)
+                    : tareDisplay.toStringAsFixed(0))
               : '',
           tareWeightKg: tareVal,
           netWeightKg: (hasGross && hasTare) ? (grossVal - tareVal).abs() : 0,
@@ -642,7 +678,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
           isVehicleChargeManuallyEdited: isManuallyEdited,
           amount: weighment.amount,
           remarksText: weighment.remarks ?? '',
-          weightUnit: weighment.weightUnit,
+          weightUnit: unit,
           editingBillCreatedAt: weighment.createdAt,
         ),
       );
@@ -659,10 +695,10 @@ class BillBloc extends Bloc<BillEvent, BillState> {
   ) async {
     final billNumber = await _generateBillNumberUseCase();
     if (emit.isDone) return;
-    String unit = 'ton';
+    String unit = 'kg';
     if (_settingsRepository != null) {
       final settings = await _settingsRepository.getSettings();
-      unit = settings.weightUnit;
+      unit = _normalizeUnit(settings.weightUnit);
     }
     _resetForm(emit, nextBillNumber: billNumber, weightUnit: unit);
   }
@@ -681,7 +717,11 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     }
   }
 
-  void _resetForm(Emitter<BillState> emit, {required String nextBillNumber, String? weightUnit}) {
+  void _resetForm(
+    Emitter<BillState> emit, {
+    required String nextBillNumber,
+    String? weightUnit,
+  }) {
     emit(
       state.copyWith(
         clearParty: true,

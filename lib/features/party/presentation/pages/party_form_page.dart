@@ -88,7 +88,9 @@ class _PartyFormDialogState extends State<PartyFormDialog> {
       },
       child: FormDialogWrapper(
         title: isEditing ? 'Edit Party' : 'Add Party',
-        subtitle: isEditing ? 'Update party details' : 'Add a new party to your records',
+        subtitle: isEditing
+            ? 'Update party details'
+            : 'Add a new party to your records',
         child: SingleChildScrollView(
           child: Form(
             key: _formKey,
@@ -99,8 +101,9 @@ class _PartyFormDialogState extends State<PartyFormDialog> {
                   label: 'Party Name',
                   controller: _nameController,
                   isRequired: true,
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Party name is required' : null,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Party name is required'
+                      : null,
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -129,61 +132,66 @@ class _PartyFormDialogState extends State<PartyFormDialog> {
                         },
                       ),
                     ),
-                  const SizedBox(width: 16),
-                  Expanded(child: FormDialogTextField(
-                    label: 'Phone Number',
-                    controller: _mobileController,
-                    inputFormatters: [PhoneNumberFormatter()],
-                  )),
-                ],
-              ),
-              const SizedBox(height: 16),
-              FormDialogTextField(label: 'Email', controller: _emailController),
-              const SizedBox(height: 16),
-              FormDialogTextField(
-                label: 'GST Number',
-                controller: _gstNumberController,
-                inputFormatters: [GSTNumberFormatter()],
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return null; // GST is optional
-                  }
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: FormDialogTextField(
+                        label: 'Phone Number',
+                        controller: _mobileController,
+                        inputFormatters: [PhoneNumberFormatter()],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                FormDialogTextField(
+                  label: 'Email',
+                  controller: _emailController,
+                ),
+                const SizedBox(height: 16),
+                FormDialogTextField(
+                  label: 'GST Number',
+                  controller: _gstNumberController,
+                  inputFormatters: [GSTNumberFormatter()],
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return null; // GST is optional
+                    }
 
-                  final gst = value.trim().toUpperCase();
+                    final gst = value.trim().toUpperCase();
 
-                  if (gst.length != 15) {
-                    return 'GST number must be 15 characters';
-                  }
+                    if (gst.length != 15) {
+                      return 'GST number must be 15 characters';
+                    }
 
-                  if (!RegExp(
-                    r'^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$',
-                  ).hasMatch(gst)) {
-                    return 'Enter a valid GST number';
-                  }
+                    if (!RegExp(
+                      r'^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$',
+                    ).hasMatch(gst)) {
+                      return 'Enter a valid GST number';
+                    }
 
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: _buildStateDropdown()),
-                  const SizedBox(width: 16),
-                  Expanded(child: _buildCityDropdown()),
-                ],
-              ),
-              const SizedBox(height: 16),
-              FormDialogTextField(
-                label: 'Address',
-                controller: _addressController,
-                hintText: 'Enter address',
-                keyboardType: TextInputType.multiline,
-                textInputAction: TextInputAction.newline,
-                minLines: 3,
-                maxLines: 5,
-              ),
-              const SizedBox(height: 24),
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: _buildCityDropdown()),
+                    const SizedBox(width: 16),
+                    Expanded(child: _buildStateDropdown()),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                FormDialogTextField(
+                  label: 'Address',
+                  controller: _addressController,
+                  hintText: 'Enter address',
+                  keyboardType: TextInputType.multiline,
+                  textInputAction: TextInputAction.newline,
+                  minLines: 3,
+                  maxLines: 5,
+                ),
+                const SizedBox(height: 24),
                 FormDialogActions(
                   submitLabel: isEditing ? 'Update Party' : 'Save Party',
                   isLoading: _isLoading,
@@ -203,8 +211,12 @@ class _PartyFormDialogState extends State<PartyFormDialog> {
     _mobileController.text = party.mobile ?? '';
     _emailController.text = party.email ?? '';
     _gstNumberController.text = party.gstNumber ?? '';
-    _selectedState = party.state != null && party.state!.isNotEmpty ? party.state : null;
-    _selectedCity = party.city != null && party.city!.isNotEmpty ? party.city : null;
+    _selectedState = party.state != null && party.state!.isNotEmpty
+        ? party.state
+        : null;
+    _selectedCity = party.city != null && party.city!.isNotEmpty
+        ? party.city
+        : null;
     _addressController.text = party.address ?? '';
   }
 
@@ -216,34 +228,59 @@ class _PartyFormDialogState extends State<PartyFormDialog> {
     setState(() => _isLoading = true);
 
     if (isEditing) {
-      context.read<PartyBloc>().add(UpdatePartyRequested(
-        id: widget.partyId!,
-        name: _nameController.text,
-        contactPerson: _contactPersonController.text.isNotEmpty ? _contactPersonController.text : null,
-        mobile: _mobileController.text.isNotEmpty ? _mobileController.text : null,
-        email: _emailController.text.isNotEmpty ? _emailController.text : null,
-        address: _addressController.text.isNotEmpty ? _addressController.text : null,
-        gstNumber: _gstNumberController.text.isNotEmpty ? _gstNumberController.text : null,
-        city: _selectedCity,
-        state: _selectedState,
-      ));
+      context.read<PartyBloc>().add(
+        UpdatePartyRequested(
+          id: widget.partyId!,
+          name: _nameController.text,
+          contactPerson: _contactPersonController.text.isNotEmpty
+              ? _contactPersonController.text
+              : null,
+          mobile: _mobileController.text.isNotEmpty
+              ? _mobileController.text
+              : null,
+          email: _emailController.text.isNotEmpty
+              ? _emailController.text
+              : null,
+          address: _addressController.text.isNotEmpty
+              ? _addressController.text
+              : null,
+          gstNumber: _gstNumberController.text.isNotEmpty
+              ? _gstNumberController.text
+              : null,
+          city: _selectedCity,
+          state: _selectedState,
+        ),
+      );
     } else {
-      context.read<PartyBloc>().add(CreatePartyRequested(
-        name: _nameController.text,
-        contactPerson: _contactPersonController.text.isNotEmpty ? _contactPersonController.text : null,
-        mobile: _mobileController.text.isNotEmpty ? _mobileController.text : null,
-        email: _emailController.text.isNotEmpty ? _emailController.text : null,
-        address: _addressController.text.isNotEmpty ? _addressController.text : null,
-        gstNumber: _gstNumberController.text.isNotEmpty ? _gstNumberController.text : null,
-        city: _selectedCity,
-        state: _selectedState,
-      ));
+      context.read<PartyBloc>().add(
+        CreatePartyRequested(
+          name: _nameController.text,
+          contactPerson: _contactPersonController.text.isNotEmpty
+              ? _contactPersonController.text
+              : null,
+          mobile: _mobileController.text.isNotEmpty
+              ? _mobileController.text
+              : null,
+          email: _emailController.text.isNotEmpty
+              ? _emailController.text
+              : null,
+          address: _addressController.text.isNotEmpty
+              ? _addressController.text
+              : null,
+          gstNumber: _gstNumberController.text.isNotEmpty
+              ? _gstNumberController.text
+              : null,
+          city: _selectedCity,
+          state: _selectedState,
+        ),
+      );
     }
   }
 
   Widget _buildStateDropdown() {
     final states = indianStates;
-    final allStates = (_selectedState != null && !states.contains(_selectedState))
+    final allStates =
+        (_selectedState != null && !states.contains(_selectedState))
         ? [_selectedState!, ...states]
         : states;
 
@@ -271,7 +308,10 @@ class _PartyFormDialogState extends State<PartyFormDialog> {
               fontSize: 13,
               color: Colors.grey.shade400,
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(color: Colors.grey.shade300),
@@ -334,13 +374,18 @@ class _PartyFormDialogState extends State<PartyFormDialog> {
           initialValue: _selectedCity,
           isExpanded: true,
           decoration: InputDecoration(
-            hintText: _selectedState == null ? 'Select State first' : 'Select City',
+            hintText: _selectedState == null
+                ? 'Select State first'
+                : 'Select City',
             hintStyle: TextStyle(
               fontFamily: 'PlusJakartaSans',
               fontSize: 13,
               color: Colors.grey.shade400,
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(color: Colors.grey.shade300),

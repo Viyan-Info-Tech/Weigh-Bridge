@@ -6,7 +6,15 @@ import '../../../vehicle_type/domain/entities/vehicle_type.dart';
 import '../../../material/domain/entities/material_item.dart';
 import '../../domain/entities/weighment.dart';
 
-enum BillScreenStatus { initial, loading, loaded, saving, saved, printing, error }
+enum BillScreenStatus {
+  initial,
+  loading,
+  loaded,
+  saving,
+  saved,
+  printing,
+  error,
+}
 
 class BillState extends Equatable {
   final BillScreenStatus status;
@@ -87,7 +95,7 @@ class BillState extends Equatable {
     this.editingFirstWeightKg,
     this.editingBillCreatedAt,
     this.weightValidationError,
-    this.weightUnit = 'ton',
+    this.weightUnit = 'kg',
     this.printReceiptBill,
     this.printReceiptVehicle,
     this.printReceiptParty,
@@ -173,12 +181,20 @@ class BillState extends Equatable {
       recentBills: recentBills ?? this.recentBills,
       pendingBills: pendingBills ?? this.pendingBills,
       billsDate: billsDate ?? this.billsDate,
-      billsStartDate: clearDateRange ? null : (billsStartDate ?? this.billsStartDate),
+      billsStartDate: clearDateRange
+          ? null
+          : (billsStartDate ?? this.billsStartDate),
       billsEndDate: clearDateRange ? null : (billsEndDate ?? this.billsEndDate),
       selectedParty: clearParty ? null : (selectedParty ?? this.selectedParty),
-      selectedVehicle: clearVehicle ? null : (selectedVehicle ?? this.selectedVehicle),
-      selectedVehicleType: clearVehicleType ? null : (selectedVehicleType ?? this.selectedVehicleType),
-      selectedMaterial: clearMaterial ? null : (selectedMaterial ?? this.selectedMaterial),
+      selectedVehicle: clearVehicle
+          ? null
+          : (selectedVehicle ?? this.selectedVehicle),
+      selectedVehicleType: clearVehicleType
+          ? null
+          : (selectedVehicleType ?? this.selectedVehicleType),
+      selectedMaterial: clearMaterial
+          ? null
+          : (selectedMaterial ?? this.selectedMaterial),
       paymentMode: paymentMode ?? this.paymentMode,
       grossWeightText: grossWeightText ?? this.grossWeightText,
       tareWeightText: tareWeightText ?? this.tareWeightText,
@@ -187,61 +203,84 @@ class BillState extends Equatable {
       tareWeightKg: tareWeightKg ?? this.tareWeightKg,
       netWeightKg: netWeightKg ?? this.netWeightKg,
       vehicleCharge: vehicleCharge ?? this.vehicleCharge,
-      defaultVehicleCharge: clearManualCharge ? (vehicleCharge ?? this.vehicleCharge) : (defaultVehicleCharge ?? this.defaultVehicleCharge),
-      isVehicleChargeManuallyEdited: clearManualCharge ? false : (isVehicleChargeManuallyEdited ?? this.isVehicleChargeManuallyEdited),
+      defaultVehicleCharge: clearManualCharge
+          ? (vehicleCharge ?? this.vehicleCharge)
+          : (defaultVehicleCharge ?? this.defaultVehicleCharge),
+      isVehicleChargeManuallyEdited: clearManualCharge
+          ? false
+          : (isVehicleChargeManuallyEdited ??
+                this.isVehicleChargeManuallyEdited),
       amount: amount ?? this.amount,
       currentBillNumber: currentBillNumber ?? this.currentBillNumber,
-      editingBillId: clearEditingBillId ? null : (editingBillId ?? this.editingBillId),
-      editingFirstWeightType: clearEditingFirstWeight ? null : (editingFirstWeightType ?? this.editingFirstWeightType),
-      editingFirstWeightKg: clearEditingFirstWeight ? null : (editingFirstWeightKg ?? this.editingFirstWeightKg),
-      editingBillCreatedAt: clearEditingBillCreatedAt ? null : (editingBillCreatedAt ?? this.editingBillCreatedAt),
-      weightValidationError: clearWeightError ? null : (weightValidationError ?? this.weightValidationError),
+      editingBillId: clearEditingBillId
+          ? null
+          : (editingBillId ?? this.editingBillId),
+      editingFirstWeightType: clearEditingFirstWeight
+          ? null
+          : (editingFirstWeightType ?? this.editingFirstWeightType),
+      editingFirstWeightKg: clearEditingFirstWeight
+          ? null
+          : (editingFirstWeightKg ?? this.editingFirstWeightKg),
+      editingBillCreatedAt: clearEditingBillCreatedAt
+          ? null
+          : (editingBillCreatedAt ?? this.editingBillCreatedAt),
+      weightValidationError: clearWeightError
+          ? null
+          : (weightValidationError ?? this.weightValidationError),
       weightUnit: weightUnit ?? this.weightUnit,
-      printReceiptBill: clearPrintReceipt ? null : (printReceiptBill ?? this.printReceiptBill),
-      printReceiptVehicle: clearPrintReceipt ? null : (printReceiptVehicle ?? this.printReceiptVehicle),
-      printReceiptParty: clearPrintReceipt ? null : (printReceiptParty ?? this.printReceiptParty),
-      printReceiptMaterialName: clearPrintReceipt ? null : (printReceiptMaterialName ?? this.printReceiptMaterialName),
+      printReceiptBill: clearPrintReceipt
+          ? null
+          : (printReceiptBill ?? this.printReceiptBill),
+      printReceiptVehicle: clearPrintReceipt
+          ? null
+          : (printReceiptVehicle ?? this.printReceiptVehicle),
+      printReceiptParty: clearPrintReceipt
+          ? null
+          : (printReceiptParty ?? this.printReceiptParty),
+      printReceiptMaterialName: clearPrintReceipt
+          ? null
+          : (printReceiptMaterialName ?? this.printReceiptMaterialName),
     );
   }
 
   @override
   List<Object?> get props => [
-        status,
-        errorMessage,
-        parties,
-        vehicles,
-        vehicleTypes,
-        materials,
-        recentBills,
-        pendingBills,
-        billsDate,
-        billsStartDate,
-        billsEndDate,
-        selectedParty,
-        selectedVehicle,
-        selectedVehicleType,
-        selectedMaterial,
-        paymentMode,
-        grossWeightText,
-        tareWeightText,
-        remarksText,
-        grossWeightKg,
-        tareWeightKg,
-        netWeightKg,
-        vehicleCharge,
-        defaultVehicleCharge,
-        isVehicleChargeManuallyEdited,
-        amount,
-        currentBillNumber,
-        editingBillId,
-        editingFirstWeightType,
-        editingFirstWeightKg,
-        editingBillCreatedAt,
-        weightValidationError,
-        weightUnit,
-        printReceiptBill,
-        printReceiptVehicle,
-        printReceiptParty,
-        printReceiptMaterialName,
-      ];
+    status,
+    errorMessage,
+    parties,
+    vehicles,
+    vehicleTypes,
+    materials,
+    recentBills,
+    pendingBills,
+    billsDate,
+    billsStartDate,
+    billsEndDate,
+    selectedParty,
+    selectedVehicle,
+    selectedVehicleType,
+    selectedMaterial,
+    paymentMode,
+    grossWeightText,
+    tareWeightText,
+    remarksText,
+    grossWeightKg,
+    tareWeightKg,
+    netWeightKg,
+    vehicleCharge,
+    defaultVehicleCharge,
+    isVehicleChargeManuallyEdited,
+    amount,
+    currentBillNumber,
+    editingBillId,
+    editingFirstWeightType,
+    editingFirstWeightKg,
+    editingBillCreatedAt,
+    weightValidationError,
+    weightUnit,
+    printReceiptBill,
+    printReceiptVehicle,
+    printReceiptParty,
+    printReceiptMaterialName,
+  ];
 }

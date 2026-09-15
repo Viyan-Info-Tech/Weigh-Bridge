@@ -88,7 +88,7 @@ class AuthBrandingPanel extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const TruckWeighbridgeLogo(size: 54, color: Colors.white),
+                const ViyanWeighbridgeLogo(size: 58),
                 const SizedBox(height: 18),
                 const Text(
                   'Viyan',

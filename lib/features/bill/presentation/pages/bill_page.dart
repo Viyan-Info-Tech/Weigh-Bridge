@@ -36,6 +36,8 @@ class _BillPageState extends State<BillPage> {
   late final FocusNode _vehicleChargeFocusNode;
   late final FocusNode _paymentModeFocusNode;
   late final FocusNode _searchFocusNode;
+  bool _didRequestInitialFocus = false;
+  String? _lastControllerWeightUnit;
 
   @override
   void initState() {
@@ -58,7 +60,6 @@ class _BillPageState extends State<BillPage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<BillBloc>().add(const LoadBillScreen());
-        _partyFocusNode.requestFocus();
       }
     });
   }
@@ -94,15 +95,51 @@ class _BillPageState extends State<BillPage> {
     });
   }
 
+  void _syncWeightControllers(BillState state) {
+    final unitChanged = _lastControllerWeightUnit != state.weightUnit;
+    final shouldSyncGross =
+        unitChanged ||
+        (_grossWeightController.text.isEmpty &&
+            state.grossWeightText.isNotEmpty);
+    final shouldSyncTare =
+        unitChanged ||
+        (_tareWeightController.text.isEmpty && state.tareWeightText.isNotEmpty);
+
+    if (shouldSyncGross) {
+      _setControllerText(_grossWeightController, state.grossWeightText);
+    }
+
+    if (shouldSyncTare) {
+      _setControllerText(_tareWeightController, state.tareWeightText);
+    }
+
+    _lastControllerWeightUnit = state.weightUnit;
+  }
+
+  void _setControllerText(TextEditingController controller, String text) {
+    if (controller.text == text) {
+      return;
+    }
+
+    controller.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
+
   void _saveTicket(BuildContext context, BillState state) {
-    final isSaving = state.status == BillScreenStatus.saving || state.status == BillScreenStatus.printing;
+    final isSaving =
+        state.status == BillScreenStatus.saving ||
+        state.status == BillScreenStatus.printing;
     if (!isSaving && !state.hasWeightError) {
       context.read<BillBloc>().add(const SaveBillRequested());
     }
   }
 
   void _saveAndPrintTicket(BuildContext context, BillState state) {
-    final isSaving = state.status == BillScreenStatus.saving || state.status == BillScreenStatus.printing;
+    final isSaving =
+        state.status == BillScreenStatus.saving ||
+        state.status == BillScreenStatus.printing;
     if (!isSaving && !state.hasWeightError) {
       context.read<BillBloc>().add(const SaveAndPrintBillRequested());
     }
@@ -129,7 +166,10 @@ class _BillPageState extends State<BillPage> {
       builder: (dialogContext) => AlertDialog(
         title: const Text(
           'Start New Receipt?',
-          style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w700),
+          style: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontWeight: FontWeight.w700,
+          ),
         ),
         content: const Text(
           'Current receipt has unsaved information. If you continue, the entered information will be cleared.',
@@ -138,8 +178,13 @@ class _BillPageState extends State<BillPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel',
-                style: TextStyle(fontFamily: 'PlusJakartaSans', color: Color(0xFF64748B))),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                color: Color(0xFF64748B),
+              ),
+            ),
           ),
           TextButton(
             onPressed: () {
@@ -147,8 +192,14 @@ class _BillPageState extends State<BillPage> {
               context.read<BillBloc>().add(const ClearBillRequested());
               _syncControllersAfterReset();
             },
-            child: const Text('Start New Receipt',
-                style: TextStyle(fontFamily: 'PlusJakartaSans', color: Color(0xFFDC2626), fontWeight: FontWeight.w600)),
+            child: const Text(
+              'Start New Receipt',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                color: Color(0xFFDC2626),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -163,8 +214,21 @@ class _BillPageState extends State<BillPage> {
           prev.editingBillId != curr.editingBillId ||
           prev.currentBillNumber != curr.currentBillNumber ||
           prev.weightUnit != curr.weightUnit ||
-          (curr.status == BillScreenStatus.printing && curr.printReceiptBill != null),
+          (curr.status == BillScreenStatus.printing &&
+              curr.printReceiptBill != null),
       listener: (context, state) {
+        _syncWeightControllers(state);
+
+        if (!_didRequestInitialFocus &&
+            state.status == BillScreenStatus.loaded &&
+            state.editingBillId == null) {
+          _didRequestInitialFocus = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) {
+              _partyFocusNode.requestFocus();
+            }
+          });
+        }
         if (state.status == BillScreenStatus.printing &&
             state.printReceiptBill != null) {
           _syncControllersAfterReset();
@@ -191,8 +255,11 @@ class _BillPageState extends State<BillPage> {
             SnackBar(
               content: Row(
                 children: [
-                  const Icon(Icons.check_circle_rounded,
-                      color: Colors.white, size: 20),
+                  const Icon(
+                    Icons.check_circle_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                   const SizedBox(width: 10),
                   Text(
                     'Bill ${state.currentBillNumber} saved successfully!',
@@ -206,7 +273,8 @@ class _BillPageState extends State<BillPage> {
               backgroundColor: const Color(0xFF16A34A),
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           );
         }
@@ -216,8 +284,11 @@ class _BillPageState extends State<BillPage> {
             SnackBar(
               content: Row(
                 children: [
-                  const Icon(Icons.error_outline_rounded,
-                      color: Colors.white, size: 20),
+                  const Icon(
+                    Icons.error_outline_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -230,18 +301,19 @@ class _BillPageState extends State<BillPage> {
               backgroundColor: Colors.red.shade700,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           );
         }
         if (state.editingBillId != null) {
-          _grossWeightController.text = state.grossWeightText;
-          _tareWeightController.text = state.tareWeightText;
+          _setControllerText(_grossWeightController, state.grossWeightText);
+          _setControllerText(_tareWeightController, state.tareWeightText);
           _remarksController.text = state.remarksText;
           _vehicleChargeController.text = state.vehicleCharge > 0
               ? (state.vehicleCharge % 1 == 0
-                  ? state.vehicleCharge.toStringAsFixed(0)
-                  : state.vehicleCharge.toStringAsFixed(2))
+                    ? state.vehicleCharge.toStringAsFixed(0)
+                    : state.vehicleCharge.toStringAsFixed(2))
               : '';
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) {
@@ -257,23 +329,40 @@ class _BillPageState extends State<BillPage> {
       builder: (context, state) {
         return CallbackShortcuts(
           bindings: <ShortcutActivator, VoidCallback>{
-            const SingleActivator(LogicalKeyboardKey.keyN, control: true): () => _startNewReceipt(context, state),
-            const SingleActivator(LogicalKeyboardKey.keyN, meta: true): () => _startNewReceipt(context, state),
-            const SingleActivator(LogicalKeyboardKey.keyS, control: true): () => _saveTicket(context, state),
-            const SingleActivator(LogicalKeyboardKey.keyS, meta: true): () => _saveTicket(context, state),
-            const SingleActivator(LogicalKeyboardKey.f9): () => _saveTicket(context, state),
-            const SingleActivator(LogicalKeyboardKey.keyP, control: true): () => _saveAndPrintTicket(context, state),
-            const SingleActivator(LogicalKeyboardKey.keyP, meta: true): () => _saveAndPrintTicket(context, state),
-            const SingleActivator(LogicalKeyboardKey.f10): () => _saveAndPrintTicket(context, state),
-            const SingleActivator(LogicalKeyboardKey.keyF, control: true): () => _searchFocusNode.requestFocus(),
-            const SingleActivator(LogicalKeyboardKey.keyF, meta: true): () => _searchFocusNode.requestFocus(),
-            const SingleActivator(LogicalKeyboardKey.f2): () => _partyFocusNode.requestFocus(),
-            const SingleActivator(LogicalKeyboardKey.f3): () => _vehicleFocusNode.requestFocus(),
-            const SingleActivator(LogicalKeyboardKey.f4): () => _materialFocusNode.requestFocus(),
-            const SingleActivator(LogicalKeyboardKey.f5): () => context.read<BillBloc>().add(const LoadRecentBills()),
-            const SingleActivator(LogicalKeyboardKey.f6): () => _grossWeightFocusNode.requestFocus(),
-            const SingleActivator(LogicalKeyboardKey.f7): () => _tareWeightFocusNode.requestFocus(),
-            const SingleActivator(LogicalKeyboardKey.f8): () => _vehicleChargeFocusNode.requestFocus(),
+            const SingleActivator(LogicalKeyboardKey.keyN, control: true): () =>
+                _startNewReceipt(context, state),
+            const SingleActivator(LogicalKeyboardKey.keyN, meta: true): () =>
+                _startNewReceipt(context, state),
+            const SingleActivator(LogicalKeyboardKey.keyS, control: true): () =>
+                _saveTicket(context, state),
+            const SingleActivator(LogicalKeyboardKey.keyS, meta: true): () =>
+                _saveTicket(context, state),
+            const SingleActivator(LogicalKeyboardKey.f9): () =>
+                _saveTicket(context, state),
+            const SingleActivator(LogicalKeyboardKey.keyP, control: true): () =>
+                _saveAndPrintTicket(context, state),
+            const SingleActivator(LogicalKeyboardKey.keyP, meta: true): () =>
+                _saveAndPrintTicket(context, state),
+            const SingleActivator(LogicalKeyboardKey.f10): () =>
+                _saveAndPrintTicket(context, state),
+            const SingleActivator(LogicalKeyboardKey.keyF, control: true): () =>
+                _searchFocusNode.requestFocus(),
+            const SingleActivator(LogicalKeyboardKey.keyF, meta: true): () =>
+                _searchFocusNode.requestFocus(),
+            const SingleActivator(LogicalKeyboardKey.f2): () =>
+                _partyFocusNode.requestFocus(),
+            const SingleActivator(LogicalKeyboardKey.f3): () =>
+                _vehicleFocusNode.requestFocus(),
+            const SingleActivator(LogicalKeyboardKey.f4): () =>
+                _materialFocusNode.requestFocus(),
+            const SingleActivator(LogicalKeyboardKey.f5): () =>
+                context.read<BillBloc>().add(const LoadRecentBills()),
+            const SingleActivator(LogicalKeyboardKey.f6): () =>
+                _grossWeightFocusNode.requestFocus(),
+            const SingleActivator(LogicalKeyboardKey.f7): () =>
+                _tareWeightFocusNode.requestFocus(),
+            const SingleActivator(LogicalKeyboardKey.f8): () =>
+                _vehicleChargeFocusNode.requestFocus(),
           },
           child: Scaffold(
             backgroundColor: const Color(0xFFF8FAFC),
@@ -282,7 +371,9 @@ class _BillPageState extends State<BillPage> {
                 builder: (context, constraints) {
                   final isTwoColumn = constraints.maxWidth >= 950;
                   final isLargeDesktop = constraints.maxWidth >= 1150;
-                  final pagePadding = isLargeDesktop ? 20.0 : (isTwoColumn ? 14.0 : 12.0);
+                  final pagePadding = isLargeDesktop
+                      ? 20.0
+                      : (isTwoColumn ? 14.0 : 12.0);
                   final billingFlex = isLargeDesktop ? 58 : 57;
                   final recentBillsFlex = isLargeDesktop ? 42 : 43;
 
@@ -303,10 +394,11 @@ class _BillPageState extends State<BillPage> {
                                     padding: const EdgeInsets.only(right: 8),
                                     child: SingleChildScrollView(
                                       child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
                                         children: [
                                           WeightDisplay(
-                                            netWeightTon: state.netWeightKg / 1000,
+                                            netWeightKg: state.netWeightKg,
                                             grossWeight: state.grossWeightKg,
                                             tareWeight: state.tareWeightKg,
                                             weightUnit: state.weightUnit,
@@ -323,7 +415,9 @@ class _BillPageState extends State<BillPage> {
                                 ),
                                 Container(
                                   width: 1,
-                                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                  ),
                                   color: const Color(0xFFE2E8F0),
                                 ),
                                 Expanded(
@@ -341,15 +435,23 @@ class _BillPageState extends State<BillPage> {
                                       vehicleTypes: state.vehicleTypes,
                                       materials: state.materials,
                                       onLoadPendingBill: (billId) {
-                                        context.read<BillBloc>().add(LoadPendingBill(billId));
+                                        context.read<BillBloc>().add(
+                                          LoadPendingBill(billId),
+                                        );
                                       },
                                       onDateChanged: (date) {
-                                        context.read<BillBloc>().add(LoadRecentBills(date: date));
+                                        context.read<BillBloc>().add(
+                                          LoadRecentBills(date: date),
+                                        );
                                       },
                                       onDateRangeChanged: (startDate, endDate) {
-                                        if (startDate != null && endDate != null) {
+                                        if (startDate != null &&
+                                            endDate != null) {
                                           context.read<BillBloc>().add(
-                                            LoadRecentBills(startDate: startDate, endDate: endDate),
+                                            LoadRecentBills(
+                                              startDate: startDate,
+                                              endDate: endDate,
+                                            ),
                                           );
                                         } else {
                                           context.read<BillBloc>().add(
@@ -376,7 +478,7 @@ class _BillPageState extends State<BillPage> {
                         _buildTopHeader(state),
                         const SizedBox(height: 16),
                         WeightDisplay(
-                          netWeightTon: state.netWeightKg / 1000,
+                          netWeightKg: state.netWeightKg,
                           grossWeight: state.grossWeightKg,
                           tareWeight: state.tareWeightKg,
                           weightUnit: state.weightUnit,
@@ -398,15 +500,22 @@ class _BillPageState extends State<BillPage> {
                           vehicleTypes: state.vehicleTypes,
                           materials: state.materials,
                           onLoadPendingBill: (billId) {
-                            context.read<BillBloc>().add(LoadPendingBill(billId));
+                            context.read<BillBloc>().add(
+                              LoadPendingBill(billId),
+                            );
                           },
                           onDateChanged: (date) {
-                            context.read<BillBloc>().add(LoadRecentBills(date: date));
+                            context.read<BillBloc>().add(
+                              LoadRecentBills(date: date),
+                            );
                           },
                           onDateRangeChanged: (startDate, endDate) {
                             if (startDate != null && endDate != null) {
                               context.read<BillBloc>().add(
-                                LoadRecentBills(startDate: startDate, endDate: endDate),
+                                LoadRecentBills(
+                                  startDate: startDate,
+                                  endDate: endDate,
+                                ),
                               );
                             } else {
                               context.read<BillBloc>().add(
@@ -455,11 +564,16 @@ class _BillPageState extends State<BillPage> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF0F52BA).withValues(alpha: 0.1),
+                            color: const Color(
+                              0xFF0F52BA,
+                            ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: const Icon(Icons.receipt_long_rounded,
-                              color: Color(0xFF0F52BA), size: 20),
+                          child: const Icon(
+                            Icons.receipt_long_rounded,
+                            color: Color(0xFF0F52BA),
+                            size: 20,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         const Expanded(
@@ -505,8 +619,11 @@ class _BillPageState extends State<BillPage> {
                         color: const Color(0xFF0F52BA).withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: const Icon(Icons.receipt_long_rounded,
-                          color: Color(0xFF0F52BA), size: 20),
+                      child: const Icon(
+                        Icons.receipt_long_rounded,
+                        color: Color(0xFF0F52BA),
+                        size: 20,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     const Flexible(
@@ -556,9 +673,7 @@ class _BillPageState extends State<BillPage> {
         backgroundColor: const Color(0xFF0D3B82),
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         textStyle: const TextStyle(
           fontFamily: 'PlusJakartaSans',
           fontSize: 12,
@@ -592,6 +707,10 @@ class _BillPageState extends State<BillPage> {
       amount: state.amount,
       weightUnit: state.weightUnit,
       weightValidationError: state.weightValidationError,
+      isReady:
+          state.status == BillScreenStatus.loaded ||
+          state.status == BillScreenStatus.saved ||
+          state.status == BillScreenStatus.error,
       partyFocusNode: _partyFocusNode,
       vehicleFocusNode: _vehicleFocusNode,
       materialFocusNode: _materialFocusNode,
@@ -610,8 +729,7 @@ class _BillPageState extends State<BillPage> {
           context.read<BillBloc>().add(GrossWeightChanged(v)),
       onTareWeightChanged: (v) =>
           context.read<BillBloc>().add(TareWeightChanged(v)),
-      onRemarksChanged: (v) =>
-          context.read<BillBloc>().add(RemarksChanged(v)),
+      onRemarksChanged: (v) => context.read<BillBloc>().add(RemarksChanged(v)),
       onPaymentModeChanged: (v) =>
           context.read<BillBloc>().add(PaymentModeChanged(v)),
       onWeightUnitChanged: (v) =>
@@ -638,10 +756,12 @@ class _BillPageState extends State<BillPage> {
           context: context,
           vehicleTypes: state.vehicleTypes,
           onSave: (vehicleNumber, vehicleTypeId) {
-            context.read<BillBloc>().add(VehicleQuickAddRequested(
-              vehicleNumber: vehicleNumber,
-              vehicleTypeId: vehicleTypeId,
-            ));
+            context.read<BillBloc>().add(
+              VehicleQuickAddRequested(
+                vehicleNumber: vehicleNumber,
+                vehicleTypeId: vehicleTypeId,
+              ),
+            );
           },
           onAddVehicleType: (name, emptyPrice, loadPrice) async {
             final bloc = context.read<BillBloc>();
@@ -665,7 +785,9 @@ class _BillPageState extends State<BillPage> {
   }
 
   Widget _buildActionButtons(BillState state) {
-    final isSaving = state.status == BillScreenStatus.saving || state.status == BillScreenStatus.printing;
+    final isSaving =
+        state.status == BillScreenStatus.saving ||
+        state.status == BillScreenStatus.printing;
     final isDisabled = isSaving || state.hasWeightError;
 
     return Container(
@@ -682,7 +804,9 @@ class _BillPageState extends State<BillPage> {
         runSpacing: 10,
         children: [
           OutlinedButton.icon(
-            onPressed: isSaving ? null : () => _onClearFormPressed(context, state),
+            onPressed: isSaving
+                ? null
+                : () => _onClearFormPressed(context, state),
             icon: const Icon(Icons.refresh_rounded, size: 16),
             label: const Text('Clear Form'),
             style: OutlinedButton.styleFrom(
@@ -690,13 +814,12 @@ class _BillPageState extends State<BillPage> {
               foregroundColor: const Color(0xFF64748B),
               side: const BorderSide(color: Color(0xFFCBD5E1)),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
           ),
           ElevatedButton.icon(
-            onPressed: isDisabled
-                ? null
-                : () => _saveTicket(context, state),
+            onPressed: isDisabled ? null : () => _saveTicket(context, state),
             icon: isSaving
                 ? const SizedBox.shrink()
                 : const Icon(Icons.save_outlined, size: 16),
@@ -705,7 +828,9 @@ class _BillPageState extends State<BillPage> {
                     height: 18,
                     width: 18,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white),
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
                   )
                 : const Text('Save Ticket (F9)'),
             style: ElevatedButton.styleFrom(
@@ -713,7 +838,8 @@ class _BillPageState extends State<BillPage> {
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
+                borderRadius: BorderRadius.circular(8),
+              ),
               elevation: 0,
             ),
           ),
@@ -729,7 +855,9 @@ class _BillPageState extends State<BillPage> {
                     height: 18,
                     width: 18,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.white),
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
                   )
                 : const Text('Save & Print Slip (F10)'),
             style: ElevatedButton.styleFrom(
@@ -737,7 +865,8 @@ class _BillPageState extends State<BillPage> {
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8)),
+                borderRadius: BorderRadius.circular(8),
+              ),
               elevation: 0,
             ),
           ),
@@ -758,7 +887,10 @@ class _BillPageState extends State<BillPage> {
       builder: (dialogContext) => AlertDialog(
         title: const Text(
           'Clear Form?',
-          style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w700),
+          style: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontWeight: FontWeight.w700,
+          ),
         ),
         content: const Text(
           'All unsaved information entered in this ticket will be cleared.',
@@ -767,7 +899,13 @@ class _BillPageState extends State<BillPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel', style: TextStyle(fontFamily: 'PlusJakartaSans', color: Color(0xFF64748B))),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                color: Color(0xFF64748B),
+              ),
+            ),
           ),
           TextButton(
             onPressed: () {
@@ -775,7 +913,14 @@ class _BillPageState extends State<BillPage> {
               context.read<BillBloc>().add(const ClearBillRequested());
               _syncControllersAfterReset();
             },
-            child: const Text('Clear Form', style: TextStyle(fontFamily: 'PlusJakartaSans', color: Color(0xFFDC2626), fontWeight: FontWeight.w600)),
+            child: const Text(
+              'Clear Form',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                color: Color(0xFFDC2626),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),

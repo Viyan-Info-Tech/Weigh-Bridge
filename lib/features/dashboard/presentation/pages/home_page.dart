@@ -13,6 +13,7 @@ import '../../../vehicle/presentation/pages/vehicles_merged_page.dart';
 import '../../../material/presentation/pages/material_list_page.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
 import '../../../report/presentation/pages/report_page.dart';
+import '../../../auth/presentation/widgets/truck_logo.dart';
 import 'about_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -62,18 +63,43 @@ class _HomePageState extends State<HomePage> {
       child: Column(
         children: [
           Container(
-            height: 64,
+            height: 70,
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 14),
             alignment: Alignment.centerLeft,
-            child: const Text(
-              'WEIGHBRIDGE',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 2,
-              ),
+            child: Row(
+              children: [
+                const ViyanWeighbridgeLogo(size: 38),
+                const SizedBox(width: 10),
+                const Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'VIYAN',
+                        style: TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          color: Color(0xFF00F5FF),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 1.5,
+                        ),
+                      ),
+                      Text(
+                        'WEIGHBRIDGE',
+                        style: TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          color: Colors.white,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
           const Divider(height: 1, color: Colors.blueGrey),
