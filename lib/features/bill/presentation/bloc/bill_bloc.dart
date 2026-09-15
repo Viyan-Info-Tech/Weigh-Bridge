@@ -167,15 +167,32 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     emit(state.copyWith(selectedMaterial: event.material, clearError: true));
   }
 
+  double _toKg(double value, [String? unit]) {
+    final u = (unit ?? state.weightUnit).toLowerCase();
+    if (u == 'ton' || u == 'tonne') {
+      return value * 1000;
+    }
+    return value;
+  }
+
+  double _fromKg(double kg, [String? unit]) {
+    final u = (unit ?? state.weightUnit).toLowerCase();
+    if (u == 'ton' || u == 'tonne') {
+      return kg / 1000;
+    }
+    return kg;
+  }
+
   void _onGrossWeightChanged(
     GrossWeightChanged event,
     Emitter<BillState> emit,
   ) {
-    final value = double.tryParse(event.value) ?? 0;
+    final displayValue = double.tryParse(event.value) ?? 0;
+    final kgValue = _toKg(displayValue);
     emit(
       state.copyWith(
         grossWeightText: event.value,
-        grossWeightKg: value,
+        grossWeightKg: kgValue,
         clearError: true,
       ),
     );
@@ -183,11 +200,12 @@ class BillBloc extends Bloc<BillEvent, BillState> {
   }
 
   void _onTareWeightChanged(TareWeightChanged event, Emitter<BillState> emit) {
-    final value = double.tryParse(event.value) ?? 0;
+    final displayValue = double.tryParse(event.value) ?? 0;
+    final kgValue = _toKg(displayValue);
     emit(
       state.copyWith(
         tareWeightText: event.value,
-        tareWeightKg: value,
+        tareWeightKg: kgValue,
         clearError: true,
       ),
     );
@@ -209,7 +227,40 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     WeightUnitChanged event,
     Emitter<BillState> emit,
   ) {
-    emit(state.copyWith(weightUnit: event.value));
+    // Historical bill unit is immutable
+    if (state.isEditing) {
+      return;
+    }
+
+    final oldUnit = state.weightUnit;
+    final newUnit = event.value;
+    if (oldUnit.toLowerCase() == newUnit.toLowerCase()) return;
+
+    String newGrossText = state.grossWeightText;
+    String newTareText = state.tareWeightText;
+    final isNewTon = newUnit.toLowerCase() == 'ton' || newUnit.toLowerCase() == 'tonne';
+
+    if (state.grossWeightKg > 0) {
+      final grossDisplay = _fromKg(state.grossWeightKg, newUnit);
+      newGrossText = isNewTon
+          ? grossDisplay.toStringAsFixed(3)
+          : grossDisplay.toStringAsFixed(0);
+    }
+    if (state.tareWeightKg > 0) {
+      final tareDisplay = _fromKg(state.tareWeightKg, newUnit);
+      newTareText = isNewTon
+          ? tareDisplay.toStringAsFixed(3)
+          : tareDisplay.toStringAsFixed(0);
+    }
+
+    emit(
+      state.copyWith(
+        weightUnit: newUnit,
+        grossWeightText: newGrossText,
+        tareWeightText: newTareText,
+      ),
+    );
+    _recalculate(emit);
   }
 
   void _onVehicleChargeChanged(
@@ -556,6 +607,11 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       final grossVal = weighment.grossWeightKg ?? 0;
       final tareVal = weighment.tareWeightKg ?? 0;
 
+      final unit = weighment.weightUnit;
+      final isTon = unit.toLowerCase() == 'ton' || unit.toLowerCase() == 'tonne';
+      final grossDisplay = _fromKg(grossVal, unit);
+      final tareDisplay = _fromKg(tareVal, unit);
+
       emit(
         state.copyWith(
           clearError: true,
@@ -568,9 +624,17 @@ class BillBloc extends Bloc<BillEvent, BillState> {
           selectedVehicleType: vehicleType,
           selectedMaterial: material,
           paymentMode: weighment.paymentMode,
-          grossWeightText: hasGross ? grossVal.toStringAsFixed(0) : '',
+          grossWeightText: hasGross
+              ? (isTon
+                  ? grossDisplay.toStringAsFixed(3)
+                  : grossDisplay.toStringAsFixed(0))
+              : '',
           grossWeightKg: grossVal,
-          tareWeightText: hasTare ? tareVal.toStringAsFixed(0) : '',
+          tareWeightText: hasTare
+              ? (isTon
+                  ? tareDisplay.toStringAsFixed(3)
+                  : tareDisplay.toStringAsFixed(0))
+              : '',
           tareWeightKg: tareVal,
           netWeightKg: (hasGross && hasTare) ? (grossVal - tareVal).abs() : 0,
           defaultVehicleCharge: defaultCharge,

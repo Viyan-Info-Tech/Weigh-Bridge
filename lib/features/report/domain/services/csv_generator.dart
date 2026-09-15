@@ -52,17 +52,19 @@ class CsvGenerator {
     for (final item in records) {
       final dateTimeStr = dateTimeFormat.format(item.createdAt);
       final unit = item.weightUnit;
-      final decimals = unit == 'kg' ? 0 : 3;
+      final isTon = unit.toLowerCase() == 'ton' || unit.toLowerCase() == 'tonne';
+      final decimals = isTon ? 3 : 0;
+      double? toDisplay(double? kg) => kg == null ? null : (isTon ? kg / 1000 : kg);
 
       // Represent empty weight values as empty strings in CSV so cells are clean
       final grossStr = item.grossWeightKg != null
-          ? '${item.grossWeightKg!.toStringAsFixed(decimals)} $unit'
+          ? '${toDisplay(item.grossWeightKg)!.toStringAsFixed(decimals)} $unit'
           : '';
       final tareStr = item.tareWeightKg != null
-          ? '${item.tareWeightKg!.toStringAsFixed(decimals)} $unit'
+          ? '${toDisplay(item.tareWeightKg)!.toStringAsFixed(decimals)} $unit'
           : '';
       final netStr = item.netWeightKg != null
-          ? '${item.netWeightKg!.toStringAsFixed(decimals)} $unit'
+          ? '${toDisplay(item.netWeightKg)!.toStringAsFixed(decimals)} $unit'
           : '';
       final statusFormatted = item.isCompleted ? 'Completed' : 'Pending';
 

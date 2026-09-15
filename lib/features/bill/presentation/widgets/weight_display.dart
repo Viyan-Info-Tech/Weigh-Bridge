@@ -52,18 +52,16 @@ class WeightDisplay extends StatelessWidget {
     );
   }
 
-  String _formatSummaryWeight(double val, String unit) {
-    if (val <= 0) return '—';
-    if (unit.toLowerCase() == 'kg') {
-      return '${val.toStringAsFixed(0)} kg';
+  String _formatSummaryWeight(double valKg, String unit) {
+    if (valKg <= 0) return '—';
+    final isTon = unit.toLowerCase() == 'ton' || unit.toLowerCase() == 'tonne';
+    if (isTon) {
+      return '${(valKg / 1000).toStringAsFixed(3)} ton';
     }
-    return '${val.toStringAsFixed(3)} ton';
+    return '${valKg.toStringAsFixed(0)} kg';
   }
 
   Widget _buildModernTruckScale(String weightString, double netKg) {
-    final isKg = weightUnit.toLowerCase() == 'kg';
-    final double netVal = isKg ? netKg : netWeightTon;
-
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: AspectRatio(
@@ -197,7 +195,7 @@ class WeightDisplay extends StatelessWidget {
                                 ),
                               ),
                               Text(
-                                'NET: ${_formatSummaryWeight(netVal, weightUnit)}',
+                                'NET: ${_formatSummaryWeight(netKg, weightUnit)}',
                                 style: const TextStyle(
                                   fontFamily: 'PlusJakartaSans',
                                   fontSize: 8.5,

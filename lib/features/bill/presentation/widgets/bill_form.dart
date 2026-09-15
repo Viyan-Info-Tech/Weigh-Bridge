@@ -184,7 +184,7 @@ class _BillFormState extends State<BillForm> {
             ? '—'
             : (isKg
                 ? '${widget.netWeightKg.toStringAsFixed(0)} kg'
-                : '${widget.netWeightKg.toStringAsFixed(3)} ton');
+                : '${(widget.netWeightKg / 1000).toStringAsFixed(3)} ton');
 
         return Container(
           padding: EdgeInsets.all(formWidth < 500 ? 16 : 24),

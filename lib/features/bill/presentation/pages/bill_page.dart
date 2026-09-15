@@ -162,6 +162,7 @@ class _BillPageState extends State<BillPage> {
           prev.status != curr.status ||
           prev.editingBillId != curr.editingBillId ||
           prev.currentBillNumber != curr.currentBillNumber ||
+          prev.weightUnit != curr.weightUnit ||
           (curr.status == BillScreenStatus.printing && curr.printReceiptBill != null),
       listener: (context, state) {
         if (state.status == BillScreenStatus.printing &&
@@ -251,8 +252,6 @@ class _BillPageState extends State<BillPage> {
               }
             }
           });
-        } else if (state.editingBillId == null) {
-          _syncControllersAfterReset();
         }
       },
       builder: (context, state) {
@@ -700,7 +699,7 @@ class _BillPageState extends State<BillPage> {
                 : () => _saveTicket(context, state),
             icon: isSaving
                 ? const SizedBox.shrink()
-                : Icon(state.isEditing ? Icons.check_circle_outline : Icons.save_outlined, size: 16),
+                : const Icon(Icons.save_outlined, size: 16),
             label: isSaving
                 ? const SizedBox(
                     height: 18,
@@ -708,7 +707,7 @@ class _BillPageState extends State<BillPage> {
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white),
                   )
-                : Text(state.isEditing ? 'Complete Weighment (F9)' : 'Save Ticket (F9)'),
+                : const Text('Save Ticket (F9)'),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF0D3B82),
               foregroundColor: Colors.white,
@@ -732,7 +731,7 @@ class _BillPageState extends State<BillPage> {
                     child: CircularProgressIndicator(
                         strokeWidth: 2, color: Colors.white),
                   )
-                : Text(state.isEditing ? 'Complete & Print (F10)' : 'Save & Print Slip (F10)'),
+                : const Text('Save & Print Slip (F10)'),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF16A34A),
               foregroundColor: Colors.white,

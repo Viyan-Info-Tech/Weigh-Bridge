@@ -201,7 +201,13 @@ class WeighmentDetailsDialog extends StatelessWidget {
             Builder(
               builder: (context) {
                 final unit = record.weightUnit;
-                final decimals = unit == 'kg' ? 0 : 3;
+                final isTon = unit.toLowerCase() == 'ton' || unit.toLowerCase() == 'tonne';
+                final decimals = isTon ? 3 : 0;
+                double? toDisplay(double? kg) {
+                  if (kg == null) return null;
+                  return isTon ? kg / 1000 : kg;
+                }
+
                 return Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -213,7 +219,7 @@ class WeighmentDetailsDialog extends StatelessWidget {
                     children: [
                       _buildWeightRow(
                         label: 'First Weight',
-                        weight: '${record.firstWeightKg.toStringAsFixed(decimals)} $unit',
+                        weight: '${(toDisplay(record.firstWeightKg) ?? 0).toStringAsFixed(decimals)} $unit',
                         badge: record.firstWeightType,
                         badgeColor: Colors.blueGrey,
                       ),
@@ -221,7 +227,7 @@ class WeighmentDetailsDialog extends StatelessWidget {
                       _buildWeightRow(
                         label: 'Second Weight',
                         weight: (record.secondWeightKg != null && record.secondWeightKg! > 0)
-                            ? '${record.secondWeightKg!.toStringAsFixed(decimals)} $unit'
+                            ? '${toDisplay(record.secondWeightKg!)!.toStringAsFixed(decimals)} $unit'
                             : '—',
                         badge: (record.secondWeightKg != null && record.secondWeightKg! > 0)
                             ? (record.secondWeightType ?? '')
@@ -230,13 +236,13 @@ class WeighmentDetailsDialog extends StatelessWidget {
                         isPending: record.secondWeightKg == null || record.secondWeightKg == 0,
                       ),
                       const Divider(height: 14, color: Color(0xFFE2E8F0)),
-                      _buildSummaryWeightRow('Gross Weight', record.grossWeightKg != null ? '${record.grossWeightKg!.toStringAsFixed(decimals)} $unit' : '—'),
+                      _buildSummaryWeightRow('Gross Weight', record.grossWeightKg != null ? '${toDisplay(record.grossWeightKg!)!.toStringAsFixed(decimals)} $unit' : '—'),
                       const SizedBox(height: 4),
-                      _buildSummaryWeightRow('Tare Weight', record.tareWeightKg != null ? '${record.tareWeightKg!.toStringAsFixed(decimals)} $unit' : '—'),
+                      _buildSummaryWeightRow('Tare Weight', record.tareWeightKg != null ? '${toDisplay(record.tareWeightKg!)!.toStringAsFixed(decimals)} $unit' : '—'),
                       const SizedBox(height: 4),
                       _buildSummaryWeightRow(
                         'Net Weight',
-                        record.netWeightKg != null ? '${record.netWeightKg!.toStringAsFixed(decimals)} $unit' : '—',
+                        record.netWeightKg != null ? '${toDisplay(record.netWeightKg!)!.toStringAsFixed(decimals)} $unit' : '—',
                         isHighlight: true,
                       ),
                     ],

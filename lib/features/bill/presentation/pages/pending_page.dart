@@ -768,7 +768,8 @@ class _PendingPageState extends State<PendingPage> {
     final badgeText = isGrossPending
         ? 'PENDING • GROSS WT'
         : 'PENDING • TARE WT';
-    final displayedWeightKg = bill.firstWeightKg;
+    final isTon = bill.weightUnit.toLowerCase() == 'ton' || bill.weightUnit.toLowerCase() == 'tonne';
+    final displayWeight = isTon ? bill.firstWeightKg / 1000 : bill.firstWeightKg;
     final weightSubtitle = isGrossPending
         ? 'Tare • ₹${bill.amount.toStringAsFixed(0)}'
         : 'Gross • ₹${bill.amount.toStringAsFixed(0)}';
@@ -933,7 +934,7 @@ class _PendingPageState extends State<PendingPage> {
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    '${displayedWeightKg.toStringAsFixed(bill.weightUnit == 'kg' ? 0 : 3)} ${bill.weightUnit}',
+                    '${displayWeight.toStringAsFixed(isTon ? 3 : 0)} ${bill.weightUnit}',
                     style: const TextStyle(
                       fontFamily: 'PlusJakartaSans',
                       fontSize: 13,

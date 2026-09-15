@@ -1243,7 +1243,7 @@ class _ReportPageState extends State<ReportPage> {
                 alignment: Alignment.centerRight,
                 child: Text(
                   item.grossWeightKg != null
-                      ? '${item.grossWeightKg!.toStringAsFixed(item.weightUnit == 'kg' ? 0 : 3)} ${item.weightUnit}'
+                      ? '${((item.weightUnit.toLowerCase() == 'ton' || item.weightUnit.toLowerCase() == 'tonne') ? item.grossWeightKg! / 1000 : item.grossWeightKg!).toStringAsFixed(item.weightUnit.toLowerCase() == 'kg' ? 0 : 3)} ${item.weightUnit}'
                       : '—',
                   style: TextStyle(
                     fontFamily: 'PlusJakartaSans',
@@ -1261,7 +1261,7 @@ class _ReportPageState extends State<ReportPage> {
                 alignment: Alignment.centerRight,
                 child: Text(
                   item.tareWeightKg != null
-                      ? '${item.tareWeightKg!.toStringAsFixed(item.weightUnit == 'kg' ? 0 : 3)} ${item.weightUnit}'
+                      ? '${((item.weightUnit.toLowerCase() == 'ton' || item.weightUnit.toLowerCase() == 'tonne') ? item.tareWeightKg! / 1000 : item.tareWeightKg!).toStringAsFixed(item.weightUnit.toLowerCase() == 'kg' ? 0 : 3)} ${item.weightUnit}'
                       : '—',
                   style: TextStyle(
                     fontFamily: 'PlusJakartaSans',
@@ -1279,7 +1279,7 @@ class _ReportPageState extends State<ReportPage> {
                 alignment: Alignment.centerRight,
                 child: Text(
                   item.netWeightKg != null
-                      ? '${item.netWeightKg!.toStringAsFixed(item.weightUnit == 'kg' ? 0 : 3)} ${item.weightUnit}'
+                      ? '${((item.weightUnit.toLowerCase() == 'ton' || item.weightUnit.toLowerCase() == 'tonne') ? item.netWeightKg! / 1000 : item.netWeightKg!).toStringAsFixed(item.weightUnit.toLowerCase() == 'kg' ? 0 : 3)} ${item.weightUnit}'
                       : '—',
                   style: TextStyle(
                     fontFamily: 'PlusJakartaSans',
