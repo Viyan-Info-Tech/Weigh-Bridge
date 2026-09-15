@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 import 'daos/user_dao.dart';
 import 'daos/party_dao.dart';
@@ -302,17 +303,34 @@ class AppDatabase extends _$AppDatabase {
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
-    final home = Platform.environment['HOME'];
-    if (home == null || home.isEmpty) {
-      throw StateError('Unable to determine macOS home directory');
-    }
-    final dbFolder = Directory(
-      p.join(home, 'Library', 'Application Support', 'Weighbridge'),
+    final directory = await getApplicationSupportDirectory();
+    final file = File(
+      p.join(directory.path, 'Weighbridge', 'weighbridge.sqlite'),
     );
-    if (!await dbFolder.exists()) {
-      await dbFolder.create(recursive: true);
+
+    // On macOS, preserve backward compatibility with legacy path if it exists
+    if (Platform.isMacOS && !await file.exists()) {
+      final home = Platform.environment['HOME'];
+      if (home != null && home.isNotEmpty) {
+        final legacyFile = File(
+          p.join(
+            home,
+            'Library',
+            'Application Support',
+            'Weighbridge',
+            'weighbridge.sqlite',
+          ),
+        );
+        if (await legacyFile.exists()) {
+          return NativeDatabase.createInBackground(legacyFile);
+        }
+      }
     }
-    final file = File(p.join(dbFolder.path, 'weighbridge.sqlite'));
+
+    if (!await file.parent.exists()) {
+      await file.parent.create(recursive: true);
+    }
+
     return NativeDatabase.createInBackground(file);
   });
 }
