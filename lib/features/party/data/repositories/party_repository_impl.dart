@@ -6,7 +6,7 @@ class PartyRepositoryImpl implements PartyRepository {
   final PartyLocalDataSource _dataSource;
 
   PartyRepositoryImpl(PartyLocalDataSource partyLocalDataSource)
-      : _dataSource = partyLocalDataSource;
+    : _dataSource = partyLocalDataSource;
 
   @override
   Future<List<Party>> getAllParties() async {

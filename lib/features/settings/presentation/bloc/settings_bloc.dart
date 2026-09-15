@@ -12,45 +12,66 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
   SettingsBloc({
     required GetSettingsUseCase getSettingsUseCase,
     required UpdateSettingsUseCase updateSettingsUseCase,
-  })  : _getSettingsUseCase = getSettingsUseCase,
-        _updateSettingsUseCase = updateSettingsUseCase,
-        super(const SettingsState()) {
+  }) : _getSettingsUseCase = getSettingsUseCase,
+       _updateSettingsUseCase = updateSettingsUseCase,
+       super(const SettingsState()) {
     on<LoadSettings>(_onLoadSettings);
     on<UpdateBillingSettings>(_onUpdateSettings);
   }
 
-  Future<void> _onLoadSettings(LoadSettings event, Emitter<SettingsState> emit) async {
-    emit(state.copyWith(status: SettingsStatus.loading, clearError: true, clearSuccess: true));
+  Future<void> _onLoadSettings(
+    LoadSettings event,
+    Emitter<SettingsState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        status: SettingsStatus.loading,
+        clearError: true,
+        clearSuccess: true,
+      ),
+    );
 
     try {
       final settings = await _getSettingsUseCase();
-      emit(state.copyWith(
-        status: SettingsStatus.loaded,
-        settings: settings,
-      ));
+      emit(state.copyWith(status: SettingsStatus.loaded, settings: settings));
     } catch (e) {
-      emit(state.copyWith(
-        status: SettingsStatus.error,
-        errorMessage: 'Failed to load settings: $e',
-      ));
+      emit(
+        state.copyWith(
+          status: SettingsStatus.error,
+          errorMessage: 'Failed to load settings: $e',
+        ),
+      );
     }
   }
 
-  Future<void> _onUpdateSettings(UpdateBillingSettings event, Emitter<SettingsState> emit) async {
-    emit(state.copyWith(status: SettingsStatus.saving, clearError: true, clearSuccess: true));
+  Future<void> _onUpdateSettings(
+    UpdateBillingSettings event,
+    Emitter<SettingsState> emit,
+  ) async {
+    emit(
+      state.copyWith(
+        status: SettingsStatus.saving,
+        clearError: true,
+        clearSuccess: true,
+      ),
+    );
 
     try {
       await _updateSettingsUseCase(event.settings);
-      emit(state.copyWith(
-        status: SettingsStatus.saved,
-        settings: event.settings,
-        successMessage: 'Settings saved successfully',
-      ));
+      emit(
+        state.copyWith(
+          status: SettingsStatus.saved,
+          settings: event.settings,
+          successMessage: 'Settings saved successfully',
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(
-        status: SettingsStatus.error,
-        errorMessage: 'Failed to save settings: $e',
-      ));
+      emit(
+        state.copyWith(
+          status: SettingsStatus.error,
+          errorMessage: 'Failed to save settings: $e',
+        ),
+      );
     }
   }
 }

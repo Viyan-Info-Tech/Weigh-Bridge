@@ -23,18 +23,32 @@ import 'package:weighbridge/features/bill/presentation/bloc/bill_state.dart';
 import 'package:weighbridge/features/dashboard/presentation/pages/home_page.dart';
 
 class MockLoginUseCase extends Mock implements LoginUseCase {}
+
 class MockLogoutUseCase extends Mock implements LogoutUseCase {}
+
 class MockGetCurrentUserUseCase extends Mock implements GetCurrentUserUseCase {}
-class MockIsAuthenticatedUseCase extends Mock implements IsAuthenticatedUseCase {}
+
+class MockIsAuthenticatedUseCase extends Mock
+    implements IsAuthenticatedUseCase {}
 
 class MockPartyRepository extends Mock implements PartyRepository {}
+
 class MockVehicleRepository extends Mock implements VehicleRepository {}
+
 class MockVehicleTypeRepository extends Mock implements VehicleTypeRepository {}
+
 class MockMaterialRepository extends Mock implements MaterialItemRepository {}
+
 class MockSaveBillUseCase extends Mock implements SaveBillUseCase {}
-class MockLoadRecentBillsUseCase extends Mock implements LoadRecentBillsUseCase {}
-class MockGenerateBillNumberUseCase extends Mock implements GenerateBillNumberUseCase {}
-class MockLoadPendingBillsUseCase extends Mock implements LoadPendingBillsUseCase {}
+
+class MockLoadRecentBillsUseCase extends Mock
+    implements LoadRecentBillsUseCase {}
+
+class MockGenerateBillNumberUseCase extends Mock
+    implements GenerateBillNumberUseCase {}
+
+class MockLoadPendingBillsUseCase extends Mock
+    implements LoadPendingBillsUseCase {}
 
 void main() {
   setUpAll(() {
@@ -73,8 +87,12 @@ void main() {
     mockGetCurrentUserUseCase = MockGetCurrentUserUseCase();
     mockIsAuthenticatedUseCase = MockIsAuthenticatedUseCase();
 
-    when(() => mockGetCurrentUserUseCase()).thenAnswer((_) => Future.value(Right(testUser)));
-    when(() => mockIsAuthenticatedUseCase()).thenAnswer((_) => Future.value(const Right(true)));
+    when(
+      () => mockGetCurrentUserUseCase(),
+    ).thenAnswer((_) => Future.value(Right(testUser)));
+    when(
+      () => mockIsAuthenticatedUseCase(),
+    ).thenAnswer((_) => Future.value(const Right(true)));
 
     authBloc = AuthBloc(
       loginUseCase: mockLoginUseCase,
@@ -92,22 +110,30 @@ void main() {
     mockGenerateBillNumberUseCase = MockGenerateBillNumberUseCase();
     mockLoadPendingBillsUseCase = MockLoadPendingBillsUseCase();
 
-    when(() => mockPartyRepository.getAllActiveParties())
-        .thenAnswer((_) => Future.value(<Party>[]));
-    when(() => mockVehicleRepository.getVehiclesByStatus(isActive: true))
-        .thenAnswer((_) => Future.value(<Vehicle>[]));
-    when(() => mockVehicleTypeRepository.getVehicleTypesByStatus(isActive: true))
-        .thenAnswer((_) => Future.value([]));
-    when(() => mockMaterialRepository.getMaterialsByStatus(isActive: true))
-        .thenAnswer((_) => Future.value(<MaterialItem>[]));
-    when(() => mockLoadRecentBillsUseCase())
-        .thenAnswer((_) => Future.value(<Weighment>[]));
-    when(() => mockLoadRecentBillsUseCase(date: any(named: 'date')))
-        .thenAnswer((_) => Future.value(<Weighment>[]));
-    when(() => mockGenerateBillNumberUseCase())
-        .thenAnswer((_) => Future.value('WB-00001'));
-    when(() => mockLoadPendingBillsUseCase())
-        .thenAnswer((_) => Future.value([]));
+    when(
+      () => mockPartyRepository.getAllActiveParties(),
+    ).thenAnswer((_) => Future.value(<Party>[]));
+    when(
+      () => mockVehicleRepository.getVehiclesByStatus(isActive: true),
+    ).thenAnswer((_) => Future.value(<Vehicle>[]));
+    when(
+      () => mockVehicleTypeRepository.getVehicleTypesByStatus(isActive: true),
+    ).thenAnswer((_) => Future.value([]));
+    when(
+      () => mockMaterialRepository.getMaterialsByStatus(isActive: true),
+    ).thenAnswer((_) => Future.value(<MaterialItem>[]));
+    when(
+      () => mockLoadRecentBillsUseCase(),
+    ).thenAnswer((_) => Future.value(<Weighment>[]));
+    when(
+      () => mockLoadRecentBillsUseCase(date: any(named: 'date')),
+    ).thenAnswer((_) => Future.value(<Weighment>[]));
+    when(
+      () => mockGenerateBillNumberUseCase(),
+    ).thenAnswer((_) => Future.value('WB-00001'));
+    when(
+      () => mockLoadPendingBillsUseCase(),
+    ).thenAnswer((_) => Future.value([]));
 
     billBloc = BillBloc(
       partyRepository: mockPartyRepository,
@@ -132,15 +158,12 @@ void main() {
         BlocProvider<AuthBloc>.value(value: authBloc),
         BlocProvider<BillBloc>.value(value: billBloc),
       ],
-      child: const MaterialApp(
-        home: HomePage(),
-      ),
+      child: const MaterialApp(home: HomePage()),
     );
   }
 
   group('HomePage Workstation Layout Tests', () {
-    testWidgets('renders top title bar and content',
-        (tester) async {
+    testWidgets('renders top title bar and content', (tester) async {
       tester.view.physicalSize = const Size(1400, 900);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -150,7 +173,9 @@ void main() {
 
       await tester.pumpWidget(createHomePageUnderTest());
       await tester.runAsync(() async {
-        await billBloc.stream.firstWhere((s) => s.status == BillScreenStatus.loaded);
+        await billBloc.stream.firstWhere(
+          (s) => s.status == BillScreenStatus.loaded,
+        );
       });
       await tester.pumpAndSettle();
 

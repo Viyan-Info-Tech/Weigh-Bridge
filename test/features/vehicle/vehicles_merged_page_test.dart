@@ -17,6 +17,7 @@ import 'package:weighbridge/features/vehicle_type/domain/usecases/load_vehicle_t
 import 'package:weighbridge/features/vehicle_type/presentation/bloc/vehicle_type_bloc.dart';
 
 class MockVehicleRepository extends Mock implements VehicleRepository {}
+
 class MockVehicleTypeRepository extends Mock implements VehicleTypeRepository {}
 
 void main() {
@@ -51,19 +52,28 @@ void main() {
     mockVehicleRepo = MockVehicleRepository();
     mockVehicleTypeRepo = MockVehicleTypeRepository();
 
-    when(() => mockVehicleRepo.getAllVehicles())
-        .thenAnswer((_) => Future.value([testVehicle]));
-    when(() => mockVehicleRepo.getVehiclesByStatus(isActive: any(named: 'isActive')))
-        .thenAnswer((_) => Future.value([testVehicle]));
-    when(() => mockVehicleRepo.searchVehicles(any()))
-        .thenAnswer((_) => Future.value([testVehicle]));
+    when(
+      () => mockVehicleRepo.getAllVehicles(),
+    ).thenAnswer((_) => Future.value([testVehicle]));
+    when(
+      () =>
+          mockVehicleRepo.getVehiclesByStatus(isActive: any(named: 'isActive')),
+    ).thenAnswer((_) => Future.value([testVehicle]));
+    when(
+      () => mockVehicleRepo.searchVehicles(any()),
+    ).thenAnswer((_) => Future.value([testVehicle]));
 
-    when(() => mockVehicleTypeRepo.getAllVehicleTypes())
-        .thenAnswer((_) => Future.value([testVehicleType]));
-    when(() => mockVehicleTypeRepo.getVehicleTypesByStatus(isActive: any(named: 'isActive')))
-        .thenAnswer((_) => Future.value([testVehicleType]));
-    when(() => mockVehicleTypeRepo.searchVehicleTypes(any()))
-        .thenAnswer((_) => Future.value([testVehicleType]));
+    when(
+      () => mockVehicleTypeRepo.getAllVehicleTypes(),
+    ).thenAnswer((_) => Future.value([testVehicleType]));
+    when(
+      () => mockVehicleTypeRepo.getVehicleTypesByStatus(
+        isActive: any(named: 'isActive'),
+      ),
+    ).thenAnswer((_) => Future.value([testVehicleType]));
+    when(
+      () => mockVehicleTypeRepo.searchVehicleTypes(any()),
+    ).thenAnswer((_) => Future.value([testVehicleType]));
 
     vehicleBloc = VehicleBloc(
       loadVehiclesUseCase: LoadVehiclesUseCase(mockVehicleRepo),
@@ -97,121 +107,159 @@ void main() {
     );
   }
 
-  testWidgets('renders header, stats cards, and both vehicle panels with correct data', (tester) async {
-    tester.view.physicalSize = const Size(1400, 900);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(() => tester.view.resetPhysicalSize());
-
-    await tester.pumpWidget(createWidgetUnderTest());
-    await tester.runAsync(() async {
-      await Future.delayed(const Duration(milliseconds: 100));
-    });
-    await tester.pumpAndSettle();
-
-    // Verify page header
-    expect(find.text('Vehicles & Types'), findsOneWidget);
-    expect(find.text('Manage registered vehicles and pricing tiers'), findsOneWidget);
-
-    // Verify stats cards
-    expect(find.text('Registered Fleet'), findsOneWidget);
-    expect(find.text('Vehicle Categories'), findsOneWidget);
-    expect(find.text('Operational Rate'), findsOneWidget);
-
-    // Verify panel titles and counts
-    expect(find.text('Vehicles'), findsWidgets);
-    expect(find.text('Vehicle Types'), findsWidgets);
-    expect(find.text('Add Vehicle'), findsOneWidget);
-    expect(find.text('Add Type'), findsOneWidget);
-
-    // Verify table headers
-    expect(find.text('VEHICLE NUMBER'), findsOneWidget);
-    expect(find.text('DRIVER'), findsOneWidget);
-    expect(find.text('EMPTY'), findsOneWidget);
-    expect(find.text('LOAD'), findsOneWidget);
-
-    // Verify data row content
-    expect(find.text('TN31CM2026'), findsOneWidget);
-    expect(find.text('Ramesh'), findsOneWidget);
-    expect(find.text('9876543210'), findsOneWidget);
-    expect(find.text('Truck'), findsWidgets);
-    expect(find.text('₹100'), findsOneWidget);
-    expect(find.text('₹200'), findsOneWidget);
-
-    // Verify footers
-    expect(find.text('Total 1 vehicle'), findsOneWidget);
-    expect(find.text('Total 1 type'), findsOneWidget);
-  });
-
-  testWidgets('renders perfectly across all desktop window dimensions without RenderFlex overflow', (tester) async {
-    final sizesToTest = [
-      const Size(1920, 1080), // Full HD Large Desktop
-      const Size(1600, 900),  // Standard Desktop
-      const Size(1440, 900),  // MacBook Pro Standard
-      const Size(1366, 768),  // Standard Laptop
-      const Size(1280, 720),  // Compact Laptop
-      const Size(1152, 720),  // Small Desktop
-      const Size(1024, 768),  // Legacy Desktop
-      const Size(960, 720),   // Breakpoint Boundary
-      const Size(900, 700),   // Narrow Desktop Stacked
-      const Size(900, 600),   // Minimum Recommended Desktop Window
-      const Size(800, 600),   // Compact Desktop Constraint
-      const Size(700, 600),   // Small Stacked
-      const Size(640, 480),   // Minimized Window Boundary
-      const Size(1280, 500),  // Short Window Height
-    ];
-
-    addTearDown(() => tester.view.resetPhysicalSize());
-
-    for (final size in sizesToTest) {
-      tester.view.physicalSize = size;
+  testWidgets(
+    'renders header, stats cards, and both vehicle panels with correct data',
+    (tester) async {
+      tester.view.physicalSize = const Size(1400, 900);
       tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
 
       await tester.pumpWidget(createWidgetUnderTest());
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 100));
+      await tester.runAsync(() async {
+        await Future.delayed(const Duration(milliseconds: 100));
+      });
+      await tester.pumpAndSettle();
 
-      // Ensure no exceptions occurred
-      expect(tester.takeException(), isNull, reason: 'Failed at size: ${size.width}x${size.height}');
+      // Verify page header
+      expect(find.text('Vehicles & Types'), findsOneWidget);
+      expect(
+        find.text('Manage registered vehicles and pricing tiers'),
+        findsOneWidget,
+      );
 
-      // Key widgets must always be present
-      expect(find.text('Vehicles & Types'), findsOneWidget, reason: 'Header missing at ${size.width}x${size.height}');
-      expect(find.text('Registered Fleet'), findsOneWidget, reason: 'Fleet card missing at ${size.width}x${size.height}');
-      expect(find.text('Vehicle Categories'), findsOneWidget, reason: 'Categories card missing at ${size.width}x${size.height}');
-      expect(find.text('Operational Rate'), findsOneWidget, reason: 'Rate card missing at ${size.width}x${size.height}');
-    }
-  });
+      // Verify stats cards
+      expect(find.text('Registered Fleet'), findsOneWidget);
+      expect(find.text('Vehicle Categories'), findsOneWidget);
+      expect(find.text('Operational Rate'), findsOneWidget);
 
-  testWidgets('dynamically resizes from wide to narrow to wide without layout exceptions', (tester) async {
-    tester.view.physicalSize = const Size(1600, 900);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(() => tester.view.resetPhysicalSize());
+      // Verify panel titles and counts
+      expect(find.text('Vehicles'), findsWidgets);
+      expect(find.text('Vehicle Types'), findsWidgets);
+      expect(find.text('Add Vehicle'), findsOneWidget);
+      expect(find.text('Add Type'), findsOneWidget);
 
-    await tester.pumpWidget(createWidgetUnderTest());
-    await tester.pumpAndSettle();
-    expect(tester.takeException(), isNull);
+      // Verify table headers
+      expect(find.text('VEHICLE NUMBER'), findsOneWidget);
+      expect(find.text('DRIVER'), findsOneWidget);
+      expect(find.text('EMPTY'), findsOneWidget);
+      expect(find.text('LOAD'), findsOneWidget);
 
-    // Resize down step-by-step
-    final resizeSteps = [
-      const Size(1366, 768),
-      const Size(1152, 720),
-      const Size(960, 720),
-      const Size(900, 700),
-      const Size(800, 600),
-      const Size(700, 550),
-      const Size(900, 600),
-      const Size(1280, 720),
-      const Size(1920, 1080),
-    ];
+      // Verify data row content
+      expect(find.text('TN31CM2026'), findsOneWidget);
+      expect(find.text('Ramesh'), findsOneWidget);
+      expect(find.text('9876543210'), findsOneWidget);
+      expect(find.text('Truck'), findsWidgets);
+      expect(find.text('₹100'), findsOneWidget);
+      expect(find.text('₹200'), findsOneWidget);
 
-    for (final step in resizeSteps) {
-      tester.view.physicalSize = step;
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 50));
-      expect(tester.takeException(), isNull, reason: 'Exception during resize to ${step.width}x${step.height}');
-    }
-  });
+      // Verify footers
+      expect(find.text('Total 1 vehicle'), findsOneWidget);
+      expect(find.text('Total 1 type'), findsOneWidget);
+    },
+  );
 
-  testWidgets('search and status filter operate correctly in both panels', (tester) async {
+  testWidgets(
+    'renders perfectly across all desktop window dimensions without RenderFlex overflow',
+    (tester) async {
+      final sizesToTest = [
+        const Size(1920, 1080), // Full HD Large Desktop
+        const Size(1600, 900), // Standard Desktop
+        const Size(1440, 900), // MacBook Pro Standard
+        const Size(1366, 768), // Standard Laptop
+        const Size(1280, 720), // Compact Laptop
+        const Size(1152, 720), // Small Desktop
+        const Size(1024, 768), // Legacy Desktop
+        const Size(960, 720), // Breakpoint Boundary
+        const Size(900, 700), // Narrow Desktop Stacked
+        const Size(900, 600), // Minimum Recommended Desktop Window
+        const Size(800, 600), // Compact Desktop Constraint
+        const Size(700, 600), // Small Stacked
+        const Size(640, 480), // Minimized Window Boundary
+        const Size(1280, 500), // Short Window Height
+      ];
+
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      for (final size in sizesToTest) {
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1.0;
+
+        await tester.pumpWidget(createWidgetUnderTest());
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 100));
+
+        // Ensure no exceptions occurred
+        expect(
+          tester.takeException(),
+          isNull,
+          reason: 'Failed at size: ${size.width}x${size.height}',
+        );
+
+        // Key widgets must always be present
+        expect(
+          find.text('Vehicles & Types'),
+          findsOneWidget,
+          reason: 'Header missing at ${size.width}x${size.height}',
+        );
+        expect(
+          find.text('Registered Fleet'),
+          findsOneWidget,
+          reason: 'Fleet card missing at ${size.width}x${size.height}',
+        );
+        expect(
+          find.text('Vehicle Categories'),
+          findsOneWidget,
+          reason: 'Categories card missing at ${size.width}x${size.height}',
+        );
+        expect(
+          find.text('Operational Rate'),
+          findsOneWidget,
+          reason: 'Rate card missing at ${size.width}x${size.height}',
+        );
+      }
+    },
+  );
+
+  testWidgets(
+    'dynamically resizes from wide to narrow to wide without layout exceptions',
+    (tester) async {
+      tester.view.physicalSize = const Size(1600, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(createWidgetUnderTest());
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      // Resize down step-by-step
+      final resizeSteps = [
+        const Size(1366, 768),
+        const Size(1152, 720),
+        const Size(960, 720),
+        const Size(900, 700),
+        const Size(800, 600),
+        const Size(700, 550),
+        const Size(900, 600),
+        const Size(1280, 720),
+        const Size(1920, 1080),
+      ];
+
+      for (final step in resizeSteps) {
+        tester.view.physicalSize = step;
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 50));
+        expect(
+          tester.takeException(),
+          isNull,
+          reason: 'Exception during resize to ${step.width}x${step.height}',
+        );
+      }
+    },
+  );
+
+  testWidgets('search and status filter operate correctly in both panels', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1280, 720);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() => tester.view.resetPhysicalSize());
@@ -239,4 +287,3 @@ void main() {
     verify(() => mockVehicleTypeRepo.searchVehicleTypes('Truck')).called(1);
   });
 }
-

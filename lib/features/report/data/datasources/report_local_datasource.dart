@@ -9,7 +9,9 @@ class ReportLocalDataSource {
 
   ReportLocalDataSource(this._database);
 
-  Future<List<WeighmentReportItem>> getReportRecords(ReportFilter filter) async {
+  Future<List<WeighmentReportItem>> getReportRecords(
+    ReportFilter filter,
+  ) async {
     final start = filter.effectiveStartDate;
     final end = filter.effectiveEndDate;
 
@@ -35,7 +37,7 @@ class ReportLocalDataSource {
     // Date range filter
     query.where(
       _database.weighments.createdAt.isBiggerOrEqualValue(start) &
-      _database.weighments.createdAt.isSmallerOrEqualValue(end),
+          _database.weighments.createdAt.isSmallerOrEqualValue(end),
     );
 
     // Party filter
@@ -65,7 +67,9 @@ class ReportLocalDataSource {
     // Payment mode filter
     if (filter.paymentMode != 'all') {
       query.where(
-        _database.weighments.paymentMode.lower().equals(filter.paymentMode.toLowerCase()),
+        _database.weighments.paymentMode.lower().equals(
+          filter.paymentMode.toLowerCase(),
+        ),
       );
     }
 
@@ -96,7 +100,10 @@ class ReportLocalDataSource {
         final matchesParty = partyName.toLowerCase().contains(search);
         final matchesMaterial = materialName.toLowerCase().contains(search);
 
-        if (!matchesBill && !matchesVehicle && !matchesParty && !matchesMaterial) {
+        if (!matchesBill &&
+            !matchesVehicle &&
+            !matchesParty &&
+            !matchesMaterial) {
           continue;
         }
       }

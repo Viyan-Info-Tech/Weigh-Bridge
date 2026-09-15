@@ -131,9 +131,15 @@ class Injection {
       localDataSource: vehicleTypeLocalDataSource,
     );
 
-    final loadVehicleTypesUseCase = LoadVehicleTypesUseCase(vehicleTypeRepository);
-    final createVehicleTypeUseCase = CreateVehicleTypeUseCase(vehicleTypeRepository);
-    final deleteVehicleTypeUseCase = DeleteVehicleTypeUseCase(vehicleTypeRepository);
+    final loadVehicleTypesUseCase = LoadVehicleTypesUseCase(
+      vehicleTypeRepository,
+    );
+    final createVehicleTypeUseCase = CreateVehicleTypeUseCase(
+      vehicleTypeRepository,
+    );
+    final deleteVehicleTypeUseCase = DeleteVehicleTypeUseCase(
+      vehicleTypeRepository,
+    );
 
     final vehicleTypeBloc = VehicleTypeBloc(
       loadVehicleTypesUseCase: loadVehicleTypesUseCase,

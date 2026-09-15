@@ -309,8 +309,13 @@ class _MaterialListPageState extends State<MaterialListPage> {
                 style: FilledButton.styleFrom(
                   backgroundColor: const Color(0xFF0D3B82),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   textStyle: const TextStyle(
                     fontFamily: 'PlusJakartaSans',
                     fontSize: 12,
@@ -339,7 +344,10 @@ class _MaterialListPageState extends State<MaterialListPage> {
                   setState(() {});
                   context.read<MaterialBloc>().add(SearchMaterials(value));
                 },
-                style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12),
+                style: const TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 12,
+                ),
                 decoration: InputDecoration(
                   hintText: 'Search by material name, category...',
                   hintStyle: const TextStyle(
@@ -362,11 +370,16 @@ class _MaterialListPageState extends State<MaterialListPage> {
                           onPressed: () {
                             _searchController.clear();
                             setState(() {});
-                            context.read<MaterialBloc>().add(const SearchMaterials(''));
+                            context.read<MaterialBloc>().add(
+                              const SearchMaterials(''),
+                            );
                           },
                         )
                       : null,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 0,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
@@ -377,7 +390,10 @@ class _MaterialListPageState extends State<MaterialListPage> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFF0F52BA), width: 1.5),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF0F52BA),
+                      width: 1.5,
+                    ),
                   ),
                   filled: true,
                   fillColor: const Color(0xFFF8FAFC),
@@ -411,14 +427,19 @@ class _MaterialListPageState extends State<MaterialListPage> {
                 items: const [
                   DropdownMenuItem(value: null, child: Text('All Status')),
                   DropdownMenuItem(value: 'active', child: Text('Active Only')),
-                  DropdownMenuItem(value: 'inactive', child: Text('Inactive Only')),
+                  DropdownMenuItem(
+                    value: 'inactive',
+                    child: Text('Inactive Only'),
+                  ),
                 ],
                 onChanged: (value) {
                   setState(() => _statusFilter = value);
                   bool? isActive;
                   if (value == 'active') isActive = true;
                   if (value == 'inactive') isActive = false;
-                  context.read<MaterialBloc>().add(FilterMaterialsByStatus(isActive));
+                  context.read<MaterialBloc>().add(
+                    FilterMaterialsByStatus(isActive),
+                  );
                 },
               ),
             ),
@@ -432,7 +453,9 @@ class _MaterialListPageState extends State<MaterialListPage> {
     return BlocBuilder<MaterialBloc, app_material.MaterialState>(
       builder: (context, state) {
         if (state.status == app_material.AppMaterialStatus.loading) {
-          return const Center(child: CircularProgressIndicator(strokeWidth: 2.5));
+          return const Center(
+            child: CircularProgressIndicator(strokeWidth: 2.5),
+          );
         }
         if (state.materials.isEmpty) {
           return _buildEmptyState();
@@ -496,7 +519,10 @@ class _MaterialListPageState extends State<MaterialListPage> {
           Expanded(flex: 38, child: _buildHeaderText('MATERIAL NAME')),
           Expanded(flex: 26, child: _buildHeaderText('CATEGORY')),
           Expanded(flex: 18, child: _buildHeaderText('STATUS')),
-          Expanded(flex: 18, child: _buildHeaderText('ACTIONS', align: TextAlign.right)),
+          Expanded(
+            flex: 18,
+            child: _buildHeaderText('ACTIONS', align: TextAlign.right),
+          ),
         ],
       ),
     );
@@ -596,7 +622,8 @@ class _MaterialListPageState extends State<MaterialListPage> {
             flex: 18,
             child: ActionMenu(
               isActive: material.isActive,
-              onView: () => MaterialDetailsDialog.show(context, material: material),
+              onView: () =>
+                  MaterialDetailsDialog.show(context, material: material),
               onEdit: () => _navigateToForm(context, materialId: material.id),
               onDelete: () => _confirmDeleteMaterial(context, material),
               onDeactivate: () => _confirmDeactivateMaterial(context, material),
@@ -621,7 +648,9 @@ class _MaterialListPageState extends State<MaterialListPage> {
             width: 5,
             height: 5,
             decoration: BoxDecoration(
-              color: isActive ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+              color: isActive
+                  ? const Color(0xFF16A34A)
+                  : const Color(0xFFDC2626),
               shape: BoxShape.circle,
             ),
           ),
@@ -632,7 +661,9 @@ class _MaterialListPageState extends State<MaterialListPage> {
               fontFamily: 'PlusJakartaSans',
               fontSize: 10.5,
               fontWeight: FontWeight.w700,
-              color: isActive ? const Color(0xFF15803D) : const Color(0xFFB91C1C),
+              color: isActive
+                  ? const Color(0xFF15803D)
+                  : const Color(0xFFB91C1C),
             ),
           ),
         ],
@@ -712,8 +743,13 @@ class _MaterialListPageState extends State<MaterialListPage> {
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF0D3B82),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 textStyle: const TextStyle(
                   fontFamily: 'PlusJakartaSans',
                   fontSize: 12,
@@ -752,19 +788,37 @@ class _MaterialListPageState extends State<MaterialListPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            style: TextButton.styleFrom(foregroundColor: const Color(0xFF64748B)),
-            child: const Text('Cancel', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF64748B),
+            ),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           FilledButton(
             onPressed: () {
-              context.read<MaterialBloc>().add(DeactivateMaterialRequested(material.id));
+              context.read<MaterialBloc>().add(
+                DeactivateMaterialRequested(material.id),
+              );
               Navigator.pop(ctx);
             },
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFDC2626),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            child: const Text('Deactivate', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+            child: const Text(
+              'Deactivate',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -796,19 +850,37 @@ class _MaterialListPageState extends State<MaterialListPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            style: TextButton.styleFrom(foregroundColor: const Color(0xFF64748B)),
-            child: const Text('Cancel', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF64748B),
+            ),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           FilledButton(
             onPressed: () {
-              context.read<MaterialBloc>().add(DeleteMaterialRequested(material.id));
+              context.read<MaterialBloc>().add(
+                DeleteMaterialRequested(material.id),
+              );
               Navigator.pop(ctx);
             },
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFDC2626),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            child: const Text('Delete', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),

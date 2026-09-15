@@ -30,7 +30,8 @@ class VehicleDao extends DatabaseAccessor<AppDatabase> with _$VehicleDaoMixin {
   }
 
   Future<Vehicle?> getVehicleByNumber(String number) async {
-    final query = select(vehicles)..where((v) => v.vehicleNumber.equals(number));
+    final query = select(vehicles)
+      ..where((v) => v.vehicleNumber.equals(number));
     return query.getSingleOrNull();
   }
 
@@ -44,28 +45,26 @@ class VehicleDao extends DatabaseAccessor<AppDatabase> with _$VehicleDaoMixin {
 
   Future<List<Vehicle>> searchVehicles(String query) async {
     final q = select(vehicles)
-      ..where((v) =>
-          v.vehicleNumber.like('%$query%') |
-          v.driverName.like('%$query%'))
+      ..where(
+        (v) => v.vehicleNumber.like('%$query%') | v.driverName.like('%$query%'),
+      )
       ..limit(20);
     return q.get();
   }
 
   Future<List<Vehicle>> getVehiclesByType(int vehicleTypeId) async {
     final query = select(vehicles)
-      ..where((v) =>
-          v.vehicleTypeId.equals(vehicleTypeId) &
-          v.isActive.equals(true));
+      ..where(
+        (v) => v.vehicleTypeId.equals(vehicleTypeId) & v.isActive.equals(true),
+      );
     return query.get();
   }
 
   Future<void> deactivateVehicle(int id) async {
     final now = DateTime.now();
-    await (update(vehicles)..where((v) => v.id.equals(id)))
-        .write(VehiclesCompanion(
-      isActive: const Value(false),
-      updatedAt: Value(now),
-    ));
+    await (update(vehicles)..where((v) => v.id.equals(id))).write(
+      VehiclesCompanion(isActive: const Value(false), updatedAt: Value(now)),
+    );
   }
 
   Future<int> deleteVehicle(int id) async {

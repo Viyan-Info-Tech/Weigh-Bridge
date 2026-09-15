@@ -50,13 +50,15 @@ void main() {
     try {
       // Seed admin
       final hash = hasher.hashPassword('Admin@123');
-      await database.into(database.users).insert(
-        UsersCompanion.insert(
-          username: 'admin',
-          passwordHash: hash,
-          role: const Value('admin'),
-        ),
-      );
+      await database
+          .into(database.users)
+          .insert(
+            UsersCompanion.insert(
+              username: 'admin',
+              passwordHash: hash,
+              role: const Value('admin'),
+            ),
+          );
 
       // Query via DAO
       final user = await database.userDao.getUserByUsername('admin');

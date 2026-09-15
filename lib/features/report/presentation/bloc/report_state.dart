@@ -65,22 +65,24 @@ class ReportState extends Equatable {
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       weightUnit: weightUnit ?? this.weightUnit,
       isExporting: isExporting ?? this.isExporting,
-      exportResult: clearExportResult ? null : (exportResult ?? this.exportResult),
+      exportResult: clearExportResult
+          ? null
+          : (exportResult ?? this.exportResult),
     );
   }
 
   @override
   List<Object?> get props => [
-        status,
-        records,
-        summary,
-        filter,
-        parties,
-        vehicles,
-        materials,
-        errorMessage,
-        weightUnit,
-        isExporting,
-        exportResult,
-      ];
+    status,
+    records,
+    summary,
+    filter,
+    parties,
+    vehicles,
+    materials,
+    errorMessage,
+    weightUnit,
+    isExporting,
+    exportResult,
+  ];
 }

@@ -28,28 +28,28 @@ void main() {
   }
 
   group('WeightDisplay Widget Tests', () {
-    testWidgets('does not render SCALE 01, STABLE, ZERO, or standalone NET status indicators',
-        (tester) async {
-      await tester.pumpWidget(buildTestWidget());
-      await tester.pumpAndSettle();
+    testWidgets(
+      'does not render SCALE 01, STABLE, ZERO, or standalone NET status indicators',
+      (tester) async {
+        await tester.pumpWidget(buildTestWidget());
+        await tester.pumpAndSettle();
 
-      expect(find.text('SCALE 01'), findsNothing);
-      expect(find.text('STABLE'), findsNothing);
-      expect(find.text('ZERO'), findsNothing);
-      expect(find.text('NET'), findsNothing);
+        expect(find.text('SCALE 01'), findsNothing);
+        expect(find.text('STABLE'), findsNothing);
+        expect(find.text('ZERO'), findsNothing);
+        expect(find.text('NET'), findsNothing);
 
-      expect(find.text('kg'), findsOneWidget);
-      expect(find.text('NET: 0 kg'), findsOneWidget);
-      expect(find.text('GROSS: 0 kg'), findsOneWidget);
-      expect(find.text('TARE: 0 kg'), findsOneWidget);
-    });
+        expect(find.text('kg'), findsOneWidget);
+        expect(find.text('NET: 0 kg'), findsOneWidget);
+        expect(find.text('GROSS: 0 kg'), findsOneWidget);
+        expect(find.text('TARE: 0 kg'), findsOneWidget);
+      },
+    );
 
     testWidgets('displays correct weight values when provided', (tester) async {
-      await tester.pumpWidget(buildTestWidget(
-        netWeightKg: 5000,
-        grossWeight: 3000,
-        tareWeight: 8000,
-      ));
+      await tester.pumpWidget(
+        buildTestWidget(netWeightKg: 5000, grossWeight: 3000, tareWeight: 8000),
+      );
       await tester.pumpAndSettle();
 
       expect(find.text('NET: 5000 kg'), findsOneWidget);
@@ -57,7 +57,9 @@ void main() {
       expect(find.text('TARE: 8000 kg'), findsOneWidget);
     });
 
-    testWidgets('does not render FIRST, SECOND, or TARE buttons', (tester) async {
+    testWidgets('does not render FIRST, SECOND, or TARE buttons', (
+      tester,
+    ) async {
       await tester.pumpWidget(buildTestWidget());
       await tester.pumpAndSettle();
 

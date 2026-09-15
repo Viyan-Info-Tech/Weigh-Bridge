@@ -6,7 +6,7 @@ class BillRepositoryImpl implements BillRepository {
   final BillLocalDataSource _localDataSource;
 
   BillRepositoryImpl({required BillLocalDataSource localDataSource})
-      : _localDataSource = localDataSource;
+    : _localDataSource = localDataSource;
 
   @override
   Future<int> saveWeighment(Weighment weighment) async {

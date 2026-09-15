@@ -31,14 +31,8 @@ class AppRouter {
       return isOnLogin ? null : '/login';
     },
     routes: [
-      GoRoute(
-        path: '/login',
-        builder: (context, state) => const LoginPage(),
-      ),
-      GoRoute(
-        path: '/bill',
-        builder: (context, state) => const HomePage(),
-      ),
+      GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
+      GoRoute(path: '/bill', builder: (context, state) => const HomePage()),
     ],
   );
 }

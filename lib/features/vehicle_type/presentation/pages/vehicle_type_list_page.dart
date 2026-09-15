@@ -62,7 +62,11 @@ class _VehicleTypeListPageState extends State<VehicleTypeListPage> {
             color: const Color(0xFF0F52BA).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Icon(Icons.category_outlined, color: Color(0xFF0F52BA), size: 20),
+          child: const Icon(
+            Icons.category_outlined,
+            color: Color(0xFF0F52BA),
+            size: 20,
+          ),
         ),
         const SizedBox(width: 12),
         const Column(
@@ -96,7 +100,9 @@ class _VehicleTypeListPageState extends State<VehicleTypeListPage> {
             backgroundColor: const Color(0xFF0D3B82),
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         ),
       ],
@@ -116,12 +122,32 @@ class _VehicleTypeListPageState extends State<VehicleTypeListPage> {
             style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13),
             decoration: InputDecoration(
               hintText: 'Search vehicle type...',
-              hintStyle: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, color: Colors.grey.shade400),
-              prefixIcon: Icon(Icons.search, color: Colors.grey.shade400, size: 18),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF0D3B82))),
+              hintStyle: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 13,
+                color: Colors.grey.shade400,
+              ),
+              prefixIcon: Icon(
+                Icons.search,
+                color: Colors.grey.shade400,
+                size: 18,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFF0D3B82)),
+              ),
               filled: true,
               fillColor: Colors.white,
             ),
@@ -138,18 +164,54 @@ class _VehicleTypeListPageState extends State<VehicleTypeListPage> {
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: _statusFilter,
-              hint: Text('Status', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, color: Colors.grey.shade600)),
+              hint: Text(
+                'Status',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 13,
+                  color: Colors.grey.shade600,
+                ),
+              ),
               items: const [
-                DropdownMenuItem(value: null, child: Text('All', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-                DropdownMenuItem(value: 'active', child: Text('Active', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-                DropdownMenuItem(value: 'inactive', child: Text('Inactive', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
+                DropdownMenuItem(
+                  value: null,
+                  child: Text(
+                    'All',
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                DropdownMenuItem(
+                  value: 'active',
+                  child: Text(
+                    'Active',
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                DropdownMenuItem(
+                  value: 'inactive',
+                  child: Text(
+                    'Inactive',
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
               ],
               onChanged: (value) {
                 setState(() => _statusFilter = value);
                 bool? isActive;
                 if (value == 'active') isActive = true;
                 if (value == 'inactive') isActive = false;
-                context.read<VehicleTypeBloc>().add(LoadVehicleTypes(filterActive: isActive));
+                context.read<VehicleTypeBloc>().add(
+                  LoadVehicleTypes(filterActive: isActive),
+                );
               },
             ),
           ),
@@ -186,15 +248,33 @@ class _VehicleTypeListPageState extends State<VehicleTypeListPage> {
         children: [
           Icon(Icons.category_outlined, size: 48, color: Colors.grey.shade300),
           const SizedBox(height: 12),
-          Text('No vehicle types found', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 16, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+          Text(
+            'No vehicle types found',
+            style: TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade600,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text('Add your first vehicle type to get started.', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, color: Colors.grey.shade400)),
+          Text(
+            'Add your first vehicle type to get started.',
+            style: TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 13,
+              color: Colors.grey.shade400,
+            ),
+          ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
             onPressed: () => _showFormDialog(context),
             icon: const Icon(Icons.add, size: 16),
             label: const Text('Add Vehicle Type'),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0D3B82), foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0D3B82),
+              foregroundColor: Colors.white,
+            ),
           ),
         ],
       ),
@@ -206,28 +286,104 @@ class _VehicleTypeListPageState extends State<VehicleTypeListPage> {
       child: DataTable(
         headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
         columns: const [
-          DataColumn(label: Text('Type', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600))),
-          DataColumn(label: Text('Empty Price', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600))),
-          DataColumn(label: Text('Load Price', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600))),
-          DataColumn(label: Text('Status', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600))),
-          DataColumn(label: Text('Actions', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600))),
-        ],
-        rows: vehicleTypes.map((vehicleType) {
-          return DataRow(cells: [
-            DataCell(Text(vehicleType.name, style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, fontWeight: FontWeight.w600))),
-            DataCell(Text('₹${vehicleType.emptyPrice.toStringAsFixed(2)}', style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-            DataCell(Text('₹${vehicleType.loadPrice.toStringAsFixed(2)}', style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-            DataCell(_buildStatusBadge(vehicleType.isActive)),
-            DataCell(
-              ActionMenu(
-                isActive: vehicleType.isActive,
-                onView: () => VehicleTypeDetailsDialog.show(context, vehicleType: vehicleType),
-                onEdit: () => _showFormDialog(context, vehicleType: vehicleType),
-                onDelete: () => _confirmDelete(context, vehicleType),
-                onDeactivate: () => _confirmDeactivate(context, vehicleType),
+          DataColumn(
+            label: Text(
+              'Type',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
               ),
             ),
-          ]);
+          ),
+          DataColumn(
+            label: Text(
+              'Empty Price',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              'Load Price',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              'Status',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              'Actions',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+        rows: vehicleTypes.map((vehicleType) {
+          return DataRow(
+            cells: [
+              DataCell(
+                Text(
+                  vehicleType.name,
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              DataCell(
+                Text(
+                  '₹${vehicleType.emptyPrice.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              DataCell(
+                Text(
+                  '₹${vehicleType.loadPrice.toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              DataCell(_buildStatusBadge(vehicleType.isActive)),
+              DataCell(
+                ActionMenu(
+                  isActive: vehicleType.isActive,
+                  onView: () => VehicleTypeDetailsDialog.show(
+                    context,
+                    vehicleType: vehicleType,
+                  ),
+                  onEdit: () =>
+                      _showFormDialog(context, vehicleType: vehicleType),
+                  onDelete: () => _confirmDelete(context, vehicleType),
+                  onDeactivate: () => _confirmDeactivate(context, vehicleType),
+                ),
+              ),
+            ],
+          );
         }).toList(),
       ),
     );
@@ -237,7 +393,9 @@ class _VehicleTypeListPageState extends State<VehicleTypeListPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: isActive ? const Color(0xFF16A34A).withValues(alpha: 0.1) : const Color(0xFFDC2626).withValues(alpha: 0.1),
+        color: isActive
+            ? const Color(0xFF16A34A).withValues(alpha: 0.1)
+            : const Color(0xFFDC2626).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
@@ -281,19 +439,37 @@ class _VehicleTypeListPageState extends State<VehicleTypeListPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            style: TextButton.styleFrom(foregroundColor: const Color(0xFF64748B)),
-            child: const Text('Cancel', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF64748B),
+            ),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           FilledButton(
             onPressed: () {
-              context.read<VehicleTypeBloc>().add(DeactivateVehicleTypeRequested(vehicleType.id));
+              context.read<VehicleTypeBloc>().add(
+                DeactivateVehicleTypeRequested(vehicleType.id),
+              );
               Navigator.pop(ctx);
             },
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFDC2626),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            child: const Text('Deactivate', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+            child: const Text(
+              'Deactivate',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -325,19 +501,37 @@ class _VehicleTypeListPageState extends State<VehicleTypeListPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            style: TextButton.styleFrom(foregroundColor: const Color(0xFF64748B)),
-            child: const Text('Cancel', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF64748B),
+            ),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           FilledButton(
             onPressed: () {
-              context.read<VehicleTypeBloc>().add(DeleteVehicleTypeRequested(vehicleType.id));
+              context.read<VehicleTypeBloc>().add(
+                DeleteVehicleTypeRequested(vehicleType.id),
+              );
               Navigator.pop(ctx);
             },
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFDC2626),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            child: const Text('Delete', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),

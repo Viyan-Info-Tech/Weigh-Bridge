@@ -113,10 +113,16 @@ void main() {
       final user = await userDao.getUserByUsername('admin');
       expect(user, isNotNull);
 
-      final isValid = passwordHasher.verifyPassword('Admin@123', user!.passwordHash);
+      final isValid = passwordHasher.verifyPassword(
+        'Admin@123',
+        user!.passwordHash,
+      );
       expect(isValid, isTrue);
 
-      final isInvalid = passwordHasher.verifyPassword('wrongpassword', user.passwordHash);
+      final isInvalid = passwordHasher.verifyPassword(
+        'wrongpassword',
+        user.passwordHash,
+      );
       expect(isInvalid, isFalse);
     });
 

@@ -22,7 +22,8 @@ class CsvGenerator {
     final startDate = filter.effectiveStartDate;
     final endDate = filter.effectiveEndDate;
 
-    final isSameDay = startDate.year == endDate.year &&
+    final isSameDay =
+        startDate.year == endDate.year &&
         startDate.month == endDate.month &&
         startDate.day == endDate.day;
 
@@ -30,7 +31,8 @@ class CsvGenerator {
     if (isSameDay) {
       datePart = dateFormat.format(startDate);
     } else {
-      datePart = '${dateFormat.format(startDate)}_to_${dateFormat.format(endDate)}';
+      datePart =
+          '${dateFormat.format(startDate)}_to_${dateFormat.format(endDate)}';
     }
 
     return 'weighment_report${statusPart}_$datePart.csv';
@@ -52,9 +54,11 @@ class CsvGenerator {
     for (final item in records) {
       final dateTimeStr = dateTimeFormat.format(item.createdAt);
       final unit = item.weightUnit;
-      final isTon = unit.toLowerCase() == 'ton' || unit.toLowerCase() == 'tonne';
+      final isTon =
+          unit.toLowerCase() == 'ton' || unit.toLowerCase() == 'tonne';
       final decimals = isTon ? 3 : 0;
-      double? toDisplay(double? kg) => kg == null ? null : (isTon ? kg / 1000 : kg);
+      double? toDisplay(double? kg) =>
+          kg == null ? null : (isTon ? kg / 1000 : kg);
 
       // Represent empty weight values as empty strings in CSV so cells are clean
       final grossStr = item.grossWeightKg != null

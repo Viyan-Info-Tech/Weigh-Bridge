@@ -6,12 +6,7 @@ import '../repositories/report_repository.dart';
 import '../services/csv_generator.dart';
 import '../services/file_save_service.dart';
 
-enum ExportResultType {
-  success,
-  noRecords,
-  cancelled,
-  failure,
-}
+enum ExportResultType { success, noRecords, cancelled, failure }
 
 class ExportReportResult {
   final ExportResultType type;
@@ -52,9 +47,9 @@ class ExportReportUseCase {
     required ReportRepository reportRepository,
     required FileSaveService fileSaveService,
     CsvGenerator? csvGenerator,
-  })  : _reportRepository = reportRepository,
-        _fileSaveService = fileSaveService,
-        _csvGenerator = csvGenerator ?? const CsvGenerator();
+  }) : _reportRepository = reportRepository,
+       _fileSaveService = fileSaveService,
+       _csvGenerator = csvGenerator ?? const CsvGenerator();
 
   Future<ExportReportResult> call(ReportFilter filter) async {
     try {

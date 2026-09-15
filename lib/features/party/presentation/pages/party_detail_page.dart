@@ -69,7 +69,9 @@ class _PartyDetailPageState extends State<PartyDetailPage> {
             backgroundColor: const Color(0xFF0D3B82),
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         ),
       ],
@@ -87,9 +89,21 @@ class _PartyDetailPageState extends State<PartyDetailPage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.error_outline, size: 48, color: Colors.grey.shade300),
+                Icon(
+                  Icons.error_outline,
+                  size: 48,
+                  color: Colors.grey.shade300,
+                ),
                 const SizedBox(height: 12),
-                Text('Party not found', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 16, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+                Text(
+                  'Party not found',
+                  style: TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
               ],
             ),
           );
@@ -120,7 +134,15 @@ class _PartyDetailPageState extends State<PartyDetailPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Party Information', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF0F172A))),
+          const Text(
+            'Party Information',
+            style: TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 14,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF0F172A),
+            ),
+          ),
           const SizedBox(height: 16),
           _buildInfoRow('Party Name', party.name),
           if (party.contactPerson != null && party.contactPerson!.isNotEmpty)
@@ -154,13 +176,21 @@ class _PartyDetailPageState extends State<PartyDetailPage> {
             width: 140,
             child: Text(
               label,
-              style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, color: Colors.grey.shade600),
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 13,
+                color: Colors.grey.shade600,
+              ),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, fontWeight: FontWeight.w600),
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
         ],
@@ -181,7 +211,15 @@ class _PartyDetailPageState extends State<PartyDetailPage> {
         children: [
           Row(
             children: [
-              const Text('Vehicles', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF0F172A))),
+              const Text(
+                'Vehicles',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
               const Spacer(),
               ElevatedButton.icon(
                 onPressed: () => _navigateToVehicles(context),
@@ -190,8 +228,13 @@ class _PartyDetailPageState extends State<PartyDetailPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0D3B82),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(6),
+                  ),
                 ),
               ),
             ],
@@ -203,11 +246,29 @@ class _PartyDetailPageState extends State<PartyDetailPage> {
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    Icon(Icons.local_shipping_outlined, size: 48, color: Colors.grey.shade300),
+                    Icon(
+                      Icons.local_shipping_outlined,
+                      size: 48,
+                      color: Colors.grey.shade300,
+                    ),
                     const SizedBox(height: 12),
-                    Text('No vehicles found', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 14, color: Colors.grey.shade600)),
+                    Text(
+                      'No vehicles found',
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 14,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
                     const SizedBox(height: 4),
-                    Text('Add a vehicle for this party', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, color: Colors.grey.shade400)),
+                    Text(
+                      'Add a vehicle for this party',
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 12,
+                        color: Colors.grey.shade400,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -218,7 +279,11 @@ class _PartyDetailPageState extends State<PartyDetailPage> {
                 padding: const EdgeInsets.all(24),
                 child: Text(
                   '${party.vehicleCount} vehicle(s) registered',
-                  style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 14, color: Colors.grey.shade600),
+                  style: TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 14,
+                    color: Colors.grey.shade600,
+                  ),
                 ),
               ),
             ),
@@ -234,7 +299,9 @@ class _PartyDetailPageState extends State<PartyDetailPage> {
   void _navigateToVehicles(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => VehicleListPage(partyId: widget.partyId)),
+      MaterialPageRoute(
+        builder: (_) => VehicleListPage(partyId: widget.partyId),
+      ),
     );
   }
 }

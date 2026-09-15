@@ -16,7 +16,9 @@ class CreatePartyUseCase {
     String? state,
   }) async {
     final existingParties = await _repository.searchParties(name);
-    final exactMatch = existingParties.where((p) => p.name.toLowerCase() == name.toLowerCase());
+    final exactMatch = existingParties.where(
+      (p) => p.name.toLowerCase() == name.toLowerCase(),
+    );
     if (exactMatch.isNotEmpty) {
       throw Exception('Party with this name already exists');
     }

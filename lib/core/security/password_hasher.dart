@@ -15,7 +15,9 @@ class PasswordHasher {
 
     final derivedKey = _deriveKey(passwordBytes, salt, _iterations, _keyLength);
 
-    final hashHex = derivedKey.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
+    final hashHex = derivedKey
+        .map((b) => b.toRadixString(16).padLeft(2, '0'))
+        .join();
     final saltHex = salt.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
     return '$_iterations:\$$saltHex\$$hashHex';
   }
@@ -37,7 +39,12 @@ class PasswordHasher {
       final storedHashBytes = _hexToBytes(hashHex);
 
       final passwordBytes = Uint8List.fromList(utf8.encode(password));
-      final derivedKey = _deriveKey(passwordBytes, salt, iterations, storedHashBytes.length);
+      final derivedKey = _deriveKey(
+        passwordBytes,
+        salt,
+        iterations,
+        storedHashBytes.length,
+      );
 
       if (derivedKey.length != storedHashBytes.length) return false;
 
@@ -52,7 +59,12 @@ class PasswordHasher {
     return List<int>.generate(_saltLength, (_) => random.nextInt(256));
   }
 
-  Uint8List _deriveKey(Uint8List password, List<int> salt, int iterations, int keyLength) {
+  Uint8List _deriveKey(
+    Uint8List password,
+    List<int> salt,
+    int iterations,
+    int keyLength,
+  ) {
     final mac = HMac.withDigest(Digest('SHA-256'));
     final gen = PBKDF2KeyDerivator(mac);
     gen.init(Pbkdf2Parameters(Uint8List.fromList(salt), iterations, keyLength));

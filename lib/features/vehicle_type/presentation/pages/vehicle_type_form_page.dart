@@ -54,7 +54,9 @@ class _VehicleTypeFormDialogState extends State<VehicleTypeFormDialog> {
           setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.successMessage ?? 'Vehicle type saved successfully'),
+              content: Text(
+                state.successMessage ?? 'Vehicle type saved successfully',
+              ),
               backgroundColor: const Color(0xFF16A34A),
             ),
           );
@@ -72,23 +74,43 @@ class _VehicleTypeFormDialogState extends State<VehicleTypeFormDialog> {
       },
       child: FormDialogWrapper(
         title: isEditing ? 'Edit Vehicle Type' : 'Add Vehicle Type',
-        subtitle: isEditing ? 'Update vehicle type details' : 'Add a new vehicle type to your master',
+        subtitle: isEditing
+            ? 'Update vehicle type details'
+            : 'Add a new vehicle type to your master',
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              FormDialogTextField(label: 'Name', controller: _nameController, isRequired: true),
+              FormDialogTextField(
+                label: 'Name',
+                controller: _nameController,
+                isRequired: true,
+              ),
               const SizedBox(height: 16),
               Row(
                 children: [
-                  Expanded(child: FormDialogTextField(label: 'Empty Price', controller: _emptyPriceController, isNumeric: true)),
+                  Expanded(
+                    child: FormDialogTextField(
+                      label: 'Empty Price',
+                      controller: _emptyPriceController,
+                      isNumeric: true,
+                    ),
+                  ),
                   const SizedBox(width: 16),
-                  Expanded(child: FormDialogTextField(label: 'Load Price', controller: _loadPriceController, isNumeric: true)),
+                  Expanded(
+                    child: FormDialogTextField(
+                      label: 'Load Price',
+                      controller: _loadPriceController,
+                      isNumeric: true,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 24),
               FormDialogActions(
-                submitLabel: isEditing ? 'Update Vehicle Type' : 'Save Vehicle Type',
+                submitLabel: isEditing
+                    ? 'Update Vehicle Type'
+                    : 'Save Vehicle Type',
                 isLoading: _isLoading,
                 onSubmit: _saveVehicleType,
               ),
@@ -108,7 +130,10 @@ class _VehicleTypeFormDialogState extends State<VehicleTypeFormDialog> {
   void _saveVehicleType() {
     if (_nameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Name is required'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Name is required'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -119,18 +144,22 @@ class _VehicleTypeFormDialogState extends State<VehicleTypeFormDialog> {
     setState(() => _isLoading = true);
 
     if (isEditing) {
-      context.read<VehicleTypeBloc>().add(UpdateVehicleTypeRequested(
-        id: widget.vehicleType.id,
-        name: _nameController.text,
-        emptyPrice: emptyPrice,
-        loadPrice: loadPrice,
-      ));
+      context.read<VehicleTypeBloc>().add(
+        UpdateVehicleTypeRequested(
+          id: widget.vehicleType.id,
+          name: _nameController.text,
+          emptyPrice: emptyPrice,
+          loadPrice: loadPrice,
+        ),
+      );
     } else {
-      context.read<VehicleTypeBloc>().add(CreateVehicleTypeRequested(
-        name: _nameController.text,
-        emptyPrice: emptyPrice,
-        loadPrice: loadPrice,
-      ));
+      context.read<VehicleTypeBloc>().add(
+        CreateVehicleTypeRequested(
+          name: _nameController.text,
+          emptyPrice: emptyPrice,
+          loadPrice: loadPrice,
+        ),
+      );
     }
   }
 }

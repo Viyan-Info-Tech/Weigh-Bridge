@@ -17,12 +17,15 @@ void main() {
       expect(hash.contains('\$'), isTrue);
     });
 
-    test('hashPassword returns different hashes for same password (different salts)', () {
-      final hash1 = hasher.hashPassword('Admin@123');
-      final hash2 = hasher.hashPassword('Admin@123');
+    test(
+      'hashPassword returns different hashes for same password (different salts)',
+      () {
+        final hash1 = hasher.hashPassword('Admin@123');
+        final hash2 = hasher.hashPassword('Admin@123');
 
-      expect(hash1, isNot(equals(hash2)));
-    });
+        expect(hash1, isNot(equals(hash2)));
+      },
+    );
 
     test('verifyPassword returns true for correct password', () {
       final hash = hasher.hashPassword('Admin@123');

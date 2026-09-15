@@ -143,7 +143,10 @@ class PartyQuickAddRequested extends BillEvent {
 class VehicleQuickAddRequested extends BillEvent {
   final String vehicleNumber;
   final int vehicleTypeId;
-  const VehicleQuickAddRequested({required this.vehicleNumber, required this.vehicleTypeId});
+  const VehicleQuickAddRequested({
+    required this.vehicleNumber,
+    required this.vehicleTypeId,
+  });
 
   @override
   List<Object?> get props => [vehicleNumber, vehicleTypeId];
@@ -153,7 +156,11 @@ class VehicleTypeQuickAddRequested extends BillEvent {
   final String name;
   final double emptyPrice;
   final double loadPrice;
-  const VehicleTypeQuickAddRequested({required this.name, this.emptyPrice = 0, this.loadPrice = 0});
+  const VehicleTypeQuickAddRequested({
+    required this.name,
+    this.emptyPrice = 0,
+    this.loadPrice = 0,
+  });
 
   @override
   List<Object?> get props => [name, emptyPrice, loadPrice];
@@ -163,10 +170,7 @@ class MaterialQuickAddRequested extends BillEvent {
   final String name;
   final Completer<MaterialItem?>? completer;
 
-  const MaterialQuickAddRequested({
-    required this.name,
-    this.completer,
-  });
+  const MaterialQuickAddRequested({required this.name, this.completer});
 
   @override
   List<Object?> get props => [name];
@@ -175,7 +179,10 @@ class MaterialQuickAddRequested extends BillEvent {
 class MaterialCreatedToState extends BillEvent {
   final List<MaterialItem> materials;
   final MaterialItem selected;
-  const MaterialCreatedToState({required this.materials, required this.selected});
+  const MaterialCreatedToState({
+    required this.materials,
+    required this.selected,
+  });
 
   @override
   List<Object?> get props => [materials, selected];
@@ -193,7 +200,10 @@ class PartyCreatedToState extends BillEvent {
 class VehicleTypeCreatedToState extends BillEvent {
   final List<VehicleType> vehicleTypes;
   final VehicleType selected;
-  const VehicleTypeCreatedToState({required this.vehicleTypes, required this.selected});
+  const VehicleTypeCreatedToState({
+    required this.vehicleTypes,
+    required this.selected,
+  });
 
   @override
   List<Object?> get props => [vehicleTypes, selected];

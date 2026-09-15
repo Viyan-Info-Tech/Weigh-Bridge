@@ -5,7 +5,8 @@ import '../../../vehicle_type/domain/entities/vehicle_type.dart';
 import '../../../vehicle_type/presentation/bloc/vehicle_type_bloc.dart';
 import '../../../vehicle_type/presentation/bloc/vehicle_type_event.dart';
 import '../../../vehicle_type/presentation/bloc/vehicle_type_state.dart';
-import '../../../vehicle_type/presentation/pages/vehicle_type_form_page.dart' as vt_form;
+import '../../../vehicle_type/presentation/pages/vehicle_type_form_page.dart'
+    as vt_form;
 import '../../domain/entities/vehicle.dart';
 import '../bloc/vehicle_bloc.dart';
 import '../bloc/vehicle_event.dart';
@@ -50,8 +51,8 @@ class _VehiclesMergedPageState extends State<VehiclesMergedPage> {
             final pagePadding = availableWidth >= 1200
                 ? const EdgeInsets.all(20)
                 : availableWidth >= 960
-                    ? const EdgeInsets.all(16)
-                    : const EdgeInsets.all(14);
+                ? const EdgeInsets.all(16)
+                : const EdgeInsets.all(14);
 
             if (isSideBySide && !isShortHeight) {
               return Padding(
@@ -114,15 +115,9 @@ class _VehiclesMergedPageState extends State<VehiclesMergedPage> {
                       ),
                     ),
                   ] else ...[
-                    const SizedBox(
-                      height: 520,
-                      child: _VehiclesPanel(),
-                    ),
+                    const SizedBox(height: 520, child: _VehiclesPanel()),
                     const SizedBox(height: 16),
-                    const SizedBox(
-                      height: 480,
-                      child: _VehicleTypesPanel(),
-                    ),
+                    const SizedBox(height: 480, child: _VehicleTypesPanel()),
                   ],
                 ],
               ),
@@ -186,11 +181,15 @@ class _VehiclesMergedPageState extends State<VehiclesMergedPage> {
         return BlocBuilder<VehicleTypeBloc, VehicleTypeState>(
           builder: (context, vtState) {
             final totalVehicles = vState.vehicles.length;
-            final activeVehicles = vState.vehicles.where((v) => v.isActive).length;
+            final activeVehicles = vState.vehicles
+                .where((v) => v.isActive)
+                .length;
             final inactiveVehicles = totalVehicles - activeVehicles;
 
             final totalTypes = vtState.vehicleTypes.length;
-            final activeTypes = vtState.vehicleTypes.where((vt) => vt.isActive).length;
+            final activeTypes = vtState.vehicleTypes
+                .where((vt) => vt.isActive)
+                .length;
 
             final activeRate = totalVehicles > 0
                 ? ((activeVehicles / totalVehicles) * 100).round()
@@ -447,7 +446,10 @@ class _VehiclesPanelState extends State<_VehiclesPanel> {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(10),
@@ -472,7 +474,9 @@ class _VehiclesPanelState extends State<_VehiclesPanel> {
                         backgroundColor: const Color(0xFF0D3B82),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.all(8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                     )
                   else
@@ -487,7 +491,9 @@ class _VehiclesPanelState extends State<_VehiclesPanel> {
                           horizontal: isCompact ? 10 : 14,
                           vertical: 8,
                         ),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                         textStyle: const TextStyle(
                           fontFamily: 'PlusJakartaSans',
                           fontSize: 12,
@@ -520,22 +526,51 @@ class _VehiclesPanelState extends State<_VehiclesPanel> {
             style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12),
             decoration: InputDecoration(
               hintText: 'Search by vehicle number, driver...',
-              hintStyle: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, color: Color(0xFF94A3B8)),
-              prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF94A3B8), size: 18),
+              hintStyle: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                color: Color(0xFF94A3B8),
+              ),
+              prefixIcon: const Icon(
+                Icons.search_rounded,
+                color: Color(0xFF94A3B8),
+                size: 18,
+              ),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear, size: 16, color: Color(0xFF94A3B8)),
+                      icon: const Icon(
+                        Icons.clear,
+                        size: 16,
+                        color: Color(0xFF94A3B8),
+                      ),
                       onPressed: () {
                         _searchController.clear();
                         setState(() {});
-                        context.read<VehicleBloc>().add(const SearchVehicles(''));
+                        context.read<VehicleBloc>().add(
+                          const SearchVehicles(''),
+                        );
                       },
                     )
                   : null,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF0F52BA), width: 1.5)),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 0,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: Color(0xFF0F52BA),
+                  width: 1.5,
+                ),
+              ),
               filled: true,
               fillColor: const Color(0xFFF8FAFC),
             ),
@@ -554,19 +589,33 @@ class _VehiclesPanelState extends State<_VehiclesPanel> {
             child: DropdownButton<String>(
               value: _statusFilter,
               isExpanded: isNarrow,
-              icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Color(0xFF64748B)),
-              style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, color: Color(0xFF334155), fontWeight: FontWeight.w500),
+              icon: const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 18,
+                color: Color(0xFF64748B),
+              ),
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                color: Color(0xFF334155),
+                fontWeight: FontWeight.w500,
+              ),
               items: const [
                 DropdownMenuItem(value: null, child: Text('All Status')),
                 DropdownMenuItem(value: 'active', child: Text('Active Only')),
-                DropdownMenuItem(value: 'inactive', child: Text('Inactive Only')),
+                DropdownMenuItem(
+                  value: 'inactive',
+                  child: Text('Inactive Only'),
+                ),
               ],
               onChanged: (value) {
                 setState(() => _statusFilter = value);
                 bool? isActive;
                 if (value == 'active') isActive = true;
                 if (value == 'inactive') isActive = false;
-                context.read<VehicleBloc>().add(FilterVehiclesByStatus(isActive));
+                context.read<VehicleBloc>().add(
+                  FilterVehiclesByStatus(isActive),
+                );
               },
             ),
           ),
@@ -627,7 +676,10 @@ class _VehiclesPanelState extends State<_VehiclesPanel> {
                           itemCount: state.vehicles.length,
                           itemBuilder: (context, index) {
                             final vehicle = state.vehicles[index];
-                            final typeName = _findTypeName(vehicle.vehicleTypeId, vehicleTypes);
+                            final typeName = _findTypeName(
+                              vehicle.vehicleTypeId,
+                              vehicleTypes,
+                            );
                             return _buildDataRow(vehicle, typeName);
                           },
                         ),
@@ -672,7 +724,10 @@ class _VehiclesPanelState extends State<_VehiclesPanel> {
           Expanded(flex: 18, child: _buildHeaderText('TYPE')),
           Expanded(flex: 22, child: _buildHeaderText('DRIVER')),
           Expanded(flex: 20, child: _buildHeaderText('STATUS')),
-          Expanded(flex: 14, child: _buildHeaderText('ACTIONS', align: TextAlign.right)),
+          Expanded(
+            flex: 14,
+            child: _buildHeaderText('ACTIONS', align: TextAlign.right),
+          ),
         ],
       ),
     );
@@ -767,13 +822,16 @@ class _VehiclesPanelState extends State<_VehiclesPanel> {
                     fontFamily: 'PlusJakartaSans',
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: vehicle.driverName != null && vehicle.driverName!.isNotEmpty
+                    color:
+                        vehicle.driverName != null &&
+                            vehicle.driverName!.isNotEmpty
                         ? const Color(0xFF1E293B)
                         : const Color(0xFF94A3B8),
                   ),
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (vehicle.driverPhone != null && vehicle.driverPhone!.isNotEmpty)
+                if (vehicle.driverPhone != null &&
+                    vehicle.driverPhone!.isNotEmpty)
                   Text(
                     vehicle.driverPhone!,
                     style: const TextStyle(
@@ -797,8 +855,13 @@ class _VehiclesPanelState extends State<_VehiclesPanel> {
             flex: 14,
             child: ActionMenu(
               isActive: vehicle.isActive,
-              onView: () => VehicleDetailsDialog.show(context, vehicle: vehicle, typeName: typeName),
-              onEdit: () => v_form.VehicleFormDialog.show(context, vehicleId: vehicle.id),
+              onView: () => VehicleDetailsDialog.show(
+                context,
+                vehicle: vehicle,
+                typeName: typeName,
+              ),
+              onEdit: () =>
+                  v_form.VehicleFormDialog.show(context, vehicleId: vehicle.id),
               onDelete: () => _confirmDeleteVehicle(context, vehicle),
               onDeactivate: () => _confirmDeactivateVehicle(context, vehicle),
             ),
@@ -822,7 +885,9 @@ class _VehiclesPanelState extends State<_VehiclesPanel> {
             width: 5,
             height: 5,
             decoration: BoxDecoration(
-              color: isActive ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+              color: isActive
+                  ? const Color(0xFF16A34A)
+                  : const Color(0xFFDC2626),
               shape: BoxShape.circle,
             ),
           ),
@@ -833,7 +898,9 @@ class _VehiclesPanelState extends State<_VehiclesPanel> {
               fontFamily: 'PlusJakartaSans',
               fontSize: 10.5,
               fontWeight: FontWeight.w700,
-              color: isActive ? const Color(0xFF15803D) : const Color(0xFFB91C1C),
+              color: isActive
+                  ? const Color(0xFF15803D)
+                  : const Color(0xFFB91C1C),
             ),
           ),
         ],
@@ -888,8 +955,13 @@ class _VehiclesPanelState extends State<_VehiclesPanel> {
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF0D3B82),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 textStyle: const TextStyle(
                   fontFamily: 'PlusJakartaSans',
                   fontSize: 12,
@@ -953,19 +1025,37 @@ class _VehiclesPanelState extends State<_VehiclesPanel> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            style: TextButton.styleFrom(foregroundColor: const Color(0xFF64748B)),
-            child: const Text('Cancel', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF64748B),
+            ),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           FilledButton(
             onPressed: () {
-              context.read<VehicleBloc>().add(DeactivateVehicleRequested(vehicle.id));
+              context.read<VehicleBloc>().add(
+                DeactivateVehicleRequested(vehicle.id),
+              );
               Navigator.pop(ctx);
             },
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFDC2626),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            child: const Text('Deactivate', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+            child: const Text(
+              'Deactivate',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -997,19 +1087,37 @@ class _VehiclesPanelState extends State<_VehiclesPanel> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            style: TextButton.styleFrom(foregroundColor: const Color(0xFF64748B)),
-            child: const Text('Cancel', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF64748B),
+            ),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           FilledButton(
             onPressed: () {
-              context.read<VehicleBloc>().add(DeleteVehicleRequested(vehicle.id));
+              context.read<VehicleBloc>().add(
+                DeleteVehicleRequested(vehicle.id),
+              );
               Navigator.pop(ctx);
             },
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFDC2626),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            child: const Text('Delete', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -1100,7 +1208,10 @@ class _VehicleTypesPanelState extends State<_VehicleTypesPanel> {
                   ),
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF1F5F9),
                       borderRadius: BorderRadius.circular(10),
@@ -1118,19 +1229,23 @@ class _VehicleTypesPanelState extends State<_VehicleTypesPanel> {
                   const Spacer(),
                   if (isVeryCompact)
                     IconButton.filled(
-                      onPressed: () => vt_form.VehicleTypeFormDialog.show(context),
+                      onPressed: () =>
+                          vt_form.VehicleTypeFormDialog.show(context),
                       icon: const Icon(Icons.add_rounded, size: 18),
                       tooltip: 'Add Type',
                       style: IconButton.styleFrom(
                         backgroundColor: const Color(0xFF0D3B82),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.all(8),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                       ),
                     )
                   else
                     FilledButton.icon(
-                      onPressed: () => vt_form.VehicleTypeFormDialog.show(context),
+                      onPressed: () =>
+                          vt_form.VehicleTypeFormDialog.show(context),
                       icon: const Icon(Icons.add_rounded, size: 16),
                       label: Text(isCompact ? 'Add' : 'Add Type'),
                       style: FilledButton.styleFrom(
@@ -1140,7 +1255,9 @@ class _VehicleTypesPanelState extends State<_VehicleTypesPanel> {
                           horizontal: isCompact ? 10 : 14,
                           vertical: 8,
                         ),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
                         textStyle: const TextStyle(
                           fontFamily: 'PlusJakartaSans',
                           fontSize: 12,
@@ -1173,22 +1290,51 @@ class _VehicleTypesPanelState extends State<_VehicleTypesPanel> {
             style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12),
             decoration: InputDecoration(
               hintText: 'Search type...',
-              hintStyle: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, color: Color(0xFF94A3B8)),
-              prefixIcon: const Icon(Icons.search_rounded, color: Color(0xFF94A3B8), size: 18),
+              hintStyle: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                color: Color(0xFF94A3B8),
+              ),
+              prefixIcon: const Icon(
+                Icons.search_rounded,
+                color: Color(0xFF94A3B8),
+                size: 18,
+              ),
               suffixIcon: _searchController.text.isNotEmpty
                   ? IconButton(
-                      icon: const Icon(Icons.clear, size: 16, color: Color(0xFF94A3B8)),
+                      icon: const Icon(
+                        Icons.clear,
+                        size: 16,
+                        color: Color(0xFF94A3B8),
+                      ),
                       onPressed: () {
                         _searchController.clear();
                         setState(() {});
-                        context.read<VehicleTypeBloc>().add(const SearchVehicleTypes(''));
+                        context.read<VehicleTypeBloc>().add(
+                          const SearchVehicleTypes(''),
+                        );
                       },
                     )
                   : null,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFFE2E8F0))),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF0F52BA), width: 1.5)),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 0,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(
+                  color: Color(0xFF0F52BA),
+                  width: 1.5,
+                ),
+              ),
               filled: true,
               fillColor: const Color(0xFFF8FAFC),
             ),
@@ -1207,19 +1353,33 @@ class _VehicleTypesPanelState extends State<_VehicleTypesPanel> {
             child: DropdownButton<String>(
               value: _statusFilter,
               isExpanded: isNarrow,
-              icon: const Icon(Icons.keyboard_arrow_down_rounded, size: 18, color: Color(0xFF64748B)),
-              style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, color: Color(0xFF334155), fontWeight: FontWeight.w500),
+              icon: const Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 18,
+                color: Color(0xFF64748B),
+              ),
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                color: Color(0xFF334155),
+                fontWeight: FontWeight.w500,
+              ),
               items: const [
                 DropdownMenuItem(value: null, child: Text('All Status')),
                 DropdownMenuItem(value: 'active', child: Text('Active Only')),
-                DropdownMenuItem(value: 'inactive', child: Text('Inactive Only')),
+                DropdownMenuItem(
+                  value: 'inactive',
+                  child: Text('Inactive Only'),
+                ),
               ],
               onChanged: (value) {
                 setState(() => _statusFilter = value);
                 bool? isActive;
                 if (value == 'active') isActive = true;
                 if (value == 'inactive') isActive = false;
-                context.read<VehicleTypeBloc>().add(LoadVehicleTypes(filterActive: isActive));
+                context.read<VehicleTypeBloc>().add(
+                  LoadVehicleTypes(filterActive: isActive),
+                );
               },
             ),
           ),
@@ -1324,7 +1484,10 @@ class _VehicleTypesPanelState extends State<_VehicleTypesPanel> {
           Expanded(flex: 17, child: _buildHeaderText('EMPTY')),
           Expanded(flex: 17, child: _buildHeaderText('LOAD')),
           Expanded(flex: 22, child: _buildHeaderText('STATUS')),
-          Expanded(flex: 16, child: _buildHeaderText('ACTIONS', align: TextAlign.right)),
+          Expanded(
+            flex: 16,
+            child: _buildHeaderText('ACTIONS', align: TextAlign.right),
+          ),
         ],
       ),
     );
@@ -1415,8 +1578,10 @@ class _VehicleTypesPanelState extends State<_VehicleTypesPanel> {
             flex: 16,
             child: ActionMenu(
               isActive: vt.isActive,
-              onView: () => VehicleTypeDetailsDialog.show(context, vehicleType: vt),
-              onEdit: () => vt_form.VehicleTypeFormDialog.show(context, vehicleType: vt),
+              onView: () =>
+                  VehicleTypeDetailsDialog.show(context, vehicleType: vt),
+              onEdit: () =>
+                  vt_form.VehicleTypeFormDialog.show(context, vehicleType: vt),
               onDelete: () => _confirmDeleteVehicleType(context, vt),
               onDeactivate: () => _confirmDeactivateVehicleType(context, vt),
             ),
@@ -1440,7 +1605,9 @@ class _VehicleTypesPanelState extends State<_VehicleTypesPanel> {
             width: 5,
             height: 5,
             decoration: BoxDecoration(
-              color: isActive ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+              color: isActive
+                  ? const Color(0xFF16A34A)
+                  : const Color(0xFFDC2626),
               shape: BoxShape.circle,
             ),
           ),
@@ -1451,7 +1618,9 @@ class _VehicleTypesPanelState extends State<_VehicleTypesPanel> {
               fontFamily: 'PlusJakartaSans',
               fontSize: 10.5,
               fontWeight: FontWeight.w700,
-              color: isActive ? const Color(0xFF15803D) : const Color(0xFFB91C1C),
+              color: isActive
+                  ? const Color(0xFF15803D)
+                  : const Color(0xFFB91C1C),
             ),
           ),
         ],
@@ -1506,8 +1675,13 @@ class _VehicleTypesPanelState extends State<_VehicleTypesPanel> {
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF0D3B82),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 textStyle: const TextStyle(
                   fontFamily: 'PlusJakartaSans',
                   fontSize: 12,
@@ -1571,19 +1745,37 @@ class _VehicleTypesPanelState extends State<_VehicleTypesPanel> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            style: TextButton.styleFrom(foregroundColor: const Color(0xFF64748B)),
-            child: const Text('Cancel', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF64748B),
+            ),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           FilledButton(
             onPressed: () {
-              context.read<VehicleTypeBloc>().add(DeactivateVehicleTypeRequested(vt.id));
+              context.read<VehicleTypeBloc>().add(
+                DeactivateVehicleTypeRequested(vt.id),
+              );
               Navigator.pop(ctx);
             },
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFDC2626),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            child: const Text('Deactivate', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+            child: const Text(
+              'Deactivate',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -1615,19 +1807,37 @@ class _VehicleTypesPanelState extends State<_VehicleTypesPanel> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            style: TextButton.styleFrom(foregroundColor: const Color(0xFF64748B)),
-            child: const Text('Cancel', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF64748B),
+            ),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           FilledButton(
             onPressed: () {
-              context.read<VehicleTypeBloc>().add(DeleteVehicleTypeRequested(vt.id));
+              context.read<VehicleTypeBloc>().add(
+                DeleteVehicleTypeRequested(vt.id),
+              );
               Navigator.pop(ctx);
             },
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFDC2626),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            child: const Text('Delete', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),

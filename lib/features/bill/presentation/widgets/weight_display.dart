@@ -82,8 +82,7 @@ class _WeightDisplayState extends State<WeightDisplay> {
   @override
   Widget build(BuildContext context) {
     final isKg = widget.weightUnit.toLowerCase() == 'kg';
-    final double netVal =
-        isKg ? widget.netWeightKg : widget.netWeightKg / 1000;
+    final double netVal = isKg ? widget.netWeightKg : widget.netWeightKg / 1000;
     final String weightString = isKg
         ? (netVal > 0 ? netVal.toStringAsFixed(0) : '0')
         : (netVal > 0 ? netVal.toStringAsFixed(3) : '0.000');
@@ -186,11 +185,7 @@ class _WeightDisplayState extends State<WeightDisplay> {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF050B14),
-            Color(0xFF091424),
-            Color(0xFF050D1A),
-          ],
+          colors: [Color(0xFF050B14), Color(0xFF091424), Color(0xFF050D1A)],
         ),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(
@@ -215,11 +210,7 @@ class _WeightDisplayState extends State<WeightDisplay> {
         child: Stack(
           children: [
             // Optical Glass Diagonal Sheen / Glare Highlight
-            Positioned.fill(
-              child: CustomPaint(
-                painter: _GlassGlarePainter(),
-              ),
-            ),
+            Positioned.fill(child: CustomPaint(painter: _GlassGlarePainter())),
 
             // Main Console Layout
             Padding(
@@ -257,7 +248,11 @@ class _WeightDisplayState extends State<WeightDisplay> {
   }
 
   /// Top micro status bar with live scale status, dynamic LED load bar, and theme chips
-  Widget _buildHeaderBar(ScaleDisplayTheme theme, double netKg, double consoleHeight) {
+  Widget _buildHeaderBar(
+    ScaleDisplayTheme theme,
+    double netKg,
+    double consoleHeight,
+  ) {
     return SizedBox(
       height: consoleHeight * 0.16,
       child: Row(
@@ -310,7 +305,10 @@ class _WeightDisplayState extends State<WeightDisplay> {
                 borderRadius: BorderRadius.circular(4),
                 child: Container(
                   margin: const EdgeInsets.symmetric(horizontal: 2),
-                  padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 5,
+                    vertical: 1.5,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? t.accentColor.withValues(alpha: 0.25)
@@ -328,7 +326,9 @@ class _WeightDisplayState extends State<WeightDisplay> {
                     style: TextStyle(
                       fontFamily: 'PlusJakartaSans',
                       fontSize: 7,
-                      fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.w800
+                          : FontWeight.w500,
                       color: isSelected
                           ? t.accentColor
                           : Colors.white.withValues(alpha: 0.45),
@@ -573,7 +573,11 @@ class _WeightDisplayState extends State<WeightDisplay> {
   }
 
   /// Bottom Strip: Gross, Tare, Net Weight Telemetry Breakdown
-  Widget _buildTelemetryBottomBar(double netKg, ScaleDisplayTheme theme, double consoleHeight) {
+  Widget _buildTelemetryBottomBar(
+    double netKg,
+    ScaleDisplayTheme theme,
+    double consoleHeight,
+  ) {
     return Container(
       height: consoleHeight * 0.18,
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -590,13 +594,15 @@ class _WeightDisplayState extends State<WeightDisplay> {
         children: [
           // GROSS
           _buildTelemetryMetric(
-            label: 'GROSS: ${_formatSummaryWeight(widget.grossWeight, widget.weightUnit)}',
+            label:
+                'GROSS: ${_formatSummaryWeight(widget.grossWeight, widget.weightUnit)}',
             color: const Color(0xFFCBD5E1),
           ),
 
           // TARE
           _buildTelemetryMetric(
-            label: 'TARE: ${_formatSummaryWeight(widget.tareWeight, widget.weightUnit)}',
+            label:
+                'TARE: ${_formatSummaryWeight(widget.tareWeight, widget.weightUnit)}',
             color: const Color(0xFFCBD5E1),
           ),
 
@@ -850,10 +856,7 @@ class _DecimalPointPainter extends CustomPainter {
   final Color litColor;
   final Color glowColor;
 
-  const _DecimalPointPainter({
-    required this.litColor,
-    required this.glowColor,
-  });
+  const _DecimalPointPainter({required this.litColor, required this.glowColor});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -930,8 +933,12 @@ class _FallbackModernTruckPainter extends CustomPainter {
       ..color = const Color(0xFF4A7C9E)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.0;
-    final containerRect =
-        Rect.fromLTWH(w * 0.206, h * 0.055, w * 0.788, h * 0.637);
+    final containerRect = Rect.fromLTWH(
+      w * 0.206,
+      h * 0.055,
+      w * 0.788,
+      h * 0.637,
+    );
     canvas.drawRect(containerRect, containerPaint);
     canvas.drawRect(containerRect, containerBorder);
 

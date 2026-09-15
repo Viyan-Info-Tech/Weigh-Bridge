@@ -1,7 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-
-
 abstract class PartyEvent extends Equatable {
   const PartyEvent();
 
@@ -50,7 +48,16 @@ class CreatePartyRequested extends PartyEvent {
   });
 
   @override
-  List<Object?> get props => [name, contactPerson, mobile, email, address, gstNumber, city, state];
+  List<Object?> get props => [
+    name,
+    contactPerson,
+    mobile,
+    email,
+    address,
+    gstNumber,
+    city,
+    state,
+  ];
 }
 
 class UpdatePartyRequested extends PartyEvent {
@@ -77,7 +84,17 @@ class UpdatePartyRequested extends PartyEvent {
   });
 
   @override
-  List<Object?> get props => [id, name, contactPerson, mobile, email, address, gstNumber, city, state];
+  List<Object?> get props => [
+    id,
+    name,
+    contactPerson,
+    mobile,
+    email,
+    address,
+    gstNumber,
+    city,
+    state,
+  ];
 }
 
 class DeactivatePartyRequested extends PartyEvent {

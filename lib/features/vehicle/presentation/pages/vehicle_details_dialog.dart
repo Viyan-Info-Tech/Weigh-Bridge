@@ -10,10 +10,15 @@ class VehicleDetailsDialog extends StatelessWidget {
 
   const VehicleDetailsDialog({super.key, required this.vehicle, this.typeName});
 
-  static Future<void> show(BuildContext context, {required Vehicle vehicle, String? typeName}) {
+  static Future<void> show(
+    BuildContext context, {
+    required Vehicle vehicle,
+    String? typeName,
+  }) {
     return showDialog(
       context: context,
-      builder: (_) => VehicleDetailsDialog(vehicle: vehicle, typeName: typeName),
+      builder: (_) =>
+          VehicleDetailsDialog(vehicle: vehicle, typeName: typeName),
     );
   }
 
@@ -34,18 +39,33 @@ class VehicleDetailsDialog extends StatelessWidget {
           _buildStatusRow(vehicle.isActive),
           _buildInfoRow('Driver Name', vehicle.driverName),
           _buildInfoRow('Driver Phone', vehicle.driverPhone),
-          _buildInfoRow('Created Date', DateFormat('dd MMM yyyy').format(vehicle.createdAt)),
+          _buildInfoRow(
+            'Created Date',
+            DateFormat('dd MMM yyyy').format(vehicle.createdAt),
+          ),
           const SizedBox(height: 20),
           Align(
             alignment: Alignment.centerRight,
             child: OutlinedButton(
               onPressed: () => Navigator.pop(context),
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
                 side: const BorderSide(color: Color(0xFFCBD5E1)),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
               ),
-              child: const Text('Close', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, color: Color(0xFF64748B))),
+              child: const Text(
+                'Close',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 13,
+                  color: Color(0xFF64748B),
+                ),
+              ),
             ),
           ),
         ],
@@ -57,7 +77,15 @@ class VehicleDetailsDialog extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 14, fontWeight: FontWeight.w700, color: Color(0xFF0F172A))),
+        Text(
+          title,
+          style: const TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF0F172A),
+          ),
+        ),
         const SizedBox(height: 4),
         const Divider(height: 1, color: Color(0xFFE2E8F0)),
       ],
@@ -74,7 +102,11 @@ class VehicleDetailsDialog extends StatelessWidget {
             width: 130,
             child: Text(
               label,
-              style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, color: Colors.grey.shade600),
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 13,
+                color: Colors.grey.shade600,
+              ),
             ),
           ),
           Expanded(
@@ -84,7 +116,9 @@ class VehicleDetailsDialog extends StatelessWidget {
                 fontFamily: 'PlusJakartaSans',
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: (value != null && value.isNotEmpty) ? const Color(0xFF0F172A) : Colors.grey.shade400,
+                color: (value != null && value.isNotEmpty)
+                    ? const Color(0xFF0F172A)
+                    : Colors.grey.shade400,
               ),
             ),
           ),
@@ -103,13 +137,19 @@ class VehicleDetailsDialog extends StatelessWidget {
             width: 130,
             child: Text(
               'Status',
-              style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, color: Colors.grey.shade600),
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 13,
+                color: Colors.grey.shade600,
+              ),
             ),
           ),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
-              color: isActive ? const Color(0xFF16A34A).withValues(alpha: 0.1) : const Color(0xFFDC2626).withValues(alpha: 0.1),
+              color: isActive
+                  ? const Color(0xFF16A34A).withValues(alpha: 0.1)
+                  : const Color(0xFFDC2626).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(4),
             ),
             child: Text(
@@ -118,7 +158,9 @@ class VehicleDetailsDialog extends StatelessWidget {
                 fontFamily: 'PlusJakartaSans',
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: isActive ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                color: isActive
+                    ? const Color(0xFF16A34A)
+                    : const Color(0xFFDC2626),
               ),
             ),
           ),

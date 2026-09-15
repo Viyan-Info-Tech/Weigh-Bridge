@@ -19,7 +19,9 @@ class VehicleLocalDataSource {
   }
 
   Future<List<Vehicle>> getVehiclesByStatus({required bool isActive}) async {
-    final records = await _database.vehicleDao.getVehiclesByStatus(isActive: isActive);
+    final records = await _database.vehicleDao.getVehiclesByStatus(
+      isActive: isActive,
+    );
     return records.map(_toEntity).toList();
   }
 
@@ -41,12 +43,14 @@ class VehicleLocalDataSource {
     String? driverName,
     String? driverPhone,
   }) async {
-    return _database.vehicleDao.insertVehicle(VehiclesCompanion(
-      vehicleNumber: Value(vehicleNumber),
-      vehicleTypeId: Value(vehicleTypeId),
-      driverName: Value(driverName),
-      driverPhone: Value(driverPhone),
-    ));
+    return _database.vehicleDao.insertVehicle(
+      VehiclesCompanion(
+        vehicleNumber: Value(vehicleNumber),
+        vehicleTypeId: Value(vehicleTypeId),
+        driverName: Value(driverName),
+        driverPhone: Value(driverPhone),
+      ),
+    );
   }
 
   Future<bool> updateVehicle({
@@ -56,14 +60,16 @@ class VehicleLocalDataSource {
     String? driverName,
     String? driverPhone,
   }) async {
-    return _database.vehicleDao.updateVehicle(VehiclesCompanion(
-      id: Value(id),
-      vehicleNumber: Value(vehicleNumber),
-      vehicleTypeId: Value(vehicleTypeId),
-      driverName: Value(driverName),
-      driverPhone: Value(driverPhone),
-      updatedAt: Value(DateTime.now()),
-    ));
+    return _database.vehicleDao.updateVehicle(
+      VehiclesCompanion(
+        id: Value(id),
+        vehicleNumber: Value(vehicleNumber),
+        vehicleTypeId: Value(vehicleTypeId),
+        driverName: Value(driverName),
+        driverPhone: Value(driverPhone),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
   }
 
   Future<void> deactivateVehicle(int id) async {

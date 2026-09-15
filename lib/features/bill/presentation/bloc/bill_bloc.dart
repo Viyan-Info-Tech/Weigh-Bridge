@@ -252,15 +252,6 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     final newUnit = _normalizeUnit(event.value);
     if (oldUnit == newUnit) return;
 
-    print('========== WEIGHT UNIT CHANGE ==========');
-    print('OLD UNIT       : $oldUnit');
-    print('NEW UNIT       : $newUnit');
-    print('GROSS TEXT     : ${state.grossWeightText}');
-    print('TARE TEXT      : ${state.tareWeightText}');
-    print('GROSS KG       : ${state.grossWeightKg}');
-    print('TARE KG        : ${state.tareWeightKg}');
-    print('NET KG         : ${state.netWeightKg}');
-
     final newGrossKg = state.grossWeightKg;
     final newTareKg = state.tareWeightKg;
     final isNewTon = newUnit == 'ton';
@@ -276,10 +267,6 @@ class BillBloc extends Bloc<BillEvent, BillState> {
               ? (newTareKg / 1000).toStringAsFixed(3)
               : newTareKg.toStringAsFixed(0))
         : '';
-
-    print('NEW GROSS TEXT: $newGrossText');
-    print('NEW TARE TEXT : $newTareText');
-    print('========================================');
 
     emit(
       state.copyWith(

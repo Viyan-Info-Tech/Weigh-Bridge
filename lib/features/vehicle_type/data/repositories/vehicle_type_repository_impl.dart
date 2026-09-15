@@ -5,8 +5,9 @@ import '../datasources/vehicle_type_local_datasource.dart';
 class VehicleTypeRepositoryImpl implements VehicleTypeRepository {
   final VehicleTypeLocalDataSource _localDataSource;
 
-  VehicleTypeRepositoryImpl({required VehicleTypeLocalDataSource localDataSource})
-      : _localDataSource = localDataSource;
+  VehicleTypeRepositoryImpl({
+    required VehicleTypeLocalDataSource localDataSource,
+  }) : _localDataSource = localDataSource;
 
   @override
   Future<List<VehicleType>> getAllVehicleTypes() async {
@@ -14,7 +15,9 @@ class VehicleTypeRepositoryImpl implements VehicleTypeRepository {
   }
 
   @override
-  Future<List<VehicleType>> getVehicleTypesByStatus({required bool isActive}) async {
+  Future<List<VehicleType>> getVehicleTypesByStatus({
+    required bool isActive,
+  }) async {
     if (isActive) {
       return _localDataSource.getAllActiveVehicleTypes();
     }

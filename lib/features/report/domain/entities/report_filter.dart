@@ -52,7 +52,11 @@ class ReportFilter extends Equatable {
         return DateTime(now.year, now.month - 1, 1);
       case DateRangePreset.custom:
         return customStartDate != null
-            ? DateTime(customStartDate!.year, customStartDate!.month, customStartDate!.day)
+            ? DateTime(
+                customStartDate!.year,
+                customStartDate!.month,
+                customStartDate!.day,
+              )
             : today;
     }
   }
@@ -66,17 +70,41 @@ class ReportFilter extends Equatable {
         return todayEnd;
       case DateRangePreset.yesterday:
         final yesterday = DateTime.now().subtract(const Duration(days: 1));
-        return DateTime(yesterday.year, yesterday.month, yesterday.day, 23, 59, 59, 999);
+        return DateTime(
+          yesterday.year,
+          yesterday.month,
+          yesterday.day,
+          23,
+          59,
+          59,
+          999,
+        );
       case DateRangePreset.thisWeek:
         return todayEnd;
       case DateRangePreset.thisMonth:
         return todayEnd;
       case DateRangePreset.lastMonth:
-        final lastDayOfPrevMonth = DateTime(now.year, now.month, 0, 23, 59, 59, 999);
+        final lastDayOfPrevMonth = DateTime(
+          now.year,
+          now.month,
+          0,
+          23,
+          59,
+          59,
+          999,
+        );
         return lastDayOfPrevMonth;
       case DateRangePreset.custom:
         return customEndDate != null
-            ? DateTime(customEndDate!.year, customEndDate!.month, customEndDate!.day, 23, 59, 59, 999)
+            ? DateTime(
+                customEndDate!.year,
+                customEndDate!.month,
+                customEndDate!.day,
+                23,
+                59,
+                59,
+                999,
+              )
             : todayEnd;
     }
   }
@@ -98,8 +126,12 @@ class ReportFilter extends Equatable {
   }) {
     return ReportFilter(
       datePreset: datePreset ?? this.datePreset,
-      customStartDate: clearCustomDates ? null : (customStartDate ?? this.customStartDate),
-      customEndDate: clearCustomDates ? null : (customEndDate ?? this.customEndDate),
+      customStartDate: clearCustomDates
+          ? null
+          : (customStartDate ?? this.customStartDate),
+      customEndDate: clearCustomDates
+          ? null
+          : (customEndDate ?? this.customEndDate),
       partyId: clearParty ? null : (partyId ?? this.partyId),
       vehicleId: clearVehicle ? null : (vehicleId ?? this.vehicleId),
       materialId: clearMaterial ? null : (materialId ?? this.materialId),
@@ -111,14 +143,14 @@ class ReportFilter extends Equatable {
 
   @override
   List<Object?> get props => [
-        datePreset,
-        customStartDate,
-        customEndDate,
-        partyId,
-        vehicleId,
-        materialId,
-        status,
-        paymentMode,
-        searchQuery,
-      ];
+    datePreset,
+    customStartDate,
+    customEndDate,
+    partyId,
+    vehicleId,
+    materialId,
+    status,
+    paymentMode,
+    searchQuery,
+  ];
 }

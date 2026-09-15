@@ -52,7 +52,9 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
           setState(() => _isLoading = false);
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.successMessage ?? 'Material saved successfully'),
+              content: Text(
+                state.successMessage ?? 'Material saved successfully',
+              ),
               backgroundColor: const Color(0xFF16A34A),
             ),
           );
@@ -73,15 +75,24 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
       },
       child: FormDialogWrapper(
         title: isEditing ? 'Edit Material' : 'Add Material',
-        subtitle: isEditing ? 'Update material details' : 'Add material details to your master',
+        subtitle: isEditing
+            ? 'Update material details'
+            : 'Add material details to your master',
         width: 600,
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              FormDialogTextField(label: 'Material Name', controller: _nameController, isRequired: true),
+              FormDialogTextField(
+                label: 'Material Name',
+                controller: _nameController,
+                isRequired: true,
+              ),
               const SizedBox(height: 16),
-              FormDialogTextField(label: 'Category', controller: _categoryController),
+              FormDialogTextField(
+                label: 'Category',
+                controller: _categoryController,
+              ),
               const SizedBox(height: 24),
               FormDialogActions(
                 submitLabel: isEditing ? 'Update Material' : 'Save Material',
@@ -103,7 +114,10 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
   void _saveMaterial() {
     if (_nameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Material name is required'), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text('Material name is required'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -111,16 +125,24 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
     setState(() => _isLoading = true);
 
     if (isEditing) {
-      context.read<MaterialBloc>().add(UpdateMaterialRequested(
-        id: widget.materialId!,
-        name: _nameController.text,
-        category: _categoryController.text.isNotEmpty ? _categoryController.text : null,
-      ));
+      context.read<MaterialBloc>().add(
+        UpdateMaterialRequested(
+          id: widget.materialId!,
+          name: _nameController.text,
+          category: _categoryController.text.isNotEmpty
+              ? _categoryController.text
+              : null,
+        ),
+      );
     } else {
-      context.read<MaterialBloc>().add(CreateMaterialRequested(
-        name: _nameController.text,
-        category: _categoryController.text.isNotEmpty ? _categoryController.text : null,
-      ));
+      context.read<MaterialBloc>().add(
+        CreateMaterialRequested(
+          name: _nameController.text,
+          category: _categoryController.text.isNotEmpty
+              ? _categoryController.text
+              : null,
+        ),
+      );
     }
   }
 }

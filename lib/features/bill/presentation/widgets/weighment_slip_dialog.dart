@@ -60,7 +60,8 @@ class WeighmentSlipDialog extends StatelessWidget {
     final dateFormatted = DateFormat('dd/MM/yyyy').format(bill.createdAt);
     final timeFormatted = DateFormat('hh:mm:ss a').format(bill.createdAt);
     final printDate = DateFormat('dd/MM/yyyy HH:mm:ss').format(DateTime.now());
-    final isCompleted = bill.status.toLowerCase() == 'completed' || bill.isCompleted;
+    final isCompleted =
+        bill.status.toLowerCase() == 'completed' || bill.isCompleted;
     final isGrossPending =
         !isCompleted && (bill.firstWeightType.toUpperCase() == 'TARE');
 
@@ -78,34 +79,60 @@ class WeighmentSlipDialog extends StatelessWidget {
     final hasDetails = hasVehNo || hasMat || hasParty || hasVehType;
 
     // Check weight rows: completed weighments always show Gross, Tare, and Net
-    final double? resolvedGrossKg = bill.grossWeightKg ??
+    final double? resolvedGrossKg =
+        bill.grossWeightKg ??
         (bill.firstWeightType.toUpperCase() == 'GROSS'
             ? (bill.firstWeightKg > 0 ? bill.firstWeightKg : null)
-            : (bill.secondWeightKg != null && bill.secondWeightKg! > 0 ? bill.secondWeightKg : null)) ??
-        ((bill.tareWeightKg != null && bill.netWeightKg != null && bill.tareWeightKg! > 0 && bill.netWeightKg! > 0)
+            : (bill.secondWeightKg != null && bill.secondWeightKg! > 0
+                  ? bill.secondWeightKg
+                  : null)) ??
+        ((bill.tareWeightKg != null &&
+                bill.netWeightKg != null &&
+                bill.tareWeightKg! > 0 &&
+                bill.netWeightKg! > 0)
             ? (bill.tareWeightKg! + bill.netWeightKg!)
             : null);
 
-    final double? resolvedTareKg = bill.tareWeightKg ??
+    final double? resolvedTareKg =
+        bill.tareWeightKg ??
         (bill.firstWeightType.toUpperCase() == 'TARE'
             ? (bill.firstWeightKg > 0 ? bill.firstWeightKg : null)
-            : (bill.secondWeightKg != null && bill.secondWeightKg! > 0 ? bill.secondWeightKg : null)) ??
-        ((resolvedGrossKg != null && bill.netWeightKg != null && resolvedGrossKg > 0 && bill.netWeightKg! > 0)
+            : (bill.secondWeightKg != null && bill.secondWeightKg! > 0
+                  ? bill.secondWeightKg
+                  : null)) ??
+        ((resolvedGrossKg != null &&
+                bill.netWeightKg != null &&
+                resolvedGrossKg > 0 &&
+                bill.netWeightKg! > 0)
             ? (resolvedGrossKg - bill.netWeightKg!)
             : null);
 
-    final double? resolvedNetKg = bill.netWeightKg ??
-        ((resolvedGrossKg != null && resolvedTareKg != null && resolvedGrossKg > 0 && resolvedTareKg > 0)
+    final double? resolvedNetKg =
+        bill.netWeightKg ??
+        ((resolvedGrossKg != null &&
+                resolvedTareKg != null &&
+                resolvedGrossKg > 0 &&
+                resolvedTareKg > 0)
             ? (resolvedGrossKg - resolvedTareKg).abs()
             : null);
 
-    final hasGross = isCompleted || activeSettings.showGrossWeight || (resolvedGrossKg != null && resolvedGrossKg > 0);
-    final hasTare = isCompleted || activeSettings.showTareWeight || (resolvedTareKg != null && resolvedTareKg > 0);
-    final hasNet = isCompleted || activeSettings.showNetWeight || (resolvedNetKg != null && resolvedNetKg > 0);
+    final hasGross =
+        isCompleted ||
+        activeSettings.showGrossWeight ||
+        (resolvedGrossKg != null && resolvedGrossKg > 0);
+    final hasTare =
+        isCompleted ||
+        activeSettings.showTareWeight ||
+        (resolvedTareKg != null && resolvedTareKg > 0);
+    final hasNet =
+        isCompleted ||
+        activeSettings.showNetWeight ||
+        (resolvedNetKg != null && resolvedNetKg > 0);
     final hasWeights = hasGross || hasTare || hasNet;
 
     // Check financial rows: completed weighments always show Amount explicitly
-    final hasAmount = isCompleted || activeSettings.showAmount || bill.amount > 0;
+    final hasAmount =
+        isCompleted || activeSettings.showAmount || bill.amount > 0;
     final hasPayment = activeSettings.showPaymentMode;
     final hasCash = activeSettings.showCashReceived;
     final hasPending = activeSettings.showPendingAmount;
@@ -192,7 +219,9 @@ class WeighmentSlipDialog extends StatelessWidget {
                         Builder(
                           builder: (context) {
                             final unit = bill.weightUnit;
-                            final isTon = unit.toLowerCase() == 'ton' || unit.toLowerCase() == 'tonne';
+                            final isTon =
+                                unit.toLowerCase() == 'ton' ||
+                                unit.toLowerCase() == 'tonne';
                             final decimals = isTon ? 3 : 0;
                             double? toDisplay(double? kg) {
                               if (kg == null) return null;
@@ -213,7 +242,8 @@ class WeighmentSlipDialog extends StatelessWidget {
                                       'Tare Weight',
                                       '${toDisplay(resolvedTareKg)?.toStringAsFixed(decimals) ?? '—'} $unit',
                                     ),
-                                  if (hasGross || hasTare) const SizedBox(height: 4),
+                                  if (hasGross || hasTare)
+                                    const SizedBox(height: 4),
                                   if (hasNet) ...[
                                     _buildDivider(),
                                     const SizedBox(height: 4),
@@ -230,7 +260,8 @@ class WeighmentSlipDialog extends StatelessWidget {
                                       'Tare Weight',
                                       '${(toDisplay(resolvedTareKg ?? bill.firstWeightKg) ?? 0).toStringAsFixed(decimals)} $unit',
                                     ),
-                                  if (hasGross || hasTare) const SizedBox(height: 4),
+                                  if (hasGross || hasTare)
+                                    const SizedBox(height: 4),
                                   if (hasNet) ...[
                                     _buildDivider(),
                                     const SizedBox(height: 4),
@@ -244,7 +275,8 @@ class WeighmentSlipDialog extends StatelessWidget {
                                     ),
                                   if (hasTare)
                                     _buildWeightRow('Tare Weight', 'PENDING'),
-                                  if (hasGross || hasTare) const SizedBox(height: 4),
+                                  if (hasGross || hasTare)
+                                    const SizedBox(height: 4),
                                   if (hasNet) ...[
                                     _buildDivider(),
                                     const SizedBox(height: 4),
@@ -276,8 +308,7 @@ class WeighmentSlipDialog extends StatelessWidget {
                             'Cash Received',
                             '₹${NumberFormat('#,##0.00').format(bill.amount)}',
                           ),
-                        if (hasPending)
-                          _buildInfoRow('Pending', '₹0.00'),
+                        if (hasPending) _buildInfoRow('Pending', '₹0.00'),
                       ],
 
                       if (!isCompleted) ...[
@@ -583,9 +614,7 @@ class WeighmentSlipDialog extends StatelessWidget {
   }
 
   Widget _buildStatusBadge({required bool isGrossPending}) {
-    final text = isGrossPending
-        ? 'PENDING • GROSS WT'
-        : 'PENDING • TARE WT';
+    final text = isGrossPending ? 'PENDING • GROSS WT' : 'PENDING • TARE WT';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
@@ -689,10 +718,7 @@ class WeighmentSlipDialog extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: const Color(0xFF243B64),
-                side: const BorderSide(
-                  color: Color(0xFFCBD5E1),
-                  width: 1.5,
-                ),
+                side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.5),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -731,10 +757,7 @@ class WeighmentSlipDialog extends StatelessWidget {
               style: OutlinedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: const Color(0xFF174A9C),
-                side: const BorderSide(
-                  color: Color(0xFFCBD5E1),
-                  width: 1.5,
-                ),
+                side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.5),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -801,10 +824,7 @@ class WeighmentSlipDialog extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: const Color(0xFF243B64),
-              side: const BorderSide(
-                color: Color(0xFFCBD5E1),
-                width: 1.5,
-              ),
+              side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.5),
               padding: const EdgeInsets.symmetric(vertical: 10),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(10),

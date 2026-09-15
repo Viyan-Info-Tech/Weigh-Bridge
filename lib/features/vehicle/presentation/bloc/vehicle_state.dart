@@ -44,5 +44,13 @@ class VehicleState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [status, vehicles, selectedVehicle, errorMessage, successMessage, searchQuery, filterActive];
+  List<Object?> get props => [
+    status,
+    vehicles,
+    selectedVehicle,
+    errorMessage,
+    successMessage,
+    searchQuery,
+    filterActive,
+  ];
 }

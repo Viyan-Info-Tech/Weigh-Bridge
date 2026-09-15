@@ -294,8 +294,13 @@ class _PartyListPageState extends State<PartyListPage> {
                 style: FilledButton.styleFrom(
                   backgroundColor: const Color(0xFF0D3B82),
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
                   textStyle: const TextStyle(
                     fontFamily: 'PlusJakartaSans',
                     fontSize: 12,
@@ -324,7 +329,10 @@ class _PartyListPageState extends State<PartyListPage> {
                   setState(() {});
                   context.read<PartyBloc>().add(SearchParties(value));
                 },
-                style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12),
+                style: const TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 12,
+                ),
                 decoration: InputDecoration(
                   hintText: 'Search by party name, phone, GST...',
                   hintStyle: const TextStyle(
@@ -347,11 +355,16 @@ class _PartyListPageState extends State<PartyListPage> {
                           onPressed: () {
                             _searchController.clear();
                             setState(() {});
-                            context.read<PartyBloc>().add(const SearchParties(''));
+                            context.read<PartyBloc>().add(
+                              const SearchParties(''),
+                            );
                           },
                         )
                       : null,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 0,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
@@ -362,7 +375,10 @@ class _PartyListPageState extends State<PartyListPage> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(color: Color(0xFF0F52BA), width: 1.5),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF0F52BA),
+                      width: 1.5,
+                    ),
                   ),
                   filled: true,
                   fillColor: const Color(0xFFF8FAFC),
@@ -396,14 +412,19 @@ class _PartyListPageState extends State<PartyListPage> {
                 items: const [
                   DropdownMenuItem(value: null, child: Text('All Status')),
                   DropdownMenuItem(value: 'active', child: Text('Active Only')),
-                  DropdownMenuItem(value: 'inactive', child: Text('Inactive Only')),
+                  DropdownMenuItem(
+                    value: 'inactive',
+                    child: Text('Inactive Only'),
+                  ),
                 ],
                 onChanged: (value) {
                   setState(() => _statusFilter = value);
                   bool? isActive;
                   if (value == 'active') isActive = true;
                   if (value == 'inactive') isActive = false;
-                  context.read<PartyBloc>().add(FilterPartiesByStatus(isActive));
+                  context.read<PartyBloc>().add(
+                    FilterPartiesByStatus(isActive),
+                  );
                 },
               ),
             ),
@@ -417,7 +438,9 @@ class _PartyListPageState extends State<PartyListPage> {
     return BlocBuilder<PartyBloc, PartyState>(
       builder: (context, state) {
         if (state.status == PartyStatus.loading) {
-          return const Center(child: CircularProgressIndicator(strokeWidth: 2.5));
+          return const Center(
+            child: CircularProgressIndicator(strokeWidth: 2.5),
+          );
         }
         if (state.parties.isEmpty) {
           return _buildEmptyState();
@@ -482,7 +505,10 @@ class _PartyListPageState extends State<PartyListPage> {
           Expanded(flex: 22, child: _buildHeaderText('CONTACT PERSON')),
           Expanded(flex: 18, child: _buildHeaderText('PHONE')),
           Expanded(flex: 18, child: _buildHeaderText('STATUS')),
-          Expanded(flex: 14, child: _buildHeaderText('ACTIONS', align: TextAlign.right)),
+          Expanded(
+            flex: 14,
+            child: _buildHeaderText('ACTIONS', align: TextAlign.right),
+          ),
         ],
       ),
     );
@@ -539,7 +565,8 @@ class _PartyListPageState extends State<PartyListPage> {
                         ),
                         overflow: TextOverflow.ellipsis,
                       ),
-                      if (party.gstNumber != null && party.gstNumber!.isNotEmpty)
+                      if (party.gstNumber != null &&
+                          party.gstNumber!.isNotEmpty)
                         Text(
                           'GST: ${party.gstNumber}',
                           style: const TextStyle(
@@ -567,7 +594,9 @@ class _PartyListPageState extends State<PartyListPage> {
                 fontFamily: 'PlusJakartaSans',
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: party.contactPerson != null && party.contactPerson!.isNotEmpty
+                color:
+                    party.contactPerson != null &&
+                        party.contactPerson!.isNotEmpty
                     ? const Color(0xFF334155)
                     : const Color(0xFF94A3B8),
               ),
@@ -633,7 +662,9 @@ class _PartyListPageState extends State<PartyListPage> {
             width: 5,
             height: 5,
             decoration: BoxDecoration(
-              color: isActive ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+              color: isActive
+                  ? const Color(0xFF16A34A)
+                  : const Color(0xFFDC2626),
               shape: BoxShape.circle,
             ),
           ),
@@ -644,7 +675,9 @@ class _PartyListPageState extends State<PartyListPage> {
               fontFamily: 'PlusJakartaSans',
               fontSize: 10.5,
               fontWeight: FontWeight.w700,
-              color: isActive ? const Color(0xFF15803D) : const Color(0xFFB91C1C),
+              color: isActive
+                  ? const Color(0xFF15803D)
+                  : const Color(0xFFB91C1C),
             ),
           ),
         ],
@@ -724,8 +757,13 @@ class _PartyListPageState extends State<PartyListPage> {
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF0D3B82),
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
                 textStyle: const TextStyle(
                   fontFamily: 'PlusJakartaSans',
                   fontSize: 12,
@@ -764,8 +802,16 @@ class _PartyListPageState extends State<PartyListPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            style: TextButton.styleFrom(foregroundColor: const Color(0xFF64748B)),
-            child: const Text('Cancel', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF64748B),
+            ),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           FilledButton(
             onPressed: () {
@@ -774,9 +820,17 @@ class _PartyListPageState extends State<PartyListPage> {
             },
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFDC2626),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            child: const Text('Deactivate', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+            child: const Text(
+              'Deactivate',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),
@@ -808,8 +862,16 @@ class _PartyListPageState extends State<PartyListPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            style: TextButton.styleFrom(foregroundColor: const Color(0xFF64748B)),
-            child: const Text('Cancel', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF64748B),
+            ),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           FilledButton(
             onPressed: () {
@@ -818,9 +880,17 @@ class _PartyListPageState extends State<PartyListPage> {
             },
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFDC2626),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
             ),
-            child: const Text('Delete', style: TextStyle(fontFamily: 'PlusJakartaSans', fontWeight: FontWeight.w600)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
         ],
       ),

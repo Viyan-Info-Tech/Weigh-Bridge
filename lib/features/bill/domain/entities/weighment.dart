@@ -41,11 +41,12 @@ class Weighment extends Equatable {
     this.weightUnit = 'ton',
     required this.createdAt,
     required this.updatedAt,
-  })  : firstWeightKg = firstWeightKg ??
-            ((firstWeightType == 'TARE' || firstWeightType == 'tare')
-                ? (tareWeightKg ?? 0)
-                : (grossWeightKg ?? 0)),
-        explicitNetWeightKg = netWeightKg;
+  }) : firstWeightKg =
+           firstWeightKg ??
+           ((firstWeightType == 'TARE' || firstWeightType == 'tare')
+               ? (tareWeightKg ?? 0)
+               : (grossWeightKg ?? 0)),
+       explicitNetWeightKg = netWeightKg;
 
   bool get isCompleted =>
       status.toLowerCase() == 'completed' ||
@@ -61,7 +62,9 @@ class Weighment extends Equatable {
     if (type == 'GROSS') {
       return firstWeightKg > 0 ? firstWeightKg : null;
     } else if (type == 'TARE') {
-      return (secondWeightKg != null && secondWeightKg! > 0) ? secondWeightKg : null;
+      return (secondWeightKg != null && secondWeightKg! > 0)
+          ? secondWeightKg
+          : null;
     }
     return firstWeightKg > 0 ? firstWeightKg : null;
   }
@@ -74,9 +77,13 @@ class Weighment extends Equatable {
     if (type == 'TARE') {
       return firstWeightKg > 0 ? firstWeightKg : null;
     } else if (type == 'GROSS') {
-      return (secondWeightKg != null && secondWeightKg! > 0) ? secondWeightKg : null;
+      return (secondWeightKg != null && secondWeightKg! > 0)
+          ? secondWeightKg
+          : null;
     }
-    return (secondWeightKg != null && secondWeightKg! > 0) ? secondWeightKg : null;
+    return (secondWeightKg != null && secondWeightKg! > 0)
+        ? secondWeightKg
+        : null;
   }
 
   /// Net Weight:
@@ -95,21 +102,21 @@ class Weighment extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        billNumber,
-        partyId,
-        vehicleId,
-        materialId,
-        firstWeightKg,
-        firstWeightType,
-        secondWeightKg,
-        secondWeightType,
-        explicitNetWeightKg,
-        vehicleCharge,
-        amount,
-        status,
-        weightUnit,
-        createdAt,
-        updatedAt,
-      ];
+    id,
+    billNumber,
+    partyId,
+    vehicleId,
+    materialId,
+    firstWeightKg,
+    firstWeightType,
+    secondWeightKg,
+    secondWeightType,
+    explicitNetWeightKg,
+    vehicleCharge,
+    amount,
+    status,
+    weightUnit,
+    createdAt,
+    updatedAt,
+  ];
 }

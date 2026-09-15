@@ -4,13 +4,23 @@ import 'package:flutter/services.dart';
 import '../../../vehicle_type/domain/entities/vehicle_type.dart';
 
 class QuickAddVehicleTypeDialog extends StatefulWidget {
-  final Future<VehicleType?> Function(String name, double emptyPrice, double loadPrice) onSave;
+  final Future<VehicleType?> Function(
+    String name,
+    double emptyPrice,
+    double loadPrice,
+  )
+  onSave;
 
   const QuickAddVehicleTypeDialog({super.key, required this.onSave});
 
   static Future<VehicleType?> show(
     BuildContext context, {
-    required Future<VehicleType?> Function(String name, double emptyPrice, double loadPrice) onSave,
+    required Future<VehicleType?> Function(
+      String name,
+      double emptyPrice,
+      double loadPrice,
+    )
+    onSave,
   }) {
     return showDialog<VehicleType?>(
       context: context,
@@ -20,7 +30,8 @@ class QuickAddVehicleTypeDialog extends StatefulWidget {
   }
 
   @override
-  State<QuickAddVehicleTypeDialog> createState() => _QuickAddVehicleTypeDialogState();
+  State<QuickAddVehicleTypeDialog> createState() =>
+      _QuickAddVehicleTypeDialogState();
 }
 
 class _QuickAddVehicleTypeDialogState extends State<QuickAddVehicleTypeDialog> {
@@ -48,8 +59,10 @@ class _QuickAddVehicleTypeDialogState extends State<QuickAddVehicleTypeDialog> {
       });
 
       try {
-        final emptyPrice = double.tryParse(_emptyPriceController.text.trim()) ?? 0;
-        final loadPrice = double.tryParse(_loadPriceController.text.trim()) ?? 0;
+        final emptyPrice =
+            double.tryParse(_emptyPriceController.text.trim()) ?? 0;
+        final loadPrice =
+            double.tryParse(_loadPriceController.text.trim()) ?? 0;
         final createdType = await widget.onSave(
           _nameController.text.trim(),
           emptyPrice,
@@ -149,7 +162,9 @@ class _QuickAddVehicleTypeDialogState extends State<QuickAddVehicleTypeDialog> {
                       ),
                     ),
                     InkWell(
-                      onTap: _isLoading ? null : () => Navigator.of(context).pop(),
+                      onTap: _isLoading
+                          ? null
+                          : () => Navigator.of(context).pop(),
                       borderRadius: BorderRadius.circular(20),
                       child: Padding(
                         padding: const EdgeInsets.all(4),
@@ -167,7 +182,10 @@ class _QuickAddVehicleTypeDialogState extends State<QuickAddVehicleTypeDialog> {
                   const SizedBox(height: 16),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFEF2F2),
                       borderRadius: BorderRadius.circular(10),
@@ -214,8 +232,9 @@ class _QuickAddVehicleTypeDialogState extends State<QuickAddVehicleTypeDialog> {
                     color: Color(0xFF0F172A),
                   ),
                   decoration: _inputDecoration(hint: 'e.g., Truck'),
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Vehicle type name is required' : null,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Vehicle type name is required'
+                      : null,
                   onFieldSubmitted: (_) => _onSave(),
                   onChanged: (_) {
                     if (_errorMessage != null) {
@@ -238,9 +257,13 @@ class _QuickAddVehicleTypeDialogState extends State<QuickAddVehicleTypeDialog> {
                           TextFormField(
                             controller: _emptyPriceController,
                             enabled: !_isLoading,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
                             inputFormatters: [
-                              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'^\d*\.?\d{0,2}'),
+                              ),
                             ],
                             style: const TextStyle(
                               fontFamily: 'PlusJakartaSans',
@@ -267,9 +290,13 @@ class _QuickAddVehicleTypeDialogState extends State<QuickAddVehicleTypeDialog> {
                           TextFormField(
                             controller: _loadPriceController,
                             enabled: !_isLoading,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
                             inputFormatters: [
-                              FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
+                              FilteringTextInputFormatter.allow(
+                                RegExp(r'^\d*\.?\d{0,2}'),
+                              ),
                             ],
                             style: const TextStyle(
                               fontFamily: 'PlusJakartaSans',
@@ -296,7 +323,9 @@ class _QuickAddVehicleTypeDialogState extends State<QuickAddVehicleTypeDialog> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                      onPressed: _isLoading
+                          ? null
+                          : () => Navigator.of(context).pop(),
                       style: TextButton.styleFrom(
                         foregroundColor: const Color(0xFF64748B),
                         padding: const EdgeInsets.symmetric(
@@ -322,8 +351,9 @@ class _QuickAddVehicleTypeDialogState extends State<QuickAddVehicleTypeDialog> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF0D3B82),
                         foregroundColor: Colors.white,
-                        disabledBackgroundColor:
-                            const Color(0xFF0D3B82).withValues(alpha: 0.6),
+                        disabledBackgroundColor: const Color(
+                          0xFF0D3B82,
+                        ).withValues(alpha: 0.6),
                         disabledForegroundColor: Colors.white70,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 20,

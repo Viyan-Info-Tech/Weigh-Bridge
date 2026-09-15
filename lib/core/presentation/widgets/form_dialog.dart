@@ -22,14 +22,19 @@ class FormDialogWrapper extends StatelessWidget {
       elevation: 8,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ConstrainedBox(
-        constraints: BoxConstraints(maxWidth: width, maxHeight: MediaQuery.of(context).size.height * 0.85),
+        constraints: BoxConstraints(
+          maxWidth: width,
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildHeader(context),
             const Divider(height: 1, color: Color(0xFFE2E8F0)),
-            Flexible(child: Padding(padding: const EdgeInsets.all(24), child: child)),
+            Flexible(
+              child: Padding(padding: const EdgeInsets.all(24), child: child),
+            ),
           ],
         ),
       ),
@@ -45,9 +50,24 @@ class FormDialogWrapper extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFF0F172A))),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(subtitle, style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, color: Colors.grey.shade500)),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 12,
+                    color: Colors.grey.shade500,
+                  ),
+                ),
               ],
             ),
           ),
@@ -92,11 +112,13 @@ class FormDialogTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveKeyboardType = keyboardType ??
+    final effectiveKeyboardType =
+        keyboardType ??
         (isNumeric
             ? TextInputType.number
             : (maxLines > 1 ? TextInputType.multiline : TextInputType.text));
-    final effectiveTextInputAction = textInputAction ??
+    final effectiveTextInputAction =
+        textInputAction ??
         (effectiveKeyboardType == TextInputType.multiline
             ? TextInputAction.newline
             : null);
@@ -106,10 +128,26 @@ class FormDialogTextField extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text(label, style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+            Text(
+              label,
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade600,
+              ),
+            ),
             if (isRequired) ...[
               const SizedBox(width: 2),
-              Text('*', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600, color: Colors.red.shade400)),
+              Text(
+                '*',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.red.shade400,
+                ),
+              ),
             ],
           ],
         ),
@@ -120,17 +158,41 @@ class FormDialogTextField extends StatelessWidget {
           minLines: minLines,
           keyboardType: effectiveKeyboardType,
           textInputAction: effectiveTextInputAction,
-          inputFormatters: inputFormatters ?? (isNumeric ? [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}'))] : null),
+          inputFormatters:
+              inputFormatters ??
+              (isNumeric
+                  ? [
+                      FilteringTextInputFormatter.allow(
+                        RegExp(r'^\d*\.?\d{0,2}'),
+                      ),
+                    ]
+                  : null),
           validator: validator,
           style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13),
           decoration: InputDecoration(
             hintText: hintText,
             alignLabelWithHint: true,
-            hintStyle: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, color: Colors.grey.shade400),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF0D3B82))),
+            hintStyle: TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 13,
+              color: Colors.grey.shade400,
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 10,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFF0D3B82)),
+            ),
             isDense: true,
           ),
         ),
@@ -163,9 +225,18 @@ class FormDialogActions extends StatelessWidget {
           style: OutlinedButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
             side: const BorderSide(color: Color(0xFFCBD5E1)),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
-          child: Text(cancelLabel, style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, color: Color(0xFF64748B))),
+          child: Text(
+            cancelLabel,
+            style: const TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 13,
+              color: Color(0xFF64748B),
+            ),
+          ),
         ),
         const SizedBox(width: 12),
         ElevatedButton(
@@ -174,11 +245,27 @@ class FormDialogActions extends StatelessWidget {
             backgroundColor: const Color(0xFF0D3B82),
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
           child: isLoading
-              ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-              : Text(submitLabel, style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, fontWeight: FontWeight.w600)),
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Text(
+                  submitLabel,
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
         ),
       ],
     );

@@ -17,10 +17,7 @@ class BillDao extends DatabaseAccessor<AppDatabase> with _$BillDaoMixin {
     return (update(weighments)..where((w) => w.id.equals(id))).write(entry);
   }
 
-  Future<List<Weighment>> getRecentBills({
-    DateTime? date,
-    int? limit,
-  }) async {
+  Future<List<Weighment>> getRecentBills({DateTime? date, int? limit}) async {
     final day = date ?? DateTime.now();
     final start = DateTime(day.year, day.month, day.day);
     final end = start.add(const Duration(days: 1));
@@ -70,7 +67,8 @@ class BillDao extends DatabaseAccessor<AppDatabase> with _$BillDaoMixin {
   }
 
   Future<Weighment?> getWeighmentByBillNumber(String billNumber) async {
-    final query = select(weighments)..where((w) => w.billNumber.equals(billNumber));
+    final query = select(weighments)
+      ..where((w) => w.billNumber.equals(billNumber));
     return query.getSingleOrNull();
   }
 

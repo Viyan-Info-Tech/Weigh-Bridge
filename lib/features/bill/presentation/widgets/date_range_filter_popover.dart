@@ -6,7 +6,11 @@ class DateRangeFilterResult {
   final DateTime? endDate;
   final String label;
 
-  const DateRangeFilterResult({this.startDate, this.endDate, required this.label});
+  const DateRangeFilterResult({
+    this.startDate,
+    this.endDate,
+    required this.label,
+  });
 }
 
 class DateRangeFilterPopover extends StatefulWidget {
@@ -44,8 +48,18 @@ class _DateRangeFilterPopoverState extends State<DateRangeFilterPopover> {
   DateTime? _endDate;
 
   static const _months = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December',
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
 
   @override
@@ -58,7 +72,9 @@ class _DateRangeFilterPopoverState extends State<DateRangeFilterPopover> {
 
   bool _isToday(DateTime date) {
     final now = DateTime.now();
-    return date.year == now.year && date.month == now.month && date.day == now.day;
+    return date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day;
   }
 
   bool _isSameDay(DateTime a, DateTime b) {
@@ -71,8 +87,10 @@ class _DateRangeFilterPopoverState extends State<DateRangeFilterPopover> {
         date.isBefore(_endDate!.add(const Duration(days: 1)));
   }
 
-  bool _isRangeStart(DateTime date) => _startDate != null && _isSameDay(date, _startDate!);
-  bool _isRangeEnd(DateTime date) => _endDate != null && _isSameDay(date, _endDate!);
+  bool _isRangeStart(DateTime date) =>
+      _startDate != null && _isSameDay(date, _startDate!);
+  bool _isRangeEnd(DateTime date) =>
+      _endDate != null && _isSameDay(date, _endDate!);
 
   void _onQuickSelect(String type) {
     final now = DateTime.now();
@@ -134,18 +152,21 @@ class _DateRangeFilterPopoverState extends State<DateRangeFilterPopover> {
       if (_isSameDay(_startDate!, _endDate!)) {
         label = DateFormat('dd MMM yyyy').format(_startDate!);
       } else {
-        label = '${DateFormat('dd MMM').format(_startDate!)} – ${DateFormat('dd MMM yyyy').format(_endDate!)}';
+        label =
+            '${DateFormat('dd MMM').format(_startDate!)} – ${DateFormat('dd MMM yyyy').format(_endDate!)}';
       }
     } else if (_startDate != null) {
       label = DateFormat('dd MMM yyyy').format(_startDate!);
     } else {
       label = 'All dates';
     }
-    Navigator.of(context).pop(DateRangeFilterResult(
-      startDate: _startDate,
-      endDate: _endDate,
-      label: label,
-    ));
+    Navigator.of(context).pop(
+      DateRangeFilterResult(
+        startDate: _startDate,
+        endDate: _endDate,
+        label: label,
+      ),
+    );
   }
 
   void _showMonthPicker() {
@@ -193,10 +214,14 @@ class _DateRangeFilterPopoverState extends State<DateRangeFilterPopover> {
                     child: Container(
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFF0D3B82) : const Color(0xFFF8FAFC),
+                        color: isSelected
+                            ? const Color(0xFF0D3B82)
+                            : const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: isSelected ? const Color(0xFF0D3B82) : const Color(0xFFE2E8F0),
+                          color: isSelected
+                              ? const Color(0xFF0D3B82)
+                              : const Color(0xFFE2E8F0),
                         ),
                       ),
                       child: Text(
@@ -204,8 +229,12 @@ class _DateRangeFilterPopoverState extends State<DateRangeFilterPopover> {
                         style: TextStyle(
                           fontFamily: 'PlusJakartaSans',
                           fontSize: 12,
-                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                          color: isSelected ? Colors.white : const Color(0xFF475569),
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: isSelected
+                              ? Colors.white
+                              : const Color(0xFF475569),
                         ),
                       ),
                     ),
@@ -268,10 +297,14 @@ class _DateRangeFilterPopoverState extends State<DateRangeFilterPopover> {
                     child: Container(
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: isSelected ? const Color(0xFF0D3B82) : const Color(0xFFF8FAFC),
+                        color: isSelected
+                            ? const Color(0xFF0D3B82)
+                            : const Color(0xFFF8FAFC),
                         borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: isSelected ? const Color(0xFF0D3B82) : const Color(0xFFE2E8F0),
+                          color: isSelected
+                              ? const Color(0xFF0D3B82)
+                              : const Color(0xFFE2E8F0),
                         ),
                       ),
                       child: Text(
@@ -279,8 +312,12 @@ class _DateRangeFilterPopoverState extends State<DateRangeFilterPopover> {
                         style: TextStyle(
                           fontFamily: 'PlusJakartaSans',
                           fontSize: 12,
-                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                          color: isSelected ? Colors.white : const Color(0xFF475569),
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                          color: isSelected
+                              ? Colors.white
+                              : const Color(0xFF475569),
                         ),
                       ),
                     ),
@@ -400,8 +437,13 @@ class _DateRangeFilterPopoverState extends State<DateRangeFilterPopover> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF0D3B82),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     textStyle: const TextStyle(
                       fontFamily: 'PlusJakartaSans',
                       fontSize: 12,
@@ -436,10 +478,14 @@ class _DateRangeFilterPopoverState extends State<DateRangeFilterPopover> {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           decoration: BoxDecoration(
-            color: date != null ? const Color(0xFFEFF6FF) : const Color(0xFFF8FAFC),
+            color: date != null
+                ? const Color(0xFFEFF6FF)
+                : const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(6),
             border: Border.all(
-              color: date != null ? const Color(0xFFBFDBFE) : const Color(0xFFE2E8F0),
+              color: date != null
+                  ? const Color(0xFFBFDBFE)
+                  : const Color(0xFFE2E8F0),
             ),
           ),
           child: Text(
@@ -448,7 +494,9 @@ class _DateRangeFilterPopoverState extends State<DateRangeFilterPopover> {
               fontFamily: 'PlusJakartaSans',
               fontSize: 12,
               fontWeight: date != null ? FontWeight.w600 : FontWeight.w400,
-              color: date != null ? const Color(0xFF1E40AF) : Colors.grey.shade400,
+              color: date != null
+                  ? const Color(0xFF1E40AF)
+                  : Colors.grey.shade400,
             ),
           ),
         ),
@@ -510,7 +558,11 @@ class _DateRangeFilterPopoverState extends State<DateRangeFilterPopover> {
                       ),
                     ),
                     const SizedBox(width: 2),
-                    const Icon(Icons.arrow_drop_down, size: 18, color: Color(0xFF0D3B82)),
+                    const Icon(
+                      Icons.arrow_drop_down,
+                      size: 18,
+                      color: Color(0xFF0D3B82),
+                    ),
                   ],
                 ),
               ),
@@ -534,7 +586,11 @@ class _DateRangeFilterPopoverState extends State<DateRangeFilterPopover> {
                       ),
                     ),
                     const SizedBox(width: 2),
-                    const Icon(Icons.arrow_drop_down, size: 18, color: Color(0xFF0D3B82)),
+                    const Icon(
+                      Icons.arrow_drop_down,
+                      size: 18,
+                      color: Color(0xFF0D3B82),
+                    ),
                   ],
                 ),
               ),
@@ -549,7 +605,11 @@ class _DateRangeFilterPopoverState extends State<DateRangeFilterPopover> {
               borderRadius: BorderRadius.circular(4),
               child: const Padding(
                 padding: EdgeInsets.all(4),
-                child: Icon(Icons.chevron_left, size: 18, color: Color(0xFF64748B)),
+                child: Icon(
+                  Icons.chevron_left,
+                  size: 18,
+                  color: Color(0xFF64748B),
+                ),
               ),
             ),
             const SizedBox(width: 4),
@@ -562,7 +622,11 @@ class _DateRangeFilterPopoverState extends State<DateRangeFilterPopover> {
               borderRadius: BorderRadius.circular(4),
               child: const Padding(
                 padding: EdgeInsets.all(4),
-                child: Icon(Icons.chevron_right, size: 18, color: Color(0xFF64748B)),
+                child: Icon(
+                  Icons.chevron_right,
+                  size: 18,
+                  color: Color(0xFF64748B),
+                ),
               ),
             ),
           ],
@@ -570,18 +634,20 @@ class _DateRangeFilterPopoverState extends State<DateRangeFilterPopover> {
         const SizedBox(height: 10),
         Row(
           children: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-              .map((d) => Expanded(
-                    child: Text(
-                      d,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 9,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF94A3B8),
-                      ),
+              .map(
+                (d) => Expanded(
+                  child: Text(
+                    d,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF94A3B8),
                     ),
-                  ))
+                  ),
+                ),
+              )
               .toList(),
         ),
         const SizedBox(height: 6),

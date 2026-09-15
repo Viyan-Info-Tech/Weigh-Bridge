@@ -18,11 +18,11 @@ class VehicleTypeBloc extends Bloc<VehicleTypeEvent, VehicleTypeState> {
     required CreateVehicleTypeUseCase createVehicleTypeUseCase,
     required DeleteVehicleTypeUseCase deleteVehicleTypeUseCase,
     required VehicleTypeRepository vehicleTypeRepository,
-  })  : _loadVehicleTypesUseCase = loadVehicleTypesUseCase,
-        _createVehicleTypeUseCase = createVehicleTypeUseCase,
-        _deleteVehicleTypeUseCase = deleteVehicleTypeUseCase,
-        _vehicleTypeRepository = vehicleTypeRepository,
-        super(const VehicleTypeState()) {
+  }) : _loadVehicleTypesUseCase = loadVehicleTypesUseCase,
+       _createVehicleTypeUseCase = createVehicleTypeUseCase,
+       _deleteVehicleTypeUseCase = deleteVehicleTypeUseCase,
+       _vehicleTypeRepository = vehicleTypeRepository,
+       super(const VehicleTypeState()) {
     on<LoadVehicleTypes>(_onLoadVehicleTypes);
     on<CreateVehicleTypeRequested>(_onCreateVehicleType);
     on<UpdateVehicleTypeRequested>(_onUpdateVehicleType);
@@ -31,19 +31,35 @@ class VehicleTypeBloc extends Bloc<VehicleTypeEvent, VehicleTypeState> {
     on<SearchVehicleTypes>(_onSearchVehicleTypes);
   }
 
-  Future<void> _onLoadVehicleTypes(LoadVehicleTypes event, Emitter<VehicleTypeState> emit) async {
+  Future<void> _onLoadVehicleTypes(
+    LoadVehicleTypes event,
+    Emitter<VehicleTypeState> emit,
+  ) async {
     emit(state.copyWith(status: VehicleTypeStatus.loading));
     try {
       final vehicleTypes = await _loadVehicleTypesUseCase(
         isActive: event.filterActive,
       );
-      emit(state.copyWith(status: VehicleTypeStatus.loaded, vehicleTypes: vehicleTypes));
+      emit(
+        state.copyWith(
+          status: VehicleTypeStatus.loaded,
+          vehicleTypes: vehicleTypes,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(status: VehicleTypeStatus.error, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          status: VehicleTypeStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
-  Future<void> _onCreateVehicleType(CreateVehicleTypeRequested event, Emitter<VehicleTypeState> emit) async {
+  Future<void> _onCreateVehicleType(
+    CreateVehicleTypeRequested event,
+    Emitter<VehicleTypeState> emit,
+  ) async {
     emit(state.copyWith(status: VehicleTypeStatus.loading));
     try {
       await _createVehicleTypeUseCase(
@@ -51,14 +67,27 @@ class VehicleTypeBloc extends Bloc<VehicleTypeEvent, VehicleTypeState> {
         emptyPrice: event.emptyPrice,
         loadPrice: event.loadPrice,
       );
-      emit(state.copyWith(status: VehicleTypeStatus.success, successMessage: 'Vehicle type created successfully'));
+      emit(
+        state.copyWith(
+          status: VehicleTypeStatus.success,
+          successMessage: 'Vehicle type created successfully',
+        ),
+      );
       add(const LoadVehicleTypes());
     } catch (e) {
-      emit(state.copyWith(status: VehicleTypeStatus.error, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          status: VehicleTypeStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
-  Future<void> _onUpdateVehicleType(UpdateVehicleTypeRequested event, Emitter<VehicleTypeState> emit) async {
+  Future<void> _onUpdateVehicleType(
+    UpdateVehicleTypeRequested event,
+    Emitter<VehicleTypeState> emit,
+  ) async {
     emit(state.copyWith(status: VehicleTypeStatus.loading));
     try {
       await _vehicleTypeRepository.updateVehicleType(
@@ -67,45 +96,97 @@ class VehicleTypeBloc extends Bloc<VehicleTypeEvent, VehicleTypeState> {
         emptyPrice: event.emptyPrice,
         loadPrice: event.loadPrice,
       );
-      emit(state.copyWith(status: VehicleTypeStatus.success, successMessage: 'Vehicle type updated successfully'));
+      emit(
+        state.copyWith(
+          status: VehicleTypeStatus.success,
+          successMessage: 'Vehicle type updated successfully',
+        ),
+      );
       add(const LoadVehicleTypes());
     } catch (e) {
-      emit(state.copyWith(status: VehicleTypeStatus.error, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          status: VehicleTypeStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
-  Future<void> _onDeactivateVehicleType(DeactivateVehicleTypeRequested event, Emitter<VehicleTypeState> emit) async {
+  Future<void> _onDeactivateVehicleType(
+    DeactivateVehicleTypeRequested event,
+    Emitter<VehicleTypeState> emit,
+  ) async {
     emit(state.copyWith(status: VehicleTypeStatus.loading));
     try {
       await _vehicleTypeRepository.deactivateVehicleType(event.vehicleTypeId);
-      emit(state.copyWith(status: VehicleTypeStatus.success, successMessage: 'Vehicle type deactivated'));
+      emit(
+        state.copyWith(
+          status: VehicleTypeStatus.success,
+          successMessage: 'Vehicle type deactivated',
+        ),
+      );
       add(const LoadVehicleTypes());
     } catch (e) {
-      emit(state.copyWith(status: VehicleTypeStatus.error, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          status: VehicleTypeStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
-  Future<void> _onDeleteVehicleType(DeleteVehicleTypeRequested event, Emitter<VehicleTypeState> emit) async {
+  Future<void> _onDeleteVehicleType(
+    DeleteVehicleTypeRequested event,
+    Emitter<VehicleTypeState> emit,
+  ) async {
     emit(state.copyWith(status: VehicleTypeStatus.loading));
     try {
       await _deleteVehicleTypeUseCase(event.vehicleTypeId);
-      emit(state.copyWith(status: VehicleTypeStatus.success, successMessage: 'Vehicle type deleted'));
+      emit(
+        state.copyWith(
+          status: VehicleTypeStatus.success,
+          successMessage: 'Vehicle type deleted',
+        ),
+      );
       add(const LoadVehicleTypes());
     } catch (e) {
-      emit(state.copyWith(status: VehicleTypeStatus.error, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          status: VehicleTypeStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
-  Future<void> _onSearchVehicleTypes(SearchVehicleTypes event, Emitter<VehicleTypeState> emit) async {
+  Future<void> _onSearchVehicleTypes(
+    SearchVehicleTypes event,
+    Emitter<VehicleTypeState> emit,
+  ) async {
     try {
       if (event.query.isEmpty) {
         add(const LoadVehicleTypes());
         return;
       }
-      final vehicleTypes = await _vehicleTypeRepository.searchVehicleTypes(event.query);
-      emit(state.copyWith(status: VehicleTypeStatus.loaded, vehicleTypes: vehicleTypes, searchQuery: event.query));
+      final vehicleTypes = await _vehicleTypeRepository.searchVehicleTypes(
+        event.query,
+      );
+      emit(
+        state.copyWith(
+          status: VehicleTypeStatus.loaded,
+          vehicleTypes: vehicleTypes,
+          searchQuery: event.query,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(status: VehicleTypeStatus.error, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          status: VehicleTypeStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 }

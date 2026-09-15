@@ -9,7 +9,9 @@ class AuthenticationFailure extends Failure {
 
 class DatabaseFailure extends Failure {
   final String message;
-  const DatabaseFailure({this.message = 'Something went wrong. Please try again.'});
+  const DatabaseFailure({
+    this.message = 'Something went wrong. Please try again.',
+  });
 }
 
 class SessionFailure extends Failure {

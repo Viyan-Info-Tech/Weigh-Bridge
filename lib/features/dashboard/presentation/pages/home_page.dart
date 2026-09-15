@@ -239,24 +239,24 @@ class _HomePageState extends State<HomePage> {
           onTap: () => setState(() => _isMastersExpanded = !_isMastersExpanded),
         ),
         if (_isMastersExpanded) ...[
-                _SidebarSubItem(
-                  icon: Icons.people_outline,
-                  label: 'Parties',
-                  isSelected: _selectedIndex == 1,
-                  onTap: () => setState(() => _selectedIndex = 1),
-                ),
-                _SidebarSubItem(
-                  icon: Icons.local_shipping_outlined,
-                  label: 'Vehicles',
-                  isSelected: _selectedIndex == 2,
-                  onTap: () => setState(() => _selectedIndex = 2),
-                ),
-                _SidebarSubItem(
-                  icon: Icons.inventory_2_outlined,
-                  label: 'Materials',
-                  isSelected: _selectedIndex == 3,
-                  onTap: () => setState(() => _selectedIndex = 3),
-                ),
+          _SidebarSubItem(
+            icon: Icons.people_outline,
+            label: 'Parties',
+            isSelected: _selectedIndex == 1,
+            onTap: () => setState(() => _selectedIndex = 1),
+          ),
+          _SidebarSubItem(
+            icon: Icons.local_shipping_outlined,
+            label: 'Vehicles',
+            isSelected: _selectedIndex == 2,
+            onTap: () => setState(() => _selectedIndex = 2),
+          ),
+          _SidebarSubItem(
+            icon: Icons.inventory_2_outlined,
+            label: 'Materials',
+            isSelected: _selectedIndex == 3,
+            onTap: () => setState(() => _selectedIndex = 3),
+          ),
         ],
       ],
     );

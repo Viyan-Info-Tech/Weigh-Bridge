@@ -56,5 +56,16 @@ class PartyState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [status, parties, selectedParty, totalParties, activeParties, inactiveParties, errorMessage, successMessage, searchQuery, filterActive];
+  List<Object?> get props => [
+    status,
+    parties,
+    selectedParty,
+    totalParties,
+    activeParties,
+    inactiveParties,
+    errorMessage,
+    successMessage,
+    searchQuery,
+    filterActive,
+  ];
 }

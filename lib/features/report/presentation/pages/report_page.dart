@@ -112,7 +112,9 @@ class _ReportPageState extends State<ReportPage> {
                 showDialog<void>(
                   context: context,
                   builder: (dialogContext) => AlertDialog(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     title: const Text(
                       'No Records to Export',
                       style: TextStyle(
@@ -150,7 +152,9 @@ class _ReportPageState extends State<ReportPage> {
                 showDialog<void>(
                   context: context,
                   builder: (dialogContext) => AlertDialog(
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     title: const Text(
                       'Unable to Export Report',
                       style: TextStyle(
@@ -197,7 +201,11 @@ class _ReportPageState extends State<ReportPage> {
                   SnackBar(
                     content: Row(
                       children: [
-                        const Icon(Icons.check_circle_rounded, color: Colors.white, size: 20),
+                        const Icon(
+                          Icons.check_circle_rounded,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Column(
@@ -229,7 +237,9 @@ class _ReportPageState extends State<ReportPage> {
                     ),
                     backgroundColor: const Color(0xFF16A34A),
                     behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
                     duration: const Duration(seconds: 5),
                     action: SnackBarAction(
                       label: 'Open Folder',
@@ -256,9 +266,7 @@ class _ReportPageState extends State<ReportPage> {
                 const SizedBox(height: 16),
                 _buildSearchAndActionBar(context, state),
                 const SizedBox(height: 12),
-                Expanded(
-                  child: _buildReportTableContainer(context, state),
-                ),
+                Expanded(child: _buildReportTableContainer(context, state)),
               ],
             ),
           );
@@ -347,7 +355,8 @@ class _ReportPageState extends State<ReportPage> {
             Expanded(
               child: _buildSummaryCard(
                 title: 'Total Revenue',
-                value: '₹${NumberFormat('#,##,###').format(summary.totalRevenue.round())}',
+                value:
+                    '₹${NumberFormat('#,##,###').format(summary.totalRevenue.round())}',
                 subtitle: 'Billed amount',
                 icon: Icons.currency_rupee_rounded,
                 iconColor: const Color(0xFFD97706),
@@ -509,14 +518,18 @@ class _ReportPageState extends State<ReportPage> {
                       ),
                       onChanged: (val) {
                         if (val != null) {
-                          context.read<ReportBloc>().add(ReportFilterPresetChanged(val));
+                          context.read<ReportBloc>().add(
+                            ReportFilterPresetChanged(val),
+                          );
                         }
                       },
                       items: DateRangePreset.values
-                          .map((preset) => DropdownMenuItem(
-                                value: preset,
-                                child: Text(preset.label),
-                              ))
+                          .map(
+                            (preset) => DropdownMenuItem(
+                              value: preset,
+                              child: Text(preset.label),
+                            ),
+                          )
                           .toList(),
                     ),
                   ),
@@ -530,7 +543,9 @@ class _ReportPageState extends State<ReportPage> {
                   flex: 2,
                   child: _buildDateButton(
                     label: 'Date From',
-                    dateText: _datePickerFormat.format(filter.effectiveStartDate),
+                    dateText: _datePickerFormat.format(
+                      filter.effectiveStartDate,
+                    ),
                     onTap: () => _selectCustomDate(
                       context: context,
                       isStartDate: true,
@@ -570,17 +585,25 @@ class _ReportPageState extends State<ReportPage> {
                         color: Color(0xFF0F172A),
                       ),
                       onChanged: (val) {
-                        context.read<ReportBloc>().add(ReportPartyFilterChanged(val));
+                        context.read<ReportBloc>().add(
+                          ReportPartyFilterChanged(val),
+                        );
                       },
                       items: [
                         const DropdownMenuItem<int?>(
                           value: null,
-                          child: Text('All Parties', style: TextStyle(fontWeight: FontWeight.w600)),
+                          child: Text(
+                            'All Parties',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
                         ),
                         ...state.parties.map(
                           (p) => DropdownMenuItem<int?>(
                             value: p.id,
-                            child: Text(p.name, overflow: TextOverflow.ellipsis),
+                            child: Text(
+                              p.name,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ),
                       ],
@@ -606,17 +629,25 @@ class _ReportPageState extends State<ReportPage> {
                         color: Color(0xFF0F172A),
                       ),
                       onChanged: (val) {
-                        context.read<ReportBloc>().add(ReportVehicleFilterChanged(val));
+                        context.read<ReportBloc>().add(
+                          ReportVehicleFilterChanged(val),
+                        );
                       },
                       items: [
                         const DropdownMenuItem<int?>(
                           value: null,
-                          child: Text('All Vehicles', style: TextStyle(fontWeight: FontWeight.w600)),
+                          child: Text(
+                            'All Vehicles',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
                         ),
                         ...state.vehicles.map(
                           (v) => DropdownMenuItem<int?>(
                             value: v.id,
-                            child: Text(v.vehicleNumber, overflow: TextOverflow.ellipsis),
+                            child: Text(
+                              v.vehicleNumber,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ),
                       ],
@@ -645,17 +676,25 @@ class _ReportPageState extends State<ReportPage> {
                         color: Color(0xFF0F172A),
                       ),
                       onChanged: (val) {
-                        context.read<ReportBloc>().add(ReportMaterialFilterChanged(val));
+                        context.read<ReportBloc>().add(
+                          ReportMaterialFilterChanged(val),
+                        );
                       },
                       items: [
                         const DropdownMenuItem<int?>(
                           value: null,
-                          child: Text('All Materials', style: TextStyle(fontWeight: FontWeight.w600)),
+                          child: Text(
+                            'All Materials',
+                            style: TextStyle(fontWeight: FontWeight.w600),
+                          ),
                         ),
                         ...state.materials.map(
                           (m) => DropdownMenuItem<int?>(
                             value: m.id,
-                            child: Text(m.name, overflow: TextOverflow.ellipsis),
+                            child: Text(
+                              m.name,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ),
                       ],
@@ -682,13 +721,24 @@ class _ReportPageState extends State<ReportPage> {
                       ),
                       onChanged: (val) {
                         if (val != null) {
-                          context.read<ReportBloc>().add(ReportStatusFilterChanged(val));
+                          context.read<ReportBloc>().add(
+                            ReportStatusFilterChanged(val),
+                          );
                         }
                       },
                       items: const [
-                        DropdownMenuItem(value: 'all', child: Text('All Status')),
-                        DropdownMenuItem(value: 'completed', child: Text('Completed')),
-                        DropdownMenuItem(value: 'pending', child: Text('Pending')),
+                        DropdownMenuItem(
+                          value: 'all',
+                          child: Text('All Status'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'completed',
+                          child: Text('Completed'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'pending',
+                          child: Text('Pending'),
+                        ),
                       ],
                     ),
                   ),
@@ -713,13 +763,21 @@ class _ReportPageState extends State<ReportPage> {
                       ),
                       onChanged: (val) {
                         if (val != null) {
-                          context.read<ReportBloc>().add(ReportPaymentFilterChanged(val));
+                          context.read<ReportBloc>().add(
+                            ReportPaymentFilterChanged(val),
+                          );
                         }
                       },
                       items: const [
-                        DropdownMenuItem(value: 'all', child: Text('All Modes')),
+                        DropdownMenuItem(
+                          value: 'all',
+                          child: Text('All Modes'),
+                        ),
                         DropdownMenuItem(value: 'cash', child: Text('Cash')),
-                        DropdownMenuItem(value: 'credit', child: Text('Credit')),
+                        DropdownMenuItem(
+                          value: 'credit',
+                          child: Text('Credit'),
+                        ),
                         DropdownMenuItem(value: 'upi', child: Text('UPI')),
                       ],
                     ),
@@ -734,13 +792,20 @@ class _ReportPageState extends State<ReportPage> {
                   OutlinedButton(
                     onPressed: () {
                       _searchController.clear();
-                      context.read<ReportBloc>().add(const ResetReportFilters());
+                      context.read<ReportBloc>().add(
+                        const ResetReportFilters(),
+                      );
                     },
                     style: OutlinedButton.styleFrom(
                       foregroundColor: const Color(0xFF64748B),
                       side: const BorderSide(color: Color(0xFFCBD5E1)),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
                     ),
                     child: const Text(
                       'Reset',
@@ -754,7 +819,9 @@ class _ReportPageState extends State<ReportPage> {
                   const SizedBox(width: 8),
                   ElevatedButton.icon(
                     onPressed: () {
-                      context.read<ReportBloc>().add(const ApplyReportFilters());
+                      context.read<ReportBloc>().add(
+                        const ApplyReportFilters(),
+                      );
                     },
                     icon: const Icon(Icons.filter_alt_outlined, size: 16),
                     label: const Text(
@@ -768,8 +835,13 @@ class _ReportPageState extends State<ReportPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF0284C7),
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       elevation: 0,
                     ),
                   ),
@@ -782,7 +854,10 @@ class _ReportPageState extends State<ReportPage> {
     );
   }
 
-  Widget _buildDropdownContainer({required String label, required Widget child}) {
+  Widget _buildDropdownContainer({
+    required String label,
+    required Widget child,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
       decoration: BoxDecoration(
@@ -850,7 +925,11 @@ class _ReportPageState extends State<ReportPage> {
                     color: Color(0xFF0F172A),
                   ),
                 ),
-                const Icon(Icons.calendar_today_outlined, size: 14, color: Color(0xFF64748B)),
+                const Icon(
+                  Icons.calendar_today_outlined,
+                  size: 14,
+                  color: Color(0xFF64748B),
+                ),
               ],
             ),
           ],
@@ -888,18 +967,31 @@ class _ReportPageState extends State<ReportPage> {
                   fontSize: 12.5,
                   color: Color(0xFF94A3B8),
                 ),
-                prefixIcon: const Icon(Icons.search, size: 18, color: Color(0xFF64748B)),
+                prefixIcon: const Icon(
+                  Icons.search,
+                  size: 18,
+                  color: Color(0xFF64748B),
+                ),
                 suffixIcon: _searchController.text.isNotEmpty
                     ? IconButton(
-                        icon: const Icon(Icons.clear, size: 16, color: Color(0xFF94A3B8)),
+                        icon: const Icon(
+                          Icons.clear,
+                          size: 16,
+                          color: Color(0xFF94A3B8),
+                        ),
                         onPressed: () {
                           _searchController.clear();
-                          context.read<ReportBloc>().add(const ReportSearchQueryChanged(''));
+                          context.read<ReportBloc>().add(
+                            const ReportSearchQueryChanged(''),
+                          );
                         },
                       )
                     : null,
                 border: InputBorder.none,
-                contentPadding: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 8,
+                  horizontal: 10,
+                ),
               ),
             ),
           ),
@@ -928,7 +1020,9 @@ class _ReportPageState extends State<ReportPage> {
           style: OutlinedButton.styleFrom(
             foregroundColor: const Color(0xFF1E293B),
             side: const BorderSide(color: Color(0xFFCBD5E1)),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           ),
         ),
@@ -964,7 +1058,9 @@ class _ReportPageState extends State<ReportPage> {
             foregroundColor: Colors.white,
             disabledBackgroundColor: const Color(0xFF64748B),
             disabledForegroundColor: Colors.white70,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
             elevation: 0,
           ),
@@ -991,7 +1087,11 @@ class _ReportPageState extends State<ReportPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.inventory_2_outlined, size: 48, color: Colors.grey.shade300),
+            Icon(
+              Icons.inventory_2_outlined,
+              size: 48,
+              color: Colors.grey.shade300,
+            ),
             const SizedBox(height: 12),
             const Text(
               'No weighment records found',
@@ -1050,12 +1150,33 @@ class _ReportPageState extends State<ReportPage> {
                     Expanded(flex: 11, child: _HeaderCell('VEHICLE')),
                     Expanded(flex: 13, child: _HeaderCell('PARTY')),
                     Expanded(flex: 11, child: _HeaderCell('MATERIAL')),
-                    Expanded(flex: 12, child: _HeaderCell('GROSS WEIGHT', align: TextAlign.right)),
-                    Expanded(flex: 12, child: _HeaderCell('TARE WEIGHT', align: TextAlign.right)),
-                    Expanded(flex: 12, child: _HeaderCell('NET WEIGHT', align: TextAlign.right)),
-                    Expanded(flex: 10, child: _HeaderCell('AMOUNT', align: TextAlign.right)),
-                    Expanded(flex: 11, child: _HeaderCell('STATUS', align: TextAlign.center)),
-                    Expanded(flex: 8, child: _HeaderCell('ACTION', align: TextAlign.center)),
+                    Expanded(
+                      flex: 12,
+                      child: _HeaderCell(
+                        'GROSS WEIGHT',
+                        align: TextAlign.right,
+                      ),
+                    ),
+                    Expanded(
+                      flex: 12,
+                      child: _HeaderCell('TARE WEIGHT', align: TextAlign.right),
+                    ),
+                    Expanded(
+                      flex: 12,
+                      child: _HeaderCell('NET WEIGHT', align: TextAlign.right),
+                    ),
+                    Expanded(
+                      flex: 10,
+                      child: _HeaderCell('AMOUNT', align: TextAlign.right),
+                    ),
+                    Expanded(
+                      flex: 11,
+                      child: _HeaderCell('STATUS', align: TextAlign.center),
+                    ),
+                    Expanded(
+                      flex: 8,
+                      child: _HeaderCell('ACTION', align: TextAlign.center),
+                    ),
                   ],
                 ),
               ),
@@ -1065,7 +1186,8 @@ class _ReportPageState extends State<ReportPage> {
               Expanded(
                 child: ListView.separated(
                   itemCount: state.records.length,
-                  separatorBuilder: (context, index) => const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                  separatorBuilder: (context, index) =>
+                      const Divider(height: 1, color: Color(0xFFF1F5F9)),
                   itemBuilder: (context, index) {
                     final item = state.records[index];
                     return _buildTableRow(context, item, state, vehicleTypes);
@@ -1079,7 +1201,9 @@ class _ReportPageState extends State<ReportPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 decoration: const BoxDecoration(
                   color: Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.vertical(bottom: Radius.circular(10)),
+                  borderRadius: BorderRadius.vertical(
+                    bottom: Radius.circular(10),
+                  ),
                   border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
                 ),
                 child: Row(
@@ -1137,8 +1261,12 @@ class _ReportPageState extends State<ReportPage> {
     final timeFormat = DateFormat('hh:mm a');
 
     final isCompleted = item.isCompleted;
-    final statusColor = isCompleted ? const Color(0xFF16A34A) : const Color(0xFFD97706);
-    final statusBg = isCompleted ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7);
+    final statusColor = isCompleted
+        ? const Color(0xFF16A34A)
+        : const Color(0xFFD97706);
+    final statusBg = isCompleted
+        ? const Color(0xFFDCFCE7)
+        : const Color(0xFFFEF3C7);
 
     return InkWell(
       onTap: () {
@@ -1250,7 +1378,9 @@ class _ReportPageState extends State<ReportPage> {
                     fontFamily: 'PlusJakartaSans',
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: item.grossWeightKg != null ? const Color(0xFF1E293B) : const Color(0xFF94A3B8),
+                    color: item.grossWeightKg != null
+                        ? const Color(0xFF1E293B)
+                        : const Color(0xFF94A3B8),
                   ),
                 ),
               ),
@@ -1268,7 +1398,9 @@ class _ReportPageState extends State<ReportPage> {
                     fontFamily: 'PlusJakartaSans',
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: item.tareWeightKg != null ? const Color(0xFF1E293B) : const Color(0xFF94A3B8),
+                    color: item.tareWeightKg != null
+                        ? const Color(0xFF1E293B)
+                        : const Color(0xFF94A3B8),
                   ),
                 ),
               ),
@@ -1286,7 +1418,9 @@ class _ReportPageState extends State<ReportPage> {
                     fontFamily: 'PlusJakartaSans',
                     fontSize: 12.5,
                     fontWeight: FontWeight.w800,
-                    color: item.netWeightKg != null ? const Color(0xFF0284C7) : const Color(0xFF94A3B8),
+                    color: item.netWeightKg != null
+                        ? const Color(0xFF0284C7)
+                        : const Color(0xFF94A3B8),
                   ),
                 ),
               ),
@@ -1312,11 +1446,16 @@ class _ReportPageState extends State<ReportPage> {
               flex: 11,
               child: Center(
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: statusBg,
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: statusColor.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -1350,7 +1489,11 @@ class _ReportPageState extends State<ReportPage> {
               flex: 8,
               child: Center(
                 child: IconButton(
-                  icon: const Icon(Icons.visibility_outlined, size: 18, color: Color(0xFF0284C7)),
+                  icon: const Icon(
+                    Icons.visibility_outlined,
+                    size: 18,
+                    color: Color(0xFF0284C7),
+                  ),
                   tooltip: 'View Weighment Details',
                   splashRadius: 18,
                   onPressed: () {
@@ -1386,7 +1529,6 @@ class _ReportPageState extends State<ReportPage> {
     }
   }
 }
-
 
 class _HeaderCell extends StatelessWidget {
   final String label;

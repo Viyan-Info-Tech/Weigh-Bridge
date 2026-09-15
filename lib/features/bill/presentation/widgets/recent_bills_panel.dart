@@ -22,7 +22,8 @@ class RecentBillsPanel extends StatefulWidget {
   final ValueChanged<Weighment>? onBillSelected;
   final ValueChanged<int>? onLoadPendingBill;
   final ValueChanged<DateTime>? onDateChanged;
-  final void Function(DateTime? startDate, DateTime? endDate)? onDateRangeChanged;
+  final void Function(DateTime? startDate, DateTime? endDate)?
+  onDateRangeChanged;
   final FocusNode? searchFocusNode;
   final bool shrinkWrap;
 
@@ -160,8 +161,11 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
       if (_hasDateRange) {
         final start = widget.billsStartDate;
         final end = widget.billsEndDate;
-        final billDate =
-            DateTime(bill.createdAt.year, bill.createdAt.month, bill.createdAt.day);
+        final billDate = DateTime(
+          bill.createdAt.year,
+          bill.createdAt.month,
+          bill.createdAt.day,
+        );
         if (start != null && end != null) {
           final s = DateTime(start.year, start.month, start.day);
           final e = DateTime(end.year, end.month, end.day);
@@ -218,25 +222,33 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
       final end = widget.billsEndDate;
       if (start != null && end != null) {
         if (_isSameDay(start, end)) {
-          countLabel = '${displayBills.length} · ${DateFormat('dd MMM').format(start)}';
-          subtitle = 'Weighments for ${DateFormat('dd MMM yyyy').format(start)}';
+          countLabel =
+              '${displayBills.length} · ${DateFormat('dd MMM').format(start)}';
+          subtitle =
+              'Weighments for ${DateFormat('dd MMM yyyy').format(start)}';
         } else {
-          countLabel = '${displayBills.length} · ${DateFormat('dd MMM').format(start)} – ${DateFormat('dd MMM').format(end)}';
-          subtitle = 'Weighments from ${DateFormat('dd MMM').format(start)} – ${DateFormat('dd MMM yyyy').format(end)}';
+          countLabel =
+              '${displayBills.length} · ${DateFormat('dd MMM').format(start)} – ${DateFormat('dd MMM').format(end)}';
+          subtitle =
+              'Weighments from ${DateFormat('dd MMM').format(start)} – ${DateFormat('dd MMM yyyy').format(end)}';
         }
       } else if (start != null) {
-        countLabel = '${displayBills.length} · From ${DateFormat('dd MMM').format(start)}';
+        countLabel =
+            '${displayBills.length} · From ${DateFormat('dd MMM').format(start)}';
         subtitle = 'Weighments from ${DateFormat('dd MMM yyyy').format(start)}';
       } else {
-        countLabel = '${displayBills.length} · Until ${DateFormat('dd MMM').format(end!)}';
+        countLabel =
+            '${displayBills.length} · Until ${DateFormat('dd MMM').format(end!)}';
         subtitle = 'Weighments until ${DateFormat('dd MMM yyyy').format(end)}';
       }
     } else if (_isViewingToday) {
       countLabel = '${displayBills.length} Today';
       subtitle = "Today's weighments";
     } else {
-      countLabel = '${displayBills.length} · ${DateFormat('dd MMM').format(_selectedDay)}';
-      subtitle = 'Weighments for ${DateFormat('dd MMM yyyy').format(_selectedDay)}';
+      countLabel =
+          '${displayBills.length} · ${DateFormat('dd MMM').format(_selectedDay)}';
+      subtitle =
+          'Weighments for ${DateFormat('dd MMM yyyy').format(_selectedDay)}';
     }
 
     return LayoutBuilder(
@@ -276,7 +288,9 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF0D3B82).withValues(alpha: 0.1),
+                            color: const Color(
+                              0xFF0D3B82,
+                            ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: const Icon(
@@ -387,10 +401,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
 
                     // 3. Search & Filter Bar (Adaptive Layout)
                     if (isCompact) ...[
-                      SizedBox(
-                        height: 38,
-                        child: _buildSearchTextField(),
-                      ),
+                      SizedBox(height: 38, child: _buildSearchTextField()),
                       const SizedBox(height: 8),
                       Row(
                         children: [
@@ -545,9 +556,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
               Icon(
                 Icons.calendar_today_rounded,
                 size: 14,
-                color: hasActiveFilter
-                    ? Colors.white
-                    : const Color(0xFF64748B),
+                color: hasActiveFilter ? Colors.white : const Color(0xFF64748B),
               ),
               if (hasActiveFilter) ...[
                 const SizedBox(width: 6),
@@ -606,10 +615,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
           _searchQuery = val;
         });
       },
-      style: const TextStyle(
-        fontFamily: 'PlusJakartaSans',
-        fontSize: 13,
-      ),
+      style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13),
       decoration: InputDecoration(
         hintText: 'Search bill #, vehicle, or party...',
         hintStyle: TextStyle(
@@ -624,10 +630,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
         ),
         suffixIcon: _searchQuery.isNotEmpty
             ? IconButton(
-                icon: const Icon(
-                  Icons.clear_rounded,
-                  size: 16,
-                ),
+                icon: const Icon(Icons.clear_rounded, size: 16),
                 onPressed: () {
                   _searchController.clear();
                   setState(() {
@@ -638,27 +641,18 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
             : null,
         filled: true,
         fillColor: const Color(0xFFF8FAFC),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 0,
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(
-            color: Color(0xFFE2E8F0),
-          ),
+          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(
-            color: Color(0xFFE2E8F0),
-          ),
+          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(
-            color: Color(0xFF0D3B82),
-          ),
+          borderSide: const BorderSide(color: Color(0xFF0D3B82)),
         ),
       ),
     );
@@ -668,12 +662,14 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
     final vehicleNo = _getVehicleNumber(bill.vehicleId);
     final partyName = _getPartyName(bill.partyId);
     final materialName = _getMaterialName(bill.materialId);
-    final isCompleted = bill.status.toLowerCase() == 'completed' || bill.isCompleted;
+    final isCompleted =
+        bill.status.toLowerCase() == 'completed' || bill.isCompleted;
     final isTareFirst = bill.firstWeightType.toUpperCase() == 'TARE';
     final timeStr = DateFormat('hh:mm a').format(bill.createdAt);
     final dateStr = DateFormat('dd MMM').format(bill.createdAt);
-    final timestampLabel =
-        _isSameDay(bill.createdAt, DateTime.now()) ? timeStr : '$dateStr, $timeStr';
+    final timestampLabel = _isSameDay(bill.createdAt, DateTime.now())
+        ? timeStr
+        : '$dateStr, $timeStr';
 
     final String statusBadgeText;
     final Color statusBadgeBg;
@@ -708,20 +704,28 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
     }
 
     if (isCompleted) {
-      grossDisplay = bill.grossWeightKg != null ? '${toDisplay(bill.grossWeightKg)!.toStringAsFixed(decimals)} $unit' : '—';
+      grossDisplay = bill.grossWeightKg != null
+          ? '${toDisplay(bill.grossWeightKg)!.toStringAsFixed(decimals)} $unit'
+          : '—';
       grossColor = null;
-      tareDisplay = bill.tareWeightKg != null ? '${toDisplay(bill.tareWeightKg)!.toStringAsFixed(decimals)} $unit' : '—';
+      tareDisplay = bill.tareWeightKg != null
+          ? '${toDisplay(bill.tareWeightKg)!.toStringAsFixed(decimals)} $unit'
+          : '—';
       tareColor = null;
-      netDisplay = bill.netWeightKg != null ? '${toDisplay(bill.netWeightKg)!.toStringAsFixed(decimals)} $unit' : '—';
+      netDisplay = bill.netWeightKg != null
+          ? '${toDisplay(bill.netWeightKg)!.toStringAsFixed(decimals)} $unit'
+          : '—';
     } else {
       netDisplay = '—';
       if (isTareFirst) {
         grossDisplay = '—';
         grossColor = null;
-        tareDisplay = '${(toDisplay(bill.firstWeightKg) ?? 0).toStringAsFixed(decimals)} $unit';
+        tareDisplay =
+            '${(toDisplay(bill.firstWeightKg) ?? 0).toStringAsFixed(decimals)} $unit';
         tareColor = null;
       } else {
-        grossDisplay = '${(toDisplay(bill.firstWeightKg) ?? 0).toStringAsFixed(decimals)} $unit';
+        grossDisplay =
+            '${(toDisplay(bill.firstWeightKg) ?? 0).toStringAsFixed(decimals)} $unit';
         grossColor = null;
         tareDisplay = 'Waiting...';
         tareColor = const Color(0xFFD97706);
@@ -886,11 +890,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                   textColor: grossColor,
                 ),
                 _buildVerticalLine(),
-                _buildWeightCell(
-                  'Tare Wt',
-                  tareDisplay,
-                  textColor: tareColor,
-                ),
+                _buildWeightCell('Tare Wt', tareDisplay, textColor: tareColor),
                 _buildVerticalLine(),
                 _buildWeightCell(
                   'Net Weight',
@@ -949,7 +949,10 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                   label: const Text('Continue'),
                   style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFFD97706),
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                   ),
                 ),
               ] else
@@ -1038,12 +1041,12 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
               _searchQuery.isNotEmpty
                   ? 'No matching billings'
                   : _filterType == 'PENDING'
-                      ? 'No Pending Billings'
-                      : _filterType == 'COMPLETED'
-                          ? 'No Completed Billings'
-                          : _isViewingToday
-                              ? 'No billings today'
-                              : 'No billings on this date',
+                  ? 'No Pending Billings'
+                  : _filterType == 'COMPLETED'
+                  ? 'No Completed Billings'
+                  : _isViewingToday
+                  ? 'No billings today'
+                  : 'No billings on this date',
               style: const TextStyle(
                 fontFamily: 'PlusJakartaSans',
                 fontSize: 15,
@@ -1056,12 +1059,12 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
               _searchQuery.isNotEmpty
                   ? 'Try searching with a different keyword'
                   : _filterType == 'PENDING'
-                      ? 'All weighments are complete.'
-                      : _filterType == 'COMPLETED'
-                          ? 'No completed weighments yet.'
-                          : _isViewingToday
-                              ? "Today's weighment tickets will appear here as they are saved."
-                              : 'Choose another date or open Report for historical bills.',
+                  ? 'All weighments are complete.'
+                  : _filterType == 'COMPLETED'
+                  ? 'No completed weighments yet.'
+                  : _isViewingToday
+                  ? "Today's weighment tickets will appear here as they are saved."
+                  : 'Choose another date or open Report for historical bills.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'PlusJakartaSans',

@@ -17,7 +17,8 @@ class MockLogoutUseCase extends Mock implements LogoutUseCase {}
 
 class MockGetCurrentUserUseCase extends Mock implements GetCurrentUserUseCase {}
 
-class MockIsAuthenticatedUseCase extends Mock implements IsAuthenticatedUseCase {}
+class MockIsAuthenticatedUseCase extends Mock
+    implements IsAuthenticatedUseCase {}
 
 void main() {
   late AuthBloc authBloc;
@@ -60,84 +61,100 @@ void main() {
     });
 
     group('AppStarted', () {
-      test('emits [checking, unauthenticated] when not authenticated', () async {
-        when(() => mockIsAuthenticatedUseCase()).thenAnswer(
-          (_) async => const Right(false),
-        );
+      test(
+        'emits [checking, unauthenticated] when not authenticated',
+        () async {
+          when(
+            () => mockIsAuthenticatedUseCase(),
+          ).thenAnswer((_) async => const Right(false));
 
-        authBloc.add(const AppStarted());
+          authBloc.add(const AppStarted());
 
-        await expectLater(
-          authBloc.stream,
-          emitsInOrder([
-            const AuthState(status: AuthStatus.checking),
-            const AuthState(status: AuthStatus.unauthenticated),
-          ]),
-        );
-      });
+          await expectLater(
+            authBloc.stream,
+            emitsInOrder([
+              const AuthState(status: AuthStatus.checking),
+              const AuthState(status: AuthStatus.unauthenticated),
+            ]),
+          );
+        },
+      );
 
-      test('emits [checking, authenticated] when authenticated and user exists', () async {
-        when(() => mockIsAuthenticatedUseCase()).thenAnswer(
-          (_) async => const Right(true),
-        );
-        when(() => mockGetCurrentUserUseCase()).thenAnswer(
-          (_) async => Right(testUser),
-        );
+      test(
+        'emits [checking, authenticated] when authenticated and user exists',
+        () async {
+          when(
+            () => mockIsAuthenticatedUseCase(),
+          ).thenAnswer((_) async => const Right(true));
+          when(
+            () => mockGetCurrentUserUseCase(),
+          ).thenAnswer((_) async => Right(testUser));
 
-        authBloc.add(const AppStarted());
+          authBloc.add(const AppStarted());
 
-        await expectLater(
-          authBloc.stream,
-          emitsInOrder([
-            const AuthState(status: AuthStatus.checking),
-            AuthState(status: AuthStatus.authenticated, user: testUser),
-          ]),
-        );
-      });
+          await expectLater(
+            authBloc.stream,
+            emitsInOrder([
+              const AuthState(status: AuthStatus.checking),
+              AuthState(status: AuthStatus.authenticated, user: testUser),
+            ]),
+          );
+        },
+      );
 
-      test('emits [checking, unauthenticated] when authenticated but user is null', () async {
-        when(() => mockIsAuthenticatedUseCase()).thenAnswer(
-          (_) async => const Right(true),
-        );
-        when(() => mockGetCurrentUserUseCase()).thenAnswer(
-          (_) async => const Right(null),
-        );
+      test(
+        'emits [checking, unauthenticated] when authenticated but user is null',
+        () async {
+          when(
+            () => mockIsAuthenticatedUseCase(),
+          ).thenAnswer((_) async => const Right(true));
+          when(
+            () => mockGetCurrentUserUseCase(),
+          ).thenAnswer((_) async => const Right(null));
 
-        authBloc.add(const AppStarted());
+          authBloc.add(const AppStarted());
 
-        await expectLater(
-          authBloc.stream,
-          emitsInOrder([
-            const AuthState(status: AuthStatus.checking),
-            const AuthState(status: AuthStatus.unauthenticated),
-          ]),
-        );
-      });
+          await expectLater(
+            authBloc.stream,
+            emitsInOrder([
+              const AuthState(status: AuthStatus.checking),
+              const AuthState(status: AuthStatus.unauthenticated),
+            ]),
+          );
+        },
+      );
     });
 
     group('LoginSubmitted', () {
-      test('emits [authenticating, authenticated] on successful login', () async {
-        when(() => mockLoginUseCase('admin', 'Admin@123')).thenAnswer(
-          (_) async => Right(testUser),
-        );
+      test(
+        'emits [authenticating, authenticated] on successful login',
+        () async {
+          when(
+            () => mockLoginUseCase('admin', 'Admin@123'),
+          ).thenAnswer((_) async => Right(testUser));
 
-        authBloc.add(const LoginSubmitted(username: 'admin', password: 'Admin@123'));
+          authBloc.add(
+            const LoginSubmitted(username: 'admin', password: 'Admin@123'),
+          );
 
-        await expectLater(
-          authBloc.stream,
-          emitsInOrder([
-            const AuthState(status: AuthStatus.authenticating),
-            AuthState(status: AuthStatus.authenticated, user: testUser),
-          ]),
-        );
-      });
+          await expectLater(
+            authBloc.stream,
+            emitsInOrder([
+              const AuthState(status: AuthStatus.authenticating),
+              AuthState(status: AuthStatus.authenticated, user: testUser),
+            ]),
+          );
+        },
+      );
 
       test('emits [failure] when login fails', () async {
-        when(() => mockLoginUseCase('admin', 'wrongpassword')).thenAnswer(
-          (_) async => const Left(AuthenticationFailure()),
-        );
+        when(
+          () => mockLoginUseCase('admin', 'wrongpassword'),
+        ).thenAnswer((_) async => const Left(AuthenticationFailure()));
 
-        authBloc.add(const LoginSubmitted(username: 'admin', password: 'wrongpassword'));
+        authBloc.add(
+          const LoginSubmitted(username: 'admin', password: 'wrongpassword'),
+        );
 
         await expectLater(
           authBloc.stream,
@@ -180,7 +197,9 @@ void main() {
       });
 
       test('emits [failure] when username is whitespace only', () async {
-        authBloc.add(const LoginSubmitted(username: '   ', password: 'Admin@123'));
+        authBloc.add(
+          const LoginSubmitted(username: '   ', password: 'Admin@123'),
+        );
 
         await expectLater(
           authBloc.stream,
@@ -194,11 +213,13 @@ void main() {
       });
 
       test('wrong username returns authentication failure', () async {
-        when(() => mockLoginUseCase('wronguser', 'Admin@123')).thenAnswer(
-          (_) async => const Left(AuthenticationFailure()),
-        );
+        when(
+          () => mockLoginUseCase('wronguser', 'Admin@123'),
+        ).thenAnswer((_) async => const Left(AuthenticationFailure()));
 
-        authBloc.add(const LoginSubmitted(username: 'wronguser', password: 'Admin@123'));
+        authBloc.add(
+          const LoginSubmitted(username: 'wronguser', password: 'Admin@123'),
+        );
 
         await expectLater(
           authBloc.stream,
@@ -215,9 +236,9 @@ void main() {
 
     group('LogoutRequested', () {
       test('emits [unauthenticated] on logout', () async {
-        when(() => mockLogoutUseCase()).thenAnswer(
-          (_) async => const Right(null),
-        );
+        when(
+          () => mockLogoutUseCase(),
+        ).thenAnswer((_) async => const Right(null));
 
         authBloc.add(const LogoutRequested());
 

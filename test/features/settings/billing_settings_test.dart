@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:weighbridge/core/database/app_database.dart' hide Weighment, Vehicle, Party;
+import 'package:weighbridge/core/database/app_database.dart'
+    hide Weighment, Vehicle, Party;
 import 'package:weighbridge/features/bill/domain/entities/weighment.dart';
 import 'package:weighbridge/features/bill/presentation/widgets/weighment_slip_dialog.dart';
 import 'package:weighbridge/features/party/domain/entities/party.dart';
@@ -40,62 +41,68 @@ void main() {
   });
 
   group('AppSettingsDao & Bill Number Generation Tests', () {
-    test('getSettings creates default settings row when database is empty', () async {
-      final settings = await dataSource.getSettings();
+    test(
+      'getSettings creates default settings row when database is empty',
+      () async {
+        final settings = await dataSource.getSettings();
 
-      expect(settings.businessName, 'VIYAN WEIGHBRIDGE');
-      expect(settings.billPrefix, 'WB');
-      expect(settings.billStartingNumber, 1);
-      expect(settings.billNumberDigits, 5);
-      expect(settings.weightUnit, 'ton');
-      expect(settings.receiptTitle, 'WEIGHMENT RECEIPT');
-      expect(settings.showSerialNumber, isTrue);
-      expect(settings.showGrossWeight, isTrue);
-    });
+        expect(settings.businessName, 'VIYAN WEIGHBRIDGE');
+        expect(settings.billPrefix, 'WB');
+        expect(settings.billStartingNumber, 1);
+        expect(settings.billNumberDigits, 5);
+        expect(settings.weightUnit, 'ton');
+        expect(settings.receiptTitle, 'WEIGHMENT RECEIPT');
+        expect(settings.showSerialNumber, isTrue);
+        expect(settings.showGrossWeight, isTrue);
+      },
+    );
 
-    test('generateNextBillNumber uses prefix, digits, and starting number correctly', () async {
-      // 1. Initial next bill when no weighments exist
-      final next1 = await db.appSettingsDao.generateNextBillNumber(
-        prefix: 'WB',
-        digits: 5,
-        startingNumber: 1,
-      );
-      expect(next1, 'WB-00001');
+    test(
+      'generateNextBillNumber uses prefix, digits, and starting number correctly',
+      () async {
+        // 1. Initial next bill when no weighments exist
+        final next1 = await db.appSettingsDao.generateNextBillNumber(
+          prefix: 'WB',
+          digits: 5,
+          startingNumber: 1,
+        );
+        expect(next1, 'WB-00001');
 
-      // 2. Insert weighment with WB-00001
-      await db.customStatement(
-        "INSERT INTO weighments (bill_number, party_id, vehicle_id, material_id, payment_mode, first_weight_kg) "
-        "VALUES ('WB-00001', 1, 1, 1, 'Cash', 15000)",
-      );
+        // 2. Insert weighment with WB-00001
+        await db.customStatement(
+          "INSERT INTO weighments (bill_number, party_id, vehicle_id, material_id, payment_mode, first_weight_kg) "
+          "VALUES ('WB-00001', 1, 1, 1, 'Cash', 15000)",
+        );
 
-      final next2 = await db.appSettingsDao.generateNextBillNumber(
-        prefix: 'WB',
-        digits: 5,
-        startingNumber: 1,
-      );
-      expect(next2, 'WB-00002');
+        final next2 = await db.appSettingsDao.generateNextBillNumber(
+          prefix: 'WB',
+          digits: 5,
+          startingNumber: 1,
+        );
+        expect(next2, 'WB-00002');
 
-      // 3. Custom prefix INV with starting number 100
-      final invNext = await db.appSettingsDao.generateNextBillNumber(
-        prefix: 'INV',
-        digits: 6,
-        startingNumber: 100,
-      );
-      expect(invNext, 'INV-000100');
+        // 3. Custom prefix INV with starting number 100
+        final invNext = await db.appSettingsDao.generateNextBillNumber(
+          prefix: 'INV',
+          digits: 6,
+          startingNumber: 100,
+        );
+        expect(invNext, 'INV-000100');
 
-      // 4. Insert INV-000100 and verify increment to INV-000101
-      await db.customStatement(
-        "INSERT INTO weighments (bill_number, party_id, vehicle_id, material_id, payment_mode, first_weight_kg) "
-        "VALUES ('INV-000100', 1, 1, 1, 'Cash', 15000)",
-      );
+        // 4. Insert INV-000100 and verify increment to INV-000101
+        await db.customStatement(
+          "INSERT INTO weighments (bill_number, party_id, vehicle_id, material_id, payment_mode, first_weight_kg) "
+          "VALUES ('INV-000100', 1, 1, 1, 'Cash', 15000)",
+        );
 
-      final invNext2 = await db.appSettingsDao.generateNextBillNumber(
-        prefix: 'INV',
-        digits: 6,
-        startingNumber: 100,
-      );
-      expect(invNext2, 'INV-000101');
-    });
+        final invNext2 = await db.appSettingsDao.generateNextBillNumber(
+          prefix: 'INV',
+          digits: 6,
+          startingNumber: 100,
+        );
+        expect(invNext2, 'INV-000101');
+      },
+    );
 
     test('updateSettings updates configuration row in SQLite', () async {
       final initial = await dataSource.getSettings();
@@ -117,55 +124,77 @@ void main() {
   });
 
   group('SettingsBloc Tests', () {
-    test('LoadSettings loads settings successfully and emits loaded state', () async {
-      final bloc = SettingsBloc(
-        getSettingsUseCase: getSettingsUseCase,
-        updateSettingsUseCase: updateSettingsUseCase,
-      );
+    test(
+      'LoadSettings loads settings successfully and emits loaded state',
+      () async {
+        final bloc = SettingsBloc(
+          getSettingsUseCase: getSettingsUseCase,
+          updateSettingsUseCase: updateSettingsUseCase,
+        );
 
-      final expectation = expectLater(
-        bloc.stream,
-        emitsInOrder([
-          isA<SettingsState>().having((s) => s.status, 'status', SettingsStatus.loading),
-          isA<SettingsState>()
-              .having((s) => s.status, 'status', SettingsStatus.loaded)
-              .having((s) => s.settings?.businessName, 'businessName', 'VIYAN WEIGHBRIDGE'),
-        ]),
-      );
+        final expectation = expectLater(
+          bloc.stream,
+          emitsInOrder([
+            isA<SettingsState>().having(
+              (s) => s.status,
+              'status',
+              SettingsStatus.loading,
+            ),
+            isA<SettingsState>()
+                .having((s) => s.status, 'status', SettingsStatus.loaded)
+                .having(
+                  (s) => s.settings?.businessName,
+                  'businessName',
+                  'VIYAN WEIGHBRIDGE',
+                ),
+          ]),
+        );
 
-      bloc.add(const LoadSettings());
-      await expectation;
-      await bloc.close();
-    });
+        bloc.add(const LoadSettings());
+        await expectation;
+        await bloc.close();
+      },
+    );
 
-    test('UpdateBillingSettings updates settings and emits saved state', () async {
-      final bloc = SettingsBloc(
-        getSettingsUseCase: getSettingsUseCase,
-        updateSettingsUseCase: updateSettingsUseCase,
-      );
+    test(
+      'UpdateBillingSettings updates settings and emits saved state',
+      () async {
+        final bloc = SettingsBloc(
+          getSettingsUseCase: getSettingsUseCase,
+          updateSettingsUseCase: updateSettingsUseCase,
+        );
 
-      final newSettings = BillingSettings(
-        businessName: 'APEX WEIGHBRIDGE',
-        billPrefix: 'APX',
-        billStartingNumber: 50,
-        billNumberDigits: 5,
-        updatedAt: DateTime.now(),
-      );
+        final newSettings = BillingSettings(
+          businessName: 'APEX WEIGHBRIDGE',
+          billPrefix: 'APX',
+          billStartingNumber: 50,
+          billNumberDigits: 5,
+          updatedAt: DateTime.now(),
+        );
 
-      final expectation = expectLater(
-        bloc.stream,
-        emitsInOrder([
-          isA<SettingsState>().having((s) => s.status, 'status', SettingsStatus.saving),
-          isA<SettingsState>()
-              .having((s) => s.status, 'status', SettingsStatus.saved)
-              .having((s) => s.settings?.businessName, 'businessName', 'APEX WEIGHBRIDGE'),
-        ]),
-      );
+        final expectation = expectLater(
+          bloc.stream,
+          emitsInOrder([
+            isA<SettingsState>().having(
+              (s) => s.status,
+              'status',
+              SettingsStatus.saving,
+            ),
+            isA<SettingsState>()
+                .having((s) => s.status, 'status', SettingsStatus.saved)
+                .having(
+                  (s) => s.settings?.businessName,
+                  'businessName',
+                  'APEX WEIGHBRIDGE',
+                ),
+          ]),
+        );
 
-      bloc.add(UpdateBillingSettings(newSettings));
-      await expectation;
-      await bloc.close();
-    });
+        bloc.add(UpdateBillingSettings(newSettings));
+        await expectation;
+        await bloc.close();
+      },
+    );
   });
 
   group('WeighmentSlipDialog Dynamic Settings Tests', () {
@@ -204,55 +233,63 @@ void main() {
       updatedAt: now,
     );
 
-    testWidgets('renders custom business name and respects hidden field flags', (tester) async {
-      tester.view.physicalSize = const Size(1200, 900);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
+    testWidgets(
+      'renders custom business name and respects hidden field flags',
+      (tester) async {
+        tester.view.physicalSize = const Size(1200, 900);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(() {
+          tester.view.resetPhysicalSize();
+          tester.view.resetDevicePixelRatio();
+        });
 
-      final customSettings = BillingSettings(
-        businessName: 'CUSTOM INDUSTRIAL WEIGHBRIDGE',
-        receiptTitle: 'OFFICIAL WEIGH SLIP',
-        showRemarks: false, // Hidden!
-        showParty: false, // Hidden!
-        footerNote: 'Mandatory verification before gate exit.',
-        updatedAt: now,
-      );
+        final customSettings = BillingSettings(
+          businessName: 'CUSTOM INDUSTRIAL WEIGHBRIDGE',
+          receiptTitle: 'OFFICIAL WEIGH SLIP',
+          showRemarks: false, // Hidden!
+          showParty: false, // Hidden!
+          footerNote: 'Mandatory verification before gate exit.',
+          updatedAt: now,
+        );
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: WeighmentSlipDialog(
-              bill: testBill,
-              vehicle: testVehicle,
-              party: testParty,
-              materialName: 'River Sand',
-              settings: customSettings,
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: WeighmentSlipDialog(
+                bill: testBill,
+                vehicle: testVehicle,
+                party: testParty,
+                materialName: 'River Sand',
+                settings: customSettings,
+              ),
             ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      // Custom business name and title are displayed
-      expect(find.text('CUSTOM INDUSTRIAL WEIGHBRIDGE'), findsOneWidget);
-      expect(find.text('OFFICIAL WEIGH SLIP'), findsOneWidget);
+        // Custom business name and title are displayed
+        expect(find.text('CUSTOM INDUSTRIAL WEIGHBRIDGE'), findsOneWidget);
+        expect(find.text('OFFICIAL WEIGH SLIP'), findsOneWidget);
 
-      // Hidden fields are omitted
-      expect(find.text('Customer special order'), findsNothing);
-      expect(find.text('UltraTech Cement'), findsNothing);
+        // Hidden fields are omitted
+        expect(find.text('Customer special order'), findsNothing);
+        expect(find.text('UltraTech Cement'), findsNothing);
 
-      // Visible fields are present
-      expect(find.text('MH 12 AB 1234'), findsOneWidget);
-      expect(find.text('River Sand'), findsOneWidget);
-      expect(find.text('Note: Mandatory verification before gate exit.'), findsOneWidget);
-    });
+        // Visible fields are present
+        expect(find.text('MH 12 AB 1234'), findsOneWidget);
+        expect(find.text('River Sand'), findsOneWidget);
+        expect(
+          find.text('Note: Mandatory verification before gate exit.'),
+          findsOneWidget,
+        );
+      },
+    );
   });
 
   group('SettingsPage Widget Tests', () {
-    testWidgets('renders all settings sections and live preview', (tester) async {
+    testWidgets('renders all settings sections and live preview', (
+      tester,
+    ) async {
       tester.view.physicalSize = const Size(1400, 900);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
@@ -269,9 +306,7 @@ void main() {
       await tester.pumpWidget(
         BlocProvider<SettingsBloc>.value(
           value: settingsBloc,
-          child: const MaterialApp(
-            home: SettingsPage(),
-          ),
+          child: const MaterialApp(home: SettingsPage()),
         ),
       );
       await tester.pumpAndSettle();
@@ -298,8 +333,9 @@ void main() {
       await settingsBloc.close();
     });
 
-    testWidgets('settings controls remain visible at minimum desktop sizes',
-        (tester) async {
+    testWidgets('settings controls remain visible at minimum desktop sizes', (
+      tester,
+    ) async {
       final sizes = <Size>[
         const Size(1400, 900),
         const Size(1100, 720),
@@ -321,9 +357,7 @@ void main() {
         await tester.pumpWidget(
           BlocProvider<SettingsBloc>.value(
             value: settingsBloc,
-            child: const MaterialApp(
-              home: SettingsPage(),
-            ),
+            child: const MaterialApp(home: SettingsPage()),
           ),
         );
         await tester.pumpAndSettle();

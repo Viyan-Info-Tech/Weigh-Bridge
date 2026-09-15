@@ -32,5 +32,13 @@ class LocalUserModel extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, username, passwordHash, role, isActive, createdAt, updatedAt];
+  List<Object?> get props => [
+    id,
+    username,
+    passwordHash,
+    role,
+    isActive,
+    createdAt,
+    updatedAt,
+  ];
 }

@@ -138,7 +138,9 @@ class _QuickAddMaterialDialogState extends State<QuickAddMaterialDialog> {
                       ),
                     ),
                     InkWell(
-                      onTap: _isLoading ? null : () => Navigator.of(context).pop(),
+                      onTap: _isLoading
+                          ? null
+                          : () => Navigator.of(context).pop(),
                       borderRadius: BorderRadius.circular(20),
                       child: Padding(
                         padding: const EdgeInsets.all(4),
@@ -156,7 +158,10 @@ class _QuickAddMaterialDialogState extends State<QuickAddMaterialDialog> {
                   const SizedBox(height: 16),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFEF2F2),
                       borderRadius: BorderRadius.circular(10),
@@ -279,7 +284,9 @@ class _QuickAddMaterialDialogState extends State<QuickAddMaterialDialog> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                      onPressed: _isLoading
+                          ? null
+                          : () => Navigator.of(context).pop(),
                       style: TextButton.styleFrom(
                         foregroundColor: const Color(0xFF64748B),
                         padding: const EdgeInsets.symmetric(
@@ -305,8 +312,9 @@ class _QuickAddMaterialDialogState extends State<QuickAddMaterialDialog> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF0D3B82),
                         foregroundColor: Colors.white,
-                        disabledBackgroundColor:
-                            const Color(0xFF0D3B82).withValues(alpha: 0.6),
+                        disabledBackgroundColor: const Color(
+                          0xFF0D3B82,
+                        ).withValues(alpha: 0.6),
                         disabledForegroundColor: Colors.white70,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 20,

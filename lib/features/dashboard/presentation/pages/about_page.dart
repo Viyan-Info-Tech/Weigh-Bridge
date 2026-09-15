@@ -211,8 +211,10 @@ class AboutPage extends StatelessWidget {
             runSpacing: 8,
             children: values.map((v) {
               return Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(20),
@@ -265,8 +267,10 @@ class AboutPage extends StatelessWidget {
             children: solutions.map((tuple) {
               final (icon, label) = tuple;
               return Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(10),
@@ -274,11 +278,7 @@ class AboutPage extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      icon,
-                      size: 16,
-                      color: const Color(0xFF0F52BA),
-                    ),
+                    Icon(icon, size: 16, color: const Color(0xFF0F52BA)),
                     const SizedBox(width: 6),
                     Text(
                       label,
@@ -405,9 +405,7 @@ class AboutPage extends StatelessWidget {
         SnackBar(
           content: Text('$value copied to clipboard'),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       );
     }
@@ -480,9 +478,7 @@ class AboutPage extends StatelessWidget {
         SnackBar(
           content: Text('$value copied to clipboard'),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       );
     }

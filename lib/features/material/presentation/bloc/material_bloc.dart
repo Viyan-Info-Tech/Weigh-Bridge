@@ -18,11 +18,11 @@ class MaterialBloc extends Bloc<MaterialEvent, MaterialState> {
     required CreateMaterialUseCase createMaterialUseCase,
     required DeleteMaterialUseCase deleteMaterialUseCase,
     required MaterialItemRepository materialRepository,
-  })  : _loadMaterialsUseCase = loadMaterialsUseCase,
-        _createMaterialUseCase = createMaterialUseCase,
-        _deleteMaterialUseCase = deleteMaterialUseCase,
-        _materialRepository = materialRepository,
-        super(const MaterialState()) {
+  }) : _loadMaterialsUseCase = loadMaterialsUseCase,
+       _createMaterialUseCase = createMaterialUseCase,
+       _deleteMaterialUseCase = deleteMaterialUseCase,
+       _materialRepository = materialRepository,
+       super(const MaterialState()) {
     on<LoadMaterials>(_onLoadMaterials);
     on<LoadMaterialById>(_onLoadMaterialById);
     on<CreateMaterialRequested>(_onCreateMaterial);
@@ -33,44 +33,82 @@ class MaterialBloc extends Bloc<MaterialEvent, MaterialState> {
     on<FilterMaterialsByStatus>(_onFilterByStatus);
   }
 
-  Future<void> _onLoadMaterials(LoadMaterials event, Emitter<MaterialState> emit) async {
+  Future<void> _onLoadMaterials(
+    LoadMaterials event,
+    Emitter<MaterialState> emit,
+  ) async {
     emit(state.copyWith(status: AppMaterialStatus.loading));
     try {
       final materials = await _loadMaterialsUseCase(
         isActive: event.filterActive,
         category: event.filterCategory,
       );
-      emit(state.copyWith(status: AppMaterialStatus.loaded, materials: materials));
-    } catch (e) {
-      emit(state.copyWith(status: AppMaterialStatus.error, errorMessage: e.toString()));
-    }
-  }
-
-  Future<void> _onLoadMaterialById(LoadMaterialById event, Emitter<MaterialState> emit) async {
-    emit(state.copyWith(status: AppMaterialStatus.loading));
-    try {
-      final material = await _materialRepository.getMaterialById(event.materialId);
-      emit(state.copyWith(status: AppMaterialStatus.loaded, selectedMaterial: material));
-    } catch (e) {
-      emit(state.copyWith(status: AppMaterialStatus.error, errorMessage: e.toString()));
-    }
-  }
-
-  Future<void> _onCreateMaterial(CreateMaterialRequested event, Emitter<MaterialState> emit) async {
-    emit(state.copyWith(status: AppMaterialStatus.loading));
-    try {
-      await _createMaterialUseCase(
-        name: event.name,
-        category: event.category,
+      emit(
+        state.copyWith(status: AppMaterialStatus.loaded, materials: materials),
       );
-      emit(state.copyWith(status: AppMaterialStatus.success, successMessage: 'Material created successfully'));
+    } catch (e) {
+      emit(
+        state.copyWith(
+          status: AppMaterialStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
+    }
+  }
+
+  Future<void> _onLoadMaterialById(
+    LoadMaterialById event,
+    Emitter<MaterialState> emit,
+  ) async {
+    emit(state.copyWith(status: AppMaterialStatus.loading));
+    try {
+      final material = await _materialRepository.getMaterialById(
+        event.materialId,
+      );
+      emit(
+        state.copyWith(
+          status: AppMaterialStatus.loaded,
+          selectedMaterial: material,
+        ),
+      );
+    } catch (e) {
+      emit(
+        state.copyWith(
+          status: AppMaterialStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
+    }
+  }
+
+  Future<void> _onCreateMaterial(
+    CreateMaterialRequested event,
+    Emitter<MaterialState> emit,
+  ) async {
+    emit(state.copyWith(status: AppMaterialStatus.loading));
+    try {
+      await _createMaterialUseCase(name: event.name, category: event.category);
+      emit(
+        state.copyWith(
+          status: AppMaterialStatus.success,
+          successMessage: 'Material created successfully',
+        ),
+      );
       add(const LoadMaterials());
     } catch (e) {
-      emit(state.copyWith(status: AppMaterialStatus.error, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          status: AppMaterialStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
-  Future<void> _onUpdateMaterial(UpdateMaterialRequested event, Emitter<MaterialState> emit) async {
+  Future<void> _onUpdateMaterial(
+    UpdateMaterialRequested event,
+    Emitter<MaterialState> emit,
+  ) async {
     emit(state.copyWith(status: AppMaterialStatus.loading));
     try {
       await _materialRepository.updateMaterial(
@@ -78,49 +116,102 @@ class MaterialBloc extends Bloc<MaterialEvent, MaterialState> {
         name: event.name,
         category: event.category,
       );
-      emit(state.copyWith(status: AppMaterialStatus.success, successMessage: 'Material updated successfully'));
+      emit(
+        state.copyWith(
+          status: AppMaterialStatus.success,
+          successMessage: 'Material updated successfully',
+        ),
+      );
       add(const LoadMaterials());
     } catch (e) {
-      emit(state.copyWith(status: AppMaterialStatus.error, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          status: AppMaterialStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
-  Future<void> _onDeactivateMaterial(DeactivateMaterialRequested event, Emitter<MaterialState> emit) async {
+  Future<void> _onDeactivateMaterial(
+    DeactivateMaterialRequested event,
+    Emitter<MaterialState> emit,
+  ) async {
     emit(state.copyWith(status: AppMaterialStatus.loading));
     try {
       await _materialRepository.deactivateMaterial(event.materialId);
-      emit(state.copyWith(status: AppMaterialStatus.success, successMessage: 'Material deactivated'));
+      emit(
+        state.copyWith(
+          status: AppMaterialStatus.success,
+          successMessage: 'Material deactivated',
+        ),
+      );
       add(const LoadMaterials());
     } catch (e) {
-      emit(state.copyWith(status: AppMaterialStatus.error, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          status: AppMaterialStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
-  Future<void> _onDeleteMaterial(DeleteMaterialRequested event, Emitter<MaterialState> emit) async {
+  Future<void> _onDeleteMaterial(
+    DeleteMaterialRequested event,
+    Emitter<MaterialState> emit,
+  ) async {
     emit(state.copyWith(status: AppMaterialStatus.loading));
     try {
       await _deleteMaterialUseCase(event.materialId);
-      emit(state.copyWith(status: AppMaterialStatus.success, successMessage: 'Material deleted'));
+      emit(
+        state.copyWith(
+          status: AppMaterialStatus.success,
+          successMessage: 'Material deleted',
+        ),
+      );
       add(const LoadMaterials());
     } catch (e) {
-      emit(state.copyWith(status: AppMaterialStatus.error, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          status: AppMaterialStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
-  Future<void> _onSearchMaterials(SearchMaterials event, Emitter<MaterialState> emit) async {
+  Future<void> _onSearchMaterials(
+    SearchMaterials event,
+    Emitter<MaterialState> emit,
+  ) async {
     try {
       if (event.query.isEmpty) {
         add(const LoadMaterials());
         return;
       }
       final materials = await _materialRepository.searchMaterials(event.query);
-      emit(state.copyWith(status: AppMaterialStatus.loaded, materials: materials, searchQuery: event.query));
+      emit(
+        state.copyWith(
+          status: AppMaterialStatus.loaded,
+          materials: materials,
+          searchQuery: event.query,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(status: AppMaterialStatus.error, errorMessage: e.toString()));
+      emit(
+        state.copyWith(
+          status: AppMaterialStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
     }
   }
 
-  Future<void> _onFilterByStatus(FilterMaterialsByStatus event, Emitter<MaterialState> emit) async {
+  Future<void> _onFilterByStatus(
+    FilterMaterialsByStatus event,
+    Emitter<MaterialState> emit,
+  ) async {
     add(LoadMaterials(filterActive: event.isActive));
   }
 }

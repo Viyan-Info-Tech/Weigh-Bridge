@@ -19,11 +19,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required LogoutUseCase logoutUseCase,
     required GetCurrentUserUseCase getCurrentUserUseCase,
     required IsAuthenticatedUseCase isAuthenticatedUseCase,
-  })  : _loginUseCase = loginUseCase,
-        _logoutUseCase = logoutUseCase,
-        _getCurrentUserUseCase = getCurrentUserUseCase,
-        _isAuthenticatedUseCase = isAuthenticatedUseCase,
-        super(const AuthState()) {
+  }) : _loginUseCase = loginUseCase,
+       _logoutUseCase = logoutUseCase,
+       _getCurrentUserUseCase = getCurrentUserUseCase,
+       _isAuthenticatedUseCase = isAuthenticatedUseCase,
+       super(const AuthState()) {
     on<AppStarted>(_onAppStarted);
     on<LoginSubmitted>(_onLoginSubmitted);
     on<LogoutRequested>(_onLogoutRequested);
@@ -39,45 +39,66 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     );
 
     if (!isAuth) {
-      emit(state.copyWith(status: AuthStatus.unauthenticated, clearErrorMessage: true));
+      emit(
+        state.copyWith(
+          status: AuthStatus.unauthenticated,
+          clearErrorMessage: true,
+        ),
+      );
       return;
     }
 
     final userResult = await _getCurrentUserUseCase();
-    final user = userResult.fold(
-      (failure) => null,
-      (user) => user,
-    );
+    final user = userResult.fold((failure) => null, (user) => user);
 
     if (user != null) {
-      emit(state.copyWith(
-        status: AuthStatus.authenticated,
-        user: user,
-        clearErrorMessage: true,
-      ));
+      emit(
+        state.copyWith(
+          status: AuthStatus.authenticated,
+          user: user,
+          clearErrorMessage: true,
+        ),
+      );
     } else {
-      emit(state.copyWith(status: AuthStatus.unauthenticated, clearErrorMessage: true));
+      emit(
+        state.copyWith(
+          status: AuthStatus.unauthenticated,
+          clearErrorMessage: true,
+        ),
+      );
     }
   }
 
-  Future<void> _onLoginSubmitted(LoginSubmitted event, Emitter<AuthState> emit) async {
+  Future<void> _onLoginSubmitted(
+    LoginSubmitted event,
+    Emitter<AuthState> emit,
+  ) async {
     if (event.username.trim().isEmpty) {
-      emit(state.copyWith(
-        status: AuthStatus.failure,
-        errorMessage: 'Username is required',
-      ));
+      emit(
+        state.copyWith(
+          status: AuthStatus.failure,
+          errorMessage: 'Username is required',
+        ),
+      );
       return;
     }
 
     if (event.password.isEmpty) {
-      emit(state.copyWith(
-        status: AuthStatus.failure,
-        errorMessage: 'Password is required',
-      ));
+      emit(
+        state.copyWith(
+          status: AuthStatus.failure,
+          errorMessage: 'Password is required',
+        ),
+      );
       return;
     }
 
-    emit(state.copyWith(status: AuthStatus.authenticating, clearErrorMessage: true));
+    emit(
+      state.copyWith(
+        status: AuthStatus.authenticating,
+        clearErrorMessage: true,
+      ),
+    );
 
     final result = await _loginUseCase(event.username, event.password);
     result.fold(
@@ -89,25 +110,29 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           ValidationFailure() => failure.message,
           UnknownFailure() => failure.message,
         };
-        emit(state.copyWith(
-          status: AuthStatus.failure,
-          errorMessage: message,
-        ));
+        emit(state.copyWith(status: AuthStatus.failure, errorMessage: message));
       },
-      (user) => emit(state.copyWith(
-        status: AuthStatus.authenticated,
-        user: user,
-        clearErrorMessage: true,
-      )),
+      (user) => emit(
+        state.copyWith(
+          status: AuthStatus.authenticated,
+          user: user,
+          clearErrorMessage: true,
+        ),
+      ),
     );
   }
 
-  Future<void> _onLogoutRequested(LogoutRequested event, Emitter<AuthState> emit) async {
+  Future<void> _onLogoutRequested(
+    LogoutRequested event,
+    Emitter<AuthState> emit,
+  ) async {
     await _logoutUseCase();
-    emit(state.copyWith(
-      status: AuthStatus.unauthenticated,
-      user: null,
-      clearErrorMessage: true,
-    ));
+    emit(
+      state.copyWith(
+        status: AuthStatus.unauthenticated,
+        user: null,
+        clearErrorMessage: true,
+      ),
+    );
   }
 }

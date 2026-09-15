@@ -6,7 +6,7 @@ class SettingsRepositoryImpl implements SettingsRepository {
   final SettingsLocalDataSource _localDataSource;
 
   SettingsRepositoryImpl({required SettingsLocalDataSource localDataSource})
-      : _localDataSource = localDataSource;
+    : _localDataSource = localDataSource;
 
   @override
   Future<BillingSettings> getSettings() async {

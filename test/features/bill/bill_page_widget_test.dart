@@ -27,7 +27,8 @@ class MockMaterialRepository extends Mock implements MaterialItemRepository {}
 
 class MockSaveBillUseCase extends Mock implements SaveBillUseCase {}
 
-class MockLoadRecentBillsUseCase extends Mock implements LoadRecentBillsUseCase {}
+class MockLoadRecentBillsUseCase extends Mock
+    implements LoadRecentBillsUseCase {}
 
 class MockGenerateBillNumberUseCase extends Mock
     implements GenerateBillNumberUseCase {}
@@ -146,24 +147,33 @@ void main() {
     mockGenerateBillNumberUseCase = MockGenerateBillNumberUseCase();
     mockLoadPendingBillsUseCase = MockLoadPendingBillsUseCase();
 
-    when(() => mockPartyRepository.getAllActiveParties())
-        .thenAnswer((_) => Future.value(testParties));
-    when(() => mockVehicleRepository.getVehiclesByStatus(isActive: true))
-        .thenAnswer((_) => Future.value(testVehicles));
-    when(() => mockVehicleTypeRepository.getVehicleTypesByStatus(isActive: true))
-        .thenAnswer((_) => Future.value(testVehicleTypes));
-    when(() => mockVehicleTypeRepository.getAllVehicleTypes())
-        .thenAnswer((_) => Future.value(testVehicleTypes));
-    when(() => mockMaterialRepository.getMaterialsByStatus(isActive: true))
-        .thenAnswer((_) => Future.value(testMaterials));
-    when(() => mockLoadRecentBillsUseCase())
-        .thenAnswer((_) => Future.value(testBills));
-    when(() => mockLoadRecentBillsUseCase(date: any(named: 'date')))
-        .thenAnswer((_) => Future.value(testBills));
-    when(() => mockGenerateBillNumberUseCase())
-        .thenAnswer((_) => Future.value('WB-00002'));
-    when(() => mockLoadPendingBillsUseCase())
-        .thenAnswer((_) => Future.value([]));
+    when(
+      () => mockPartyRepository.getAllActiveParties(),
+    ).thenAnswer((_) => Future.value(testParties));
+    when(
+      () => mockVehicleRepository.getVehiclesByStatus(isActive: true),
+    ).thenAnswer((_) => Future.value(testVehicles));
+    when(
+      () => mockVehicleTypeRepository.getVehicleTypesByStatus(isActive: true),
+    ).thenAnswer((_) => Future.value(testVehicleTypes));
+    when(
+      () => mockVehicleTypeRepository.getAllVehicleTypes(),
+    ).thenAnswer((_) => Future.value(testVehicleTypes));
+    when(
+      () => mockMaterialRepository.getMaterialsByStatus(isActive: true),
+    ).thenAnswer((_) => Future.value(testMaterials));
+    when(
+      () => mockLoadRecentBillsUseCase(),
+    ).thenAnswer((_) => Future.value(testBills));
+    when(
+      () => mockLoadRecentBillsUseCase(date: any(named: 'date')),
+    ).thenAnswer((_) => Future.value(testBills));
+    when(
+      () => mockGenerateBillNumberUseCase(),
+    ).thenAnswer((_) => Future.value('WB-00002'));
+    when(
+      () => mockLoadPendingBillsUseCase(),
+    ).thenAnswer((_) => Future.value([]));
 
     billBloc = BillBloc(
       partyRepository: mockPartyRepository,
@@ -183,10 +193,7 @@ void main() {
 
   Widget createWidgetUnderTest() {
     return MaterialApp(
-      home: BlocProvider.value(
-        value: billBloc,
-        child: const BillPage(),
-      ),
+      home: BlocProvider.value(value: billBloc, child: const BillPage()),
     );
   }
 
@@ -211,8 +218,40 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('renders left-side form controls and right-side recent billings',
-      (tester) async {
+  testWidgets(
+    'renders left-side form controls and right-side recent billings',
+    (tester) async {
+      tester.view.physicalSize = const Size(1400, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await pumpBillPage(tester);
+
+      // Verify Header
+      expect(find.text('Viyan Weighbridge'), findsOneWidget);
+      expect(find.text('Billing & Ticket Management'), findsOneWidget);
+
+      // Verify Left Side: Truck Digital Scale & Quick Action Buttons
+      expect(find.text('kg'), findsOneWidget);
+      expect(find.text('Clear Form'), findsOneWidget);
+      expect(find.text('Save Ticket'), findsOneWidget);
+      expect(find.text('Save & Print Slip'), findsOneWidget);
+
+      // Verify Right Side: Today's Recent Billings panel
+      expect(find.text('Recent Billings'), findsOneWidget);
+      expect(find.text('1 Today'), findsOneWidget);
+      expect(find.text('WB-00001'), findsWidgets);
+      expect(find.text('MH 12 AB 1234'), findsWidgets);
+      expect(find.text('UltraTech Cement'), findsWidgets);
+    },
+  );
+
+  testWidgets('hides yesterday bills from today recent billings', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1400, 900);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
@@ -220,39 +259,12 @@ void main() {
       tester.view.resetDevicePixelRatio();
     });
 
-    await pumpBillPage(tester);
-
-    // Verify Header
-    expect(find.text('Viyan Weighbridge'), findsOneWidget);
-    expect(find.text('Billing & Ticket Management'), findsOneWidget);
-
-    // Verify Left Side: Truck Digital Scale & Quick Action Buttons
-    expect(find.text('kg'), findsOneWidget);
-    expect(find.text('Clear Form'), findsOneWidget);
-    expect(find.text('Save Ticket'), findsOneWidget);
-    expect(find.text('Save & Print Slip'), findsOneWidget);
-
-    // Verify Right Side: Today's Recent Billings panel
-    expect(find.text('Recent Billings'), findsOneWidget);
-    expect(find.text('1 Today'), findsOneWidget);
-    expect(find.text('WB-00001'), findsWidgets);
-    expect(find.text('MH 12 AB 1234'), findsWidgets);
-    expect(find.text('UltraTech Cement'), findsWidgets);
-  });
-
-  testWidgets('hides yesterday bills from today recent billings',
-      (tester) async {
-    tester.view.physicalSize = const Size(1400, 900);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(() {
-      tester.view.resetPhysicalSize();
-      tester.view.resetDevicePixelRatio();
-    });
-
-    when(() => mockLoadRecentBillsUseCase())
-        .thenAnswer((_) => Future.value(mixedDayBills));
-    when(() => mockLoadRecentBillsUseCase(date: any(named: 'date')))
-        .thenAnswer((_) => Future.value(mixedDayBills));
+    when(
+      () => mockLoadRecentBillsUseCase(),
+    ).thenAnswer((_) => Future.value(mixedDayBills));
+    when(
+      () => mockLoadRecentBillsUseCase(date: any(named: 'date')),
+    ).thenAnswer((_) => Future.value(mixedDayBills));
 
     await pumpBillPage(tester);
 
@@ -261,8 +273,9 @@ void main() {
     expect(find.text('1 Today'), findsOneWidget);
   });
 
-  testWidgets('filters recent bills when typing in search field',
-      (tester) async {
+  testWidgets('filters recent bills when typing in search field', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1400, 900);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
@@ -274,21 +287,26 @@ void main() {
 
     // Search for nonexistent vehicle
     await tester.enterText(
-        find.byKey(const Key('recent_bills_search_field')), 'NONEXISTENT');
+      find.byKey(const Key('recent_bills_search_field')),
+      'NONEXISTENT',
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('No matching billings'), findsOneWidget);
 
     // Search for matching vehicle
     await tester.enterText(
-        find.byKey(const Key('recent_bills_search_field')), 'MH 12');
+      find.byKey(const Key('recent_bills_search_field')),
+      'MH 12',
+    );
     await tester.pumpAndSettle();
 
     expect(find.text('WB-00001'), findsWidgets);
   });
 
-  testWidgets('opens weighment slip dialog when clicking print icon',
-      (tester) async {
+  testWidgets('opens weighment slip dialog when clicking print icon', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1400, 900);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() {

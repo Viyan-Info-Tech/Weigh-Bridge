@@ -47,7 +47,9 @@ class ViyanWeighbridgeLogo extends StatelessWidget {
           fit: BoxFit.cover,
           errorBuilder: (context, error, stackTrace) => CustomPaint(
             size: Size(size, size),
-            painter: _ViyanVLogoPainter(color: tintColor ?? const Color(0xFF00F5FF)),
+            painter: _ViyanVLogoPainter(
+              color: tintColor ?? const Color(0xFF00F5FF),
+            ),
           ),
         ),
       ),
@@ -68,11 +70,7 @@ class TruckWeighbridgeLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ViyanWeighbridgeLogo(
-      size: size,
-      withGlow: true,
-      tintColor: color,
-    );
+    return ViyanWeighbridgeLogo(size: size, withGlow: true, tintColor: color);
   }
 }
 
@@ -124,11 +122,7 @@ class _ViyanVLogoPainter extends CustomPainter {
       ..shader = const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [
-          Color(0xFFE2E8F0),
-          Color(0xFF00F5FF),
-          Color(0xFF0D3B82),
-        ],
+        colors: [Color(0xFFE2E8F0), Color(0xFF00F5FF), Color(0xFF0D3B82)],
       ).createShader(Rect.fromLTWH(0, 0, w, h));
     canvas.drawPath(outerVPath, vPaint);
 

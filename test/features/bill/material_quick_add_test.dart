@@ -11,13 +11,23 @@ import 'package:weighbridge/features/vehicle/domain/repositories/vehicle_reposit
 import 'package:weighbridge/features/vehicle_type/domain/repositories/vehicle_type_repository.dart';
 
 class MockPartyRepository extends Mock implements PartyRepository {}
+
 class MockVehicleRepository extends Mock implements VehicleRepository {}
+
 class MockVehicleTypeRepository extends Mock implements VehicleTypeRepository {}
+
 class MockMaterialRepository extends Mock implements MaterialItemRepository {}
+
 class MockSaveBillUseCase extends Mock implements SaveBillUseCase {}
-class MockLoadRecentBillsUseCase extends Mock implements LoadRecentBillsUseCase {}
-class MockGenerateBillNumberUseCase extends Mock implements GenerateBillNumberUseCase {}
-class MockLoadPendingBillsUseCase extends Mock implements LoadPendingBillsUseCase {}
+
+class MockLoadRecentBillsUseCase extends Mock
+    implements LoadRecentBillsUseCase {}
+
+class MockGenerateBillNumberUseCase extends Mock
+    implements GenerateBillNumberUseCase {}
+
+class MockLoadPendingBillsUseCase extends Mock
+    implements LoadPendingBillsUseCase {}
 
 void main() {
   late BillBloc billBloc;
@@ -57,37 +67,63 @@ void main() {
   });
 
   group('Material Quick Add - BillBloc', () {
-    test('successfully creates material, updates state.materials and selectedMaterial', () async {
-      final existingMaterials = [
-        MaterialItem(id: 1, name: 'Sand', isActive: true, createdAt: DateTime.now(), updatedAt: DateTime.now()),
-      ];
+    test(
+      'successfully creates material, updates state.materials and selectedMaterial',
+      () async {
+        final existingMaterials = [
+          MaterialItem(
+            id: 1,
+            name: 'Sand',
+            isActive: true,
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+        ];
 
-      final createdMaterial = MaterialItem(
-        id: 2,
-        name: 'Stone',
-        isActive: true,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
+        final createdMaterial = MaterialItem(
+          id: 2,
+          name: 'Stone',
+          isActive: true,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        );
 
-      when(() => mockMaterialRepository.getAllMaterials()).thenAnswer((_) async => existingMaterials);
-      when(() => mockMaterialRepository.createMaterial(name: 'Stone', category: '')).thenAnswer((_) async => 2);
-      when(() => mockMaterialRepository.getMaterialById(2)).thenAnswer((_) async => createdMaterial);
+        when(
+          () => mockMaterialRepository.getAllMaterials(),
+        ).thenAnswer((_) async => existingMaterials);
+        when(
+          () => mockMaterialRepository.createMaterial(
+            name: 'Stone',
+            category: '',
+          ),
+        ).thenAnswer((_) async => 2);
+        when(
+          () => mockMaterialRepository.getMaterialById(2),
+        ).thenAnswer((_) async => createdMaterial);
 
-      final result = await billBloc.quickAddMaterial('Stone');
+        final result = await billBloc.quickAddMaterial('Stone');
 
-      expect(result, equals(createdMaterial));
-      expect(billBloc.state.materials.any((m) => m.name == 'Stone'), isTrue);
-      expect(billBloc.state.selectedMaterial, equals(createdMaterial));
-      expect(billBloc.state.errorMessage, isNull);
-    });
+        expect(result, equals(createdMaterial));
+        expect(billBloc.state.materials.any((m) => m.name == 'Stone'), isTrue);
+        expect(billBloc.state.selectedMaterial, equals(createdMaterial));
+        expect(billBloc.state.errorMessage, isNull);
+      },
+    );
 
     test('prevents case-insensitive duplicate materials', () async {
       final existingMaterials = [
-        MaterialItem(id: 1, name: 'Stone', isActive: true, createdAt: DateTime.now(), updatedAt: DateTime.now()),
+        MaterialItem(
+          id: 1,
+          name: 'Stone',
+          isActive: true,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
       ];
 
-      when(() => mockMaterialRepository.getAllMaterials()).thenAnswer((_) async => existingMaterials);
+      when(
+        () => mockMaterialRepository.getAllMaterials(),
+      ).thenAnswer((_) async => existingMaterials);
 
       expect(
         () => billBloc.quickAddMaterial('stone'),
@@ -100,13 +136,13 @@ void main() {
     });
 
     test('prevents empty material name', () async {
-      expect(
-        () => billBloc.quickAddMaterial('   '),
-        throwsA(isA<Exception>()),
-      );
+      expect(() => billBloc.quickAddMaterial('   '), throwsA(isA<Exception>()));
 
       await Future<void>.delayed(Duration.zero);
-      expect(billBloc.state.errorMessage, contains('Material name is required'));
+      expect(
+        billBloc.state.errorMessage,
+        contains('Material name is required'),
+      );
     });
   });
 
@@ -141,7 +177,9 @@ void main() {
       expect(find.text('Material name is required'), findsOneWidget);
     });
 
-    testWidgets('shows loading and returns created material on success', (tester) async {
+    testWidgets('shows loading and returns created material on success', (
+      tester,
+    ) async {
       final createdItem = MaterialItem(
         id: 10,
         name: 'Gravel',
@@ -161,7 +199,9 @@ void main() {
                   dialogResult = await QuickAddMaterialDialog.show(
                     context,
                     onSave: (name) async {
-                      await Future<void>.delayed(const Duration(milliseconds: 50));
+                      await Future<void>.delayed(
+                        const Duration(milliseconds: 50),
+                      );
                       return createdItem;
                     },
                   );
@@ -186,10 +226,15 @@ void main() {
       await tester.pumpAndSettle(); // Finish saving and animation
 
       expect(dialogResult, equals(createdItem));
-      expect(find.byType(QuickAddMaterialDialog), findsNothing); // Dialog closed
+      expect(
+        find.byType(QuickAddMaterialDialog),
+        findsNothing,
+      ); // Dialog closed
     });
 
-    testWidgets('displays error message and remains open on error', (tester) async {
+    testWidgets('displays error message and remains open on error', (
+      tester,
+    ) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -216,7 +261,10 @@ void main() {
       await tester.pumpAndSettle();
 
       // Verify error banner is displayed
-      expect(find.text('Material with this name already exists'), findsOneWidget);
+      expect(
+        find.text('Material with this name already exists'),
+        findsOneWidget,
+      );
       // Dialog remains open
       expect(find.byType(QuickAddMaterialDialog), findsOneWidget);
     });

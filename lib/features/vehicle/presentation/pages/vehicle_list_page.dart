@@ -62,7 +62,11 @@ class _VehicleListPageState extends State<VehicleListPage> {
             color: const Color(0xFF0F52BA).withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: const Icon(Icons.local_shipping_outlined, color: Color(0xFF0F52BA), size: 20),
+          child: const Icon(
+            Icons.local_shipping_outlined,
+            color: Color(0xFF0F52BA),
+            size: 20,
+          ),
         ),
         const SizedBox(width: 12),
         const Column(
@@ -96,7 +100,9 @@ class _VehicleListPageState extends State<VehicleListPage> {
             backgroundColor: const Color(0xFF0D3B82),
             foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
           ),
         ),
       ],
@@ -116,12 +122,32 @@ class _VehicleListPageState extends State<VehicleListPage> {
             style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13),
             decoration: InputDecoration(
               hintText: 'Search vehicle...',
-              hintStyle: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, color: Colors.grey.shade400),
-              prefixIcon: Icon(Icons.search, color: Colors.grey.shade400, size: 18),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-              enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: BorderSide(color: Colors.grey.shade300)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(8), borderSide: const BorderSide(color: Color(0xFF0D3B82))),
+              hintStyle: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 13,
+                color: Colors.grey.shade400,
+              ),
+              prefixIcon: Icon(
+                Icons.search,
+                color: Colors.grey.shade400,
+                size: 18,
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: const BorderSide(color: Color(0xFF0D3B82)),
+              ),
               filled: true,
               fillColor: Colors.white,
             ),
@@ -138,18 +164,54 @@ class _VehicleListPageState extends State<VehicleListPage> {
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: _statusFilter,
-              hint: Text('Status', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, color: Colors.grey.shade600)),
+              hint: Text(
+                'Status',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 13,
+                  color: Colors.grey.shade600,
+                ),
+              ),
               items: const [
-                DropdownMenuItem(value: null, child: Text('All', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-                DropdownMenuItem(value: 'active', child: Text('Active', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-                DropdownMenuItem(value: 'inactive', child: Text('Inactive', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
+                DropdownMenuItem(
+                  value: null,
+                  child: Text(
+                    'All',
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                DropdownMenuItem(
+                  value: 'active',
+                  child: Text(
+                    'Active',
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+                DropdownMenuItem(
+                  value: 'inactive',
+                  child: Text(
+                    'Inactive',
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
               ],
               onChanged: (value) {
                 setState(() => _statusFilter = value);
                 bool? isActive;
                 if (value == 'active') isActive = true;
                 if (value == 'inactive') isActive = false;
-                context.read<VehicleBloc>().add(FilterVehiclesByStatus(isActive));
+                context.read<VehicleBloc>().add(
+                  FilterVehiclesByStatus(isActive),
+                );
               },
             ),
           ),
@@ -184,17 +246,39 @@ class _VehicleListPageState extends State<VehicleListPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.local_shipping_outlined, size: 48, color: Colors.grey.shade300),
+          Icon(
+            Icons.local_shipping_outlined,
+            size: 48,
+            color: Colors.grey.shade300,
+          ),
           const SizedBox(height: 12),
-          Text('No vehicles found', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 16, fontWeight: FontWeight.w600, color: Colors.grey.shade600)),
+          Text(
+            'No vehicles found',
+            style: TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey.shade600,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text('Add your first vehicle to get started.', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, color: Colors.grey.shade400)),
+          Text(
+            'Add your first vehicle to get started.',
+            style: TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 13,
+              color: Colors.grey.shade400,
+            ),
+          ),
           const SizedBox(height: 16),
           ElevatedButton.icon(
             onPressed: () => _navigateToForm(context),
             icon: const Icon(Icons.add, size: 16),
             label: const Text('Add Vehicle'),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF0D3B82), foregroundColor: Colors.white),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0D3B82),
+              foregroundColor: Colors.white,
+            ),
           ),
         ],
       ),
@@ -206,27 +290,121 @@ class _VehicleListPageState extends State<VehicleListPage> {
       child: DataTable(
         headingRowColor: WidgetStateProperty.all(const Color(0xFFF8FAFC)),
         columns: const [
-          DataColumn(label: Text('Vehicle Number', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600))),
-          DataColumn(label: Text('Party', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600))),
-          DataColumn(label: Text('Type', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600))),
-          DataColumn(label: Text('Driver', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600))),
-          DataColumn(label: Text('Status', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600))),
-          DataColumn(label: Text('Actions', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 12, fontWeight: FontWeight.w600))),
+          DataColumn(
+            label: Text(
+              'Vehicle Number',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              'Party',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              'Type',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              'Driver',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              'Status',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          DataColumn(
+            label: Text(
+              'Actions',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
         ],
         rows: vehicles.map((vehicle) {
-          return DataRow(cells: [
-            DataCell(Text(vehicle.vehicleNumber, style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13, fontWeight: FontWeight.w600))),
-            DataCell(Text('-', style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-            DataCell(Text('-', style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-            DataCell(Text(vehicle.driverName ?? '-', style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13))),
-            DataCell(_buildStatusBadge(vehicle.isActive)),
-            DataCell(Row(
-              children: [
-                _buildActionIcon(Icons.edit_outlined, () => _navigateToForm(context, vehicleId: vehicle.id)),
-                _buildActionIcon(Icons.more_vert, () {}),
-              ],
-            )),
-          ]);
+          return DataRow(
+            cells: [
+              DataCell(
+                Text(
+                  vehicle.vehicleNumber,
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              DataCell(
+                Text(
+                  '-',
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              DataCell(
+                Text(
+                  '-',
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              DataCell(
+                Text(
+                  vehicle.driverName ?? '-',
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              DataCell(_buildStatusBadge(vehicle.isActive)),
+              DataCell(
+                Row(
+                  children: [
+                    _buildActionIcon(
+                      Icons.edit_outlined,
+                      () => _navigateToForm(context, vehicleId: vehicle.id),
+                    ),
+                    _buildActionIcon(Icons.more_vert, () {}),
+                  ],
+                ),
+              ),
+            ],
+          );
         }).toList(),
       ),
     );
@@ -236,7 +414,9 @@ class _VehicleListPageState extends State<VehicleListPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: isActive ? const Color(0xFF16A34A).withValues(alpha: 0.1) : const Color(0xFFDC2626).withValues(alpha: 0.1),
+        color: isActive
+            ? const Color(0xFF16A34A).withValues(alpha: 0.1)
+            : const Color(0xFFDC2626).withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(

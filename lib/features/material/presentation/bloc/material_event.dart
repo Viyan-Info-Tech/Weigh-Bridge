@@ -12,7 +12,11 @@ class LoadMaterials extends MaterialEvent {
   final bool? filterActive;
   final String? filterCategory;
 
-  const LoadMaterials({this.searchQuery, this.filterActive, this.filterCategory});
+  const LoadMaterials({
+    this.searchQuery,
+    this.filterActive,
+    this.filterCategory,
+  });
 
   @override
   List<Object?> get props => [searchQuery, filterActive, filterCategory];
@@ -22,10 +26,7 @@ class CreateMaterialRequested extends MaterialEvent {
   final String name;
   final String? category;
 
-  const CreateMaterialRequested({
-    required this.name,
-    this.category,
-  });
+  const CreateMaterialRequested({required this.name, this.category});
 
   @override
   List<Object?> get props => [name, category];

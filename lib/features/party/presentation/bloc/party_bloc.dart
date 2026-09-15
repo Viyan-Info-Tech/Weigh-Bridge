@@ -27,14 +27,14 @@ class PartyBloc extends Bloc<PartyEvent, PartyState> {
     required DeletePartyUseCase deletePartyUseCase,
     required SearchPartiesUseCase searchPartiesUseCase,
     required PartyRepository partyRepository,
-  })  : _loadPartiesUseCase = loadPartiesUseCase,
-        _createPartyUseCase = createPartyUseCase,
-        _updatePartyUseCase = updatePartyUseCase,
-        _deactivatePartyUseCase = deactivatePartyUseCase,
-        _deletePartyUseCase = deletePartyUseCase,
-        _searchPartiesUseCase = searchPartiesUseCase,
-        _partyRepository = partyRepository,
-        super(const PartyState()) {
+  }) : _loadPartiesUseCase = loadPartiesUseCase,
+       _createPartyUseCase = createPartyUseCase,
+       _updatePartyUseCase = updatePartyUseCase,
+       _deactivatePartyUseCase = deactivatePartyUseCase,
+       _deletePartyUseCase = deletePartyUseCase,
+       _searchPartiesUseCase = searchPartiesUseCase,
+       _partyRepository = partyRepository,
+       super(const PartyState()) {
     on<LoadParties>(_onLoadParties);
     on<LoadPartyDetail>(_onLoadPartyDetail);
     on<CreatePartyRequested>(_onCreateParty);
@@ -45,37 +45,52 @@ class PartyBloc extends Bloc<PartyEvent, PartyState> {
     on<FilterPartiesByStatus>(_onFilterByStatus);
   }
 
-  Future<void> _onLoadParties(LoadParties event, Emitter<PartyState> emit) async {
+  Future<void> _onLoadParties(
+    LoadParties event,
+    Emitter<PartyState> emit,
+  ) async {
     emit(state.copyWith(status: PartyStatus.loading));
     try {
       final parties = await _loadPartiesUseCase(isActive: event.filterActive);
       final total = await _partyRepository.totalPartyCount();
       final active = await _partyRepository.activePartyCount();
       final inactive = await _partyRepository.inactivePartyCount();
-      emit(state.copyWith(
-        status: PartyStatus.loaded,
-        parties: parties,
-        totalParties: total,
-        activeParties: active,
-        inactiveParties: inactive,
-        filterActive: event.filterActive,
-      ));
+      emit(
+        state.copyWith(
+          status: PartyStatus.loaded,
+          parties: parties,
+          totalParties: total,
+          activeParties: active,
+          inactiveParties: inactive,
+          filterActive: event.filterActive,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(status: PartyStatus.error, errorMessage: e.toString()));
+      emit(
+        state.copyWith(status: PartyStatus.error, errorMessage: e.toString()),
+      );
     }
   }
 
-  Future<void> _onLoadPartyDetail(LoadPartyDetail event, Emitter<PartyState> emit) async {
+  Future<void> _onLoadPartyDetail(
+    LoadPartyDetail event,
+    Emitter<PartyState> emit,
+  ) async {
     emit(state.copyWith(status: PartyStatus.loading));
     try {
       final party = await _partyRepository.getPartyById(event.partyId);
       emit(state.copyWith(status: PartyStatus.loaded, selectedParty: party));
     } catch (e) {
-      emit(state.copyWith(status: PartyStatus.error, errorMessage: e.toString()));
+      emit(
+        state.copyWith(status: PartyStatus.error, errorMessage: e.toString()),
+      );
     }
   }
 
-  Future<void> _onCreateParty(CreatePartyRequested event, Emitter<PartyState> emit) async {
+  Future<void> _onCreateParty(
+    CreatePartyRequested event,
+    Emitter<PartyState> emit,
+  ) async {
     emit(state.copyWith(status: PartyStatus.loading));
     try {
       await _createPartyUseCase(
@@ -88,14 +103,24 @@ class PartyBloc extends Bloc<PartyEvent, PartyState> {
         city: event.city,
         state: event.state,
       );
-      emit(state.copyWith(status: PartyStatus.success, successMessage: 'Party created successfully'));
+      emit(
+        state.copyWith(
+          status: PartyStatus.success,
+          successMessage: 'Party created successfully',
+        ),
+      );
       add(const LoadParties());
     } catch (e) {
-      emit(state.copyWith(status: PartyStatus.error, errorMessage: e.toString()));
+      emit(
+        state.copyWith(status: PartyStatus.error, errorMessage: e.toString()),
+      );
     }
   }
 
-  Future<void> _onUpdateParty(UpdatePartyRequested event, Emitter<PartyState> emit) async {
+  Future<void> _onUpdateParty(
+    UpdatePartyRequested event,
+    Emitter<PartyState> emit,
+  ) async {
     emit(state.copyWith(status: PartyStatus.loading));
     try {
       await _updatePartyUseCase(
@@ -109,53 +134,90 @@ class PartyBloc extends Bloc<PartyEvent, PartyState> {
         city: event.city,
         state: event.state,
       );
-      emit(state.copyWith(status: PartyStatus.success, successMessage: 'Party updated successfully'));
+      emit(
+        state.copyWith(
+          status: PartyStatus.success,
+          successMessage: 'Party updated successfully',
+        ),
+      );
       add(const LoadParties());
     } catch (e) {
-      emit(state.copyWith(status: PartyStatus.error, errorMessage: e.toString()));
+      emit(
+        state.copyWith(status: PartyStatus.error, errorMessage: e.toString()),
+      );
     }
   }
 
-  Future<void> _onDeactivateParty(DeactivatePartyRequested event, Emitter<PartyState> emit) async {
+  Future<void> _onDeactivateParty(
+    DeactivatePartyRequested event,
+    Emitter<PartyState> emit,
+  ) async {
     emit(state.copyWith(status: PartyStatus.loading));
     try {
       await _deactivatePartyUseCase(event.partyId);
-      emit(state.copyWith(status: PartyStatus.success, successMessage: 'Party deactivated'));
+      emit(
+        state.copyWith(
+          status: PartyStatus.success,
+          successMessage: 'Party deactivated',
+        ),
+      );
       add(const LoadParties());
     } catch (e) {
-      emit(state.copyWith(status: PartyStatus.error, errorMessage: e.toString()));
+      emit(
+        state.copyWith(status: PartyStatus.error, errorMessage: e.toString()),
+      );
     }
   }
 
-  Future<void> _onDeleteParty(DeletePartyRequested event, Emitter<PartyState> emit) async {
+  Future<void> _onDeleteParty(
+    DeletePartyRequested event,
+    Emitter<PartyState> emit,
+  ) async {
     emit(state.copyWith(status: PartyStatus.loading));
     try {
       await _deletePartyUseCase(event.partyId);
-      emit(state.copyWith(status: PartyStatus.success, successMessage: 'Party deleted'));
+      emit(
+        state.copyWith(
+          status: PartyStatus.success,
+          successMessage: 'Party deleted',
+        ),
+      );
       add(const LoadParties());
     } catch (e) {
-      emit(state.copyWith(status: PartyStatus.error, errorMessage: e.toString()));
+      emit(
+        state.copyWith(status: PartyStatus.error, errorMessage: e.toString()),
+      );
     }
   }
 
-  Future<void> _onSearchParties(SearchParties event, Emitter<PartyState> emit) async {
+  Future<void> _onSearchParties(
+    SearchParties event,
+    Emitter<PartyState> emit,
+  ) async {
     try {
       if (event.query.isEmpty) {
         add(const LoadParties());
         return;
       }
       final parties = await _searchPartiesUseCase(event.query);
-      emit(state.copyWith(
-        status: PartyStatus.loaded,
-        parties: parties,
-        searchQuery: event.query,
-      ));
+      emit(
+        state.copyWith(
+          status: PartyStatus.loaded,
+          parties: parties,
+          searchQuery: event.query,
+        ),
+      );
     } catch (e) {
-      emit(state.copyWith(status: PartyStatus.error, errorMessage: e.toString()));
+      emit(
+        state.copyWith(status: PartyStatus.error, errorMessage: e.toString()),
+      );
     }
   }
 
-  Future<void> _onFilterByStatus(FilterPartiesByStatus event, Emitter<PartyState> emit) async {
+  Future<void> _onFilterByStatus(
+    FilterPartiesByStatus event,
+    Emitter<PartyState> emit,
+  ) async {
     add(LoadParties(filterActive: event.isActive));
   }
 }

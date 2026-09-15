@@ -6,7 +6,7 @@ class VehicleRepositoryImpl implements VehicleRepository {
   final VehicleLocalDataSource _localDataSource;
 
   VehicleRepositoryImpl({required VehicleLocalDataSource localDataSource})
-      : _localDataSource = localDataSource;
+    : _localDataSource = localDataSource;
 
   @override
   Future<List<Vehicle>> getAllVehicles() => _localDataSource.getAllVehicles();
@@ -16,10 +16,12 @@ class VehicleRepositoryImpl implements VehicleRepository {
       _localDataSource.getVehiclesByStatus(isActive: isActive);
 
   @override
-  Future<Vehicle?> getVehicleById(int id) => _localDataSource.getVehicleById(id);
+  Future<Vehicle?> getVehicleById(int id) =>
+      _localDataSource.getVehicleById(id);
 
   @override
-  Future<Vehicle?> getVehicleByNumber(String number) => _localDataSource.getVehicleByNumber(number);
+  Future<Vehicle?> getVehicleByNumber(String number) =>
+      _localDataSource.getVehicleByNumber(number);
 
   @override
   Future<int> createVehicle({
@@ -27,13 +29,12 @@ class VehicleRepositoryImpl implements VehicleRepository {
     required int vehicleTypeId,
     String? driverName,
     String? driverPhone,
-  }) =>
-      _localDataSource.insertVehicle(
-        vehicleNumber: vehicleNumber.trim().toUpperCase(),
-        vehicleTypeId: vehicleTypeId,
-        driverName: driverName,
-        driverPhone: driverPhone,
-      );
+  }) => _localDataSource.insertVehicle(
+    vehicleNumber: vehicleNumber.trim().toUpperCase(),
+    vehicleTypeId: vehicleTypeId,
+    driverName: driverName,
+    driverPhone: driverPhone,
+  );
 
   @override
   Future<bool> updateVehicle({
@@ -42,21 +43,22 @@ class VehicleRepositoryImpl implements VehicleRepository {
     required int vehicleTypeId,
     String? driverName,
     String? driverPhone,
-  }) =>
-      _localDataSource.updateVehicle(
-        id: id,
-        vehicleNumber: vehicleNumber.trim().toUpperCase(),
-        vehicleTypeId: vehicleTypeId,
-        driverName: driverName,
-        driverPhone: driverPhone,
-      );
+  }) => _localDataSource.updateVehicle(
+    id: id,
+    vehicleNumber: vehicleNumber.trim().toUpperCase(),
+    vehicleTypeId: vehicleTypeId,
+    driverName: driverName,
+    driverPhone: driverPhone,
+  );
 
   @override
-  Future<void> deactivateVehicle(int id) => _localDataSource.deactivateVehicle(id);
+  Future<void> deactivateVehicle(int id) =>
+      _localDataSource.deactivateVehicle(id);
 
   @override
   Future<void> deleteVehicle(int id) => _localDataSource.deleteVehicle(id);
 
   @override
-  Future<List<Vehicle>> searchVehicles(String query) => _localDataSource.searchVehicles(query);
+  Future<List<Vehicle>> searchVehicles(String query) =>
+      _localDataSource.searchVehicles(query);
 }

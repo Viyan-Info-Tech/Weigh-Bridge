@@ -68,22 +68,22 @@ class PartyDao extends DatabaseAccessor<AppDatabase> with _$PartyDaoMixin {
 
   Future<List<Party>> searchParties(String query) async {
     final q = select(parties)
-      ..where((p) =>
-          p.name.like('%$query%') |
-          p.mobile.like('%$query%') |
-          p.contactPerson.like('%$query%') |
-          p.gstNumber.like('%$query%'))
+      ..where(
+        (p) =>
+            p.name.like('%$query%') |
+            p.mobile.like('%$query%') |
+            p.contactPerson.like('%$query%') |
+            p.gstNumber.like('%$query%'),
+      )
       ..limit(20);
     return q.get();
   }
 
   Future<void> deactivateParty(int id) async {
     final now = DateTime.now();
-    await (update(parties)..where((p) => p.id.equals(id)))
-        .write(PartiesCompanion(
-      isActive: const Value(false),
-      updatedAt: Value(now),
-    ));
+    await (update(parties)..where((p) => p.id.equals(id))).write(
+      PartiesCompanion(isActive: const Value(false), updatedAt: Value(now)),
+    );
   }
 
   Future<int> deleteParty(int id) async {

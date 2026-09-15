@@ -13,13 +13,19 @@ class MaterialItemLocalDataSource {
     return records.map(_toEntity).toList();
   }
 
-  Future<List<MaterialItem>> getMaterialsByStatus({required bool isActive}) async {
-    final records = await _database.materialDao.getMaterialsByStatus(isActive: isActive);
+  Future<List<MaterialItem>> getMaterialsByStatus({
+    required bool isActive,
+  }) async {
+    final records = await _database.materialDao.getMaterialsByStatus(
+      isActive: isActive,
+    );
     return records.map(_toEntity).toList();
   }
 
   Future<List<MaterialItem>> getMaterialsByCategory(String category) async {
-    final records = await _database.materialDao.getMaterialsByCategory(category);
+    final records = await _database.materialDao.getMaterialsByCategory(
+      category,
+    );
     return records.map(_toEntity).toList();
   }
 
@@ -34,13 +40,15 @@ class MaterialItemLocalDataSource {
     bool isActive = true,
   }) async {
     final now = DateTime.now();
-    return _database.materialDao.insertMaterial(MaterialsCompanion(
-      name: Value(name),
-      category: Value(category),
-      isActive: Value(isActive),
-      createdAt: Value(now),
-      updatedAt: Value(now),
-    ));
+    return _database.materialDao.insertMaterial(
+      MaterialsCompanion(
+        name: Value(name),
+        category: Value(category),
+        isActive: Value(isActive),
+        createdAt: Value(now),
+        updatedAt: Value(now),
+      ),
+    );
   }
 
   Future<bool> updateMaterial({
@@ -48,12 +56,14 @@ class MaterialItemLocalDataSource {
     required String name,
     String? category,
   }) async {
-    return _database.materialDao.updateMaterial(MaterialsCompanion(
-      id: Value(id),
-      name: Value(name),
-      category: Value(category),
-      updatedAt: Value(DateTime.now()),
-    ));
+    return _database.materialDao.updateMaterial(
+      MaterialsCompanion(
+        id: Value(id),
+        name: Value(name),
+        category: Value(category),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
   }
 
   Future<void> deactivateMaterial(int id) async {

@@ -32,5 +32,17 @@ class Party extends Equatable {
   });
 
   @override
-  List<Object?> get props => [id, name, contactPerson, mobile, email, address, gstNumber, city, state, isActive, vehicleCount];
+  List<Object?> get props => [
+    id,
+    name,
+    contactPerson,
+    mobile,
+    email,
+    address,
+    gstNumber,
+    city,
+    state,
+    isActive,
+    vehicleCount,
+  ];
 }

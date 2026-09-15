@@ -48,5 +48,14 @@ class MaterialState extends Equatable {
   }
 
   @override
-  List<Object?> get props => [status, materials, selectedMaterial, errorMessage, successMessage, searchQuery, filterActive, filterCategory];
+  List<Object?> get props => [
+    status,
+    materials,
+    selectedMaterial,
+    errorMessage,
+    successMessage,
+    searchQuery,
+    filterActive,
+    filterCategory,
+  ];
 }

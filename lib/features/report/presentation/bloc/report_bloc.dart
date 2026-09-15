@@ -22,12 +22,12 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     required VehicleRepository vehicleRepository,
     required MaterialItemRepository materialRepository,
     required ExportReportUseCase exportReportUseCase,
-  })  : _reportRepository = reportRepository,
-        _partyRepository = partyRepository,
-        _vehicleRepository = vehicleRepository,
-        _materialRepository = materialRepository,
-        _exportReportUseCase = exportReportUseCase,
-        super(const ReportState()) {
+  }) : _reportRepository = reportRepository,
+       _partyRepository = partyRepository,
+       _vehicleRepository = vehicleRepository,
+       _materialRepository = materialRepository,
+       _exportReportUseCase = exportReportUseCase,
+       super(const ReportState()) {
     on<LoadReportInitial>(_onLoadReportInitial);
     on<ReportFilterPresetChanged>(_onFilterPresetChanged);
     on<ReportCustomDateChanged>(_onCustomDateChanged);
@@ -155,11 +155,7 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     ReportStatusFilterChanged event,
     Emitter<ReportState> emit,
   ) {
-    emit(
-      state.copyWith(
-        filter: state.filter.copyWith(status: event.status),
-      ),
-    );
+    emit(state.copyWith(filter: state.filter.copyWith(status: event.status)));
   }
 
   void _onPaymentFilterChanged(

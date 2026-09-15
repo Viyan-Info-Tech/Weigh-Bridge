@@ -6,7 +6,8 @@ import '../tables/vehicle_types_table.dart';
 part 'vehicle_type_dao.g.dart';
 
 @DriftAccessor(tables: [VehicleTypes])
-class VehicleTypeDao extends DatabaseAccessor<AppDatabase> with _$VehicleTypeDaoMixin {
+class VehicleTypeDao extends DatabaseAccessor<AppDatabase>
+    with _$VehicleTypeDaoMixin {
   VehicleTypeDao(super.db);
 
   Future<List<VehicleType>> getAllActiveVehicleTypes() async {
@@ -45,11 +46,12 @@ class VehicleTypeDao extends DatabaseAccessor<AppDatabase> with _$VehicleTypeDao
 
   Future<void> deactivateVehicleType(int id) async {
     final now = DateTime.now();
-    await (update(vehicleTypes)..where((v) => v.id.equals(id)))
-        .write(VehicleTypesCompanion(
-      isActive: const Value(false),
-      updatedAt: Value(now),
-    ));
+    await (update(vehicleTypes)..where((v) => v.id.equals(id))).write(
+      VehicleTypesCompanion(
+        isActive: const Value(false),
+        updatedAt: Value(now),
+      ),
+    );
   }
 
   Future<int> deleteVehicleType(int id) async {

@@ -16,24 +16,31 @@ class AuthRepositoryImpl implements AuthRepository {
     required AuthLocalDataSource localDataSource,
     required PasswordHasher passwordHasher,
     required SessionManager sessionManager,
-  })  : _localDataSource = localDataSource,
-        _passwordHasher = passwordHasher,
-        _sessionManager = sessionManager;
+  }) : _localDataSource = localDataSource,
+       _passwordHasher = passwordHasher,
+       _sessionManager = sessionManager;
 
   @override
   Future<Either<Failure, User>> login(String username, String password) async {
     try {
       final trimmedUsername = username.trim();
-      final localUser = await _localDataSource.getUserByUsername(trimmedUsername);
+      final localUser = await _localDataSource.getUserByUsername(
+        trimmedUsername,
+      );
       if (localUser == null) {
         return const Left(AuthenticationFailure());
       }
 
       if (!localUser.isActive) {
-        return const Left(AuthenticationFailure(message: 'Account is deactivated'));
+        return const Left(
+          AuthenticationFailure(message: 'Account is deactivated'),
+        );
       }
 
-      final isValid = _passwordHasher.verifyPassword(password, localUser.passwordHash);
+      final isValid = _passwordHasher.verifyPassword(
+        password,
+        localUser.passwordHash,
+      );
       if (!isValid) {
         return const Left(AuthenticationFailure());
       }
@@ -79,14 +86,16 @@ class AuthRepositoryImpl implements AuthRepository {
         return const Right(null);
       }
 
-      return Right(User(
-        id: userId,
-        username: username,
-        role: role,
-        isActive: true,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      ));
+      return Right(
+        User(
+          id: userId,
+          username: username,
+          role: role,
+          isActive: true,
+          createdAt: DateTime.now(),
+          updatedAt: DateTime.now(),
+        ),
+      );
     } catch (_) {
       return const Left(SessionFailure());
     }

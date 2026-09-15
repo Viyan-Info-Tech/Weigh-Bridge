@@ -31,7 +31,12 @@ class CreateVehicleRequested extends VehicleEvent {
   });
 
   @override
-  List<Object?> get props => [vehicleNumber, vehicleTypeId, driverName, driverPhone];
+  List<Object?> get props => [
+    vehicleNumber,
+    vehicleTypeId,
+    driverName,
+    driverPhone,
+  ];
 }
 
 class UpdateVehicleRequested extends VehicleEvent {
@@ -50,7 +55,13 @@ class UpdateVehicleRequested extends VehicleEvent {
   });
 
   @override
-  List<Object?> get props => [id, vehicleNumber, vehicleTypeId, driverName, driverPhone];
+  List<Object?> get props => [
+    id,
+    vehicleNumber,
+    vehicleTypeId,
+    driverName,
+    driverPhone,
+  ];
 }
 
 class DeactivateVehicleRequested extends VehicleEvent {

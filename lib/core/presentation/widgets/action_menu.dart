@@ -32,7 +32,10 @@ class ActionMenu extends StatelessWidget {
               constraints: const BoxConstraints(),
               iconSize: 18,
               tooltip: 'View',
-              icon: const Icon(Icons.visibility_outlined, color: Color(0xFF64748B)),
+              icon: const Icon(
+                Icons.visibility_outlined,
+                color: Color(0xFF64748B),
+              ),
             ),
           ),
           const SizedBox(width: 2),
@@ -43,7 +46,9 @@ class ActionMenu extends StatelessWidget {
               padding: EdgeInsets.zero,
               iconSize: 18,
               tooltip: 'More actions',
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
               elevation: 4,
               onSelected: (value) {
                 switch (value) {
@@ -63,9 +68,19 @@ class ActionMenu extends StatelessWidget {
                   value: 'edit',
                   child: Row(
                     children: [
-                      Icon(Icons.edit_outlined, size: 16, color: Color(0xFF0F52BA)),
+                      Icon(
+                        Icons.edit_outlined,
+                        size: 16,
+                        color: Color(0xFF0F52BA),
+                      ),
                       SizedBox(width: 10),
-                      Text('Edit', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13)),
+                      Text(
+                        'Edit',
+                        style: TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 13,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -73,9 +88,19 @@ class ActionMenu extends StatelessWidget {
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(Icons.delete_outline, size: 16, color: Color(0xFFDC2626)),
+                      Icon(
+                        Icons.delete_outline,
+                        size: 16,
+                        color: Color(0xFFDC2626),
+                      ),
                       SizedBox(width: 10),
-                      Text('Delete', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13)),
+                      Text(
+                        'Delete',
+                        style: TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 13,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -84,14 +109,28 @@ class ActionMenu extends StatelessWidget {
                     value: 'deactivate',
                     child: Row(
                       children: [
-                        Icon(Icons.block_outlined, size: 16, color: Color(0xFFDC2626)),
+                        Icon(
+                          Icons.block_outlined,
+                          size: 16,
+                          color: Color(0xFFDC2626),
+                        ),
                         SizedBox(width: 10),
-                        Text('Deactivate', style: TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13)),
+                        Text(
+                          'Deactivate',
+                          style: TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontSize: 13,
+                          ),
+                        ),
                       ],
                     ),
                   ),
               ],
-              child: const Icon(Icons.more_vert, size: 18, color: Color(0xFF64748B)),
+              child: const Icon(
+                Icons.more_vert,
+                size: 18,
+                color: Color(0xFF64748B),
+              ),
             ),
           ),
         ],

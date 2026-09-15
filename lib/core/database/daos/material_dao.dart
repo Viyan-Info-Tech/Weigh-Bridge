@@ -6,7 +6,8 @@ import '../tables/materials_table.dart';
 part 'material_dao.g.dart';
 
 @DriftAccessor(tables: [Materials])
-class MaterialDao extends DatabaseAccessor<AppDatabase> with _$MaterialDaoMixin {
+class MaterialDao extends DatabaseAccessor<AppDatabase>
+    with _$MaterialDaoMixin {
   MaterialDao(super.db);
 
   Future<List<Material>> getAllActiveMaterials() async {
@@ -49,20 +50,16 @@ class MaterialDao extends DatabaseAccessor<AppDatabase> with _$MaterialDaoMixin 
 
   Future<List<Material>> searchMaterials(String query) async {
     final q = select(materials)
-      ..where((m) =>
-          m.name.like('%$query%') |
-          m.category.like('%$query%'))
+      ..where((m) => m.name.like('%$query%') | m.category.like('%$query%'))
       ..limit(20);
     return q.get();
   }
 
   Future<void> deactivateMaterial(int id) async {
     final now = DateTime.now();
-    await (update(materials)..where((m) => m.id.equals(id)))
-        .write(MaterialsCompanion(
-      isActive: const Value(false),
-      updatedAt: Value(now),
-    ));
+    await (update(materials)..where((m) => m.id.equals(id))).write(
+      MaterialsCompanion(isActive: const Value(false), updatedAt: Value(now)),
+    );
   }
 
   Future<int> deleteMaterial(int id) async {

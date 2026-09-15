@@ -94,9 +94,15 @@ class WeighmentDetailsDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isCompleted = record.isCompleted;
-    final statusColor = isCompleted ? const Color(0xFF16A34A) : const Color(0xFFD97706);
-    final statusBg = isCompleted ? const Color(0xFFDCFCE7) : const Color(0xFFFEF3C7);
-    final dateFormatted = DateFormat('dd/MM/yyyy hh:mm a').format(record.createdAt);
+    final statusColor = isCompleted
+        ? const Color(0xFF16A34A)
+        : const Color(0xFFD97706);
+    final statusBg = isCompleted
+        ? const Color(0xFFDCFCE7)
+        : const Color(0xFFFEF3C7);
+    final dateFormatted = DateFormat(
+      'dd/MM/yyyy hh:mm a',
+    ).format(record.createdAt);
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -124,7 +130,11 @@ class WeighmentDetailsDialog extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.close, size: 20, color: Color(0xFF64748B)),
+                  icon: const Icon(
+                    Icons.close,
+                    size: 20,
+                    color: Color(0xFF64748B),
+                  ),
                   splashRadius: 18,
                   onPressed: () => Navigator.of(context).pop(),
                 ),
@@ -167,11 +177,16 @@ class WeighmentDetailsDialog extends StatelessWidget {
                     ],
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: statusBg,
                       borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: statusColor.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: statusColor.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Text(
                       record.displayStatus,
@@ -201,7 +216,9 @@ class WeighmentDetailsDialog extends StatelessWidget {
             Builder(
               builder: (context) {
                 final unit = record.weightUnit;
-                final isTon = unit.toLowerCase() == 'ton' || unit.toLowerCase() == 'tonne';
+                final isTon =
+                    unit.toLowerCase() == 'ton' ||
+                    unit.toLowerCase() == 'tonne';
                 final decimals = isTon ? 3 : 0;
                 double? toDisplay(double? kg) {
                   if (kg == null) return null;
@@ -219,30 +236,49 @@ class WeighmentDetailsDialog extends StatelessWidget {
                     children: [
                       _buildWeightRow(
                         label: 'First Weight',
-                        weight: '${(toDisplay(record.firstWeightKg) ?? 0).toStringAsFixed(decimals)} $unit',
+                        weight:
+                            '${(toDisplay(record.firstWeightKg) ?? 0).toStringAsFixed(decimals)} $unit',
                         badge: record.firstWeightType,
                         badgeColor: Colors.blueGrey,
                       ),
                       const Divider(height: 14, color: Color(0xFFE2E8F0)),
                       _buildWeightRow(
                         label: 'Second Weight',
-                        weight: (record.secondWeightKg != null && record.secondWeightKg! > 0)
+                        weight:
+                            (record.secondWeightKg != null &&
+                                record.secondWeightKg! > 0)
                             ? '${toDisplay(record.secondWeightKg!)!.toStringAsFixed(decimals)} $unit'
                             : '—',
-                        badge: (record.secondWeightKg != null && record.secondWeightKg! > 0)
+                        badge:
+                            (record.secondWeightKg != null &&
+                                record.secondWeightKg! > 0)
                             ? (record.secondWeightType ?? '')
                             : '',
                         badgeColor: Colors.blueGrey,
-                        isPending: record.secondWeightKg == null || record.secondWeightKg == 0,
+                        isPending:
+                            record.secondWeightKg == null ||
+                            record.secondWeightKg == 0,
                       ),
                       const Divider(height: 14, color: Color(0xFFE2E8F0)),
-                      _buildSummaryWeightRow('Gross Weight', record.grossWeightKg != null ? '${toDisplay(record.grossWeightKg!)!.toStringAsFixed(decimals)} $unit' : '—'),
+                      _buildSummaryWeightRow(
+                        'Gross Weight',
+                        record.grossWeightKg != null
+                            ? '${toDisplay(record.grossWeightKg!)!.toStringAsFixed(decimals)} $unit'
+                            : '—',
+                      ),
                       const SizedBox(height: 4),
-                      _buildSummaryWeightRow('Tare Weight', record.tareWeightKg != null ? '${toDisplay(record.tareWeightKg!)!.toStringAsFixed(decimals)} $unit' : '—'),
+                      _buildSummaryWeightRow(
+                        'Tare Weight',
+                        record.tareWeightKg != null
+                            ? '${toDisplay(record.tareWeightKg!)!.toStringAsFixed(decimals)} $unit'
+                            : '—',
+                      ),
                       const SizedBox(height: 4),
                       _buildSummaryWeightRow(
                         'Net Weight',
-                        record.netWeightKg != null ? '${toDisplay(record.netWeightKg!)!.toStringAsFixed(decimals)} $unit' : '—',
+                        record.netWeightKg != null
+                            ? '${toDisplay(record.netWeightKg!)!.toStringAsFixed(decimals)} $unit'
+                            : '—',
                         isHighlight: true,
                       ),
                     ],
@@ -294,7 +330,10 @@ class WeighmentDetailsDialog extends StatelessWidget {
                         ),
                       ),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(4),
@@ -315,7 +354,8 @@ class WeighmentDetailsDialog extends StatelessWidget {
                 ],
               ),
             ),
-            if (record.remarks != null && record.remarks!.trim().isNotEmpty) ...[
+            if (record.remarks != null &&
+                record.remarks!.trim().isNotEmpty) ...[
               const SizedBox(height: 10),
               Text(
                 'Remarks: ${record.remarks!}',
@@ -345,7 +385,10 @@ class WeighmentDetailsDialog extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 12,
+                    ),
                   ),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
@@ -372,7 +415,10 @@ class WeighmentDetailsDialog extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
                   ),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
@@ -462,7 +508,9 @@ class WeighmentDetailsDialog extends StatelessWidget {
                 fontFamily: 'PlusJakartaSans',
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: isPending ? const Color(0xFFD97706) : const Color(0xFF0F172A),
+                color: isPending
+                    ? const Color(0xFFD97706)
+                    : const Color(0xFF0F172A),
               ),
             ),
             if (badge.isNotEmpty) ...[
@@ -490,7 +538,11 @@ class WeighmentDetailsDialog extends StatelessWidget {
     );
   }
 
-  Widget _buildSummaryWeightRow(String label, String value, {bool isHighlight = false}) {
+  Widget _buildSummaryWeightRow(
+    String label,
+    String value, {
+    bool isHighlight = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -500,7 +552,9 @@ class WeighmentDetailsDialog extends StatelessWidget {
             fontFamily: 'PlusJakartaSans',
             fontSize: isHighlight ? 13 : 12,
             fontWeight: isHighlight ? FontWeight.w700 : FontWeight.w500,
-            color: isHighlight ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+            color: isHighlight
+                ? const Color(0xFF0F172A)
+                : const Color(0xFF64748B),
           ),
         ),
         Text(
@@ -509,7 +563,9 @@ class WeighmentDetailsDialog extends StatelessWidget {
             fontFamily: 'PlusJakartaSans',
             fontSize: isHighlight ? 14 : 13,
             fontWeight: isHighlight ? FontWeight.w800 : FontWeight.w600,
-            color: isHighlight ? const Color(0xFF0284C7) : const Color(0xFF1E293B),
+            color: isHighlight
+                ? const Color(0xFF0284C7)
+                : const Color(0xFF1E293B),
           ),
         ),
       ],

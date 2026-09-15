@@ -768,8 +768,12 @@ class _PendingPageState extends State<PendingPage> {
     final badgeText = isGrossPending
         ? 'PENDING • GROSS WT'
         : 'PENDING • TARE WT';
-    final isTon = bill.weightUnit.toLowerCase() == 'ton' || bill.weightUnit.toLowerCase() == 'tonne';
-    final displayWeight = isTon ? bill.firstWeightKg / 1000 : bill.firstWeightKg;
+    final isTon =
+        bill.weightUnit.toLowerCase() == 'ton' ||
+        bill.weightUnit.toLowerCase() == 'tonne';
+    final displayWeight = isTon
+        ? bill.firstWeightKg / 1000
+        : bill.firstWeightKg;
     final weightSubtitle = isGrossPending
         ? 'Tare • ₹${bill.amount.toStringAsFixed(0)}'
         : 'Gross • ₹${bill.amount.toStringAsFixed(0)}';

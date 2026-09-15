@@ -48,7 +48,9 @@ class _QuickAddPartyDialogState extends State<QuickAddPartyDialog> {
       try {
         final created = await widget.onSave(
           _nameController.text.trim(),
-          _contactController.text.trim().isEmpty ? null : _contactController.text.trim(),
+          _contactController.text.trim().isEmpty
+              ? null
+              : _contactController.text.trim(),
         );
         if (mounted) {
           if (created != null) {
@@ -144,7 +146,9 @@ class _QuickAddPartyDialogState extends State<QuickAddPartyDialog> {
                       ),
                     ),
                     InkWell(
-                      onTap: _isLoading ? null : () => Navigator.of(context).pop(),
+                      onTap: _isLoading
+                          ? null
+                          : () => Navigator.of(context).pop(),
                       borderRadius: BorderRadius.circular(20),
                       child: Padding(
                         padding: const EdgeInsets.all(4),
@@ -162,7 +166,10 @@ class _QuickAddPartyDialogState extends State<QuickAddPartyDialog> {
                   const SizedBox(height: 16),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFFEF2F2),
                       borderRadius: BorderRadius.circular(10),
@@ -209,8 +216,9 @@ class _QuickAddPartyDialogState extends State<QuickAddPartyDialog> {
                     color: Color(0xFF0F172A),
                   ),
                   decoration: _inputDecoration('Enter party name'),
-                  validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Party name is required' : null,
+                  validator: (v) => (v == null || v.trim().isEmpty)
+                      ? 'Party name is required'
+                      : null,
                   onFieldSubmitted: (_) => _onSave(),
                   onChanged: (_) {
                     if (_errorMessage != null) {
@@ -230,9 +238,7 @@ class _QuickAddPartyDialogState extends State<QuickAddPartyDialog> {
                   textCapitalization: TextCapitalization.words,
                   keyboardType: TextInputType.name,
                   inputFormatters: [
-                    FilteringTextInputFormatter.allow(
-                      RegExp(r'[a-zA-Z ]'),
-                    ),
+                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z ]')),
                   ],
                   style: const TextStyle(
                     fontFamily: 'PlusJakartaSans',
@@ -267,7 +273,9 @@ class _QuickAddPartyDialogState extends State<QuickAddPartyDialog> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                      onPressed: _isLoading
+                          ? null
+                          : () => Navigator.of(context).pop(),
                       style: TextButton.styleFrom(
                         foregroundColor: const Color(0xFF64748B),
                         padding: const EdgeInsets.symmetric(
@@ -293,8 +301,9 @@ class _QuickAddPartyDialogState extends State<QuickAddPartyDialog> {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF0D3B82),
                         foregroundColor: Colors.white,
-                        disabledBackgroundColor:
-                            const Color(0xFF0D3B82).withValues(alpha: 0.6),
+                        disabledBackgroundColor: const Color(
+                          0xFF0D3B82,
+                        ).withValues(alpha: 0.6),
                         disabledForegroundColor: Colors.white70,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 20,

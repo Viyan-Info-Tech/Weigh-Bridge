@@ -53,7 +53,9 @@ class WeighmentReportItem extends Equatable {
     if (type == 'GROSS') {
       return firstWeightKg > 0 ? firstWeightKg : null;
     } else if (type == 'TARE') {
-      return (secondWeightKg != null && secondWeightKg! > 0) ? secondWeightKg : null;
+      return (secondWeightKg != null && secondWeightKg! > 0)
+          ? secondWeightKg
+          : null;
     }
     return firstWeightKg > 0 ? firstWeightKg : null;
   }
@@ -66,9 +68,13 @@ class WeighmentReportItem extends Equatable {
     if (type == 'TARE') {
       return firstWeightKg > 0 ? firstWeightKg : null;
     } else if (type == 'GROSS') {
-      return (secondWeightKg != null && secondWeightKg! > 0) ? secondWeightKg : null;
+      return (secondWeightKg != null && secondWeightKg! > 0)
+          ? secondWeightKg
+          : null;
     }
-    return (secondWeightKg != null && secondWeightKg! > 0) ? secondWeightKg : null;
+    return (secondWeightKg != null && secondWeightKg! > 0)
+        ? secondWeightKg
+        : null;
   }
 
   /// Net Weight is only calculated when both Gross and Tare weights exist:
@@ -100,25 +106,25 @@ class WeighmentReportItem extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        billNumber,
-        createdAt,
-        vehicleId,
-        vehicleNumber,
-        vehicleTypeName,
-        partyId,
-        partyName,
-        materialId,
-        materialName,
-        paymentMode,
-        amount,
-        vehicleCharge,
-        remarks,
-        firstWeightKg,
-        firstWeightType,
-        secondWeightKg,
-        secondWeightType,
-        rawStatus,
-        weightUnit,
-      ];
+    id,
+    billNumber,
+    createdAt,
+    vehicleId,
+    vehicleNumber,
+    vehicleTypeName,
+    partyId,
+    partyName,
+    materialId,
+    materialName,
+    paymentMode,
+    amount,
+    vehicleCharge,
+    remarks,
+    firstWeightKg,
+    firstWeightType,
+    secondWeightKg,
+    secondWeightType,
+    rawStatus,
+    weightUnit,
+  ];
 }

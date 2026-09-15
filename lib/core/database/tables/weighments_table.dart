@@ -12,15 +12,20 @@ class Weighments extends Table {
   IntColumn get materialId => integer().references(Materials, #id)();
   TextColumn get paymentMode => text().withLength(min: 1, max: 20)();
   RealColumn get firstWeightKg => real()();
-  TextColumn get firstWeightType => text().withLength(min: 1, max: 20).withDefault(const Constant('GROSS'))();
+  TextColumn get firstWeightType =>
+      text().withLength(min: 1, max: 20).withDefault(const Constant('GROSS'))();
   RealColumn get secondWeightKg => real().nullable()();
-  TextColumn get secondWeightType => text().withLength(min: 1, max: 20).nullable()();
+  TextColumn get secondWeightType =>
+      text().withLength(min: 1, max: 20).nullable()();
   RealColumn get netWeightKg => real().nullable()();
   RealColumn get vehicleCharge => real().withDefault(const Constant(0))();
   RealColumn get amount => real().withDefault(const Constant(0))();
   TextColumn get remarks => text().withLength(min: 0, max: 500).nullable()();
-  TextColumn get status => text().withLength(min: 1, max: 20).withDefault(const Constant('pending'))();
-  TextColumn get weightUnit => text().withLength(min: 1, max: 10).withDefault(const Constant('ton'))();
+  TextColumn get status => text()
+      .withLength(min: 1, max: 20)
+      .withDefault(const Constant('pending'))();
+  TextColumn get weightUnit =>
+      text().withLength(min: 1, max: 10).withDefault(const Constant('ton'))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }

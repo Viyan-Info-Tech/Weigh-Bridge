@@ -24,12 +24,12 @@ class ReportSummary extends Equatable {
 
   @override
   List<Object?> get props => [
-        totalBills,
-        totalGrossWeightKg,
-        totalTareWeightKg,
-        totalNetWeightKg,
-        totalRevenue,
-        pendingCount,
-        completedCount,
-      ];
+    totalBills,
+    totalGrossWeightKg,
+    totalTareWeightKg,
+    totalNetWeightKg,
+    totalRevenue,
+    pendingCount,
+    completedCount,
+  ];
 }
