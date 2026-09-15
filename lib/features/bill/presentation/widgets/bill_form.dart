@@ -22,6 +22,7 @@ class BillForm extends StatefulWidget {
   final TextEditingController grossWeightController;
   final TextEditingController tareWeightController;
   final TextEditingController remarksController;
+  final TextEditingController? vehicleChargeController;
   final double netWeightKg;
   final double vehicleCharge;
   final double defaultVehicleCharge;
@@ -60,6 +61,7 @@ class BillForm extends StatefulWidget {
     required this.grossWeightController,
     required this.tareWeightController,
     required this.remarksController,
+    this.vehicleChargeController,
     required this.netWeightKg,
     required this.vehicleCharge,
     this.defaultVehicleCharge = 0,
@@ -90,6 +92,61 @@ class _BillFormState extends State<BillForm> {
   final GlobalKey _dropdownKey = GlobalKey();
   final GlobalKey _vehicleDropdownKey = GlobalKey();
   final GlobalKey _materialDropdownKey = GlobalKey();
+
+  TextEditingController? _internalVehicleChargeController;
+
+  TextEditingController get _effectiveVehicleChargeController =>
+      widget.vehicleChargeController ??
+      (_internalVehicleChargeController ??= TextEditingController(
+        text: _formatCharge(widget.vehicleCharge),
+      ));
+
+  static String _formatCharge(double charge) {
+    if (charge <= 0) return '';
+    return charge % 1 == 0
+        ? charge.toStringAsFixed(0)
+        : charge.toStringAsFixed(2);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.vehicleChargeController != null &&
+        widget.vehicleChargeController!.text.isEmpty &&
+        widget.vehicleCharge > 0) {
+      widget.vehicleChargeController!.text =
+          _formatCharge(widget.vehicleCharge);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant BillForm oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.vehicleChargeController != oldWidget.vehicleChargeController) {
+      _internalVehicleChargeController?.dispose();
+      _internalVehicleChargeController = null;
+    }
+
+    final controller = _effectiveVehicleChargeController;
+
+    // In auto mode, or when bill number changes, sync controller text from state.
+    // While user is manually editing (isVehicleChargeManuallyEdited == true and same bill),
+    // do NOT touch the controller so focus and cursor remain intact.
+    if (!widget.isVehicleChargeManuallyEdited ||
+        widget.billNumber != oldWidget.billNumber) {
+      final text = _formatCharge(widget.vehicleCharge);
+      if (controller.text != text) {
+        controller.text = text;
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _internalVehicleChargeController?.dispose();
+    super.dispose();
+  }
 
   bool get isEditing => widget.isEditing;
   List<Party> get parties => widget.parties;
@@ -1125,24 +1182,29 @@ class _BillFormState extends State<BillForm> {
               ),
             ),
             const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-              decoration: BoxDecoration(
-                color: isManual
-                    ? const Color(0xFF7C3AED).withValues(alpha: 0.1)
-                    : const Color(0xFF16A34A).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(3),
-              ),
-              child: Text(
-                isManual ? 'Manual' : 'Auto',
-                style: TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
+            Tooltip(
+              message: isManual
+                  ? 'Manual charge override. Tap reset to restore auto calculation.'
+                  : 'Auto-calculated from vehicle type. Type here to manually override.',
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                decoration: BoxDecoration(
                   color: isManual
-                      ? const Color(0xFF7C3AED)
-                      : const Color(0xFF16A34A),
-                  letterSpacing: 0.3,
+                      ? const Color(0xFF7C3AED).withValues(alpha: 0.1)
+                      : const Color(0xFF16A34A).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+                child: Text(
+                  isManual ? 'Manual' : 'Auto',
+                  style: TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                    color: isManual
+                        ? const Color(0xFF7C3AED)
+                        : const Color(0xFF16A34A),
+                    letterSpacing: 0.3,
+                  ),
                 ),
               ),
             ),
@@ -1150,10 +1212,7 @@ class _BillFormState extends State<BillForm> {
         ),
         const SizedBox(height: 6),
         TextFormField(
-          key: ValueKey('vc_${widget.vehicleCharge}_${widget.isVehicleChargeManuallyEdited}'),
-          initialValue: widget.vehicleCharge > 0
-              ? widget.vehicleCharge.toStringAsFixed(0)
-              : '',
+          controller: _effectiveVehicleChargeController,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
@@ -1183,8 +1242,12 @@ class _BillFormState extends State<BillForm> {
                     icon: const Icon(Icons.restart_alt_rounded, size: 18),
                     color: const Color(0xFF7C3AED),
                     visualDensity: VisualDensity.compact,
-                    tooltip: 'Reset to default (\u20B9${widget.defaultVehicleCharge.toStringAsFixed(0)})',
-                    onPressed: widget.onResetVehicleCharge,
+                    tooltip: 'Reset to default (\u20B9${_formatCharge(widget.defaultVehicleCharge)})',
+                    onPressed: () {
+                      widget.onResetVehicleCharge();
+                      _effectiveVehicleChargeController.text =
+                          _formatCharge(widget.defaultVehicleCharge);
+                    },
                   )
                 : null,
             contentPadding:

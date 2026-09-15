@@ -23,6 +23,7 @@ class _BillPageState extends State<BillPage> {
   late final TextEditingController _grossWeightController;
   late final TextEditingController _tareWeightController;
   late final TextEditingController _remarksController;
+  late final TextEditingController _vehicleChargeController;
 
   @override
   void initState() {
@@ -30,6 +31,7 @@ class _BillPageState extends State<BillPage> {
     _grossWeightController = TextEditingController();
     _tareWeightController = TextEditingController();
     _remarksController = TextEditingController();
+    _vehicleChargeController = TextEditingController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         context.read<BillBloc>().add(const LoadBillScreen());
@@ -42,6 +44,7 @@ class _BillPageState extends State<BillPage> {
     _grossWeightController.dispose();
     _tareWeightController.dispose();
     _remarksController.dispose();
+    _vehicleChargeController.dispose();
     super.dispose();
   }
 
@@ -49,6 +52,7 @@ class _BillPageState extends State<BillPage> {
     _grossWeightController.clear();
     _tareWeightController.clear();
     _remarksController.clear();
+    _vehicleChargeController.clear();
   }
 
   bool _hasUnsavedData(BillState state) {
@@ -159,6 +163,11 @@ class _BillPageState extends State<BillPage> {
           _grossWeightController.text = state.grossWeightText;
           _tareWeightController.text = state.tareWeightText;
           _remarksController.text = state.remarksText;
+          _vehicleChargeController.text = state.vehicleCharge > 0
+              ? (state.vehicleCharge % 1 == 0
+                  ? state.vehicleCharge.toStringAsFixed(0)
+                  : state.vehicleCharge.toStringAsFixed(2))
+              : '';
         } else if (state.editingBillId == null) {
           _syncControllersAfterReset();
         }
@@ -470,6 +479,7 @@ class _BillPageState extends State<BillPage> {
       grossWeightController: _grossWeightController,
       tareWeightController: _tareWeightController,
       remarksController: _remarksController,
+      vehicleChargeController: _vehicleChargeController,
       netWeightKg: state.netWeightKg,
       vehicleCharge: state.vehicleCharge,
       defaultVehicleCharge: state.defaultVehicleCharge,

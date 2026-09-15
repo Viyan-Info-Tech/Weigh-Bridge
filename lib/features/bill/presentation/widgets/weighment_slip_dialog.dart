@@ -659,26 +659,38 @@ class WeighmentSlipDialog extends StatelessWidget {
             child: OutlinedButton(
               onPressed: () => Navigator.of(context).pop(),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF334155),
-                side: const BorderSide(color: Color(0xFFCBD5E1)),
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFF243B64),
+                side: const BorderSide(
+                  color: Color(0xFFCBD5E1),
+                  width: 1.5,
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              child: const Text(
-                'Close',
-                style: TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontWeight: FontWeight.w700,
-                  fontSize: 11,
-                ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.close, size: 14),
+                  SizedBox(width: 4),
+                  Text(
+                    'Close',
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
           const SizedBox(width: 6),
           Expanded(
-            child: OutlinedButton.icon(
+            child: OutlinedButton(
               onPressed: () {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
@@ -688,22 +700,33 @@ class WeighmentSlipDialog extends StatelessWidget {
                   ),
                 );
               },
-              icon: const Icon(Icons.print_rounded, size: 14),
-              label: const Text(
-                'Print Ticket',
-                style: TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontWeight: FontWeight.w700,
-                  fontSize: 11,
-                ),
-              ),
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF0F52BA),
-                side: const BorderSide(color: Color(0xFF93C5FD)),
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFF174A9C),
+                side: const BorderSide(
+                  color: Color(0xFFCBD5E1),
+                  width: 1.5,
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(10),
                 ),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.print, size: 14),
+                  SizedBox(width: 4),
+                  Text(
+                    'Print Ticket',
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontWeight: FontWeight.w700,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -732,7 +755,7 @@ class WeighmentSlipDialog extends StatelessWidget {
                   horizontal: 4,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 elevation: 1,
               ),
@@ -748,26 +771,37 @@ class WeighmentSlipDialog extends StatelessWidget {
           child: OutlinedButton(
             onPressed: () => Navigator.of(context).pop(),
             style: OutlinedButton.styleFrom(
-              foregroundColor: const Color(0xFF334155),
-              side: const BorderSide(color: Color(0xFFCBD5E1)),
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFF243B64),
+              side: const BorderSide(
+                color: Color(0xFFCBD5E1),
+                width: 1.5,
+              ),
               padding: const EdgeInsets.symmetric(vertical: 10),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Text(
-              'Close',
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontWeight: FontWeight.w700,
-              ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.close, size: 16),
+                SizedBox(width: 8),
+                Text(
+                  'Close',
+                  style: TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
           flex: 2,
-          child: ElevatedButton.icon(
+          child: ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(
@@ -778,23 +812,29 @@ class WeighmentSlipDialog extends StatelessWidget {
                 ),
               );
             },
-            icon: const Icon(Icons.print_rounded, size: 16),
-            label: const Text(
-              'Print Ticket',
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontWeight: FontWeight.w800,
-                fontSize: 13,
-              ),
-            ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0D3B82),
+              backgroundColor: const Color(0xFF174A9C),
               foregroundColor: Colors.white,
+              elevation: 2,
               padding: const EdgeInsets.symmetric(vertical: 10),
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(6),
+                borderRadius: BorderRadius.circular(10),
               ),
-              elevation: 2,
+            ),
+            child: const Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.print, size: 16),
+                SizedBox(width: 8),
+                Text(
+                  'Print Ticket',
+                  style: TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
