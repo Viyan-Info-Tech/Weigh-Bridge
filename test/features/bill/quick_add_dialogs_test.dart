@@ -127,7 +127,7 @@ void main() {
                 onPressed: () => QuickAddVehicleDialog.show(
                   context: context,
                   vehicleTypes: types,
-                  onSave: (num, typeId) {},
+                  onSave: (vehicleNumber, typeId) {},
                   onAddVehicleType: (n, e, l) async => null,
                 ),
                 child: const Text('Open Vehicle'),

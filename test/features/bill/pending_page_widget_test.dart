@@ -142,6 +142,7 @@ void main() {
       vehicleId: 1,
       materialId: 1,
       paymentMode: 'Cash',
+      firstWeightType: 'TARE',
       grossWeightKg: 0,
       tareWeightKg: 6000,
       netWeightKg: null,
@@ -267,7 +268,7 @@ void main() {
       expect(find.text('BILL NUMBER'), findsOneWidget);
       expect(find.text('VEHICLE'), findsOneWidget);
       expect(find.text('PARTY & MATERIAL'), findsOneWidget);
-      expect(find.text('GROSS WEIGHT'), findsOneWidget);
+      expect(find.text('FIRST WEIGHT'), findsOneWidget);
       expect(find.text('TIME'), findsOneWidget);
       expect(find.text('ACTION'), findsOneWidget);
 
@@ -444,7 +445,7 @@ void main() {
       expect(find.text('—'), findsOneWidget);
 
       // Verify status badge
-      expect(find.text('TARE WEIGHT PENDING'), findsWidgets);
+      expect(find.text('PENDING'), findsWidgets);
 
       // Verify footer note
       expect(find.textContaining('Tare weight is pending'), findsOneWidget);
@@ -524,7 +525,7 @@ void main() {
 
       // Verify row displays Gross Weight Pending
       expect(find.text('WB-00009'), findsOneWidget);
-      expect(find.text('Gross Weight Pending'), findsOneWidget);
+      expect(find.text('PENDING • GROSS WT'), findsOneWidget);
       expect(find.widgetWithText(FilledButton, 'Gross Weight'), findsOneWidget);
 
       // Open popup for WB-00009

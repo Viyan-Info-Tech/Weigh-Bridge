@@ -17,7 +17,6 @@ import 'package:weighbridge/features/settings/presentation/bloc/settings_event.d
 import 'package:weighbridge/features/settings/presentation/bloc/settings_state.dart';
 import 'package:weighbridge/features/settings/presentation/pages/settings_page.dart';
 import 'package:weighbridge/features/vehicle/domain/entities/vehicle.dart';
-import 'package:weighbridge/features/vehicle_type/domain/entities/vehicle_type.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
