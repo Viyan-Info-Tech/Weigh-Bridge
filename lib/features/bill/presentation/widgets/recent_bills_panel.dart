@@ -899,7 +899,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
           Row(
             children: [
               Text(
-                '₹ ${bill.amount.toStringAsFixed(2)}',
+                '₹${NumberFormat('#,##0.00').format(bill.amount)}',
                 style: const TextStyle(
                   fontFamily: 'PlusJakartaSans',
                   fontSize: 14,

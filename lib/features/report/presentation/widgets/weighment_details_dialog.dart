@@ -267,7 +267,7 @@ class WeighmentDetailsDialog extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '₹${record.amount.toStringAsFixed(0)}',
+                        '₹${NumberFormat('#,##0.00').format(record.amount)}',
                         style: const TextStyle(
                           fontFamily: 'PlusJakartaSans',
                           fontSize: 16,

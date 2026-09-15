@@ -83,8 +83,8 @@ class WeighmentSlipDialog extends StatelessWidget {
     final hasNet = activeSettings.showNetWeight;
     final hasWeights = hasGross || hasTare || hasNet;
 
-    // Check financial rows
-    final hasAmount = activeSettings.showAmount;
+    // Check financial rows: completed weighments always show Amount explicitly
+    final hasAmount = isCompleted || activeSettings.showAmount || bill.amount > 0;
     final hasPayment = activeSettings.showPaymentMode;
     final hasCash = activeSettings.showCashReceived;
     final hasPending = activeSettings.showPendingAmount;
@@ -237,19 +237,20 @@ class WeighmentSlipDialog extends StatelessWidget {
                         if (hasAmount)
                           _buildInfoRow(
                             'Amount',
-                            'Rs. ${bill.amount.toStringAsFixed(2)}',
+                            '₹${NumberFormat('#,##0.00').format(bill.amount)}',
                           ),
                         if (hasPayment)
                           _buildInfoRow(
                             'Payment',
                             bill.paymentMode.toUpperCase(),
                           ),
-                        if (hasCash)
+                        if (hasCash && bill.paymentMode.toUpperCase() == 'CASH')
                           _buildInfoRow(
                             'Cash Received',
-                            'Rs. ${bill.amount.toStringAsFixed(2)}',
+                            '₹${NumberFormat('#,##0.00').format(bill.amount)}',
                           ),
-                        if (hasPending) _buildInfoRow('Pending', 'Rs. 0.00'),
+                        if (hasPending)
+                          _buildInfoRow('Pending', '₹0.00'),
                       ],
 
                       if (!isCompleted) ...[
