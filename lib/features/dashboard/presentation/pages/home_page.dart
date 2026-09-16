@@ -57,10 +57,11 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildSidebar(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: 240,
-      color: Colors.blueGrey.shade900,
-      child: Column(
+      child: Material(
+        color: Colors.blueGrey.shade900,
+        child: Column(
         children: [
           Container(
             height: 70,
@@ -202,8 +203,9 @@ class _HomePageState extends State<HomePage> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildMastersSection() {
     return Column(
@@ -318,8 +320,8 @@ class _SidebarSubItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(left: 16),
+    return Padding(
+      padding: const EdgeInsets.only(left: 16),
       child: ListTile(
         leading: Icon(
           icon,

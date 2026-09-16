@@ -315,15 +315,6 @@ class _BillPageState extends State<BillPage> {
                     ? state.vehicleCharge.toStringAsFixed(0)
                     : state.vehicleCharge.toStringAsFixed(2))
               : '';
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) {
-              if (state.editingFirstWeightType?.toUpperCase() == 'GROSS') {
-                _tareWeightFocusNode.requestFocus();
-              } else {
-                _grossWeightFocusNode.requestFocus();
-              }
-            }
-          });
         }
       },
       builder: (context, state) {

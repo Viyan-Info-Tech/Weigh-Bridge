@@ -215,15 +215,15 @@ class _WeightDisplayState extends State<WeightDisplay> {
             // Main Console Layout
             Padding(
               padding: EdgeInsets.symmetric(
-                horizontal: consoleWidth * 0.024,
-                vertical: consoleHeight * 0.04,
+                horizontal: (consoleWidth * 0.022).clamp(4.0, 16.0),
+                vertical: (consoleHeight * 0.035).clamp(2.0, 10.0),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // --- TOP INSTRUMENT STATUS BAR ---
-                  _buildHeaderBar(theme, netKg, consoleHeight),
+                  _buildHeaderBar(theme, netKg, consoleWidth, consoleHeight),
 
                   // --- CENTER DIGITAL READOUT ---
                   Expanded(
@@ -231,13 +231,19 @@ class _WeightDisplayState extends State<WeightDisplay> {
                       child: _buildMainDigitalReadout(
                         weightString: weightString,
                         theme: theme,
+                        consoleWidth: consoleWidth,
                         consoleHeight: consoleHeight,
                       ),
                     ),
                   ),
 
                   // --- BOTTOM TELEMETRY SUMMARY BAR ---
-                  _buildTelemetryBottomBar(netKg, theme, consoleHeight),
+                  _buildTelemetryBottomBar(
+                    netKg,
+                    theme,
+                    consoleWidth,
+                    consoleHeight,
+                  ),
                 ],
               ),
             ),
@@ -247,108 +253,211 @@ class _WeightDisplayState extends State<WeightDisplay> {
     );
   }
 
-  /// Top micro status bar with live scale status, dynamic LED load bar, and theme chips
+  /// Responsive top status bar adapting between spacious 3-column and compact 2-row layouts
   Widget _buildHeaderBar(
     ScaleDisplayTheme theme,
     double netKg,
+    double consoleWidth,
     double consoleHeight,
   ) {
-    return SizedBox(
-      height: consoleHeight * 0.16,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
+    if (consoleWidth < 480) {
+      // Compact layout for smaller desktop widths:
+      // Row 1: Status indicator (left) + Theme chips (right)
+      // Row 2: Centered dynamic load gauge
+      return Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Left: Live scale heartbeat indicator
           Row(
-            mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 7,
-                height: 7,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: theme.accentColor,
-                  boxShadow: [
-                    BoxShadow(
-                      color: theme.accentColor.withValues(alpha: 0.8),
-                      blurRadius: 6,
-                      spreadRadius: 1,
-                    ),
-                  ],
+              Expanded(
+                child: _buildStatusIndicator(
+                  theme,
+                  consoleWidth,
+                  consoleHeight,
                 ),
               ),
-              const SizedBox(width: 6),
-              Text(
-                'DIGITAL WEIGHBRIDGE INDICATOR',
-                style: TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 8,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white.withValues(alpha: 0.7),
-                  letterSpacing: 0.8,
-                ),
+              const SizedBox(width: 4),
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: _buildThemeSwitcher(theme, consoleWidth),
               ),
             ],
           ),
+          const SizedBox(height: 2),
+          Center(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: _buildSegmentedLoadGauge(
+                netKg,
+                theme,
+                consoleWidth,
+                consoleHeight,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
 
-          // Center: Segmented Dynamic LED Capacity Bar (0 to 50,000 kg capacity)
-          _buildSegmentedLoadGauge(netKg, theme),
+    // Standard / Large desktop layout: single spacious row with 3 flexible sections
+    return SizedBox(
+      height: (consoleHeight * 0.16).clamp(14.0, 24.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Left: Live scale heartbeat indicator
+          Expanded(
+            flex: 4,
+            child: _buildStatusIndicator(theme, consoleWidth, consoleHeight),
+          ),
+
+          // Center: Segmented Dynamic LED Capacity Bar
+          Expanded(
+            flex: 3,
+            child: Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: _buildSegmentedLoadGauge(
+                  netKg,
+                  theme,
+                  consoleWidth,
+                  consoleHeight,
+                ),
+              ),
+            ),
+          ),
 
           // Right: Color Theme Switcher Pills
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: ScaleDisplayTheme.values.map((t) {
-              final isSelected = t == _selectedTheme;
-              return InkWell(
-                onTap: () => setState(() => _selectedTheme = t),
-                borderRadius: BorderRadius.circular(4),
-                child: Container(
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 5,
-                    vertical: 1.5,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? t.accentColor.withValues(alpha: 0.25)
-                        : Colors.white.withValues(alpha: 0.05),
-                    borderRadius: BorderRadius.circular(3),
-                    border: Border.all(
-                      color: isSelected
-                          ? t.accentColor
-                          : Colors.white.withValues(alpha: 0.12),
-                      width: 0.8,
-                    ),
-                  ),
-                  child: Text(
-                    t.label,
-                    style: TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 7,
-                      fontWeight: isSelected
-                          ? FontWeight.w800
-                          : FontWeight.w500,
-                      color: isSelected
-                          ? t.accentColor
-                          : Colors.white.withValues(alpha: 0.45),
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
+          Expanded(
+            flex: 4,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: _buildThemeSwitcher(theme, consoleWidth),
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
+  /// Heartbeat status indicator with responsive text and dot
+  Widget _buildStatusIndicator(
+    ScaleDisplayTheme theme,
+    double consoleWidth,
+    double consoleHeight,
+  ) {
+    final dotSize = (consoleHeight * 0.065).clamp(5.0, 7.5);
+    final fontSize = (consoleHeight * 0.075).clamp(6.5, 8.5);
+    final statusText = consoleWidth < 380
+        ? 'LIVE SCALE'
+        : (consoleWidth < 520
+            ? 'SCALE INDICATOR'
+            : 'DIGITAL WEIGHBRIDGE INDICATOR');
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: dotSize,
+          height: dotSize,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: theme.accentColor,
+            boxShadow: [
+              BoxShadow(
+                color: theme.accentColor.withValues(alpha: 0.8),
+                blurRadius: 5,
+                spreadRadius: 1,
+              ),
+            ],
+          ),
+        ),
+        SizedBox(width: (dotSize * 0.8).clamp(3.0, 6.0)),
+        Flexible(
+          child: Text(
+            statusText,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: fontSize,
+              fontWeight: FontWeight.w700,
+              color: Colors.white.withValues(alpha: 0.75),
+              letterSpacing: 0.6,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Theme switcher chips with scalable padding and font
+  Widget _buildThemeSwitcher(ScaleDisplayTheme theme, double consoleWidth) {
+    final isCompact = consoleWidth < 480;
+    final hPad = isCompact ? 3.5 : 5.0;
+    final vPad = isCompact ? 1.0 : 1.5;
+    final fontSize = isCompact ? 6.5 : 7.0;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: ScaleDisplayTheme.values.map((t) {
+        final isSelected = t == _selectedTheme;
+        return InkWell(
+          onTap: () => setState(() => _selectedTheme = t),
+          borderRadius: BorderRadius.circular(4),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 1.5),
+            padding: EdgeInsets.symmetric(
+              horizontal: hPad,
+              vertical: vPad,
+            ),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? t.accentColor.withValues(alpha: 0.25)
+                  : Colors.white.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(3),
+              border: Border.all(
+                color: isSelected
+                    ? t.accentColor
+                    : Colors.white.withValues(alpha: 0.12),
+                width: 0.8,
+              ),
+            ),
+            child: Text(
+              t.label,
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: fontSize,
+                fontWeight: isSelected ? FontWeight.w800 : FontWeight.w500,
+                color: isSelected
+                    ? t.accentColor
+                    : Colors.white.withValues(alpha: 0.45),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
   /// Segmented dynamic load gauge (16 LED notches showing scale load percentage)
-  Widget _buildSegmentedLoadGauge(double netKg, ScaleDisplayTheme theme) {
+  Widget _buildSegmentedLoadGauge(
+    double netKg,
+    ScaleDisplayTheme theme,
+    double consoleWidth,
+    double consoleHeight,
+  ) {
     const int totalSegments = 16;
     const double maxCapacityKg = 50000.0;
     final double ratio = (netKg / maxCapacityKg).clamp(0.0, 1.0);
     final int litSegments = (ratio * totalSegments).round();
+
+    final segWidth = (consoleWidth * 0.0055).clamp(2.0, 3.5);
+    final segHeight = (consoleHeight * 0.055).clamp(4.0, 6.5);
+    final segSpacing = (consoleWidth * 0.002).clamp(0.6, 1.0);
 
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -364,9 +473,9 @@ class _WeightDisplayState extends State<WeightDisplay> {
         }
 
         return Container(
-          width: 3,
-          height: 6,
-          margin: const EdgeInsets.symmetric(horizontal: 1),
+          width: segWidth,
+          height: segHeight,
+          margin: EdgeInsets.symmetric(horizontal: segSpacing),
           decoration: BoxDecoration(
             color: isLit ? segColor : Colors.white.withValues(alpha: 0.06),
             borderRadius: BorderRadius.circular(0.8),
@@ -388,54 +497,63 @@ class _WeightDisplayState extends State<WeightDisplay> {
   Widget _buildMainDigitalReadout({
     required String weightString,
     required ScaleDisplayTheme theme,
+    required double consoleWidth,
     required double consoleHeight,
   }) {
-    final digitHeight = (consoleHeight * 0.52).clamp(24.0, 58.0);
+    final digitHeight = (consoleHeight * 0.50).clamp(22.0, 58.0);
     final digitWidth = digitHeight * 0.56;
+    final hPadding = (consoleWidth * 0.024).clamp(6.0, 14.0);
+    final vPadding = (consoleHeight * 0.035).clamp(2.0, 5.0);
+    final gapWidth = (digitHeight * 0.20).clamp(4.0, 14.0);
 
-    return FittedBox(
-      fit: BoxFit.scaleDown,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-        decoration: BoxDecoration(
-          color: theme.bgTint.withValues(alpha: 0.4),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: theme.accentColor.withValues(alpha: 0.2),
-            width: 1,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.35),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: consoleWidth * 0.95,
+      ),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: hPadding, vertical: vPadding),
+          decoration: BoxDecoration(
+            color: theme.bgTint.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: theme.accentColor.withValues(alpha: 0.2),
+              width: 1,
             ),
-          ],
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // Slanted LED Digits Container
-            Transform(
-              transform: Matrix4.skewX(-0.10), // 6° modern aerodynamic slant
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: _buildDigitsWithSmokedBackground(
-                  weightString: weightString,
-                  digitWidth: digitWidth,
-                  digitHeight: digitHeight,
-                  theme: theme,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.35),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // Slanted LED Digits Container
+              Transform(
+                transform: Matrix4.skewX(-0.10), // 6° modern aerodynamic slant
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: _buildDigitsWithSmokedBackground(
+                    weightString: weightString,
+                    digitWidth: digitWidth,
+                    digitHeight: digitHeight,
+                    theme: theme,
+                  ),
                 ),
               ),
-            ),
 
-            const SizedBox(width: 14),
+              SizedBox(width: gapWidth),
 
-            // High-Tech Unit Indicator Pill
-            _buildUnitBadge(theme, digitHeight),
-          ],
+              // High-Tech Unit Indicator Pill
+              _buildUnitBadge(theme, digitHeight),
+            ],
+          ),
         ),
       ),
     );
@@ -518,13 +636,18 @@ class _WeightDisplayState extends State<WeightDisplay> {
     return widgets;
   }
 
-  /// High-tech unit badge with glow
+  /// High-tech unit badge with glow that scales smoothly with digitHeight
   Widget _buildUnitBadge(ScaleDisplayTheme theme, double digitHeight) {
+    final unitLabelSize = (digitHeight * 0.13).clamp(5.5, 7.5);
+    final unitTextSize = (digitHeight * 0.32).clamp(11.0, 17.0);
+    final hPadding = (digitHeight * 0.15).clamp(4.0, 8.0);
+    final vPadding = (digitHeight * 0.08).clamp(2.0, 5.0);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      padding: EdgeInsets.symmetric(horizontal: hPadding, vertical: vPadding),
       decoration: BoxDecoration(
         color: theme.accentColor.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(5),
         border: Border.all(
           color: theme.accentColor.withValues(alpha: 0.4),
           width: 1,
@@ -544,18 +667,18 @@ class _WeightDisplayState extends State<WeightDisplay> {
             'UNIT',
             style: TextStyle(
               fontFamily: 'PlusJakartaSans',
-              fontSize: 6.5,
+              fontSize: unitLabelSize,
               fontWeight: FontWeight.w700,
               color: Colors.white.withValues(alpha: 0.5),
               letterSpacing: 0.8,
             ),
           ),
-          const SizedBox(height: 1),
+          SizedBox(height: (digitHeight * 0.02).clamp(0.5, 1.5)),
           Text(
             widget.weightUnit,
             style: TextStyle(
               fontFamily: 'PlusJakartaSans',
-              fontSize: 16,
+              fontSize: unitTextSize,
               fontWeight: FontWeight.w800,
               color: theme.accentColor,
               letterSpacing: 0.5,
@@ -572,15 +695,27 @@ class _WeightDisplayState extends State<WeightDisplay> {
     );
   }
 
-  /// Bottom Strip: Gross, Tare, Net Weight Telemetry Breakdown
+  /// Bottom Strip: Gross, Tare, Net Weight Telemetry Breakdown with guaranteed responsiveness
   Widget _buildTelemetryBottomBar(
     double netKg,
     ScaleDisplayTheme theme,
+    double consoleWidth,
     double consoleHeight,
   ) {
+    final isCompact = consoleWidth < 400;
+    final grossStr = _formatSummaryWeight(widget.grossWeight, widget.weightUnit);
+    final tareStr = _formatSummaryWeight(widget.tareWeight, widget.weightUnit);
+    final netStr = _formatSummaryWeight(netKg, widget.weightUnit);
+
+    final grossLabel = isCompact ? 'G: $grossStr' : 'GROSS: $grossStr';
+    final tareLabel = isCompact ? 'T: $tareStr' : 'TARE: $tareStr';
+    final netLabel = isCompact ? 'N: $netStr' : 'NET: $netStr';
+
+    final fontSize = (consoleHeight * 0.08).clamp(7.0, 9.0);
+
     return Container(
-      height: consoleHeight * 0.18,
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      height: (consoleHeight * 0.18).clamp(16.0, 24.0),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(6),
@@ -590,27 +725,35 @@ class _WeightDisplayState extends State<WeightDisplay> {
         ),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // GROSS
-          _buildTelemetryMetric(
-            label:
-                'GROSS: ${_formatSummaryWeight(widget.grossWeight, widget.weightUnit)}',
-            color: const Color(0xFFCBD5E1),
+          Expanded(
+            child: _buildTelemetryMetric(
+              label: grossLabel,
+              color: const Color(0xFFCBD5E1),
+              fontSize: fontSize,
+            ),
           ),
+          const SizedBox(width: 4),
 
           // TARE
-          _buildTelemetryMetric(
-            label:
-                'TARE: ${_formatSummaryWeight(widget.tareWeight, widget.weightUnit)}',
-            color: const Color(0xFFCBD5E1),
+          Expanded(
+            child: _buildTelemetryMetric(
+              label: tareLabel,
+              color: const Color(0xFFCBD5E1),
+              fontSize: fontSize,
+            ),
           ),
+          const SizedBox(width: 4),
 
           // NET (highlighted in theme accent)
-          _buildTelemetryMetric(
-            label: 'NET: ${_formatSummaryWeight(netKg, widget.weightUnit)}',
-            color: theme.accentColor,
-            isHighlighted: true,
+          Expanded(
+            child: _buildTelemetryMetric(
+              label: netLabel,
+              color: theme.accentColor,
+              isHighlighted: true,
+              fontSize: fontSize,
+            ),
           ),
         ],
       ),
@@ -621,9 +764,11 @@ class _WeightDisplayState extends State<WeightDisplay> {
     required String label,
     required Color color,
     bool isHighlighted = false,
+    required double fontSize,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+      alignment: Alignment.center,
       decoration: BoxDecoration(
         color: isHighlighted
             ? color.withValues(alpha: 0.12)
@@ -632,9 +777,12 @@ class _WeightDisplayState extends State<WeightDisplay> {
       ),
       child: Text(
         label,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
         style: TextStyle(
           fontFamily: 'PlusJakartaSans',
-          fontSize: 8.5,
+          fontSize: fontSize,
           fontWeight: isHighlighted ? FontWeight.w800 : FontWeight.w600,
           color: color,
           letterSpacing: 0.3,

@@ -59,6 +59,7 @@ class _SearchableDropdownState<T extends Object>
   final ScrollController _scrollController = ScrollController();
   bool _overlayUpdateScheduled = false;
   bool _pendingShouldShowOverlay = false;
+  bool _isDismissed = false;
 
   @override
   void initState() {
@@ -109,31 +110,49 @@ class _SearchableDropdownState<T extends Object>
 
   void _handleFocusChange() {
     if (_effectiveFocusNode.hasFocus) {
-      // Auto-select text on focus so typing immediately replaces it
+      _isDismissed = false;
+
+      // Select all text when the field receives focus.
       _textController.selection = TextSelection(
         baseOffset: 0,
         extentOffset: _textController.text.length,
       );
+
       _rebuildOptions();
-    } else {
-      _dismissOverlay();
-      // On blur, if text does not match any item, restore selected item label or clear
+      return;
+    }
+
+    // IMPORTANT:
+    // Do not dismiss the overlay synchronously here.
+    //
+    // On Windows desktop, clicking an item inside the OverlayEntry can
+    // cause the TextFormField to lose focus before the mouse tap reaches
+    // the InkWell. Removing the overlay here prevents the mouse click
+    // from being delivered.
+    //
+    // Let the pointer event finish first.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      if (_effectiveFocusNode.hasFocus) return;
+
       if (widget.selectedItem != null) {
         final currentText = _textController.text.trim().toLowerCase();
-        final selectedText = widget
-            .itemLabel(widget.selectedItem!)
-            .toLowerCase();
+        final selectedText =
+            widget.itemLabel(widget.selectedItem!).toLowerCase();
+
         if (currentText != selectedText) {
           _textController.text = widget.itemLabel(widget.selectedItem!);
         }
-      } else {
+      } else if (_textController.text.isNotEmpty) {
         _textController.clear();
       }
-    }
+    });
   }
 
   void _handleTextChange() {
     if (_effectiveFocusNode.hasFocus) {
+      _isDismissed = false;
       _rebuildOptions();
     }
   }
@@ -146,7 +165,19 @@ class _SearchableDropdownState<T extends Object>
     if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
       return KeyEventResult.ignored;
     }
-    if (_currentOptions.isEmpty || _overlayEntry == null) {
+    if (_overlayEntry == null) {
+      if (event.logicalKey == LogicalKeyboardKey.arrowDown ||
+          event.logicalKey == LogicalKeyboardKey.arrowUp) {
+        _rebuildOptions(forceShow: true);
+        return KeyEventResult.handled;
+      }
+      return KeyEventResult.ignored;
+    }
+    if (_currentOptions.isEmpty) {
+      if (event.logicalKey == LogicalKeyboardKey.escape) {
+        _dismissOverlay();
+        return KeyEventResult.handled;
+      }
       return KeyEventResult.ignored;
     }
 
@@ -218,9 +249,12 @@ class _SearchableDropdownState<T extends Object>
     }).toList();
   }
 
-  void _rebuildOptions() {
+  void _rebuildOptions({bool forceShow = false}) {
     final newOptions = _computeOptions();
-    final shouldShow = newOptions.isNotEmpty;
+    if (forceShow) {
+      _isDismissed = false;
+    }
+    final shouldShow = !_isDismissed && _effectiveFocusNode.hasFocus;
 
     setState(() {
       _currentOptions = newOptions;
@@ -254,16 +288,33 @@ class _SearchableDropdownState<T extends Object>
     });
   }
 
+  void _toggleOverlay() {
+    if (!widget.enabled) return;
+    if (_overlayEntry != null) {
+      _dismissOverlay();
+    } else {
+      _isDismissed = false;
+      if (!_effectiveFocusNode.hasFocus) {
+        _effectiveFocusNode.requestFocus();
+      } else {
+        _rebuildOptions(forceShow: true);
+      }
+    }
+  }
+
   void _showOverlay() {
     _overlayEntry?.remove();
     _overlayEntry = _buildOverlay();
     Overlay.of(context).insert(_overlayEntry!);
+    if (mounted) setState(() {});
   }
 
   void _dismissOverlay() {
+    _isDismissed = true;
     _overlayEntry?.remove();
     _overlayEntry = null;
     _highlightedIndex = -1;
+    if (mounted) setState(() {});
   }
 
   OverlayEntry _buildOverlay() {
@@ -300,21 +351,48 @@ class _SearchableDropdownState<T extends Object>
     );
   }
 
+  String _getEmptyMessage() {
+    final query = _textController.text.trim();
+    if (widget.items.isEmpty) {
+      final labelLower = widget.label.toLowerCase();
+      if (labelLower.contains('party')) return 'No parties found';
+      if (labelLower.contains('vehicle')) return 'No vehicles found';
+      if (labelLower.contains('material')) return 'No materials found';
+      return 'No items found';
+    }
+    if (query.isNotEmpty) {
+      return 'No matches found for "$query"';
+    }
+    return 'No matches found';
+  }
+
   Widget _buildOptionsList() {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         if (_currentOptions.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: Text(
-              'No matches found',
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 12,
-                color: Color(0xFF94A3B8),
-                fontStyle: FontStyle.italic,
-              ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: 16,
+                  color: Colors.grey.shade400,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    _getEmptyMessage(),
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 13,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
             ),
           )
         else
@@ -381,11 +459,13 @@ class _SearchableDropdownState<T extends Object>
           const Divider(height: 1, color: Color(0xFFE2E8F0)),
           InkWell(
             onTap: () {
+              _dismissOverlay();
               widget.onAddNew!();
             },
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              color: const Color(0xFFF8FAFC),
               child: Row(
                 children: [
                   const Icon(
@@ -450,6 +530,11 @@ class _SearchableDropdownState<T extends Object>
             focusNode: _effectiveFocusNode,
             enabled: widget.enabled,
             textInputAction: TextInputAction.next,
+            onTap: () {
+              if (_overlayEntry == null) {
+                _rebuildOptions(forceShow: true);
+              }
+            },
             style: const TextStyle(
               fontFamily: 'PlusJakartaSans',
               fontSize: 13,
@@ -491,34 +576,50 @@ class _SearchableDropdownState<T extends Object>
                   width: 2.0,
                 ),
               ),
+              suffixIconConstraints: const BoxConstraints(
+                minWidth: 36,
+                minHeight: 36,
+              ),
               suffixIcon: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   if (_textController.text.isNotEmpty && widget.enabled)
-                    IconButton(
-                      icon: const Icon(Icons.clear_rounded, size: 16),
-                      color: Colors.grey.shade400,
-                      visualDensity: VisualDensity.compact,
-                      tooltip: 'Clear',
-                      onPressed: () {
-                        _textController.clear();
-                        _effectiveFocusNode.requestFocus();
-                      },
+                    Tooltip(
+                      message: 'Clear',
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: () {
+                          _textController.clear();
+                          _effectiveFocusNode.requestFocus();
+                        },
+                        child: Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: Icon(
+                            Icons.clear_rounded,
+                            size: 16,
+                            color: Colors.grey.shade400,
+                          ),
+                        ),
+                      ),
                     ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: widget.enabled
-                          ? Colors.grey.shade600
-                          : Colors.grey.shade300,
-                      size: 20,
+                  Tooltip(
+                    message: _overlayEntry != null ? 'Close' : 'Open',
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: widget.enabled ? _toggleOverlay : null,
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(
+                          _overlayEntry != null
+                              ? Icons.arrow_drop_up_rounded
+                              : Icons.arrow_drop_down_rounded,
+                          color: widget.enabled
+                              ? const Color(0xFF64748B)
+                              : Colors.grey.shade300,
+                          size: 24,
+                        ),
+                      ),
                     ),
-                    visualDensity: VisualDensity.compact,
-                    onPressed: widget.enabled
-                        ? () {
-                            _effectiveFocusNode.requestFocus();
-                          }
-                        : null,
                   ),
                   const SizedBox(width: 4),
                 ],
