@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../domain/entities/vehicle_type.dart';
 import '../../domain/usecases/load_vehicle_types.dart';
 import '../../domain/usecases/create_vehicle_type.dart';
 import '../../domain/usecases/delete_vehicle_type.dart';
@@ -188,5 +189,29 @@ class VehicleTypeBloc extends Bloc<VehicleTypeEvent, VehicleTypeState> {
         ),
       );
     }
+  }
+
+  Future<VehicleType> createVehicleType(
+    String name,
+    double emptyPrice,
+    double loadPrice,
+  ) async {
+    final existing = await _vehicleTypeRepository.getVehicleTypesByStatus(
+      isActive: true,
+    );
+    if (existing.any((vt) => vt.name.toLowerCase() == name.toLowerCase())) {
+      throw Exception('Vehicle type with this name already exists');
+    }
+    final newId = await _vehicleTypeRepository.createVehicleType(
+      name: name,
+      emptyPrice: emptyPrice,
+      loadPrice: loadPrice,
+    );
+    final refreshed = await _vehicleTypeRepository.getVehicleTypesByStatus(
+      isActive: true,
+    );
+    final created = refreshed.firstWhere((vt) => vt.id == newId);
+    add(const LoadVehicleTypes());
+    return created;
   }
 }
