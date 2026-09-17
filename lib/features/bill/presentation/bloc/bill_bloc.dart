@@ -324,12 +324,19 @@ class BillBloc extends Bloc<BillEvent, BillState> {
         netWeightKg = 0;
       } else {
         netWeightKg = gw - tw;
-        if (vehicleType != null) {
-          defaultCharge = vehicleType.loadPrice;
-        }
       }
-    } else if ((gw > 0 || tw > 0) && vehicleType != null) {
-      defaultCharge = vehicleType.emptyPrice;
+    }
+
+    if (vehicleType != null) {
+      if (gw > 0) {
+        // Gross weight entered (Gross only or Gross + Tare) -> loaded vehicle
+        defaultCharge = vehicleType.loadPrice;
+      } else if (tw > 0) {
+        // Tare weight entered (Tare only) -> empty vehicle
+        defaultCharge = vehicleType.emptyPrice;
+      } else {
+        defaultCharge = 0;
+      }
     }
 
     final vehicleCharge = state.isVehicleChargeManuallyEdited
@@ -617,18 +624,24 @@ class BillBloc extends Bloc<BillEvent, BillState> {
         }
       }
 
-      double defaultCharge = 0;
-      if (vehicleType != null) {
-        defaultCharge = vehicleType.emptyPrice;
-      }
-      final isManuallyEdited =
-          weighment.vehicleCharge != defaultCharge &&
-          weighment.vehicleCharge > 0;
-
       final hasGross = (weighment.grossWeightKg ?? 0) > 0;
       final hasTare = (weighment.tareWeightKg ?? 0) > 0;
       final grossVal = weighment.grossWeightKg ?? 0;
       final tareVal = weighment.tareWeightKg ?? 0;
+
+      double defaultCharge = 0;
+      if (vehicleType != null) {
+        if (hasGross) {
+          defaultCharge = vehicleType.loadPrice;
+        } else if (hasTare) {
+          defaultCharge = vehicleType.emptyPrice;
+        } else {
+          defaultCharge = 0;
+        }
+      }
+      final isManuallyEdited =
+          weighment.vehicleCharge != defaultCharge &&
+          weighment.vehicleCharge > 0;
 
       final unit = _normalizeUnit(weighment.weightUnit);
       final isTon = unit == 'ton';
@@ -922,6 +935,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
           clearError: true,
         ),
       );
+      _recalculate(emit);
     } catch (e) {
       if (emit.isDone) return;
       emit(
@@ -1092,5 +1106,6 @@ class BillBloc extends Bloc<BillEvent, BillState> {
         clearError: true,
       ),
     );
+    _recalculate(emit);
   }
 }

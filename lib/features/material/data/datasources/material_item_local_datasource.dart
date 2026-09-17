@@ -70,6 +70,10 @@ class MaterialItemLocalDataSource {
     await _database.materialDao.deactivateMaterial(id);
   }
 
+  Future<void> activateMaterial(int id) async {
+    await _database.materialDao.activateMaterial(id);
+  }
+
   Future<void> deleteMaterial(int id) async {
     await _database.materialDao.deleteMaterial(id);
   }

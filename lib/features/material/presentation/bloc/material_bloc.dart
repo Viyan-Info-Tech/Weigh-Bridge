@@ -28,6 +28,7 @@ class MaterialBloc extends Bloc<MaterialEvent, MaterialState> {
     on<CreateMaterialRequested>(_onCreateMaterial);
     on<UpdateMaterialRequested>(_onUpdateMaterial);
     on<DeactivateMaterialRequested>(_onDeactivateMaterial);
+    on<ActivateMaterialRequested>(_onActivateMaterial);
     on<DeleteMaterialRequested>(_onDeleteMaterial);
     on<SearchMaterials>(_onSearchMaterials);
     on<FilterMaterialsByStatus>(_onFilterByStatus);
@@ -144,6 +145,30 @@ class MaterialBloc extends Bloc<MaterialEvent, MaterialState> {
         state.copyWith(
           status: AppMaterialStatus.success,
           successMessage: 'Material deactivated',
+        ),
+      );
+      add(const LoadMaterials());
+    } catch (e) {
+      emit(
+        state.copyWith(
+          status: AppMaterialStatus.error,
+          errorMessage: e.toString(),
+        ),
+      );
+    }
+  }
+
+  Future<void> _onActivateMaterial(
+    ActivateMaterialRequested event,
+    Emitter<MaterialState> emit,
+  ) async {
+    emit(state.copyWith(status: AppMaterialStatus.loading));
+    try {
+      await _materialRepository.activateMaterial(event.materialId);
+      emit(
+        state.copyWith(
+          status: AppMaterialStatus.success,
+          successMessage: 'Material activated',
         ),
       );
       add(const LoadMaterials());

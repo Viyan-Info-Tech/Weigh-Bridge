@@ -5,6 +5,7 @@ class ActionMenu extends StatelessWidget {
   final VoidCallback onEdit;
   final VoidCallback onDelete;
   final VoidCallback onDeactivate;
+  final VoidCallback? onActivate;
   final bool isActive;
 
   const ActionMenu({
@@ -13,6 +14,7 @@ class ActionMenu extends StatelessWidget {
     required this.onEdit,
     required this.onDelete,
     required this.onDeactivate,
+    this.onActivate,
     this.isActive = true,
   });
 
@@ -22,6 +24,7 @@ class ActionMenu extends StatelessWidget {
       constraints: const BoxConstraints(minWidth: 64),
       child: Row(
         mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
           SizedBox(
             width: 30,
@@ -60,6 +63,9 @@ class ActionMenu extends StatelessWidget {
                     break;
                   case 'deactivate':
                     onDeactivate();
+                    break;
+                  case 'activate':
+                    (onActivate ?? onDeactivate)();
                     break;
                 }
               },
@@ -117,6 +123,27 @@ class ActionMenu extends StatelessWidget {
                         SizedBox(width: 10),
                         Text(
                           'Deactivate',
+                          style: TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  const PopupMenuItem(
+                    value: 'activate',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.check_circle_outline,
+                          size: 16,
+                          color: Color(0xFF16A34A),
+                        ),
+                        SizedBox(width: 10),
+                        Text(
+                          'Activate',
                           style: TextStyle(
                             fontFamily: 'PlusJakartaSans',
                             fontSize: 13,

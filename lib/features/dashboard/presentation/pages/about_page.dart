@@ -1,5 +1,8 @@
+import 'dart:io' show Platform, Process;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../auth/presentation/widgets/truck_logo.dart';
 
@@ -21,8 +24,6 @@ class AboutPage extends StatelessWidget {
               _buildCompanyCard(),
               const SizedBox(height: 20),
               _buildContactCard(context),
-              const SizedBox(height: 20),
-              _buildMissionsRow(),
               const SizedBox(height: 20),
               _buildValues(),
               const SizedBox(height: 20),
@@ -101,84 +102,6 @@ class AboutPage extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildMissionsRow() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildCard(
-            child: _buildMissionCard(
-              icon: Icons.auto_awesome_outlined,
-              title: 'Our Mission',
-              description:
-                  'To engineer digital tools that simplify operations, increase '
-                  'efficiency, and scale seamlessly with business growth.',
-            ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildCard(
-            child: _buildMissionCard(
-              icon: Icons.visibility_outlined,
-              title: 'Our Vision',
-              description:
-                  'To become a world-leading technology agency defined by '
-                  'quality, visual design precision, and development speed.',
-              iconColor: const Color(0xFF16A34A),
-              bgColor: const Color(0xFF16A34A).withValues(alpha: 0.1),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMissionCard({
-    required IconData icon,
-    required String title,
-    required String description,
-    Color bgColor = Colors.transparent,
-    Color iconColor = const Color(0xFF0F52BA),
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: bgColor,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, color: iconColor, size: 18),
-            ),
-            const SizedBox(width: 8),
-            Text(
-              title,
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 14,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF0F172A),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Text(
-          description,
-          style: TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            fontSize: 12,
-            color: Colors.grey.shade600,
-            height: 1.5,
-          ),
-        ),
-      ],
     );
   }
 
@@ -345,54 +268,57 @@ class AboutPage extends StatelessWidget {
     required String value,
     required VoidCallback onTap,
   }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0D3B82).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0D3B82).withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(icon, size: 16, color: const Color(0xFF0D3B82)),
               ),
-              child: Icon(icon, size: 16, color: const Color(0xFF0D3B82)),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.grey.shade600,
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.grey.shade600,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF0F172A),
+                    const SizedBox(height: 2),
+                    Text(
+                      value,
+                      style: const TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF0F172A),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            const Icon(Icons.content_copy, size: 14, color: Color(0xFF94A3B8)),
-          ],
+              const Icon(Icons.content_copy, size: 14, color: Color(0xFF94A3B8)),
+            ],
+          ),
         ),
       ),
     );
@@ -435,34 +361,43 @@ class AboutPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          GestureDetector(
-            onTap: () => _copyEmail(context, 'www.viyaninfo.com'),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.language_outlined,
-                    size: 14,
-                    color: Color(0xFF0F52BA),
-                  ),
-                  SizedBox(width: 6),
-                  Text(
-                    'www.viyaninfo.com',
-                    style: TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              onTap: () => _openUrl(context, 'https://www.viyaninfo.com'),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.language_outlined,
+                      size: 14,
                       color: Color(0xFF0F52BA),
                     ),
-                  ),
-                ],
+                    SizedBox(width: 6),
+                    Text(
+                      'www.viyaninfo.com',
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF0F52BA),
+                      ),
+                    ),
+                    SizedBox(width: 6),
+                    Icon(
+                      Icons.open_in_new,
+                      size: 13,
+                      color: Color(0xFF0F52BA),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -471,14 +406,50 @@ class AboutPage extends StatelessWidget {
     );
   }
 
-  void _copyEmail(BuildContext context, String value) {
-    Clipboard.setData(ClipboardData(text: value));
-    if (context.mounted) {
+  Future<void> _openUrl(BuildContext context, String urlString) async {
+    final formattedUrl =
+        urlString.startsWith('http://') || urlString.startsWith('https://')
+            ? urlString
+            : 'https://$urlString';
+
+    bool launched = false;
+
+    try {
+      final uri = Uri.parse(formattedUrl);
+      if (await canLaunchUrl(uri)) {
+        launched = await launchUrl(
+          uri,
+          mode: LaunchMode.externalApplication,
+        );
+      }
+    } catch (_) {
+      // Platform channel may not be connected yet in current debug session
+    }
+
+    // Windows fallback: directly invoke OS default browser protocol handler
+    if (!launched && !kIsWeb && Platform.isWindows) {
+      try {
+        final result = await Process.run(
+          'rundll32',
+          ['url.dll,FileProtocolHandler', formattedUrl],
+        );
+        launched = result.exitCode == 0;
+      } catch (_) {
+        try {
+          final res = await Process.run('cmd', ['/c', 'start', '', formattedUrl]);
+          launched = res.exitCode == 0;
+        } catch (_) {}
+      }
+    }
+
+    if (!launched && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('$value copied to clipboard'),
+          content: Text('Could not open $urlString'),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
         ),
       );
     }

@@ -62,6 +62,13 @@ class MaterialDao extends DatabaseAccessor<AppDatabase>
     );
   }
 
+  Future<void> activateMaterial(int id) async {
+    final now = DateTime.now();
+    await (update(materials)..where((m) => m.id.equals(id))).write(
+      MaterialsCompanion(isActive: const Value(true), updatedAt: Value(now)),
+    );
+  }
+
   Future<int> deleteMaterial(int id) async {
     return await (delete(materials)..where((m) => m.id.equals(id))).go();
   }

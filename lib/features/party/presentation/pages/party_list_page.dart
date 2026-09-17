@@ -488,6 +488,8 @@ class _PartyListPageState extends State<PartyListPage> {
     );
   }
 
+  static const double _actionColumnWidth = 110.0;
+
   Widget _buildHeaderRow() {
     return Container(
       height: 40,
@@ -501,13 +503,19 @@ class _PartyListPageState extends State<PartyListPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          Expanded(flex: 36, child: _buildHeaderText('PARTY NAME')),
-          Expanded(flex: 22, child: _buildHeaderText('CONTACT PERSON')),
-          Expanded(flex: 18, child: _buildHeaderText('PHONE')),
+          Expanded(flex: 38, child: _buildHeaderText('PARTY NAME')),
+          Expanded(flex: 24, child: _buildHeaderText('CONTACT PERSON')),
+          Expanded(flex: 20, child: _buildHeaderText('PHONE')),
           Expanded(flex: 18, child: _buildHeaderText('STATUS')),
-          Expanded(
-            flex: 14,
-            child: _buildHeaderText('ACTIONS', align: TextAlign.right),
+          SizedBox(
+            width: _actionColumnWidth,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _buildHeaderText('ACTIONS'),
+              ),
+            ),
           ),
         ],
       ),
@@ -633,14 +641,20 @@ class _PartyListPageState extends State<PartyListPage> {
           ),
 
           // Actions
-          Expanded(
-            flex: 14,
-            child: ActionMenu(
-              isActive: party.isActive,
-              onView: () => PartyDetailsDialog.show(context, party: party),
-              onEdit: () => _navigateToForm(context, partyId: party.id),
-              onDelete: () => _confirmDeleteParty(context, party),
-              onDeactivate: () => _confirmDeactivateParty(context, party),
+          SizedBox(
+            width: _actionColumnWidth,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ActionMenu(
+                  isActive: party.isActive,
+                  onView: () => PartyDetailsDialog.show(context, party: party),
+                  onEdit: () => _navigateToForm(context, partyId: party.id),
+                  onDelete: () => _confirmDeleteParty(context, party),
+                  onDeactivate: () => _confirmDeactivateParty(context, party),
+                ),
+              ),
             ),
           ),
         ],

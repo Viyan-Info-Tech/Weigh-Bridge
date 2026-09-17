@@ -707,6 +707,8 @@ class _VehiclesPanelState extends State<_VehiclesPanel> {
     );
   }
 
+  static const double _actionColumnWidth = 110.0;
+
   Widget _buildHeaderRow() {
     return Container(
       height: 40,
@@ -720,13 +722,19 @@ class _VehiclesPanelState extends State<_VehiclesPanel> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          Expanded(flex: 26, child: _buildHeaderText('VEHICLE NUMBER')),
-          Expanded(flex: 18, child: _buildHeaderText('TYPE')),
-          Expanded(flex: 22, child: _buildHeaderText('DRIVER')),
-          Expanded(flex: 20, child: _buildHeaderText('STATUS')),
-          Expanded(
-            flex: 14,
-            child: _buildHeaderText('ACTIONS', align: TextAlign.right),
+          Expanded(flex: 30, child: _buildHeaderText('VEHICLE NUMBER')),
+          Expanded(flex: 22, child: _buildHeaderText('TYPE')),
+          Expanded(flex: 26, child: _buildHeaderText('DRIVER')),
+          Expanded(flex: 22, child: _buildHeaderText('STATUS')),
+          SizedBox(
+            width: _actionColumnWidth,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _buildHeaderText('ACTIONS'),
+              ),
+            ),
           ),
         ],
       ),
@@ -845,25 +853,31 @@ class _VehiclesPanelState extends State<_VehiclesPanel> {
             ),
           ),
           Expanded(
-            flex: 20,
+            flex: 22,
             child: Align(
               alignment: Alignment.centerLeft,
               child: _buildStatusBadge(vehicle.isActive),
             ),
           ),
-          Expanded(
-            flex: 14,
-            child: ActionMenu(
-              isActive: vehicle.isActive,
-              onView: () => VehicleDetailsDialog.show(
-                context,
-                vehicle: vehicle,
-                typeName: typeName,
+          SizedBox(
+            width: _actionColumnWidth,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ActionMenu(
+                  isActive: vehicle.isActive,
+                  onView: () => VehicleDetailsDialog.show(
+                    context,
+                    vehicle: vehicle,
+                    typeName: typeName,
+                  ),
+                  onEdit: () =>
+                      v_form.VehicleFormDialog.show(context, vehicleId: vehicle.id),
+                  onDelete: () => _confirmDeleteVehicle(context, vehicle),
+                  onDeactivate: () => _confirmDeactivateVehicle(context, vehicle),
+                ),
               ),
-              onEdit: () =>
-                  v_form.VehicleFormDialog.show(context, vehicleId: vehicle.id),
-              onDelete: () => _confirmDeleteVehicle(context, vehicle),
-              onDeactivate: () => _confirmDeactivateVehicle(context, vehicle),
             ),
           ),
         ],
@@ -1467,6 +1481,8 @@ class _VehicleTypesPanelState extends State<_VehicleTypesPanel> {
     );
   }
 
+  static const double _actionColumnWidth = 110.0;
+
   Widget _buildHeaderRow() {
     return Container(
       height: 40,
@@ -1480,13 +1496,19 @@ class _VehicleTypesPanelState extends State<_VehicleTypesPanel> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          Expanded(flex: 28, child: _buildHeaderText('TYPE NAME')),
-          Expanded(flex: 17, child: _buildHeaderText('EMPTY')),
-          Expanded(flex: 17, child: _buildHeaderText('LOAD')),
-          Expanded(flex: 22, child: _buildHeaderText('STATUS')),
-          Expanded(
-            flex: 16,
-            child: _buildHeaderText('ACTIONS', align: TextAlign.right),
+          Expanded(flex: 36, child: _buildHeaderText('TYPE NAME')),
+          Expanded(flex: 20, child: _buildHeaderText('EMPTY')),
+          Expanded(flex: 20, child: _buildHeaderText('LOAD')),
+          Expanded(flex: 24, child: _buildHeaderText('STATUS')),
+          SizedBox(
+            width: _actionColumnWidth,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _buildHeaderText('ACTIONS'),
+              ),
+            ),
           ),
         ],
       ),
@@ -1568,22 +1590,28 @@ class _VehicleTypesPanelState extends State<_VehicleTypesPanel> {
             ),
           ),
           Expanded(
-            flex: 22,
+            flex: 24,
             child: Align(
               alignment: Alignment.centerLeft,
               child: _buildStatusBadge(vt.isActive),
             ),
           ),
-          Expanded(
-            flex: 16,
-            child: ActionMenu(
-              isActive: vt.isActive,
-              onView: () =>
-                  VehicleTypeDetailsDialog.show(context, vehicleType: vt),
-              onEdit: () =>
-                  vt_form.VehicleTypeFormDialog.show(context, vehicleType: vt),
-              onDelete: () => _confirmDeleteVehicleType(context, vt),
-              onDeactivate: () => _confirmDeactivateVehicleType(context, vt),
+          SizedBox(
+            width: _actionColumnWidth,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ActionMenu(
+                  isActive: vt.isActive,
+                  onView: () =>
+                      VehicleTypeDetailsDialog.show(context, vehicleType: vt),
+                  onEdit: () =>
+                      vt_form.VehicleTypeFormDialog.show(context, vehicleType: vt),
+                  onDelete: () => _confirmDeleteVehicleType(context, vt),
+                  onDeactivate: () => _confirmDeactivateVehicleType(context, vt),
+                ),
+              ),
             ),
           ),
         ],

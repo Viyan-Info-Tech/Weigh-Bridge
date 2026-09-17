@@ -503,6 +503,8 @@ class _MaterialListPageState extends State<MaterialListPage> {
     );
   }
 
+  static const double _actionColumnWidth = 110.0;
+
   Widget _buildHeaderRow() {
     return Container(
       height: 40,
@@ -516,12 +518,18 @@ class _MaterialListPageState extends State<MaterialListPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
-          Expanded(flex: 38, child: _buildHeaderText('MATERIAL NAME')),
-          Expanded(flex: 26, child: _buildHeaderText('CATEGORY')),
-          Expanded(flex: 18, child: _buildHeaderText('STATUS')),
-          Expanded(
-            flex: 18,
-            child: _buildHeaderText('ACTIONS', align: TextAlign.right),
+          Expanded(flex: 42, child: _buildHeaderText('MATERIAL NAME')),
+          Expanded(flex: 30, child: _buildHeaderText('CATEGORY')),
+          Expanded(flex: 28, child: _buildHeaderText('STATUS')),
+          SizedBox(
+            width: _actionColumnWidth,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: _buildHeaderText('ACTIONS'),
+              ),
+            ),
           ),
         ],
       ),
@@ -548,7 +556,7 @@ class _MaterialListPageState extends State<MaterialListPage> {
         children: [
           // Material Name
           Expanded(
-            flex: 38,
+            flex: 42,
             child: Row(
               children: [
                 Container(
@@ -582,7 +590,7 @@ class _MaterialListPageState extends State<MaterialListPage> {
 
           // Category
           Expanded(
-            flex: 26,
+            flex: 30,
             child: Align(
               alignment: Alignment.centerLeft,
               child: Container(
@@ -610,7 +618,7 @@ class _MaterialListPageState extends State<MaterialListPage> {
 
           // Status
           Expanded(
-            flex: 18,
+            flex: 28,
             child: Align(
               alignment: Alignment.centerLeft,
               child: _buildStatusBadge(material.isActive),
@@ -618,15 +626,22 @@ class _MaterialListPageState extends State<MaterialListPage> {
           ),
 
           // Actions
-          Expanded(
-            flex: 18,
-            child: ActionMenu(
-              isActive: material.isActive,
-              onView: () =>
-                  MaterialDetailsDialog.show(context, material: material),
-              onEdit: () => _navigateToForm(context, materialId: material.id),
-              onDelete: () => _confirmDeleteMaterial(context, material),
-              onDeactivate: () => _confirmDeactivateMaterial(context, material),
+          SizedBox(
+            width: _actionColumnWidth,
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ActionMenu(
+                  isActive: material.isActive,
+                  onView: () =>
+                      MaterialDetailsDialog.show(context, material: material),
+                  onEdit: () => _navigateToForm(context, materialId: material.id),
+                  onDelete: () => _confirmDeleteMaterial(context, material),
+                  onDeactivate: () => _confirmDeactivateMaterial(context, material),
+                  onActivate: () => _confirmActivateMaterial(context, material),
+                ),
+              ),
             ),
           ),
         ],
@@ -769,7 +784,7 @@ class _MaterialListPageState extends State<MaterialListPage> {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
         title: const Text(
-          'Deactivate Material',
+          'Deactivate Material?',
           style: TextStyle(
             fontFamily: 'PlusJakartaSans',
             fontWeight: FontWeight.w700,
@@ -778,7 +793,7 @@ class _MaterialListPageState extends State<MaterialListPage> {
           ),
         ),
         content: Text(
-          'Are you sure you want to deactivate material "${material.name}"?\nExisting records will be preserved.',
+          '"${material.name}" will no longer be available for new weighments.',
           style: const TextStyle(
             fontFamily: 'PlusJakartaSans',
             fontSize: 13,
@@ -814,6 +829,68 @@ class _MaterialListPageState extends State<MaterialListPage> {
             ),
             child: const Text(
               'Deactivate',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmActivateMaterial(BuildContext context, MaterialItem material) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: const Text(
+          'Activate Material?',
+          style: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontWeight: FontWeight.w700,
+            fontSize: 16,
+            color: Color(0xFF0F172A),
+          ),
+        ),
+        content: Text(
+          '"${material.name}" will become available for new weighments.',
+          style: const TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 13,
+            color: Color(0xFF475569),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFF64748B),
+            ),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          FilledButton(
+            onPressed: () {
+              context.read<MaterialBloc>().add(
+                ActivateMaterialRequested(material.id),
+              );
+              Navigator.pop(ctx);
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF16A34A),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'Activate',
               style: TextStyle(
                 fontFamily: 'PlusJakartaSans',
                 fontWeight: FontWeight.w600,

@@ -41,6 +41,10 @@ class MaterialItemRepositoryImpl implements MaterialItemRepository {
       _localDataSource.deactivateMaterial(id);
 
   @override
+  Future<void> activateMaterial(int id) =>
+      _localDataSource.activateMaterial(id);
+
+  @override
   Future<void> deleteMaterial(int id) => _localDataSource.deleteMaterial(id);
 
   @override

@@ -1001,11 +1001,27 @@ class _ReportPageState extends State<ReportPage> {
         // Print Report button
         OutlinedButton.icon(
           onPressed: () {
+            final partyLabel = state.parties
+                .where((p) => p.id == state.filter.partyId)
+                .map((p) => p.name)
+                .firstOrNull ?? 'All Parties';
+            final vehicleLabel = state.vehicles
+                .where((v) => v.id == state.filter.vehicleId)
+                .map((v) => v.vehicleNumber)
+                .firstOrNull ?? 'All Vehicles';
+            final materialLabel = state.materials
+                .where((m) => m.id == state.filter.materialId)
+                .map((m) => m.name)
+                .firstOrNull ?? 'All Materials';
+
             PrintReportDialog.show(
               context: context,
               records: state.records,
               summary: state.summary,
               filter: state.filter,
+              partyLabel: partyLabel,
+              vehicleLabel: vehicleLabel,
+              materialLabel: materialLabel,
             );
           },
           icon: const Icon(Icons.print_outlined, size: 16),

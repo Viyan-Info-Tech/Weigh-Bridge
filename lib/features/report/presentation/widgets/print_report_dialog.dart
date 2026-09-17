@@ -1,23 +1,35 @@
+import 'dart:io' show File, Platform, Process;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:printing/printing.dart';
 
 import '../../../settings/presentation/bloc/settings_bloc.dart';
 import '../../../settings/presentation/bloc/settings_state.dart';
+import '../../data/services/file_picker_save_service.dart';
 import '../../domain/entities/report_filter.dart';
 import '../../domain/entities/report_summary.dart';
 import '../../domain/entities/weighment_report_item.dart';
+import '../../domain/services/report_pdf_generator.dart';
 
-class PrintReportDialog extends StatelessWidget {
+class PrintReportDialog extends StatefulWidget {
   final List<WeighmentReportItem> records;
   final ReportSummary summary;
   final ReportFilter filter;
+  final String partyLabel;
+  final String vehicleLabel;
+  final String materialLabel;
 
   const PrintReportDialog({
     super.key,
     required this.records,
     required this.summary,
     required this.filter,
+    this.partyLabel = 'All Parties',
+    this.vehicleLabel = 'All Vehicles',
+    this.materialLabel = 'All Materials',
   });
 
   static Future<void> show({
@@ -25,12 +37,217 @@ class PrintReportDialog extends StatelessWidget {
     required List<WeighmentReportItem> records,
     required ReportSummary summary,
     required ReportFilter filter,
+    String partyLabel = 'All Parties',
+    String vehicleLabel = 'All Vehicles',
+    String materialLabel = 'All Materials',
   }) {
     return showDialog<void>(
       context: context,
-      builder: (dialogContext) =>
-          PrintReportDialog(records: records, summary: summary, filter: filter),
+      builder: (dialogContext) => PrintReportDialog(
+        records: records,
+        summary: summary,
+        filter: filter,
+        partyLabel: partyLabel,
+        vehicleLabel: vehicleLabel,
+        materialLabel: materialLabel,
+      ),
     );
+  }
+
+  @override
+  State<PrintReportDialog> createState() => _PrintReportDialogState();
+}
+
+class _PrintReportDialogState extends State<PrintReportDialog> {
+  bool _isPrinting = false;
+  bool _isExportingPdf = false;
+
+  String _formatWeight(double? weightKg, String unit) {
+    if (weightKg == null) return '—';
+    final isTon =
+        unit.toLowerCase() == 'ton' || unit.toLowerCase() == 'tonne';
+    final val = isTon ? weightKg / 1000 : weightKg;
+    final dec = isTon ? 3 : 0;
+    return '${val.toStringAsFixed(dec)} $unit';
+  }
+
+  Future<void> _handlePrint(SettingsState settingsState) async {
+    if (widget.records.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('No records available to print'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isPrinting = true);
+    try {
+      final pdfGenerator = const ReportPdfGenerator();
+      final settings = settingsState.settings;
+      final pdfBytes = await pdfGenerator.generateReportPdf(
+        records: widget.records,
+        summary: widget.summary,
+        filter: widget.filter,
+        companyName: settings?.businessName,
+        address: settings?.address,
+        phone: settings?.phoneNumber,
+        gstin: settings?.gstin,
+        partyLabel: widget.partyLabel,
+        vehicleLabel: widget.vehicleLabel,
+        materialLabel: widget.materialLabel,
+      );
+
+      bool printed = false;
+      try {
+        // Open standard OS print preview & printer selection dialog
+        printed = await Printing.layoutPdf(
+          name:
+              'Weighment_Report_${DateFormat('yyyyMMdd').format(DateTime.now())}',
+          onLayout: (format) async => pdfBytes,
+        );
+      } catch (_) {
+        // Native printing channel might not be connected in current debug session
+      }
+
+      // Windows fallback if native platform channel is disconnected in hot-reload
+      if (!printed && !kIsWeb && Platform.isWindows) {
+        try {
+          final tempDir = await getTemporaryDirectory();
+          final tempFile = File(
+            '${tempDir.path}\\weighment_report_${DateTime.now().millisecondsSinceEpoch}.pdf',
+          );
+          await tempFile.writeAsBytes(pdfBytes);
+          await Process.run(
+            'rundll32',
+            ['url.dll,FileProtocolHandler', tempFile.path],
+          );
+          printed = true;
+        } catch (_) {}
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.print_rounded, color: Colors.white, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                'Print document ready (${widget.records.length} records)',
+              ),
+            ],
+          ),
+          backgroundColor: const Color(0xFF0284C7),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to generate print document: $e'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isPrinting = false);
+      }
+    }
+  }
+
+  Future<void> _handleSavePdf(SettingsState settingsState) async {
+    if (widget.records.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('No records available to export'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isExportingPdf = true);
+    try {
+      final pdfGenerator = const ReportPdfGenerator();
+      final settings = settingsState.settings;
+      final pdfBytes = await pdfGenerator.generateReportPdf(
+        records: widget.records,
+        summary: widget.summary,
+        filter: widget.filter,
+        companyName: settings?.businessName,
+        address: settings?.address,
+        phone: settings?.phoneNumber,
+        gstin: settings?.gstin,
+        partyLabel: widget.partyLabel,
+        vehicleLabel: widget.vehicleLabel,
+        materialLabel: widget.materialLabel,
+      );
+
+      final dateFormatted =
+          DateFormat('yyyy-MM-dd').format(widget.filter.effectiveStartDate);
+      final suggestedName = 'weighment_report_$dateFormatted.pdf';
+      final saveService = FilePickerSaveService();
+      final savedPath = await saveService.saveFile(
+        suggestedFileName: suggestedName,
+        bytes: pdfBytes,
+        mimeType: 'application/pdf',
+      );
+
+      if (!mounted) return;
+      if (savedPath != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(
+                  Icons.check_circle_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Report saved as PDF to: $savedPath',
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: const Color(0xFF16A34A),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to save PDF: $e'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isExportingPdf = false);
+      }
+    }
   }
 
   @override
@@ -41,31 +258,39 @@ class PrintReportDialog extends StatelessWidget {
       'dd/MM/yyyy HH:mm:ss',
     ).format(DateTime.now());
 
-    String filterDateLabel = filter.datePreset.label;
-    if (filter.datePreset == DateRangePreset.custom &&
-        filter.customStartDate != null &&
-        filter.customEndDate != null) {
+    String filterDateLabel = widget.filter.datePreset.label;
+    if (widget.filter.datePreset == DateRangePreset.custom &&
+        widget.filter.customStartDate != null &&
+        widget.filter.customEndDate != null) {
       filterDateLabel =
-          '${dateFormat.format(filter.customStartDate!)} to ${dateFormat.format(filter.customEndDate!)}';
+          '${dateFormat.format(widget.filter.customStartDate!)} - ${dateFormat.format(widget.filter.customEndDate!)}';
     } else {
       filterDateLabel =
-          '${filter.datePreset.label} (${dateFormat.format(filter.effectiveStartDate)} - ${dateFormat.format(filter.effectiveEndDate)})';
+          '${widget.filter.datePreset.label} (${dateFormat.format(widget.filter.effectiveStartDate)} - ${dateFormat.format(widget.filter.effectiveEndDate)})';
     }
 
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       backgroundColor: Colors.white,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 30),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
       child: BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, settingsState) {
           final settings = settingsState.settings;
+          final companyName = settings?.businessName.trim() ?? '';
           final address = settings?.address ?? '';
           final phone = settings?.phoneNumber ?? '';
           final gstin = settings?.gstin ?? '';
 
+          final statusLabel = widget.filter.status == 'all'
+              ? 'All Statuses'
+              : widget.filter.status.toUpperCase();
+          final paymentLabel = widget.filter.paymentMode == 'all'
+              ? 'All Modes'
+              : widget.filter.paymentMode.toUpperCase();
+
           return Container(
-            width: 900,
-            constraints: const BoxConstraints(maxHeight: 700),
+            width: 950,
+            constraints: const BoxConstraints(maxHeight: 740),
             padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -74,36 +299,50 @@ class PrintReportDialog extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Report Print Preview',
-                      style: TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF334155),
-                      ),
-                    ),
-                    Row(
+                    const Row(
                       children: [
-                        IconButton(
-                          icon: const Icon(Icons.close, size: 20),
-                          onPressed: () => Navigator.of(context).pop(),
+                        Icon(
+                          Icons.visibility_outlined,
+                          size: 20,
+                          color: Color(0xFF0F52BA),
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Report Print Preview',
+                          style: TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1E293B),
+                          ),
                         ),
                       ],
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 20),
+                      onPressed: () => Navigator.of(context).pop(),
+                      tooltip: 'Close Preview',
                     ),
                   ],
                 ),
                 const Divider(height: 16),
 
-                // Printable Sheet
+                // Printable Sheet Preview
                 Expanded(
                   child: SingleChildScrollView(
                     child: Container(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        border: Border.all(color: const Color(0xFFE2E8F0)),
-                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: const Color(0xFFCBD5E1)),
+                        borderRadius: BorderRadius.circular(6),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.02),
+                            blurRadius: 6,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -112,35 +351,54 @@ class PrintReportDialog extends StatelessWidget {
                           Center(
                             child: Column(
                               children: [
-                                const Text(
-                                  'REPORT ANALYSIS',
-                                  style: TextStyle(
+                                Text(
+                                  companyName.isNotEmpty
+                                      ? companyName
+                                      : 'VIYAN WEIGHBRIDGE',
+                                  style: const TextStyle(
                                     fontFamily: 'PlusJakartaSans',
                                     fontSize: 18,
                                     fontWeight: FontWeight.w800,
-                                    letterSpacing: 1.5,
+                                    letterSpacing: 1.2,
                                     color: Color(0xFF0F172A),
                                   ),
                                 ),
+                                const SizedBox(height: 2),
+                                const Text(
+                                  'WEIGHMENT REPORT',
+                                  style: TextStyle(
+                                    fontFamily: 'PlusJakartaSans',
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF0284C7),
+                                    letterSpacing: 0.8,
+                                  ),
+                                ),
                                 if (address.isNotEmpty)
-                                  Text(
-                                    address,
-                                    style: const TextStyle(
-                                      fontFamily: 'PlusJakartaSans',
-                                      fontSize: 12,
-                                      color: Color(0xFF475569),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 2),
+                                    child: Text(
+                                      address,
+                                      style: const TextStyle(
+                                        fontFamily: 'PlusJakartaSans',
+                                        fontSize: 11,
+                                        color: Color(0xFF475569),
+                                      ),
                                     ),
                                   ),
                                 if (phone.isNotEmpty || gstin.isNotEmpty)
-                                  Text(
-                                    [
-                                      if (phone.isNotEmpty) 'Phone: $phone',
-                                      if (gstin.isNotEmpty) 'GSTIN: $gstin',
-                                    ].join(' | '),
-                                    style: const TextStyle(
-                                      fontFamily: 'PlusJakartaSans',
-                                      fontSize: 11,
-                                      color: Color(0xFF64748B),
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 2),
+                                    child: Text(
+                                      [
+                                        if (phone.isNotEmpty) 'Phone: $phone',
+                                        if (gstin.isNotEmpty) 'GSTIN: $gstin',
+                                      ].join(' | '),
+                                      style: const TextStyle(
+                                        fontFamily: 'PlusJakartaSans',
+                                        fontSize: 10.5,
+                                        color: Color(0xFF64748B),
+                                      ),
                                     ),
                                   ),
                               ],
@@ -148,65 +406,65 @@ class PrintReportDialog extends StatelessWidget {
                           ),
                           const SizedBox(height: 12),
                           const Divider(
-                            thickness: 1.5,
+                            thickness: 1.2,
                             color: Color(0xFF0F172A),
                           ),
                           const SizedBox(height: 8),
 
-                          // Report Info
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'WEIGHMENT REPORT',
-                                    style: TextStyle(
-                                      fontFamily: 'PlusJakartaSans',
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      color: Color(0xFF0F172A),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'Period: $filterDateLabel',
-                                    style: const TextStyle(
-                                      fontFamily: 'PlusJakartaSans',
-                                      fontSize: 11,
-                                      color: Color(0xFF475569),
-                                    ),
-                                  ),
-                                ],
+                          // Report Info & Filters Grid
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: const Color(0xFFE2E8F0),
                               ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    'Printed On: $printDateTime',
-                                    style: const TextStyle(
-                                      fontFamily: 'PlusJakartaSans',
-                                      fontSize: 11,
-                                      color: Color(0xFF64748B),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _metaRow('Period', filterDateLabel),
+                                    const SizedBox(height: 4),
+                                    _metaRow('Party', widget.partyLabel),
+                                    const SizedBox(height: 4),
+                                    _metaRow('Vehicle', widget.vehicleLabel),
+                                  ],
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _metaRow('Generated', printDateTime),
+                                    const SizedBox(height: 4),
+                                    _metaRow('Material', widget.materialLabel),
+                                    const SizedBox(height: 4),
+                                    _metaRow('Status', statusLabel),
+                                  ],
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _metaRow(
+                                      'Total Bills',
+                                      '${widget.records.length}',
                                     ),
-                                  ),
-                                  Text(
-                                    'Total Bills: ${records.length}',
-                                    style: const TextStyle(
-                                      fontFamily: 'PlusJakartaSans',
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      color: Color(0xFF334155),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                    const SizedBox(height: 4),
+                                    _metaRow('Payment Mode', paymentLabel),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                           const SizedBox(height: 14),
 
-                          // Table
+                          // Tabular Report
                           Table(
                             border: TableBorder.all(
                               color: const Color(0xFFCBD5E1),
@@ -215,14 +473,14 @@ class PrintReportDialog extends StatelessWidget {
                             columnWidths: const {
                               0: FlexColumnWidth(1.2), // Bill
                               1: FlexColumnWidth(1.5), // Date & Time
-                              2: FlexColumnWidth(1.4), // Vehicle
+                              2: FlexColumnWidth(1.3), // Vehicle
                               3: FlexColumnWidth(1.5), // Party
                               4: FlexColumnWidth(1.2), // Material
-                              5: FlexColumnWidth(1.1), // Gross
-                              6: FlexColumnWidth(1.1), // Tare
-                              7: FlexColumnWidth(1.1), // Net
+                              5: FlexColumnWidth(1.2), // Gross
+                              6: FlexColumnWidth(1.2), // Tare
+                              7: FlexColumnWidth(1.2), // Net
                               8: FlexColumnWidth(1.0), // Amount
-                              9: FlexColumnWidth(1.3), // Status
+                              9: FlexColumnWidth(1.1), // Status
                             },
                             children: [
                               // Table Header
@@ -237,30 +495,34 @@ class PrintReportDialog extends StatelessWidget {
                                   _cell('PARTY', isHeader: true),
                                   _cell('MATERIAL', isHeader: true),
                                   _cell(
-                                    'GROSS (kg)',
+                                    'GROSS',
                                     isHeader: true,
                                     align: TextAlign.right,
                                   ),
                                   _cell(
-                                    'TARE (kg)',
+                                    'TARE',
                                     isHeader: true,
                                     align: TextAlign.right,
                                   ),
                                   _cell(
-                                    'NET (kg)',
+                                    'NET',
                                     isHeader: true,
                                     align: TextAlign.right,
                                   ),
                                   _cell(
-                                    'AMT (₹)',
+                                    'AMOUNT',
                                     isHeader: true,
                                     align: TextAlign.right,
                                   ),
-                                  _cell('STATUS', isHeader: true),
+                                  _cell(
+                                    'STATUS',
+                                    isHeader: true,
+                                    align: TextAlign.center,
+                                  ),
                                 ],
                               ),
-                              // Table Rows
-                              ...records.map(
+                              // Table Data Rows
+                              ...widget.records.map(
                                 (r) => TableRow(
                                   children: [
                                     _cell(r.billNumber, bold: true),
@@ -271,16 +533,24 @@ class PrintReportDialog extends StatelessWidget {
                                     _cell(r.partyName),
                                     _cell(r.materialName),
                                     _cell(
-                                      r.grossWeightKg?.toStringAsFixed(0) ??
-                                          '—',
+                                      _formatWeight(
+                                        r.grossWeightKg,
+                                        r.weightUnit,
+                                      ),
                                       align: TextAlign.right,
                                     ),
                                     _cell(
-                                      r.tareWeightKg?.toStringAsFixed(0) ?? '—',
+                                      _formatWeight(
+                                        r.tareWeightKg,
+                                        r.weightUnit,
+                                      ),
                                       align: TextAlign.right,
                                     ),
                                     _cell(
-                                      r.netWeightKg?.toStringAsFixed(0) ?? '—',
+                                      _formatWeight(
+                                        r.netWeightKg,
+                                        r.weightUnit,
+                                      ),
                                       align: TextAlign.right,
                                       bold: true,
                                     ),
@@ -288,7 +558,11 @@ class PrintReportDialog extends StatelessWidget {
                                       '₹${r.amount.toStringAsFixed(0)}',
                                       align: TextAlign.right,
                                     ),
-                                    _cell(r.displayStatus),
+                                    _cell(
+                                      r.displayStatus,
+                                      align: TextAlign.center,
+                                      isStatusBadge: true,
+                                    ),
                                   ],
                                 ),
                               ),
@@ -296,38 +570,49 @@ class PrintReportDialog extends StatelessWidget {
                           ),
                           const SizedBox(height: 16),
 
-                          // Summary Totals
+                          // Summary Totals Section
                           Container(
-                            padding: const EdgeInsets.all(12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
                             decoration: BoxDecoration(
                               color: const Color(0xFFF8FAFC),
                               border: Border.all(
                                 color: const Color(0xFFE2E8F0),
                               ),
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: BorderRadius.circular(6),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
                                 _summaryItem(
                                   'Total Bills',
-                                  '${summary.totalBills}',
+                                  '${widget.summary.totalBills}',
                                 ),
                                 _summaryItem(
                                   'Total Gross',
-                                  '${summary.totalGrossTons} T',
+                                  '${widget.summary.totalGrossTons} ton',
+                                ),
+                                _summaryItem(
+                                  'Total Tare',
+                                  '${(widget.summary.totalTareWeightKg / 1000).toStringAsFixed(3)} ton',
                                 ),
                                 _summaryItem(
                                   'Total Net',
-                                  '${summary.totalNetTons} T',
+                                  '${widget.summary.totalNetTons} ton',
                                 ),
                                 _summaryItem(
                                   'Total Revenue',
-                                  '₹${summary.totalRevenue.toStringAsFixed(0)}',
+                                  '₹${widget.summary.totalRevenue.toStringAsFixed(0)}',
                                 ),
                                 _summaryItem(
                                   'Pending',
-                                  '${summary.pendingCount}',
+                                  '${widget.summary.pendingCount}',
+                                ),
+                                _summaryItem(
+                                  'Completed',
+                                  '${widget.summary.completedCount}',
                                 ),
                               ],
                             ),
@@ -339,7 +624,7 @@ class PrintReportDialog extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
 
-                // Bottom actions
+                // Bottom Action Buttons: Close | Save PDF | Print Report
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -349,52 +634,71 @@ class PrintReportDialog extends StatelessWidget {
                         foregroundColor: const Color(0xFF475569),
                         side: const BorderSide(color: Color(0xFFCBD5E1)),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
+                          horizontal: 20,
                           vertical: 12,
                         ),
                       ),
                       child: const Text('Close'),
                     ),
                     const SizedBox(width: 12),
+                    OutlinedButton.icon(
+                      onPressed: _isExportingPdf
+                          ? null
+                          : () => _handleSavePdf(settingsState),
+                      icon: _isExportingPdf
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Color(0xFF0F52BA),
+                              ),
+                            )
+                          : const Icon(
+                              Icons.picture_as_pdf_rounded,
+                              size: 16,
+                              color: Color(0xFFDC2626),
+                            ),
+                      label: const Text('Save PDF'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF1E293B),
+                        side: const BorderSide(color: Color(0xFFCBD5E1)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
                     ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Row(
-                              children: [
-                                const Icon(
-                                  Icons.print,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Print job sent for Weighment Report (${records.length} records)',
-                                ),
-                              ],
-                            ),
-                            backgroundColor: const Color(0xFF0284C7),
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.print, size: 16),
+                      onPressed: _isPrinting
+                          ? null
+                          : () => _handlePrint(settingsState),
+                      icon: _isPrinting
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.print_rounded, size: 16),
                       label: const Text('Print Report'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF0284C7),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(8),
                         ),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
+                          horizontal: 22,
                           vertical: 12,
                         ),
                       ),
@@ -409,12 +713,69 @@ class PrintReportDialog extends StatelessWidget {
     );
   }
 
+  Widget _metaRow(String label, String value) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '$label: ',
+          style: const TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 11,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF475569),
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF0F172A),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _cell(
     String text, {
     bool isHeader = false,
     bool bold = false,
     TextAlign align = TextAlign.left,
+    bool isStatusBadge = false,
   }) {
+    if (isStatusBadge) {
+      final isCompleted = text.toUpperCase() == 'COMPLETED';
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 5),
+        child: Align(
+          alignment: Alignment.center,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              color: isCompleted
+                  ? const Color(0xFF16A34A).withValues(alpha: 0.1)
+                  : const Color(0xFFD97706).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              text,
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 9.5,
+                fontWeight: FontWeight.w700,
+                color: isCompleted
+                    ? const Color(0xFF16A34A)
+                    : const Color(0xFFD97706),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
       child: Text(
@@ -439,7 +800,7 @@ class PrintReportDialog extends StatelessWidget {
           title,
           style: const TextStyle(
             fontFamily: 'PlusJakartaSans',
-            fontSize: 11,
+            fontSize: 10.5,
             color: Color(0xFF64748B),
           ),
         ),
@@ -448,7 +809,7 @@ class PrintReportDialog extends StatelessWidget {
           value,
           style: const TextStyle(
             fontFamily: 'PlusJakartaSans',
-            fontSize: 14,
+            fontSize: 13,
             fontWeight: FontWeight.w800,
             color: Color(0xFF0F172A),
           ),
