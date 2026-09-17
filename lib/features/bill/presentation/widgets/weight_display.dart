@@ -81,11 +81,32 @@ class _WeightDisplayState extends State<WeightDisplay> {
 
   @override
   Widget build(BuildContext context) {
+    final gross = widget.grossWeight;
+    final tare = widget.tareWeight;
+
+    // Weight display selection rule:
+    // 1. Both exist        -> Show Net (Gross - Tare)
+    // 2. Gross exists only -> Show Gross
+    // 3. Tare exists only  -> Show Tare
+    // 4. Neither exists    -> Show 0
+    final double displayWeightKg;
+    if (gross > 0 && tare > 0) {
+      displayWeightKg = widget.netWeightKg > 0
+          ? widget.netWeightKg
+          : (gross - tare).abs();
+    } else if (gross > 0) {
+      displayWeightKg = gross;
+    } else if (tare > 0) {
+      displayWeightKg = tare;
+    } else {
+      displayWeightKg = 0;
+    }
+
     final isKg = widget.weightUnit.toLowerCase() == 'kg';
-    final double netVal = isKg ? widget.netWeightKg : widget.netWeightKg / 1000;
+    final double displayVal = isKg ? displayWeightKg : displayWeightKg / 1000;
     final String weightString = isKg
-        ? (netVal > 0 ? netVal.toStringAsFixed(0) : '0')
-        : (netVal > 0 ? netVal.toStringAsFixed(3) : '0.000');
+        ? (displayVal > 0 ? displayVal.toStringAsFixed(0) : '0')
+        : (displayVal > 0 ? displayVal.toStringAsFixed(3) : '0.000');
 
     return Container(
       padding: const EdgeInsets.all(12),
@@ -103,7 +124,7 @@ class _WeightDisplayState extends State<WeightDisplay> {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          return _buildModernTruckScale(weightString, widget.netWeightKg);
+          return _buildModernTruckScale(weightString, displayWeightKg);
         },
       ),
     );
@@ -118,7 +139,7 @@ class _WeightDisplayState extends State<WeightDisplay> {
     return '${valKg.toStringAsFixed(0)} kg';
   }
 
-  Widget _buildModernTruckScale(String weightString, double netKg) {
+  Widget _buildModernTruckScale(String weightString, double displayKg) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: AspectRatio(
@@ -157,7 +178,7 @@ class _WeightDisplayState extends State<WeightDisplay> {
                   height: containerHeight * 0.93,
                   child: _buildDigitalConsole(
                     weightString: weightString,
-                    netKg: netKg,
+                    displayKg: displayKg,
                     consoleWidth: containerWidth * 0.976,
                     consoleHeight: containerHeight * 0.93,
                   ),
@@ -173,7 +194,7 @@ class _WeightDisplayState extends State<WeightDisplay> {
   /// Builds the complete modern digital weighbridge terminal console
   Widget _buildDigitalConsole({
     required String weightString,
-    required double netKg,
+    required double displayKg,
     required double consoleWidth,
     required double consoleHeight,
   }) {
@@ -223,7 +244,7 @@ class _WeightDisplayState extends State<WeightDisplay> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   // --- TOP INSTRUMENT STATUS BAR ---
-                  _buildHeaderBar(theme, netKg, consoleWidth, consoleHeight),
+                  _buildHeaderBar(theme, displayKg, consoleWidth, consoleHeight),
 
                   // --- CENTER DIGITAL READOUT ---
                   Expanded(
@@ -239,7 +260,7 @@ class _WeightDisplayState extends State<WeightDisplay> {
 
                   // --- BOTTOM TELEMETRY SUMMARY BAR ---
                   _buildTelemetryBottomBar(
-                    netKg,
+                    displayKg,
                     theme,
                     consoleWidth,
                     consoleHeight,
@@ -697,21 +718,54 @@ class _WeightDisplayState extends State<WeightDisplay> {
 
   /// Bottom Strip: Gross, Tare, Net Weight Telemetry Breakdown with guaranteed responsiveness
   Widget _buildTelemetryBottomBar(
-    double netKg,
+    double currentDisplayKg,
     ScaleDisplayTheme theme,
     double consoleWidth,
     double consoleHeight,
   ) {
     final isCompact = consoleWidth < 400;
-    final grossStr = _formatSummaryWeight(widget.grossWeight, widget.weightUnit);
-    final tareStr = _formatSummaryWeight(widget.tareWeight, widget.weightUnit);
-    final netStr = _formatSummaryWeight(netKg, widget.weightUnit);
+
+    final hasGross = widget.grossWeight > 0;
+    final hasTare = widget.tareWeight > 0;
+    final hasBoth = hasGross && hasTare;
+
+    final String grossStr;
+    final String tareStr;
+    final String netStr;
+
+    if (hasBoth) {
+      grossStr = _formatSummaryWeight(widget.grossWeight, widget.weightUnit);
+      tareStr = _formatSummaryWeight(widget.tareWeight, widget.weightUnit);
+      final netVal = widget.netWeightKg > 0
+          ? widget.netWeightKg
+          : (widget.grossWeight - widget.tareWeight).abs();
+      netStr = _formatSummaryWeight(netVal, widget.weightUnit);
+    } else if (hasGross) {
+      // Gross only entered
+      grossStr = _formatSummaryWeight(widget.grossWeight, widget.weightUnit);
+      tareStr = '0 ${widget.weightUnit}';
+      netStr = '—';
+    } else if (hasTare) {
+      // Tare only entered
+      grossStr = '—';
+      tareStr = _formatSummaryWeight(widget.tareWeight, widget.weightUnit);
+      netStr = '—';
+    } else {
+      // Neither entered
+      grossStr = '0 ${widget.weightUnit}';
+      tareStr = '0 ${widget.weightUnit}';
+      netStr = '0 ${widget.weightUnit}';
+    }
 
     final grossLabel = isCompact ? 'G: $grossStr' : 'GROSS: $grossStr';
     final tareLabel = isCompact ? 'T: $tareStr' : 'TARE: $tareStr';
     final netLabel = isCompact ? 'N: $netStr' : 'NET: $netStr';
 
     final fontSize = (consoleHeight * 0.08).clamp(7.0, 9.0);
+
+    final bool isGrossActive = hasGross && !hasTare;
+    final bool isTareActive = hasTare && !hasGross;
+    final bool isNetActive = hasBoth;
 
     return Container(
       height: (consoleHeight * 0.18).clamp(16.0, 24.0),
@@ -730,7 +784,8 @@ class _WeightDisplayState extends State<WeightDisplay> {
           Expanded(
             child: _buildTelemetryMetric(
               label: grossLabel,
-              color: const Color(0xFFCBD5E1),
+              color: isGrossActive ? theme.accentColor : const Color(0xFFCBD5E1),
+              isHighlighted: isGrossActive,
               fontSize: fontSize,
             ),
           ),
@@ -740,18 +795,19 @@ class _WeightDisplayState extends State<WeightDisplay> {
           Expanded(
             child: _buildTelemetryMetric(
               label: tareLabel,
-              color: const Color(0xFFCBD5E1),
+              color: isTareActive ? theme.accentColor : const Color(0xFFCBD5E1),
+              isHighlighted: isTareActive,
               fontSize: fontSize,
             ),
           ),
           const SizedBox(width: 4),
 
-          // NET (highlighted in theme accent)
+          // NET (highlighted in theme accent when completed)
           Expanded(
             child: _buildTelemetryMetric(
               label: netLabel,
-              color: theme.accentColor,
-              isHighlighted: true,
+              color: isNetActive ? theme.accentColor : const Color(0xFFCBD5E1),
+              isHighlighted: isNetActive,
               fontSize: fontSize,
             ),
           ),
