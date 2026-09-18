@@ -1,13 +1,13 @@
 #pragma once
 
-#include <flutter/method_channel.h>
-#include <flutter/standard_method_codec.h>
+#include <flutter/flutter_engine.h>
+
 #include <windows.h>
+#include <algorithm>
+#include <iomanip>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <sstream>
-#include <iomanip>
-#include <algorithm>
 
 namespace machine_identity {
 
@@ -100,7 +100,6 @@ inline std::wstring QueryWmiString(const std::wstring& wmiClass,
                     nullptr) &&
          bytesRead > 0) {
     buffer[bytesRead] = '\0';
-    // Convert ANSI to wstring
     int wlen = MultiByteToWideChar(CP_ACP, 0, buffer, bytesRead,
                                      nullptr, 0);
     if (wlen > 0) {
@@ -141,3 +140,5 @@ inline std::wstring GetBaseBoardSerial() {
 }
 
 }  // namespace machine_identity
+
+void RegisterMachineIdentityChannel(flutter::FlutterEngine* engine);

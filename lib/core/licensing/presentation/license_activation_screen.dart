@@ -142,10 +142,12 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
   }
 
   String _getDisplayId() {
-    if (_machineId.length >= 19) {
-      return '${_machineId.substring(0, 4)}-${_machineId.substring(4, 8)}-${_machineId.substring(8, 12)}-${_machineId.substring(12, 16)}';
+    if (_machineId.length != 64) return _machineId;
+    final groups = <String>[];
+    for (var i = 0; i < _machineId.length; i += 4) {
+      groups.add(_machineId.substring(i, i + 4));
     }
-    return _machineId;
+    return groups.join('-');
   }
 
   @override

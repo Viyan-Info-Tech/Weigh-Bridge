@@ -9,9 +9,24 @@ void main() async {
   final injection = await Injection.init();
 
   runApp(
-    LicenseGate(
-      injection: injection,
-      licenseService: injection.licenseService,
+    MaterialApp(
+      title: 'Viyan Weighbridge',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blueGrey,
+          brightness: Brightness.light,
+        ),
+        useMaterial3: true,
+        inputDecorationTheme: const InputDecorationTheme(
+          border: OutlineInputBorder(),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
+      ),
+      home: LicenseGate(
+        injection: injection,
+        licenseService: injection.licenseService,
+      ),
     ),
   );
 }
