@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 
-import 'app/app.dart';
 import 'app/di/injection.dart';
-import 'features/auth/presentation/bloc/auth_event.dart';
+import 'core/licensing/license_gate.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final injection = await Injection.init();
 
-  injection.authBloc.add(const AppStarted());
-
-  runApp(WeighbridgeApp(injection: injection));
+  runApp(
+    LicenseGate(
+      injection: injection,
+      licenseService: injection.licenseService,
+    ),
+  );
 }

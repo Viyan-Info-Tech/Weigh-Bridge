@@ -33,6 +33,16 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# License
+/license.dat
+/license_state.dat
+!.gitignore
+
+# Private keys (NEVER commit)
+private_key.pem
+private.key
+secret.json
+
 # Symbolication related
 app.*.symbols
 

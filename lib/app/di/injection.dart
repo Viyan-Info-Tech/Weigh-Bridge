@@ -1,3 +1,4 @@
+import '../../core/licensing/license_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/database/app_database.dart';
@@ -64,6 +65,7 @@ class Injection {
   final MaterialBloc materialBloc;
   final SettingsBloc settingsBloc;
   final ReportBloc reportBloc;
+  final LicenseService licenseService;
 
   Injection._({
     required this.database,
@@ -75,6 +77,7 @@ class Injection {
     required this.materialBloc,
     required this.settingsBloc,
     required this.reportBloc,
+    required this.licenseService,
   });
 
   static Future<Injection> init() async {
@@ -237,6 +240,11 @@ class Injection {
       exportReportUseCase: exportReportUseCase,
     );
 
+
+
+    // License
+    final licenseService = LicenseServiceImpl();
+
     await _seedInitialData(authLocalDataSource, passwordHasher);
 
     return Injection._(
@@ -249,6 +257,7 @@ class Injection {
       materialBloc: materialBloc,
       settingsBloc: settingsBloc,
       reportBloc: reportBloc,
+      licenseService: licenseService,
     );
   }
 
