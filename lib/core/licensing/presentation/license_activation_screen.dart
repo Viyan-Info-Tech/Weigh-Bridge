@@ -52,7 +52,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
   Future<void> _selectLicenseFile() async {
     final file = await FilePicker.pickFile(
       type: FileType.custom,
-      allowedExtensions: ['dat'],
+      allowedExtensions: ['license', 'dat'],
     );
     if (file != null) {
       final path = file.path;
