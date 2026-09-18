@@ -57,6 +57,50 @@ void main() {
       expect(find.text('TARE: 8000 kg'), findsOneWidget);
     });
 
+    testWidgets('shows live Gross weight and dashes Net when Gross only entered', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        buildTestWidget(grossWeight: 20000, tareWeight: 0, weightUnit: 'ton'),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('GROSS: 20.000 ton'), findsOneWidget);
+      expect(find.text('TARE: 0 ton'), findsOneWidget);
+      expect(find.text('NET: —'), findsOneWidget);
+    });
+
+    testWidgets('shows live Tare weight and dashes Gross and Net when Tare only entered', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        buildTestWidget(grossWeight: 0, tareWeight: 2000, weightUnit: 'ton'),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('GROSS: —'), findsOneWidget);
+      expect(find.text('TARE: 2.000 ton'), findsOneWidget);
+      expect(find.text('NET: —'), findsOneWidget);
+    });
+
+    testWidgets('shows Net weight and all metrics when both weights entered', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          grossWeight: 20000,
+          tareWeight: 2000,
+          netWeightKg: 18000,
+          weightUnit: 'ton',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('GROSS: 20.000 ton'), findsOneWidget);
+      expect(find.text('TARE: 2.000 ton'), findsOneWidget);
+      expect(find.text('NET: 18.000 ton'), findsOneWidget);
+    });
+
     testWidgets('does not render FIRST, SECOND, or TARE buttons', (
       tester,
     ) async {
