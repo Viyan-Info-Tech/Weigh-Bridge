@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'di/injection.dart';
 import 'router/app_router.dart';
@@ -30,33 +29,21 @@ class _WeighbridgeAppState extends State<WeighbridgeApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider.value(value: widget.injection.authBloc),
-        BlocProvider.value(value: widget.injection.billBloc),
-        BlocProvider.value(value: widget.injection.partyBloc),
-        BlocProvider.value(value: widget.injection.vehicleBloc),
-        BlocProvider.value(value: widget.injection.vehicleTypeBloc),
-        BlocProvider.value(value: widget.injection.materialBloc),
-        BlocProvider.value(value: widget.injection.settingsBloc),
-        BlocProvider.value(value: widget.injection.reportBloc),
-      ],
-      child: MaterialApp.router(
-        title: 'Viyan Weighbridge',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(
-            seedColor: Colors.blueGrey,
-            brightness: Brightness.light,
-          ),
-          useMaterial3: true,
-          inputDecorationTheme: const InputDecorationTheme(
-            border: OutlineInputBorder(),
-            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          ),
+    return MaterialApp.router(
+      title: 'Viyan Weighbridge',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blueGrey,
+          brightness: Brightness.light,
         ),
-        routerConfig: _appRouter.router,
+        useMaterial3: true,
+        inputDecorationTheme: const InputDecorationTheme(
+          border: OutlineInputBorder(),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        ),
       ),
+      routerConfig: _appRouter.router,
     );
   }
 }

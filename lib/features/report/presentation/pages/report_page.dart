@@ -25,8 +25,13 @@ class ReportPage extends StatefulWidget {
 }
 
 class _ReportPageState extends State<ReportPage> {
+  static const double _minTableWidth = 1200;
+  static const double _minTableChromeHeight = 83;
+  static const double _shortViewportHeight = 560;
+
   final TextEditingController _searchController = TextEditingController();
   final DateFormat _datePickerFormat = DateFormat('dd/MM/yyyy');
+  final ScrollController _hScrollController = ScrollController();
 
   @override
   void initState() {
@@ -37,6 +42,7 @@ class _ReportPageState extends State<ReportPage> {
   @override
   void dispose() {
     _searchController.dispose();
+    _hScrollController.dispose();
     super.dispose();
   }
 
@@ -255,19 +261,48 @@ class _ReportPageState extends State<ReportPage> {
         builder: (context, state) {
           return Padding(
             padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildHeader(context, state),
-                const SizedBox(height: 16),
-                _buildSummaryCards(state.summary),
-                const SizedBox(height: 16),
-                _buildFilterCard(context, state),
-                const SizedBox(height: 16),
-                _buildSearchAndActionBar(context, state),
-                const SizedBox(height: 12),
-                Expanded(child: _buildReportTableContainer(context, state)),
-              ],
+            child: LayoutBuilder(
+              builder: (context, viewport) {
+                final pageContent = Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildHeader(context, state),
+                    const SizedBox(height: 16),
+                    _buildSummaryCards(state.summary),
+                    const SizedBox(height: 16),
+                    _buildFilterCard(context, state),
+                    const SizedBox(height: 16),
+                    _buildSearchAndActionBar(context, state),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: _buildReportTableContainer(context, state),
+                    ),
+                  ],
+                );
+
+                if (viewport.maxHeight >= _shortViewportHeight) {
+                  return pageContent;
+                }
+
+                // Very short window: the fixed chrome above the table no
+                // longer fits, so make the whole page scroll instead.
+                return SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildHeader(context, state),
+                      const SizedBox(height: 16),
+                      _buildSummaryCards(state.summary),
+                      const SizedBox(height: 16),
+                      _buildFilterCard(context, state),
+                      const SizedBox(height: 16),
+                      _buildSearchAndActionBar(context, state),
+                      const SizedBox(height: 12),
+                      _buildReportTableContainer(context, state),
+                    ],
+                  ),
+                );
+              },
             ),
           );
         },
@@ -1001,18 +1036,24 @@ class _ReportPageState extends State<ReportPage> {
         // Print Report button
         OutlinedButton.icon(
           onPressed: () {
-            final partyLabel = state.parties
-                .where((p) => p.id == state.filter.partyId)
-                .map((p) => p.name)
-                .firstOrNull ?? 'All Parties';
-            final vehicleLabel = state.vehicles
-                .where((v) => v.id == state.filter.vehicleId)
-                .map((v) => v.vehicleNumber)
-                .firstOrNull ?? 'All Vehicles';
-            final materialLabel = state.materials
-                .where((m) => m.id == state.filter.materialId)
-                .map((m) => m.name)
-                .firstOrNull ?? 'All Materials';
+            final partyLabel =
+                state.parties
+                    .where((p) => p.id == state.filter.partyId)
+                    .map((p) => p.name)
+                    .firstOrNull ??
+                'All Parties';
+            final vehicleLabel =
+                state.vehicles
+                    .where((v) => v.id == state.filter.vehicleId)
+                    .map((v) => v.vehicleNumber)
+                    .firstOrNull ??
+                'All Vehicles';
+            final materialLabel =
+                state.materials
+                    .where((m) => m.id == state.filter.materialId)
+                    .map((m) => m.name)
+                    .firstOrNull ??
+                'All Materials';
 
             PrintReportDialog.show(
               context: context,
@@ -1100,34 +1141,37 @@ class _ReportPageState extends State<ReportPage> {
           border: Border.all(color: const Color(0xFFE2E8F0)),
         ),
         alignment: Alignment.center,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.inventory_2_outlined,
-              size: 48,
-              color: Colors.grey.shade300,
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'No weighment records found',
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 15,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF475569),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.inventory_2_outlined,
+                size: 48,
+                color: Colors.grey.shade300,
               ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Try adjusting the date range or filter criteria above.',
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 13,
-                color: Color(0xFF94A3B8),
+              const SizedBox(height: 12),
+              const Text(
+                'No weighment records found',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF475569),
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 4),
+              const Text(
+                'Try adjusting the date range or filter criteria above.',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 13,
+                  color: Color(0xFF94A3B8),
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -1149,122 +1193,209 @@ class _ReportPageState extends State<ReportPage> {
               ),
             ],
           ),
-          child: Column(
-            children: [
-              // Header Row
-              Container(
-                height: 42,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
-                ),
-                child: Row(
-                  children: const [
-                    Expanded(flex: 11, child: _HeaderCell('BILL NO')),
-                    Expanded(flex: 13, child: _HeaderCell('DATE & TIME')),
-                    Expanded(flex: 11, child: _HeaderCell('VEHICLE')),
-                    Expanded(flex: 13, child: _HeaderCell('PARTY')),
-                    Expanded(flex: 11, child: _HeaderCell('MATERIAL')),
-                    Expanded(
-                      flex: 12,
-                      child: _HeaderCell(
-                        'GROSS WEIGHT',
-                        align: TextAlign.right,
-                      ),
-                    ),
-                    Expanded(
-                      flex: 12,
-                      child: _HeaderCell('TARE WEIGHT', align: TextAlign.right),
-                    ),
-                    Expanded(
-                      flex: 12,
-                      child: _HeaderCell('NET WEIGHT', align: TextAlign.right),
-                    ),
-                    Expanded(
-                      flex: 10,
-                      child: _HeaderCell('AMOUNT', align: TextAlign.right),
-                    ),
-                    Expanded(
-                      flex: 11,
-                      child: _HeaderCell('STATUS', align: TextAlign.center),
-                    ),
-                    Expanded(
-                      flex: 8,
-                      child: _HeaderCell('ACTION', align: TextAlign.center),
-                    ),
-                  ],
-                ),
-              ),
-              const Divider(height: 1, color: Color(0xFFE2E8F0)),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final tableWidth = constraints.maxWidth < _minTableWidth
+                  ? _minTableWidth
+                  : constraints.maxWidth;
 
-              // Data Rows
-              Expanded(
-                child: ListView.separated(
-                  itemCount: state.records.length,
-                  separatorBuilder: (context, index) =>
-                      const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                  itemBuilder: (context, index) {
-                    final item = state.records[index];
-                    return _buildTableRow(context, item, state, vehicleTypes);
-                  },
-                ),
-              ),
-
-              // Table Footer Summary Bar
-              Container(
-                height: 40,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.vertical(
-                    bottom: Radius.circular(10),
-                  ),
-                  border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Total: ${state.records.length} Bills',
-                      style: const TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF475569),
-                      ),
-                    ),
-                    Row(
+              // Whole-page scroll mode (very short window): the table is given
+              // unbounded height, so render it at its natural size and let the
+              // page scroll vertically.
+              if (!constraints.maxHeight.isFinite) {
+                return SingleChildScrollView(
+                  controller: _hScrollController,
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: tableWidth,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
-                          'Total Net: ${state.summary.totalNetTons} T',
-                          style: const TextStyle(
-                            fontFamily: 'PlusJakartaSans',
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF16A34A),
-                          ),
-                        ),
-                        const SizedBox(width: 24),
-                        Text(
-                          'Total Amount: ₹${NumberFormat('#,##,###').format(state.summary.totalRevenue.round())}',
-                          style: const TextStyle(
-                            fontFamily: 'PlusJakartaSans',
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            color: Color(0xFF0F172A),
-                          ),
-                        ),
+                        _tableHeader(),
+                        const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                        ..._tableRows(context, state, vehicleTypes),
+                        _tableFooter(state),
                       ],
                     ),
-                  ],
+                  ),
+                );
+              }
+
+              // The fixed table chrome (header 42 + divider 1 + footer 40)
+              // needs at least 83px. When the available height is smaller the
+              // Expanded rows list would overflow, so switch to a naturally
+              // sized table inside a vertical scroll instead.
+              if (constraints.maxHeight < _minTableChromeHeight) {
+                return SingleChildScrollView(
+                  controller: _hScrollController,
+                  scrollDirection: Axis.horizontal,
+                  child: SizedBox(
+                    width: tableWidth,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.vertical,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _tableHeader(),
+                          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                          ..._tableRows(context, state, vehicleTypes),
+                          _tableFooter(state),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              return SingleChildScrollView(
+                controller: _hScrollController,
+                scrollDirection: Axis.horizontal,
+                child: SizedBox(
+                  width: tableWidth,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      // Header Row
+                      _tableHeader(),
+                      const Divider(height: 1, color: Color(0xFFE2E8F0)),
+
+                      // Data Rows
+                      Expanded(
+                        child: ListView.separated(
+                          itemCount: state.records.length,
+                          separatorBuilder: (context, index) => const Divider(
+                            height: 1,
+                            color: Color(0xFFF1F5F9),
+                          ),
+                          itemBuilder: (context, index) {
+                            final item = state.records[index];
+                            return _buildTableRow(
+                              context,
+                              item,
+                              state,
+                              vehicleTypes,
+                            );
+                          },
+                        ),
+                      ),
+
+                      // Table Footer Summary Bar
+                      _tableFooter(state),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              );
+            },
           ),
         );
       },
     );
+  }
+
+  Widget _tableHeader() {
+    return Container(
+      height: 42,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(10)),
+      ),
+      child: Row(
+        children: const [
+          Expanded(flex: 11, child: _HeaderCell('BILL NO')),
+          Expanded(flex: 13, child: _HeaderCell('DATE & TIME')),
+          Expanded(flex: 11, child: _HeaderCell('VEHICLE')),
+          Expanded(flex: 13, child: _HeaderCell('PARTY')),
+          Expanded(flex: 11, child: _HeaderCell('MATERIAL')),
+          Expanded(
+            flex: 12,
+            child: _HeaderCell('GROSS WEIGHT', align: TextAlign.right),
+          ),
+          Expanded(
+            flex: 12,
+            child: _HeaderCell('TARE WEIGHT', align: TextAlign.right),
+          ),
+          Expanded(
+            flex: 12,
+            child: _HeaderCell('NET WEIGHT', align: TextAlign.right),
+          ),
+          Expanded(
+            flex: 10,
+            child: _HeaderCell('AMOUNT', align: TextAlign.right),
+          ),
+          Expanded(
+            flex: 11,
+            child: _HeaderCell('STATUS', align: TextAlign.center),
+          ),
+          Expanded(
+            flex: 8,
+            child: _HeaderCell('ACTION', align: TextAlign.center),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _tableFooter(ReportState state) {
+    return Container(
+      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(10)),
+        border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Total: ${state.records.length} Bills',
+            style: const TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF475569),
+            ),
+          ),
+          Row(
+            children: [
+              Text(
+                'Total Net: ${state.summary.totalNetTons} T',
+                style: const TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF16A34A),
+                ),
+              ),
+              const SizedBox(width: 24),
+              Text(
+                'Total Amount: ₹${NumberFormat('#,##,###').format(state.summary.totalRevenue.round())}',
+                style: const TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _tableRows(
+    BuildContext context,
+    ReportState state,
+    List<VehicleType> vehicleTypes,
+  ) {
+    return [
+      for (var i = 0; i < state.records.length; i++) ...[
+        if (i > 0) const Divider(height: 1, color: Color(0xFFF1F5F9)),
+        _buildTableRow(context, state.records[i], state, vehicleTypes),
+      ],
+    ];
   }
 
   Widget _buildTableRow(
@@ -1485,14 +1616,18 @@ class _ReportPageState extends State<ReportPage> {
                         ),
                       ),
                       const SizedBox(width: 5),
-                      Text(
-                        item.displayStatus,
-                        style: TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 10,
-                          fontWeight: FontWeight.w800,
-                          color: statusColor,
-                          letterSpacing: 0.4,
+                      Flexible(
+                        child: Text(
+                          item.displayStatus,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontSize: 10,
+                            fontWeight: FontWeight.w800,
+                            color: statusColor,
+                            letterSpacing: 0.4,
+                          ),
                         ),
                       ),
                     ],
