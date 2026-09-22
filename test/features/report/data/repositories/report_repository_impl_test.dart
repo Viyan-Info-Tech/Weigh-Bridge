@@ -21,11 +21,9 @@ void main() {
       id: id,
       billNumber: 'WB-0000$id',
       createdAt: created,
-      vehicleId: 1,
       vehicleNumber: 'TN31CM$id',
-      vehicleTypeName: 'Truck',
-      partyId: 1,
-      partyName: 'Party$id',
+      customerId: 1,
+      customerName: 'Customer$id',
       materialId: 1,
       materialName: 'Cement',
       paymentMode: 'cash',
@@ -34,7 +32,6 @@ void main() {
       firstWeightKg: firstWeightKg,
       firstWeightType: firstWeightType,
       secondWeightKg: secondWeightKg,
-      rawStatus: secondWeightKg == null ? 'pending' : 'completed',
     );
   }
 
@@ -56,23 +53,13 @@ void main() {
       expect(summary.totalBills, 0);
       expect(summary.totalGrossWeightKg, 0);
       expect(summary.totalRevenue, 0);
-      expect(summary.pendingCount, 0);
       expect(summary.completedCount, 0);
     });
 
-    test('sums available weights, revenue and status counts', () {
+    test('sums available weights, revenue and completed counts', () {
       final records = [
-        item(
-          id: 1,
-          amount: 250,
-          firstWeightKg: 20000,
-          secondWeightKg: 5000,
-        ),
-        item(
-          id: 2,
-          amount: 300,
-          firstWeightKg: 30000,
-        ),
+        item(id: 1, amount: 250, firstWeightKg: 20000, secondWeightKg: 5000),
+        item(id: 2, amount: 300, firstWeightKg: 30000),
       ];
 
       final summary = repository.calculateSummary(records);
@@ -82,7 +69,6 @@ void main() {
       expect(summary.totalNetWeightKg, 15000);
       expect(summary.totalRevenue, 550);
       expect(summary.completedCount, 1);
-      expect(summary.pendingCount, 1);
     });
 
     test('skips absent weights instead of adding zero noise', () {
@@ -120,9 +106,9 @@ void main() {
       final repository = ReportRepositoryImpl(mockSource);
       const filter = ReportFilter();
 
-      when(() => mockSource.getReportRecords(any())).thenAnswer(
-        (_) async => [item(id: 1, secondWeightKg: 5000)],
-      );
+      when(
+        () => mockSource.getReportRecords(any()),
+      ).thenAnswer((_) async => [item(id: 1, secondWeightKg: 5000)]);
 
       final records = await repository.getReportRecords(filter);
       expect(records, hasLength(1));

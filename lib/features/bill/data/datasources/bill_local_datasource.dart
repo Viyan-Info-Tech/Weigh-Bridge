@@ -12,8 +12,8 @@ class BillLocalDataSource {
     return _database.billDao.insertWeighment(
       WeighmentsCompanion.insert(
         billNumber: weighment.billNumber,
-        partyId: weighment.partyId,
-        vehicleId: weighment.vehicleId,
+        customerId: weighment.customerId,
+        vehicleNumber: weighment.vehicleNumber,
         materialId: weighment.materialId,
         paymentMode: weighment.paymentMode,
         firstWeightKg: weighment.firstWeightKg,
@@ -24,7 +24,6 @@ class BillLocalDataSource {
         vehicleCharge: Value(weighment.vehicleCharge),
         amount: Value(weighment.amount),
         remarks: Value(weighment.remarks),
-        status: Value(weighment.status),
         weightUnit: Value(weighment.weightUnit),
       ),
     );
@@ -41,7 +40,6 @@ class BillLocalDataSource {
         netWeightKg: Value(weighment.netWeightKg),
         vehicleCharge: Value(weighment.vehicleCharge),
         amount: Value(weighment.amount),
-        status: Value(weighment.status),
         remarks: Value(weighment.remarks),
         weightUnit: Value(weighment.weightUnit),
         updatedAt: Value(DateTime.now()),
@@ -54,11 +52,6 @@ class BillLocalDataSource {
       date: date,
       limit: limit,
     );
-    return records.map(_toEntity).toList();
-  }
-
-  Future<List<Weighment>> getPendingBills() async {
-    final records = await _database.billDao.getPendingBills();
     return records.map(_toEntity).toList();
   }
 
@@ -120,8 +113,8 @@ class BillLocalDataSource {
     return Weighment(
       id: record.id,
       billNumber: record.billNumber,
-      partyId: record.partyId,
-      vehicleId: record.vehicleId,
+      customerId: record.customerId,
+      vehicleNumber: record.vehicleNumber,
       materialId: record.materialId,
       paymentMode: record.paymentMode,
       firstWeightKg: firstWeight,
@@ -132,7 +125,6 @@ class BillLocalDataSource {
       vehicleCharge: (record.vehicleCharge as num).toDouble(),
       amount: (record.amount as num).toDouble(),
       remarks: record.remarks as String?,
-      status: record.status as String,
       weightUnit: unit,
       createdAt: record.createdAt as DateTime,
       updatedAt: record.updatedAt as DateTime,

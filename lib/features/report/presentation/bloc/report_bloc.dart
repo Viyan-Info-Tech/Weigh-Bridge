@@ -1,8 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../material/domain/repositories/material_item_repository.dart';
-import '../../../party/domain/repositories/party_repository.dart';
-import '../../../vehicle/domain/repositories/vehicle_repository.dart';
+import '../../../customer/domain/repositories/customer_repository.dart';
 import '../../domain/entities/report_filter.dart';
 import '../../domain/repositories/report_repository.dart';
 import '../../domain/usecases/export_report_usecase.dart';
@@ -11,30 +10,26 @@ import 'report_state.dart';
 
 class ReportBloc extends Bloc<ReportEvent, ReportState> {
   final ReportRepository _reportRepository;
-  final PartyRepository _partyRepository;
-  final VehicleRepository _vehicleRepository;
+  final CustomerRepository _customerRepository;
   final MaterialItemRepository _materialRepository;
   final ExportReportUseCase _exportReportUseCase;
 
   ReportBloc({
     required ReportRepository reportRepository,
-    required PartyRepository partyRepository,
-    required VehicleRepository vehicleRepository,
+    required CustomerRepository customerRepository,
     required MaterialItemRepository materialRepository,
     required ExportReportUseCase exportReportUseCase,
   }) : _reportRepository = reportRepository,
-       _partyRepository = partyRepository,
-       _vehicleRepository = vehicleRepository,
+       _customerRepository = customerRepository,
        _materialRepository = materialRepository,
        _exportReportUseCase = exportReportUseCase,
        super(const ReportState()) {
     on<LoadReportInitial>(_onLoadReportInitial);
     on<ReportFilterPresetChanged>(_onFilterPresetChanged);
     on<ReportCustomDateChanged>(_onCustomDateChanged);
-    on<ReportPartyFilterChanged>(_onPartyFilterChanged);
+    on<ReportCustomerFilterChanged>(_onCustomerFilterChanged);
     on<ReportVehicleFilterChanged>(_onVehicleFilterChanged);
     on<ReportMaterialFilterChanged>(_onMaterialFilterChanged);
-    on<ReportStatusFilterChanged>(_onStatusFilterChanged);
     on<ReportPaymentFilterChanged>(_onPaymentFilterChanged);
     on<ReportSearchQueryChanged>(_onSearchQueryChanged);
     on<ApplyReportFilters>(_onApplyReportFilters);
@@ -50,8 +45,7 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
   ) async {
     emit(state.copyWith(status: ReportStatus.loading, clearError: true));
     try {
-      final parties = await _partyRepository.getAllParties();
-      final vehicles = await _vehicleRepository.getAllVehicles();
+      final customers = await _customerRepository.getAllCustomers();
       final materials = await _materialRepository.getAllMaterials();
 
       final records = await _reportRepository.getReportRecords(state.filter);
@@ -60,8 +54,7 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
       emit(
         state.copyWith(
           status: ReportStatus.loaded,
-          parties: parties,
-          vehicles: vehicles,
+          customers: customers,
           materials: materials,
           records: records,
           summary: summary,
@@ -109,15 +102,15 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     );
   }
 
-  void _onPartyFilterChanged(
-    ReportPartyFilterChanged event,
+  void _onCustomerFilterChanged(
+    ReportCustomerFilterChanged event,
     Emitter<ReportState> emit,
   ) {
     emit(
       state.copyWith(
         filter: state.filter.copyWith(
-          partyId: event.partyId,
-          clearParty: event.partyId == null,
+          customerId: event.customerId,
+          clearCustomer: event.customerId == null,
         ),
       ),
     );
@@ -129,10 +122,7 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
   ) {
     emit(
       state.copyWith(
-        filter: state.filter.copyWith(
-          vehicleId: event.vehicleId,
-          clearVehicle: event.vehicleId == null,
-        ),
+        filter: state.filter.copyWith(vehicleNumber: event.vehicleNumber),
       ),
     );
   }
@@ -149,13 +139,6 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
         ),
       ),
     );
-  }
-
-  void _onStatusFilterChanged(
-    ReportStatusFilterChanged event,
-    Emitter<ReportState> emit,
-  ) {
-    emit(state.copyWith(filter: state.filter.copyWith(status: event.status)));
   }
 
   void _onPaymentFilterChanged(
@@ -191,7 +174,6 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
   ) async {
     const defaultFilter = ReportFilter(
       datePreset: DateRangePreset.today,
-      status: 'all',
       paymentMode: 'all',
       searchQuery: '',
     );

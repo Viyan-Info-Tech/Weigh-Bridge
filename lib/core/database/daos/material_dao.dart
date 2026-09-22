@@ -24,14 +24,13 @@ class MaterialDao extends DatabaseAccessor<AppDatabase>
     return query.get();
   }
 
-  Future<List<Material>> getMaterialsByCategory(String category) async {
-    final query = select(materials)
-      ..where((m) => m.category.equals(category) & m.isActive.equals(true));
-    return query.get();
-  }
-
   Future<Material?> getMaterialById(int id) async {
     final query = select(materials)..where((m) => m.id.equals(id));
+    return query.getSingleOrNull();
+  }
+
+  Future<Material?> getMaterialByCode(String code) async {
+    final query = select(materials)..where((m) => m.code.equals(code));
     return query.getSingleOrNull();
   }
 
@@ -50,7 +49,7 @@ class MaterialDao extends DatabaseAccessor<AppDatabase>
 
   Future<List<Material>> searchMaterials(String query) async {
     final q = select(materials)
-      ..where((m) => m.name.like('%$query%') | m.category.like('%$query%'))
+      ..where((m) => m.code.like('%$query%') | m.name.like('%$query%'))
       ..limit(20);
     return q.get();
   }

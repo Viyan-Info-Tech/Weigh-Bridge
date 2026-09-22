@@ -3,8 +3,8 @@ import 'package:equatable/equatable.dart';
 class Weighment extends Equatable {
   final int id;
   final String billNumber;
-  final int partyId;
-  final int vehicleId;
+  final int customerId;
+  final String vehicleNumber;
   final int materialId;
   final String paymentMode;
   final double firstWeightKg;
@@ -15,7 +15,6 @@ class Weighment extends Equatable {
   final double vehicleCharge;
   final double amount;
   final String? remarks;
-  final String status;
   final String weightUnit;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -23,8 +22,8 @@ class Weighment extends Equatable {
   const Weighment({
     required this.id,
     required this.billNumber,
-    required this.partyId,
-    required this.vehicleId,
+    required this.customerId,
+    required this.vehicleNumber,
     required this.materialId,
     required this.paymentMode,
     double? firstWeightKg,
@@ -37,7 +36,6 @@ class Weighment extends Equatable {
     required this.vehicleCharge,
     required this.amount,
     this.remarks,
-    this.status = 'pending',
     this.weightUnit = 'ton',
     required this.createdAt,
     required this.updatedAt,
@@ -48,11 +46,9 @@ class Weighment extends Equatable {
                : (grossWeightKg ?? 0)),
        explicitNetWeightKg = netWeightKg;
 
+  /// A weighment is completed once both weights have been captured.
   bool get isCompleted =>
-      status.toLowerCase() == 'completed' ||
-      (firstWeightKg > 0 && secondWeightKg != null && secondWeightKg! > 0);
-
-  bool get isPending => !isCompleted;
+      firstWeightKg > 0 && secondWeightKg != null && secondWeightKg! > 0;
 
   /// Business Logic for Gross Weight:
   /// If firstWeightType == GROSS -> firstWeight (if > 0)
@@ -104,8 +100,8 @@ class Weighment extends Equatable {
   List<Object?> get props => [
     id,
     billNumber,
-    partyId,
-    vehicleId,
+    customerId,
+    vehicleNumber,
     materialId,
     firstWeightKg,
     firstWeightType,
@@ -114,7 +110,6 @@ class Weighment extends Equatable {
     explicitNetWeightKg,
     vehicleCharge,
     amount,
-    status,
     weightUnit,
     createdAt,
     updatedAt,

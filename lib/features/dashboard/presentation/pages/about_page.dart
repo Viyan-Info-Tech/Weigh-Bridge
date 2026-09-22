@@ -316,7 +316,11 @@ class AboutPage extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.content_copy, size: 14, color: Color(0xFF94A3B8)),
+              const Icon(
+                Icons.content_copy,
+                size: 14,
+                color: Color(0xFF94A3B8),
+              ),
             ],
           ),
         ),
@@ -366,7 +370,10 @@ class AboutPage extends StatelessWidget {
             child: GestureDetector(
               onTap: () => _openUrl(context, 'https://www.viyaninfo.com'),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(6),
@@ -391,11 +398,7 @@ class AboutPage extends StatelessWidget {
                       ),
                     ),
                     SizedBox(width: 6),
-                    Icon(
-                      Icons.open_in_new,
-                      size: 13,
-                      color: Color(0xFF0F52BA),
-                    ),
+                    Icon(Icons.open_in_new, size: 13, color: Color(0xFF0F52BA)),
                   ],
                 ),
               ),
@@ -409,18 +412,15 @@ class AboutPage extends StatelessWidget {
   Future<void> _openUrl(BuildContext context, String urlString) async {
     final formattedUrl =
         urlString.startsWith('http://') || urlString.startsWith('https://')
-            ? urlString
-            : 'https://$urlString';
+        ? urlString
+        : 'https://$urlString';
 
     bool launched = false;
 
     try {
       final uri = Uri.parse(formattedUrl);
       if (await canLaunchUrl(uri)) {
-        launched = await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication,
-        );
+        launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
       }
     } catch (_) {
       // Platform channel may not be connected yet in current debug session
@@ -429,14 +429,19 @@ class AboutPage extends StatelessWidget {
     // Windows fallback: directly invoke OS default browser protocol handler
     if (!launched && !kIsWeb && Platform.isWindows) {
       try {
-        final result = await Process.run(
-          'rundll32',
-          ['url.dll,FileProtocolHandler', formattedUrl],
-        );
+        final result = await Process.run('rundll32', [
+          'url.dll,FileProtocolHandler',
+          formattedUrl,
+        ]);
         launched = result.exitCode == 0;
       } catch (_) {
         try {
-          final res = await Process.run('cmd', ['/c', 'start', '', formattedUrl]);
+          final res = await Process.run('cmd', [
+            '/c',
+            'start',
+            '',
+            formattedUrl,
+          ]);
           launched = res.exitCode == 0;
         } catch (_) {}
       }
@@ -447,9 +452,7 @@ class AboutPage extends StatelessWidget {
         SnackBar(
           content: Text('Could not open $urlString'),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       );
     }

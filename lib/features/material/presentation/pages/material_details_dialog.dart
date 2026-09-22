@@ -31,9 +31,9 @@ class MaterialDetailsDialog extends StatelessWidget {
         children: [
           _buildSection('Material Information'),
           const SizedBox(height: 12),
+          _buildInfoRow('Material Code', material.code),
           _buildInfoRow('Material Name', material.name),
           _buildStatusRow(material.isActive),
-          _buildInfoRow('Category', material.category),
           _buildInfoRow(
             'Created Date',
             DateFormat('dd MMM yyyy').format(material.createdAt),

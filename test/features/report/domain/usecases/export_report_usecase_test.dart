@@ -23,11 +23,9 @@ void main() {
     id: 1,
     billNumber: 'WB-00001',
     createdAt: DateTime(2026, 9, 18, 10, 30),
-    vehicleId: 1,
     vehicleNumber: 'TN31CM2026',
-    vehicleTypeName: 'Truck',
-    partyId: 1,
-    partyName: 'Party',
+    customerId: 1,
+    customerName: 'Customer',
     materialId: 1,
     materialName: 'Cement',
     paymentMode: 'cash',
@@ -35,7 +33,6 @@ void main() {
     vehicleCharge: 250,
     firstWeightKg: 20000,
     secondWeightKg: 5000,
-    rawStatus: 'completed',
   );
 
   setUpAll(() {
@@ -59,17 +56,19 @@ void main() {
 
     expect(result.type, ExportResultType.noRecords);
     verify(() => mockRepo.getReportRecords(any())).called(1);
-    verifyNever(() => mockSaveService.saveFile(
-      suggestedFileName: any(named: 'suggestedFileName'),
-      bytes: any(named: 'bytes'),
-      mimeType: any(named: 'mimeType'),
-    ));
+    verifyNever(
+      () => mockSaveService.saveFile(
+        suggestedFileName: any(named: 'suggestedFileName'),
+        bytes: any(named: 'bytes'),
+        mimeType: any(named: 'mimeType'),
+      ),
+    );
   });
 
   test('returns success with the saved path and basename', () async {
-    when(() => mockRepo.getReportRecords(any())).thenAnswer(
-      (_) async => [record],
-    );
+    when(
+      () => mockRepo.getReportRecords(any()),
+    ).thenAnswer((_) async => [record]);
     when(
       () => mockSaveService.saveFile(
         suggestedFileName: any(named: 'suggestedFileName'),
@@ -93,9 +92,9 @@ void main() {
   });
 
   test('passes a suggested CSV filename based on the filter', () async {
-    when(() => mockRepo.getReportRecords(any())).thenAnswer(
-      (_) async => [record],
-    );
+    when(
+      () => mockRepo.getReportRecords(any()),
+    ).thenAnswer((_) async => [record]);
     when(
       () => mockSaveService.saveFile(
         suggestedFileName: any(named: 'suggestedFileName'),
@@ -118,9 +117,9 @@ void main() {
   });
 
   test('returns cancelled when the user dismisses the dialog', () async {
-    when(() => mockRepo.getReportRecords(any())).thenAnswer(
-      (_) async => [record],
-    );
+    when(
+      () => mockRepo.getReportRecords(any()),
+    ).thenAnswer((_) async => [record]);
     when(
       () => mockSaveService.saveFile(
         suggestedFileName: any(named: 'suggestedFileName'),
@@ -135,9 +134,9 @@ void main() {
   });
 
   test('writes UTF-8 BOM bytes produced by the CSV generator', () async {
-    when(() => mockRepo.getReportRecords(any())).thenAnswer(
-      (_) async => [record],
-    );
+    when(
+      () => mockRepo.getReportRecords(any()),
+    ).thenAnswer((_) async => [record]);
     Uint8List? capturedBytes;
     when(
       () => mockSaveService.saveFile(
@@ -159,9 +158,9 @@ void main() {
   });
 
   test('returns failure when saving throws', () async {
-    when(() => mockRepo.getReportRecords(any())).thenAnswer(
-      (_) async => [record],
-    );
+    when(
+      () => mockRepo.getReportRecords(any()),
+    ).thenAnswer((_) async => [record]);
     when(
       () => mockSaveService.saveFile(
         suggestedFileName: any(named: 'suggestedFileName'),

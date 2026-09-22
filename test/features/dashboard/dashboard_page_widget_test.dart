@@ -9,11 +9,8 @@ import 'package:weighbridge/features/auth/domain/usecases/is_authenticated.dart'
 import 'package:weighbridge/features/auth/domain/usecases/login.dart';
 import 'package:weighbridge/features/auth/domain/usecases/logout.dart';
 import 'package:weighbridge/features/auth/presentation/bloc/auth_bloc.dart';
-import 'package:weighbridge/features/party/domain/entities/party.dart';
-import 'package:weighbridge/features/party/domain/repositories/party_repository.dart';
-import 'package:weighbridge/features/vehicle/domain/entities/vehicle.dart';
-import 'package:weighbridge/features/vehicle/domain/repositories/vehicle_repository.dart';
-import 'package:weighbridge/features/vehicle_type/domain/repositories/vehicle_type_repository.dart';
+import 'package:weighbridge/features/customer/domain/entities/customer.dart';
+import 'package:weighbridge/features/customer/domain/repositories/customer_repository.dart';
 import 'package:weighbridge/features/material/domain/entities/material_item.dart';
 import 'package:weighbridge/features/material/domain/repositories/material_item_repository.dart';
 import 'package:weighbridge/features/bill/domain/entities/weighment.dart';
@@ -31,11 +28,7 @@ class MockGetCurrentUserUseCase extends Mock implements GetCurrentUserUseCase {}
 class MockIsAuthenticatedUseCase extends Mock
     implements IsAuthenticatedUseCase {}
 
-class MockPartyRepository extends Mock implements PartyRepository {}
-
-class MockVehicleRepository extends Mock implements VehicleRepository {}
-
-class MockVehicleTypeRepository extends Mock implements VehicleTypeRepository {}
+class MockCustomerRepository extends Mock implements CustomerRepository {}
 
 class MockMaterialRepository extends Mock implements MaterialItemRepository {}
 
@@ -46,9 +39,6 @@ class MockLoadRecentBillsUseCase extends Mock
 
 class MockGenerateBillNumberUseCase extends Mock
     implements GenerateBillNumberUseCase {}
-
-class MockLoadPendingBillsUseCase extends Mock
-    implements LoadPendingBillsUseCase {}
 
 void main() {
   setUpAll(() {
@@ -63,14 +53,11 @@ void main() {
   late MockGetCurrentUserUseCase mockGetCurrentUserUseCase;
   late MockIsAuthenticatedUseCase mockIsAuthenticatedUseCase;
 
-  late MockPartyRepository mockPartyRepository;
-  late MockVehicleRepository mockVehicleRepository;
-  late MockVehicleTypeRepository mockVehicleTypeRepository;
+  late MockCustomerRepository mockCustomerRepository;
   late MockMaterialRepository mockMaterialRepository;
   late MockSaveBillUseCase mockSaveBillUseCase;
   late MockLoadRecentBillsUseCase mockLoadRecentBillsUseCase;
   late MockGenerateBillNumberUseCase mockGenerateBillNumberUseCase;
-  late MockLoadPendingBillsUseCase mockLoadPendingBillsUseCase;
 
   final testUser = User(
     id: 1,
@@ -101,24 +88,15 @@ void main() {
       isAuthenticatedUseCase: mockIsAuthenticatedUseCase,
     );
 
-    mockPartyRepository = MockPartyRepository();
-    mockVehicleRepository = MockVehicleRepository();
-    mockVehicleTypeRepository = MockVehicleTypeRepository();
+    mockCustomerRepository = MockCustomerRepository();
     mockMaterialRepository = MockMaterialRepository();
     mockSaveBillUseCase = MockSaveBillUseCase();
     mockLoadRecentBillsUseCase = MockLoadRecentBillsUseCase();
     mockGenerateBillNumberUseCase = MockGenerateBillNumberUseCase();
-    mockLoadPendingBillsUseCase = MockLoadPendingBillsUseCase();
 
     when(
-      () => mockPartyRepository.getAllActiveParties(),
-    ).thenAnswer((_) => Future.value(<Party>[]));
-    when(
-      () => mockVehicleRepository.getVehiclesByStatus(isActive: true),
-    ).thenAnswer((_) => Future.value(<Vehicle>[]));
-    when(
-      () => mockVehicleTypeRepository.getVehicleTypesByStatus(isActive: true),
-    ).thenAnswer((_) => Future.value([]));
+      () => mockCustomerRepository.getAllActiveCustomers(),
+    ).thenAnswer((_) => Future.value(<Customer>[]));
     when(
       () => mockMaterialRepository.getMaterialsByStatus(isActive: true),
     ).thenAnswer((_) => Future.value(<MaterialItem>[]));
@@ -131,18 +109,12 @@ void main() {
     when(
       () => mockGenerateBillNumberUseCase(),
     ).thenAnswer((_) => Future.value('WB-00001'));
-    when(
-      () => mockLoadPendingBillsUseCase(),
-    ).thenAnswer((_) => Future.value([]));
 
     billBloc = BillBloc(
-      partyRepository: mockPartyRepository,
-      vehicleRepository: mockVehicleRepository,
-      vehicleTypeRepository: mockVehicleTypeRepository,
+      customerRepository: mockCustomerRepository,
       materialRepository: mockMaterialRepository,
       saveBillUseCase: mockSaveBillUseCase,
       loadRecentBillsUseCase: mockLoadRecentBillsUseCase,
-      loadPendingBillsUseCase: mockLoadPendingBillsUseCase,
       generateBillNumberUseCase: mockGenerateBillNumberUseCase,
     );
   });
@@ -173,17 +145,20 @@ void main() {
 
       await tester.pumpWidget(createHomePageUnderTest());
       await tester.runAsync(() async {
-        await billBloc.stream.firstWhere(
-          (s) => s.status == BillScreenStatus.loaded,
-        );
+        if (billBloc.state.status != BillScreenStatus.loaded) {
+          await billBloc.stream.firstWhere(
+            (s) => s.status == BillScreenStatus.loaded,
+          );
+        }
       });
       await tester.pumpAndSettle();
 
       // Top title bar
       expect(find.text('Admin'), findsWidgets);
 
-      // Sidebar items
+      // Navigation items
       expect(find.text('Bill'), findsWidgets);
+      expect(find.text('Configuration'), findsWidgets);
     });
   });
 }

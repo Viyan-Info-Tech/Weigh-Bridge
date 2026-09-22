@@ -2,12 +2,8 @@ import 'package:flutter/material.dart' hide Material;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:weighbridge/features/party/domain/entities/party.dart';
-import 'package:weighbridge/features/party/domain/repositories/party_repository.dart';
-import 'package:weighbridge/features/vehicle/domain/entities/vehicle.dart';
-import 'package:weighbridge/features/vehicle/domain/repositories/vehicle_repository.dart';
-import 'package:weighbridge/features/vehicle_type/domain/entities/vehicle_type.dart';
-import 'package:weighbridge/features/vehicle_type/domain/repositories/vehicle_type_repository.dart';
+import 'package:weighbridge/features/customer/domain/entities/customer.dart';
+import 'package:weighbridge/features/customer/domain/repositories/customer_repository.dart';
 import 'package:weighbridge/features/material/domain/entities/material_item.dart';
 import 'package:weighbridge/features/material/domain/repositories/material_item_repository.dart';
 import 'package:weighbridge/features/bill/domain/entities/weighment.dart';
@@ -17,11 +13,7 @@ import 'package:weighbridge/features/bill/presentation/bloc/bill_event.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_state.dart';
 import 'package:weighbridge/features/bill/presentation/pages/bill_page.dart';
 
-class MockPartyRepository extends Mock implements PartyRepository {}
-
-class MockVehicleRepository extends Mock implements VehicleRepository {}
-
-class MockVehicleTypeRepository extends Mock implements VehicleTypeRepository {}
+class MockCustomerRepository extends Mock implements CustomerRepository {}
 
 class MockMaterialRepository extends Mock implements MaterialItemRepository {}
 
@@ -33,26 +25,20 @@ class MockLoadRecentBillsUseCase extends Mock
 class MockGenerateBillNumberUseCase extends Mock
     implements GenerateBillNumberUseCase {}
 
-class MockLoadPendingBillsUseCase extends Mock
-    implements LoadPendingBillsUseCase {}
-
 void main() {
   setUpAll(() {
     registerFallbackValue(DateTime(2026, 9, 12));
   });
 
   late BillBloc billBloc;
-  late MockPartyRepository mockPartyRepository;
-  late MockVehicleRepository mockVehicleRepository;
-  late MockVehicleTypeRepository mockVehicleTypeRepository;
+  late MockCustomerRepository mockCustomerRepository;
   late MockMaterialRepository mockMaterialRepository;
   late MockSaveBillUseCase mockSaveBillUseCase;
   late MockLoadRecentBillsUseCase mockLoadRecentBillsUseCase;
   late MockGenerateBillNumberUseCase mockGenerateBillNumberUseCase;
-  late MockLoadPendingBillsUseCase mockLoadPendingBillsUseCase;
 
-  final testParties = [
-    Party(
+  final testCustomers = [
+    Customer(
       id: 1,
       name: 'UltraTech Cement',
       mobile: '9876543210',
@@ -64,30 +50,10 @@ void main() {
     ),
   ];
 
-  final testVehicles = [
-    Vehicle(
-      id: 1,
-      vehicleNumber: 'MH 12 AB 1234',
-      vehicleTypeId: 1,
-      isActive: true,
-      createdAt: DateTime(2025),
-      updatedAt: DateTime(2025),
-    ),
-  ];
-
-  final testVehicleTypes = [
-    VehicleType(
-      id: 1,
-      name: '10 Wheeler',
-      loadPrice: 500,
-      createdAt: DateTime(2025),
-      updatedAt: DateTime(2025),
-    ),
-  ];
-
   final testMaterials = [
     MaterialItem(
       id: 1,
+      code: '1',
       name: 'Sand',
       isActive: true,
       createdAt: DateTime(2025),
@@ -102,8 +68,8 @@ void main() {
     Weighment(
       id: 1,
       billNumber: 'WB-00001',
-      partyId: 1,
-      vehicleId: 1,
+      customerId: 1,
+      vehicleNumber: 'MH 12 AB 1234',
       materialId: 1,
       paymentMode: 'Cash',
       grossWeightKg: 25000,
@@ -111,7 +77,6 @@ void main() {
       netWeightKg: 15000,
       vehicleCharge: 500,
       amount: 500,
-      status: 'completed',
       createdAt: now,
       updatedAt: now,
     ),
@@ -122,8 +87,8 @@ void main() {
     Weighment(
       id: 2,
       billNumber: 'WB-00000',
-      partyId: 1,
-      vehicleId: 1,
+      customerId: 1,
+      vehicleNumber: 'MH 12 AB 1234',
       materialId: 1,
       paymentMode: 'Cash',
       grossWeightKg: 10000,
@@ -131,34 +96,21 @@ void main() {
       netWeightKg: 10000,
       vehicleCharge: 500,
       amount: 500,
-      status: 'completed',
       createdAt: yesterday,
       updatedAt: yesterday,
     ),
   ];
 
   setUp(() {
-    mockPartyRepository = MockPartyRepository();
-    mockVehicleRepository = MockVehicleRepository();
-    mockVehicleTypeRepository = MockVehicleTypeRepository();
+    mockCustomerRepository = MockCustomerRepository();
     mockMaterialRepository = MockMaterialRepository();
     mockSaveBillUseCase = MockSaveBillUseCase();
     mockLoadRecentBillsUseCase = MockLoadRecentBillsUseCase();
     mockGenerateBillNumberUseCase = MockGenerateBillNumberUseCase();
-    mockLoadPendingBillsUseCase = MockLoadPendingBillsUseCase();
 
     when(
-      () => mockPartyRepository.getAllActiveParties(),
-    ).thenAnswer((_) => Future.value(testParties));
-    when(
-      () => mockVehicleRepository.getVehiclesByStatus(isActive: true),
-    ).thenAnswer((_) => Future.value(testVehicles));
-    when(
-      () => mockVehicleTypeRepository.getVehicleTypesByStatus(isActive: true),
-    ).thenAnswer((_) => Future.value(testVehicleTypes));
-    when(
-      () => mockVehicleTypeRepository.getAllVehicleTypes(),
-    ).thenAnswer((_) => Future.value(testVehicleTypes));
+      () => mockCustomerRepository.getAllActiveCustomers(),
+    ).thenAnswer((_) => Future.value(testCustomers));
     when(
       () => mockMaterialRepository.getMaterialsByStatus(isActive: true),
     ).thenAnswer((_) => Future.value(testMaterials));
@@ -171,18 +123,12 @@ void main() {
     when(
       () => mockGenerateBillNumberUseCase(),
     ).thenAnswer((_) => Future.value('WB-00002'));
-    when(
-      () => mockLoadPendingBillsUseCase(),
-    ).thenAnswer((_) => Future.value([]));
 
     billBloc = BillBloc(
-      partyRepository: mockPartyRepository,
-      vehicleRepository: mockVehicleRepository,
-      vehicleTypeRepository: mockVehicleTypeRepository,
+      customerRepository: mockCustomerRepository,
       materialRepository: mockMaterialRepository,
       saveBillUseCase: mockSaveBillUseCase,
       loadRecentBillsUseCase: mockLoadRecentBillsUseCase,
-      loadPendingBillsUseCase: mockLoadPendingBillsUseCase,
       generateBillNumberUseCase: mockGenerateBillNumberUseCase,
     );
   });
@@ -218,38 +164,41 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets(
-    'renders left-side form controls and right-side recent billings',
-    (tester) async {
-      tester.view.physicalSize = const Size(1400, 900);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
+  testWidgets('renders hero scale banner, 2-column form, and action buttons', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
 
-      await pumpBillPage(tester);
+    await pumpBillPage(tester);
 
-      // Verify Header
-      expect(find.text('Viyan Weighbridge'), findsOneWidget);
-      expect(find.text('Billing & Ticket Management'), findsOneWidget);
+    // Verify Hero Scale Banner
+    expect(find.text('WEIGHT'), findsOneWidget);
+    expect(find.text('STABLE'), findsOneWidget);
+    expect(find.text('CAM 01'), findsOneWidget);
 
-      // Verify Left Side: Truck Digital Scale & Quick Action Buttons
-      expect(find.text('kg'), findsOneWidget);
-      expect(find.text('Clear Form'), findsOneWidget);
-      expect(find.text('Save Ticket'), findsOneWidget);
-      expect(find.text('Save & Print Slip'), findsOneWidget);
+    // Verify Form Labels
+    expect(find.text('TRUCK NO'), findsOneWidget);
+    expect(find.text('SERIAL NO'), findsOneWidget);
+    expect(find.text('GROSS WEIGHT'), findsOneWidget);
+    expect(find.text('TARE WEIGHT'), findsOneWidget);
+    expect(find.text('NETT WEIGHT'), findsOneWidget);
 
-      // Verify Right Side: Today's Recent Billings panel
-      expect(find.text('Recent Billings'), findsOneWidget);
-      expect(find.text('1 Today'), findsOneWidget);
-      expect(find.text('WB-00001'), findsWidgets);
-      expect(find.text('MH 12 AB 1234'), findsWidgets);
-      expect(find.text('UltraTech Cement'), findsWidgets);
-    },
-  );
+    // Verify Action Buttons
+    expect(find.text('SAVE'), findsOneWidget);
+    expect(find.text('CANCEL'), findsOneWidget);
+    expect(find.text('RE-PRINT'), findsOneWidget);
+    expect(find.text('MANUAL TARE'), findsOneWidget);
+    expect(find.text('AUTO TARE'), findsOneWidget);
+    expect(find.text('RE-SEND SMS'), findsOneWidget);
+    expect(find.text('EXIT'), findsOneWidget);
+  });
 
-  testWidgets('hides yesterday bills from today recent billings', (
+  testWidgets('hides yesterday bills from today recent billings in drawer', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1400, 900);
@@ -268,12 +217,16 @@ void main() {
 
     await pumpBillPage(tester);
 
+    // Open recent bills drawer
+    tester.state<ScaffoldState>(find.byType(Scaffold)).openEndDrawer();
+    await tester.pumpAndSettle();
+
     expect(find.text('WB-00001'), findsWidgets);
     expect(find.text('WB-00000'), findsNothing);
     expect(find.text('1 Today'), findsOneWidget);
   });
 
-  testWidgets('filters recent bills when typing in search field', (
+  testWidgets('filters recent bills when typing in search field in drawer', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1400, 900);
@@ -284,6 +237,10 @@ void main() {
     });
 
     await pumpBillPage(tester);
+
+    // Open recent bills drawer
+    tester.state<ScaffoldState>(find.byType(Scaffold)).openEndDrawer();
+    await tester.pumpAndSettle();
 
     // Search for nonexistent vehicle
     await tester.enterText(
@@ -304,25 +261,30 @@ void main() {
     expect(find.text('WB-00001'), findsWidgets);
   });
 
-  testWidgets('opens weighment slip dialog when clicking print icon', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(1400, 900);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(() {
-      tester.view.resetPhysicalSize();
-      tester.view.resetDevicePixelRatio();
-    });
+  testWidgets(
+    'opens weighment slip dialog when clicking print icon in drawer',
+    (tester) async {
+      tester.view.physicalSize = const Size(1400, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
 
-    await pumpBillPage(tester);
+      await pumpBillPage(tester);
 
-    // Tap print slip icon on recent bill card
-    await tester.tap(find.byKey(const Key('print_slip_button_WB-00001')));
-    await tester.pumpAndSettle();
+      // Open recent bills drawer
+      tester.state<ScaffoldState>(find.byType(Scaffold)).openEndDrawer();
+      await tester.pumpAndSettle();
 
-    // Verify dialog opened with bill details
-    expect(find.text('VIYAN WEIGHBRIDGE'), findsOneWidget);
-    expect(find.text('WB-00001'), findsWidgets);
-    expect(find.text('Print Ticket'), findsOneWidget);
-  });
+      // Tap print slip icon on recent bill card
+      await tester.tap(find.byKey(const Key('print_slip_button_WB-00001')));
+      await tester.pumpAndSettle();
+
+      // Verify dialog opened with bill details
+      expect(find.text('VIYAN WEIGHBRIDGE'), findsOneWidget);
+      expect(find.text('WB-00001'), findsWidgets);
+      expect(find.text('Print Ticket'), findsOneWidget);
+    },
+  );
 }

@@ -34,13 +34,6 @@ class BillDao extends DatabaseAccessor<AppDatabase> with _$BillDaoMixin {
     return query.get();
   }
 
-  Future<List<Weighment>> getPendingBills() async {
-    final query = select(weighments)
-      ..where((w) => w.status.equals('pending'))
-      ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]);
-    return query.get();
-  }
-
   Future<List<Weighment>> getRecentBillsByDateRange({
     required DateTime startDate,
     required DateTime endDate,
@@ -84,7 +77,7 @@ class BillDao extends DatabaseAccessor<AppDatabase> with _$BillDaoMixin {
   Future<List<Weighment>> searchBills({
     String? billNumber,
     String? vehicleNumber,
-    String? partyName,
+    String? customerName,
     DateTime? startDate,
     DateTime? endDate,
     int limit = 50,

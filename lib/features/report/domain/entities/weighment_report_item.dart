@@ -4,11 +4,9 @@ class WeighmentReportItem extends Equatable {
   final int id;
   final String billNumber;
   final DateTime createdAt;
-  final int vehicleId;
   final String vehicleNumber;
-  final String vehicleTypeName;
-  final int partyId;
-  final String partyName;
+  final int customerId;
+  final String customerName;
   final int materialId;
   final String materialName;
   final String paymentMode;
@@ -19,18 +17,15 @@ class WeighmentReportItem extends Equatable {
   final String firstWeightType;
   final double? secondWeightKg;
   final String? secondWeightType;
-  final String rawStatus;
   final String weightUnit;
 
   const WeighmentReportItem({
     required this.id,
     required this.billNumber,
     required this.createdAt,
-    required this.vehicleId,
     required this.vehicleNumber,
-    required this.vehicleTypeName,
-    required this.partyId,
-    required this.partyName,
+    required this.customerId,
+    required this.customerName,
     required this.materialId,
     required this.materialName,
     required this.paymentMode,
@@ -41,7 +36,6 @@ class WeighmentReportItem extends Equatable {
     this.firstWeightType = 'GROSS',
     this.secondWeightKg,
     this.secondWeightType,
-    required this.rawStatus,
     this.weightUnit = 'ton',
   });
 
@@ -88,32 +82,18 @@ class WeighmentReportItem extends Equatable {
     return null;
   }
 
-  /// Business-level status logic:
-  /// First weight entered:
-  ///   Is second weight available?
-  ///     YES -> COMPLETED
-  ///     NO  -> PENDING
-  String get displayStatus {
-    final hasSecond = secondWeightKg != null && secondWeightKg! > 0;
-    if (firstWeightKg > 0 && hasSecond) {
-      return 'COMPLETED';
-    }
-    return 'PENDING';
-  }
-
-  bool get isCompleted => displayStatus == 'COMPLETED';
-  bool get isPending => !isCompleted;
+  /// A weighment is completed once both weights have been captured.
+  bool get isCompleted =>
+      firstWeightKg > 0 && secondWeightKg != null && secondWeightKg! > 0;
 
   @override
   List<Object?> get props => [
     id,
     billNumber,
     createdAt,
-    vehicleId,
     vehicleNumber,
-    vehicleTypeName,
-    partyId,
-    partyName,
+    customerId,
+    customerName,
     materialId,
     materialName,
     paymentMode,
@@ -124,7 +104,6 @@ class WeighmentReportItem extends Equatable {
     firstWeightType,
     secondWeightKg,
     secondWeightType,
-    rawStatus,
     weightUnit,
   ];
 }

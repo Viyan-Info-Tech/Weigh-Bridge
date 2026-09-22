@@ -13,7 +13,7 @@ void main() {
     int id = 1,
     DateTime? createdAt,
     String vehicleNumber = 'TN31CM2026',
-    String partyName = 'ACME Traders',
+    String customerName = 'ACME Traders',
     String materialName = 'Cement',
     double firstWeightKg = 20000,
     String firstWeightType = 'GROSS',
@@ -26,11 +26,9 @@ void main() {
       id: id,
       billNumber: billNumber,
       createdAt: createdAt ?? DateTime(2026, 9, 18, 10, 30),
-      vehicleId: 1,
       vehicleNumber: vehicleNumber,
-      vehicleTypeName: 'Truck',
-      partyId: 1,
-      partyName: partyName,
+      customerId: 1,
+      customerName: customerName,
       materialId: 1,
       materialName: materialName,
       paymentMode: 'cash',
@@ -39,7 +37,6 @@ void main() {
       firstWeightKg: firstWeightKg,
       firstWeightType: firstWeightType,
       secondWeightKg: secondWeightKg,
-      rawStatus: 'completed',
       weightUnit: weightUnit,
     );
   }
@@ -48,19 +45,12 @@ void main() {
     test('single-day range uses one date', () {
       final name = generator.generateSuggestedFileName(const ReportFilter());
       final date = DateTime.now();
-      final expected = 'weighment_report_'
+      final expected =
+          'weighment_report_'
           '${date.year.toString().padLeft(4, '0')}-'
           '${date.month.toString().padLeft(2, '0')}-'
           '${date.day.toString().padLeft(2, '0')}.csv';
       expect(name, expected);
-    });
-
-    test('status filter is embedded in the name', () {
-      final name = generator.generateSuggestedFileName(
-        const ReportFilter(status: 'pending'),
-      );
-      expect(name, startsWith('weighment_report_pending_'));
-      expect(name, endsWith('.csv'));
     });
 
     test('multi-day custom range uses from and to dates', () {
@@ -84,7 +74,7 @@ void main() {
       expect(
         lines.first,
         contains(
-          'Bill No,Date & Time,Vehicle,Party,Material,Gross Weight,'
+          'Bill No,Date & Time,Vehicle,Customer,Material,Gross Weight,'
           'Tare Weight,Net Weight,Weight Unit,Amount,Status',
         ),
       );
@@ -120,20 +110,19 @@ void main() {
       expect(csv, contains('20.000 ton,,'));
     });
 
-    test('marks records as Completed or Pending based on weights', () {
+    test('marks every record as Completed', () {
       final csv = generator.generateCsvString([
         item(billNumber: 'WB-001', firstWeightKg: 20000, secondWeightKg: 5000),
         item(billNumber: 'WB-002', firstWeightKg: 20000, secondWeightKg: null),
       ]);
       expect(csv, contains('Completed'));
-      expect(csv, contains('Pending'));
-      expect((csv.split('Completed').length - 1), 1);
-      expect((csv.split('Pending').length - 1), 1);
+      expect(csv, isNot(contains('Pending')));
+      expect(csv.split('Completed').length - 1, 2);
     });
 
     test('quotes fields containing commas or quotes', () {
       final csv = generator.generateCsvString([
-        item(billNumber: 'WB-003', partyName: 'Kumar, Sons & "Co"'),
+        item(billNumber: 'WB-003', customerName: 'Kumar, Sons & "Co"'),
       ]);
       expect(csv, contains('"Kumar, Sons & ""Co"""'));
     });
@@ -141,9 +130,7 @@ void main() {
 
   group('generateCsvBytes', () {
     test('encodes the CSV as UTF-8 bytes', () {
-      final bytes = generator.generateCsvBytes(
-        [item(billNumber: 'WB-001')],
-      );
+      final bytes = generator.generateCsvBytes([item(billNumber: 'WB-001')]);
       final decoded = utf8.decode(bytes);
       expect(decoded, contains('WB-001'));
       expect(bytes, isNotEmpty);

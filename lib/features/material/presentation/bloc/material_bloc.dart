@@ -42,7 +42,6 @@ class MaterialBloc extends Bloc<MaterialEvent, MaterialState> {
     try {
       final materials = await _loadMaterialsUseCase(
         isActive: event.filterActive,
-        category: event.filterCategory,
       );
       emit(
         state.copyWith(status: AppMaterialStatus.loaded, materials: materials),
@@ -88,7 +87,7 @@ class MaterialBloc extends Bloc<MaterialEvent, MaterialState> {
   ) async {
     emit(state.copyWith(status: AppMaterialStatus.loading));
     try {
-      await _createMaterialUseCase(name: event.name, category: event.category);
+      await _createMaterialUseCase(code: event.code, name: event.name);
       emit(
         state.copyWith(
           status: AppMaterialStatus.success,
@@ -112,10 +111,20 @@ class MaterialBloc extends Bloc<MaterialEvent, MaterialState> {
   ) async {
     emit(state.copyWith(status: AppMaterialStatus.loading));
     try {
+      final duplicate = await _materialRepository.getMaterialByCode(event.code);
+      if (duplicate != null && duplicate.id != event.id) {
+        emit(
+          state.copyWith(
+            status: AppMaterialStatus.error,
+            errorMessage: 'Material with this code already exists',
+          ),
+        );
+        return;
+      }
       await _materialRepository.updateMaterial(
         id: event.id,
+        code: event.code,
         name: event.name,
-        category: event.category,
       );
       emit(
         state.copyWith(

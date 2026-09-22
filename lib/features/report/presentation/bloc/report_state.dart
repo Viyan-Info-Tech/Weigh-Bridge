@@ -1,8 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../../../material/domain/entities/material_item.dart';
-import '../../../party/domain/entities/party.dart';
-import '../../../vehicle/domain/entities/vehicle.dart';
+import '../../../customer/domain/entities/customer.dart';
 import '../../domain/entities/report_filter.dart';
 import '../../domain/entities/report_summary.dart';
 import '../../domain/entities/weighment_report_item.dart';
@@ -15,8 +14,7 @@ class ReportState extends Equatable {
   final List<WeighmentReportItem> records;
   final ReportSummary summary;
   final ReportFilter filter;
-  final List<Party> parties;
-  final List<Vehicle> vehicles;
+  final List<Customer> customers;
   final List<MaterialItem> materials;
   final String? errorMessage;
   final String weightUnit;
@@ -28,8 +26,7 @@ class ReportState extends Equatable {
     this.records = const [],
     this.summary = const ReportSummary(),
     this.filter = const ReportFilter(),
-    this.parties = const [],
-    this.vehicles = const [],
+    this.customers = const [],
     this.materials = const [],
     this.errorMessage,
     this.weightUnit = 'kg',
@@ -44,8 +41,7 @@ class ReportState extends Equatable {
     List<WeighmentReportItem>? records,
     ReportSummary? summary,
     ReportFilter? filter,
-    List<Party>? parties,
-    List<Vehicle>? vehicles,
+    List<Customer>? customers,
     List<MaterialItem>? materials,
     String? errorMessage,
     bool clearError = false,
@@ -59,8 +55,7 @@ class ReportState extends Equatable {
       records: records ?? this.records,
       summary: summary ?? this.summary,
       filter: filter ?? this.filter,
-      parties: parties ?? this.parties,
-      vehicles: vehicles ?? this.vehicles,
+      customers: customers ?? this.customers,
       materials: materials ?? this.materials,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
       weightUnit: weightUnit ?? this.weightUnit,
@@ -77,8 +72,7 @@ class ReportState extends Equatable {
     records,
     summary,
     filter,
-    parties,
-    vehicles,
+    customers,
     materials,
     errorMessage,
     weightUnit,

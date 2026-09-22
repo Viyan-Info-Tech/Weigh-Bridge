@@ -2,21 +2,21 @@ import 'package:equatable/equatable.dart';
 
 class MaterialItem extends Equatable {
   final int id;
+  final String code;
   final String name;
-  final String? category;
   final bool isActive;
   final DateTime createdAt;
   final DateTime updatedAt;
 
   const MaterialItem({
     required this.id,
+    required this.code,
     required this.name,
-    this.category,
     this.isActive = true,
     required this.createdAt,
     required this.updatedAt,
   });
 
   @override
-  List<Object?> get props => [id, name, category, isActive];
+  List<Object?> get props => [id, code, name, isActive];
 }

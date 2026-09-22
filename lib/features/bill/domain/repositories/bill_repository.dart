@@ -12,6 +12,5 @@ abstract class BillRepository {
   Future<Weighment?> getWeighmentById(int id);
   Future<Weighment?> getWeighmentByBillNumber(String billNumber);
   Future<String> generateNextBillNumber();
-  Future<List<Weighment>> getPendingBills();
   Future<int> deleteWeighment(int id);
 }

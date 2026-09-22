@@ -17,16 +17,8 @@ class ReportLocalDataSource {
 
     final query = _database.select(_database.weighments).join([
       leftOuterJoin(
-        _database.parties,
-        _database.parties.id.equalsExp(_database.weighments.partyId),
-      ),
-      leftOuterJoin(
-        _database.vehicles,
-        _database.vehicles.id.equalsExp(_database.weighments.vehicleId),
-      ),
-      leftOuterJoin(
-        _database.vehicleTypes,
-        _database.vehicleTypes.id.equalsExp(_database.vehicles.vehicleTypeId),
+        _database.customers,
+        _database.customers.id.equalsExp(_database.weighments.customerId),
       ),
       leftOuterJoin(
         _database.materials,
@@ -40,28 +32,20 @@ class ReportLocalDataSource {
           _database.weighments.createdAt.isSmallerOrEqualValue(end),
     );
 
-    // Party filter
-    if (filter.partyId != null) {
-      query.where(_database.weighments.partyId.equals(filter.partyId!));
+    // Customer filter
+    if (filter.customerId != null) {
+      query.where(_database.weighments.customerId.equals(filter.customerId!));
     }
 
-    // Vehicle filter
-    if (filter.vehicleId != null) {
-      query.where(_database.weighments.vehicleId.equals(filter.vehicleId!));
+    // Vehicle number filter
+    final vehicleQuery = filter.vehicleNumber.trim();
+    if (vehicleQuery.isNotEmpty) {
+      query.where(_database.weighments.vehicleNumber.like('%$vehicleQuery%'));
     }
 
     // Material filter
     if (filter.materialId != null) {
       query.where(_database.weighments.materialId.equals(filter.materialId!));
-    }
-
-    // Status filter
-    if (filter.status != 'all') {
-      if (filter.status == 'completed') {
-        query.where(_database.weighments.status.equals('completed'));
-      } else if (filter.status == 'pending') {
-        query.where(_database.weighments.status.equals('pending'));
-      }
     }
 
     // Payment mode filter
@@ -83,26 +67,23 @@ class ReportLocalDataSource {
 
     for (final row in rows) {
       final w = row.readTable(_database.weighments);
-      final party = row.readTableOrNull(_database.parties);
-      final vehicle = row.readTableOrNull(_database.vehicles);
-      final vehicleType = row.readTableOrNull(_database.vehicleTypes);
+      final customer = row.readTableOrNull(_database.customers);
       final material = row.readTableOrNull(_database.materials);
 
-      final partyName = party?.name ?? 'Party #${w.partyId}';
-      final vehicleNumber = vehicle?.vehicleNumber ?? 'Vehicle #${w.vehicleId}';
-      final vehicleTypeName = vehicleType?.name ?? '—';
+      final customerName = customer?.name ?? 'Customer #${w.customerId}';
+      final vehicleNumber = w.vehicleNumber;
       final materialName = material?.name ?? 'Material #${w.materialId}';
 
       // If search query is present, check match
       if (search.isNotEmpty) {
         final matchesBill = w.billNumber.toLowerCase().contains(search);
         final matchesVehicle = vehicleNumber.toLowerCase().contains(search);
-        final matchesParty = partyName.toLowerCase().contains(search);
+        final matchesCustomer = customerName.toLowerCase().contains(search);
         final matchesMaterial = materialName.toLowerCase().contains(search);
 
         if (!matchesBill &&
             !matchesVehicle &&
-            !matchesParty &&
+            !matchesCustomer &&
             !matchesMaterial) {
           continue;
         }
@@ -113,11 +94,9 @@ class ReportLocalDataSource {
           id: w.id,
           billNumber: w.billNumber,
           createdAt: w.createdAt,
-          vehicleId: w.vehicleId,
           vehicleNumber: vehicleNumber,
-          vehicleTypeName: vehicleTypeName,
-          partyId: w.partyId,
-          partyName: partyName,
+          customerId: w.customerId,
+          customerName: customerName,
           materialId: w.materialId,
           materialName: materialName,
           paymentMode: w.paymentMode,
@@ -128,7 +107,6 @@ class ReportLocalDataSource {
           firstWeightType: w.firstWeightType,
           secondWeightKg: w.secondWeightKg,
           secondWeightType: w.secondWeightType,
-          rawStatus: w.status,
           weightUnit: w.weightUnit,
         ),
       );

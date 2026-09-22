@@ -32,7 +32,9 @@ void main() {
     test('getSettings returns the same single row repeatedly', () async {
       final first = await db.appSettingsDao.getSettings();
       final second = await db.appSettingsDao.getSettings();
-      final all = await db.customSelect('SELECT COUNT(*) AS c FROM app_settings').get();
+      final all = await db
+          .customSelect('SELECT COUNT(*) AS c FROM app_settings')
+          .get();
       expect(first.id, second.id);
       expect(all.single.data['c'], 1);
     });
@@ -87,8 +89,7 @@ void main() {
         final refs = await seedParents(db);
         await seedWeighment(
           db,
-          partyId: refs.partyId,
-          vehicleId: refs.vehicleId,
+          customerId: refs.customerId,
           materialId: refs.materialId,
           billNumber: 'WB-00008',
         );
@@ -101,14 +102,17 @@ void main() {
         expect(billNumber, 'WB-00009');
       });
 
-      test('clamps to starting number when existing numbers are lower', () async {
-        final billNumber = await db.appSettingsDao.generateNextBillNumber(
-          prefix: 'WB',
-          digits: 5,
-          startingNumber: 100,
-        );
-        expect(billNumber, 'WB-00100');
-      });
+      test(
+        'clamps to starting number when existing numbers are lower',
+        () async {
+          final billNumber = await db.appSettingsDao.generateNextBillNumber(
+            prefix: 'WB',
+            digits: 5,
+            startingNumber: 100,
+          );
+          expect(billNumber, 'WB-00100');
+        },
+      );
 
       test('pads to the configured number of digits', () async {
         final billNumber = await db.appSettingsDao.generateNextBillNumber(

@@ -10,14 +10,9 @@ class CsvGenerator {
 
   /// Production-grade filename generator based on report filters:
   /// e.g. weighment_report_2026-09-13.csv
-  /// e.g. weighment_report_pending_2026-09-13.csv
   /// e.g. weighment_report_2026-09-01_to_2026-09-13.csv
   String generateSuggestedFileName(ReportFilter filter) {
     final dateFormat = DateFormat('yyyy-MM-dd');
-    String statusPart = '';
-    if (filter.status != 'all') {
-      statusPart = '_${filter.status.toLowerCase()}';
-    }
 
     final startDate = filter.effectiveStartDate;
     final endDate = filter.effectiveEndDate;
@@ -35,7 +30,7 @@ class CsvGenerator {
           '${dateFormat.format(startDate)}_to_${dateFormat.format(endDate)}';
     }
 
-    return 'weighment_report${statusPart}_$datePart.csv';
+    return 'weighment_report_$datePart.csv';
   }
 
   /// Generates clean tabular CSV data with UTF-8 BOM for Excel compatibility.
@@ -46,7 +41,7 @@ class CsvGenerator {
 
     // Clean, standard CSV Header
     buffer.writeln(
-      'Bill No,Date & Time,Vehicle,Party,Material,Gross Weight,Tare Weight,Net Weight,Weight Unit,Amount,Status',
+      'Bill No,Date & Time,Vehicle,Customer,Material,Gross Weight,Tare Weight,Net Weight,Weight Unit,Amount,Status',
     );
 
     final dateTimeFormat = DateFormat('dd/MM/yyyy hh:mm a');
@@ -70,13 +65,13 @@ class CsvGenerator {
       final netStr = item.netWeightKg != null
           ? '${toDisplay(item.netWeightKg)!.toStringAsFixed(decimals)} $unit'
           : '';
-      final statusFormatted = item.isCompleted ? 'Completed' : 'Pending';
+      final statusFormatted = 'Completed';
 
       final line = [
         _escape(item.billNumber),
         _escape(dateTimeStr),
         _escape(item.vehicleNumber),
-        _escape(item.partyName),
+        _escape(item.customerName),
         _escape(item.materialName),
         _escape(grossStr),
         _escape(tareStr),

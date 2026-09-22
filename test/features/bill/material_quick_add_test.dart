@@ -6,15 +6,9 @@ import 'package:weighbridge/features/bill/presentation/bloc/bill_bloc.dart';
 import 'package:weighbridge/features/bill/presentation/widgets/quick_add_material_dialog.dart';
 import 'package:weighbridge/features/material/domain/entities/material_item.dart';
 import 'package:weighbridge/features/material/domain/repositories/material_item_repository.dart';
-import 'package:weighbridge/features/party/domain/repositories/party_repository.dart';
-import 'package:weighbridge/features/vehicle/domain/repositories/vehicle_repository.dart';
-import 'package:weighbridge/features/vehicle_type/domain/repositories/vehicle_type_repository.dart';
+import 'package:weighbridge/features/customer/domain/repositories/customer_repository.dart';
 
-class MockPartyRepository extends Mock implements PartyRepository {}
-
-class MockVehicleRepository extends Mock implements VehicleRepository {}
-
-class MockVehicleTypeRepository extends Mock implements VehicleTypeRepository {}
+class MockCustomerRepository extends Mock implements CustomerRepository {}
 
 class MockMaterialRepository extends Mock implements MaterialItemRepository {}
 
@@ -26,38 +20,26 @@ class MockLoadRecentBillsUseCase extends Mock
 class MockGenerateBillNumberUseCase extends Mock
     implements GenerateBillNumberUseCase {}
 
-class MockLoadPendingBillsUseCase extends Mock
-    implements LoadPendingBillsUseCase {}
-
 void main() {
   late BillBloc billBloc;
-  late MockPartyRepository mockPartyRepository;
-  late MockVehicleRepository mockVehicleRepository;
-  late MockVehicleTypeRepository mockVehicleTypeRepository;
+  late MockCustomerRepository mockCustomerRepository;
   late MockMaterialRepository mockMaterialRepository;
   late MockSaveBillUseCase mockSaveBillUseCase;
   late MockLoadRecentBillsUseCase mockLoadRecentBillsUseCase;
   late MockGenerateBillNumberUseCase mockGenerateBillNumberUseCase;
-  late MockLoadPendingBillsUseCase mockLoadPendingBillsUseCase;
 
   setUp(() {
-    mockPartyRepository = MockPartyRepository();
-    mockVehicleRepository = MockVehicleRepository();
-    mockVehicleTypeRepository = MockVehicleTypeRepository();
+    mockCustomerRepository = MockCustomerRepository();
     mockMaterialRepository = MockMaterialRepository();
     mockSaveBillUseCase = MockSaveBillUseCase();
     mockLoadRecentBillsUseCase = MockLoadRecentBillsUseCase();
     mockGenerateBillNumberUseCase = MockGenerateBillNumberUseCase();
-    mockLoadPendingBillsUseCase = MockLoadPendingBillsUseCase();
 
     billBloc = BillBloc(
-      partyRepository: mockPartyRepository,
-      vehicleRepository: mockVehicleRepository,
-      vehicleTypeRepository: mockVehicleTypeRepository,
+      customerRepository: mockCustomerRepository,
       materialRepository: mockMaterialRepository,
       saveBillUseCase: mockSaveBillUseCase,
       loadRecentBillsUseCase: mockLoadRecentBillsUseCase,
-      loadPendingBillsUseCase: mockLoadPendingBillsUseCase,
       generateBillNumberUseCase: mockGenerateBillNumberUseCase,
     );
   });
@@ -66,42 +48,39 @@ void main() {
     billBloc.close();
   });
 
+  MaterialItem buildMaterial(int id, String code, String name) {
+    return MaterialItem(
+      id: id,
+      code: code,
+      name: name,
+      isActive: true,
+      createdAt: DateTime.now(),
+      updatedAt: DateTime.now(),
+    );
+  }
+
   group('Material Quick Add - BillBloc', () {
     test(
       'successfully creates material, updates state.materials and selectedMaterial',
       () async {
-        final existingMaterials = [
-          MaterialItem(
-            id: 1,
-            name: 'Sand',
-            isActive: true,
-            createdAt: DateTime.now(),
-            updatedAt: DateTime.now(),
-          ),
-        ];
+        final existingMaterials = [buildMaterial(1, '1', 'Sand')];
 
-        final createdMaterial = MaterialItem(
-          id: 2,
-          name: 'Stone',
-          isActive: true,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        );
+        final createdMaterial = buildMaterial(2, '2', 'Stone');
 
         when(
           () => mockMaterialRepository.getAllMaterials(),
         ).thenAnswer((_) async => existingMaterials);
         when(
-          () => mockMaterialRepository.createMaterial(
-            name: 'Stone',
-            category: '',
-          ),
+          () => mockMaterialRepository.getMaterialByCode('2'),
+        ).thenAnswer((_) async => null);
+        when(
+          () => mockMaterialRepository.createMaterial(code: '2', name: 'Stone'),
         ).thenAnswer((_) async => 2);
         when(
           () => mockMaterialRepository.getMaterialById(2),
         ).thenAnswer((_) async => createdMaterial);
 
-        final result = await billBloc.quickAddMaterial('Stone');
+        final result = await billBloc.quickAddMaterial('2', 'Stone');
 
         expect(result, equals(createdMaterial));
         expect(billBloc.state.materials.any((m) => m.name == 'Stone'), isTrue);
@@ -110,23 +89,15 @@ void main() {
       },
     );
 
-    test('prevents case-insensitive duplicate materials', () async {
-      final existingMaterials = [
-        MaterialItem(
-          id: 1,
-          name: 'Stone',
-          isActive: true,
-          createdAt: DateTime.now(),
-          updatedAt: DateTime.now(),
-        ),
-      ];
+    test('prevents duplicate material codes', () async {
+      final existingMaterial = buildMaterial(1, '1', 'Stone');
 
       when(
-        () => mockMaterialRepository.getAllMaterials(),
-      ).thenAnswer((_) async => existingMaterials);
+        () => mockMaterialRepository.getMaterialByCode('1'),
+      ).thenAnswer((_) async => existingMaterial);
 
       expect(
-        () => billBloc.quickAddMaterial('stone'),
+        () => billBloc.quickAddMaterial('1', 'Stone'),
         throwsA(isA<Exception>()),
       );
 
@@ -136,7 +107,10 @@ void main() {
     });
 
     test('prevents empty material name', () async {
-      expect(() => billBloc.quickAddMaterial('   '), throwsA(isA<Exception>()));
+      expect(
+        () => billBloc.quickAddMaterial('1', '   '),
+        throwsA(isA<Exception>()),
+      );
 
       await Future<void>.delayed(Duration.zero);
       expect(
@@ -144,10 +118,23 @@ void main() {
         contains('Material name is required'),
       );
     });
+
+    test('prevents empty material code', () async {
+      expect(
+        () => billBloc.quickAddMaterial('   ', 'Stone'),
+        throwsA(isA<Exception>()),
+      );
+
+      await Future<void>.delayed(Duration.zero);
+      expect(
+        billBloc.state.errorMessage,
+        contains('Material code is required'),
+      );
+    });
   });
 
   group('QuickAddMaterialDialog Widget Tests', () {
-    testWidgets('renders dialog and validates empty name', (tester) async {
+    testWidgets('renders dialog and validates empty fields', (tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -155,7 +142,7 @@ void main() {
               builder: (context) => ElevatedButton(
                 onPressed: () => QuickAddMaterialDialog.show(
                   context,
-                  onSave: (name) async => null,
+                  onSave: (code, name) async => null,
                 ),
                 child: const Text('Open'),
               ),
@@ -168,25 +155,21 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Add Material'), findsOneWidget);
+      expect(find.text('Material Code *'), findsOneWidget);
       expect(find.text('Material Name *'), findsOneWidget);
 
       // Try to save empty
       await tester.tap(find.text('Save Material'));
       await tester.pumpAndSettle();
 
+      expect(find.text('Material code is required'), findsOneWidget);
       expect(find.text('Material name is required'), findsOneWidget);
     });
 
     testWidgets('shows loading and returns created material on success', (
       tester,
     ) async {
-      final createdItem = MaterialItem(
-        id: 10,
-        name: 'Gravel',
-        isActive: true,
-        createdAt: DateTime.now(),
-        updatedAt: DateTime.now(),
-      );
+      final createdItem = buildMaterial(10, '9', 'Gravel');
 
       MaterialItem? dialogResult;
 
@@ -198,7 +181,7 @@ void main() {
                 onPressed: () async {
                   dialogResult = await QuickAddMaterialDialog.show(
                     context,
-                    onSave: (name) async {
+                    onSave: (code, name) async {
                       await Future<void>.delayed(
                         const Duration(milliseconds: 50),
                       );
@@ -216,7 +199,8 @@ void main() {
       await tester.tap(find.text('Open'));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextFormField), 'Gravel');
+      await tester.enterText(find.byType(TextFormField).first, '9');
+      await tester.enterText(find.byType(TextFormField).at(1), 'Gravel');
       await tester.tap(find.text('Save Material'));
       await tester.pump(); // Start saving
 
@@ -242,8 +226,8 @@ void main() {
               builder: (context) => ElevatedButton(
                 onPressed: () => QuickAddMaterialDialog.show(
                   context,
-                  onSave: (name) async {
-                    throw Exception('Material with this name already exists');
+                  onSave: (code, name) async {
+                    throw Exception('Material with this code already exists');
                   },
                 ),
                 child: const Text('Open'),
@@ -256,13 +240,14 @@ void main() {
       await tester.tap(find.text('Open'));
       await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextFormField), 'Sand');
+      await tester.enterText(find.byType(TextFormField).first, '1');
+      await tester.enterText(find.byType(TextFormField).at(1), 'Sand');
       await tester.tap(find.text('Save Material'));
       await tester.pumpAndSettle();
 
       // Verify error banner is displayed
       expect(
-        find.text('Material with this name already exists'),
+        find.text('Material with this code already exists'),
         findsOneWidget,
       );
       // Dialog remains open

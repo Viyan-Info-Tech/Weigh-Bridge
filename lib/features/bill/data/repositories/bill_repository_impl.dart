@@ -39,11 +39,6 @@ class BillRepositoryImpl implements BillRepository {
   }
 
   @override
-  Future<List<Weighment>> getPendingBills() async {
-    return _localDataSource.getPendingBills();
-  }
-
-  @override
   Future<List<Weighment>> getRecentBillsByDateRange({
     required DateTime startDate,
     required DateTime endDate,

@@ -39,16 +39,6 @@ class LoadRecentBillsUseCase {
   }
 }
 
-class LoadPendingBillsUseCase {
-  final BillRepository _repository;
-
-  LoadPendingBillsUseCase(this._repository);
-
-  Future<List<Weighment>> call() async {
-    return _repository.getPendingBills();
-  }
-}
-
 class GenerateBillNumberUseCase {
   final BillRepository _repository;
 

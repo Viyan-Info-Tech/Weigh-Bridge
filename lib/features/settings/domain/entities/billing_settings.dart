@@ -19,15 +19,13 @@ class BillingSettings extends Equatable {
   final bool showTime;
   final bool showVehicleNumber;
   final bool showMaterial;
-  final bool showParty;
-  final bool showVehicleType;
+  final bool showCustomer;
   final bool showGrossWeight;
   final bool showTareWeight;
   final bool showNetWeight;
   final bool showAmount;
   final bool showPaymentMode;
   final bool showCashReceived;
-  final bool showPendingAmount;
   final bool showRemarks;
   final bool showFooterNote;
   final String? footerNote;
@@ -52,15 +50,13 @@ class BillingSettings extends Equatable {
     this.showTime = true,
     this.showVehicleNumber = true,
     this.showMaterial = true,
-    this.showParty = true,
-    this.showVehicleType = true,
+    this.showCustomer = true,
     this.showGrossWeight = true,
     this.showTareWeight = true,
     this.showNetWeight = true,
     this.showAmount = true,
     this.showPaymentMode = true,
     this.showCashReceived = true,
-    this.showPendingAmount = true,
     this.showRemarks = true,
     this.showFooterNote = true,
     this.footerNote = 'Please check the weight before leaving the weighbridge.',
@@ -98,15 +94,13 @@ class BillingSettings extends Equatable {
     bool? showTime,
     bool? showVehicleNumber,
     bool? showMaterial,
-    bool? showParty,
-    bool? showVehicleType,
+    bool? showCustomer,
     bool? showGrossWeight,
     bool? showTareWeight,
     bool? showNetWeight,
     bool? showAmount,
     bool? showPaymentMode,
     bool? showCashReceived,
-    bool? showPendingAmount,
     bool? showRemarks,
     bool? showFooterNote,
     String? footerNote,
@@ -134,15 +128,13 @@ class BillingSettings extends Equatable {
       showTime: showTime ?? this.showTime,
       showVehicleNumber: showVehicleNumber ?? this.showVehicleNumber,
       showMaterial: showMaterial ?? this.showMaterial,
-      showParty: showParty ?? this.showParty,
-      showVehicleType: showVehicleType ?? this.showVehicleType,
+      showCustomer: showCustomer ?? this.showCustomer,
       showGrossWeight: showGrossWeight ?? this.showGrossWeight,
       showTareWeight: showTareWeight ?? this.showTareWeight,
       showNetWeight: showNetWeight ?? this.showNetWeight,
       showAmount: showAmount ?? this.showAmount,
       showPaymentMode: showPaymentMode ?? this.showPaymentMode,
       showCashReceived: showCashReceived ?? this.showCashReceived,
-      showPendingAmount: showPendingAmount ?? this.showPendingAmount,
       showRemarks: showRemarks ?? this.showRemarks,
       showFooterNote: showFooterNote ?? this.showFooterNote,
       footerNote: clearFooterNote ? null : (footerNote ?? this.footerNote),
@@ -170,15 +162,13 @@ class BillingSettings extends Equatable {
     showTime,
     showVehicleNumber,
     showMaterial,
-    showParty,
-    showVehicleType,
+    showCustomer,
     showGrossWeight,
     showTareWeight,
     showNetWeight,
     showAmount,
     showPaymentMode,
     showCashReceived,
-    showPendingAmount,
     showRemarks,
     showFooterNote,
     footerNote,

@@ -4,9 +4,7 @@ import 'package:intl/intl.dart';
 import 'weighment_slip_dialog.dart';
 import 'date_range_filter_popover.dart';
 
-import '../../../party/domain/entities/party.dart';
-import '../../../vehicle/domain/entities/vehicle.dart';
-import '../../../vehicle_type/domain/entities/vehicle_type.dart';
+import '../../../customer/domain/entities/customer.dart';
 import '../../../material/domain/entities/material_item.dart' as domain;
 import '../../domain/entities/weighment.dart';
 
@@ -15,12 +13,9 @@ class RecentBillsPanel extends StatefulWidget {
   final DateTime? billsDate;
   final DateTime? billsStartDate;
   final DateTime? billsEndDate;
-  final List<Party> parties;
-  final List<Vehicle> vehicles;
-  final List<VehicleType> vehicleTypes;
+  final List<Customer> customers;
   final List<domain.MaterialItem> materials;
   final ValueChanged<Weighment>? onBillSelected;
-  final ValueChanged<int>? onLoadPendingBill;
   final ValueChanged<DateTime>? onDateChanged;
   final void Function(DateTime? startDate, DateTime? endDate)?
   onDateRangeChanged;
@@ -33,12 +28,9 @@ class RecentBillsPanel extends StatefulWidget {
     this.billsDate,
     this.billsStartDate,
     this.billsEndDate,
-    required this.parties,
-    required this.vehicles,
-    this.vehicleTypes = const [],
+    required this.customers,
     this.materials = const [],
     this.onBillSelected,
-    this.onLoadPendingBill,
     this.onDateChanged,
     this.onDateRangeChanged,
     this.searchFocusNode,
@@ -61,19 +53,11 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
     super.dispose();
   }
 
-  String _getVehicleNumber(int vehicleId) {
+  String _getCustomerName(int customerId) {
     try {
-      return widget.vehicles.firstWhere((v) => v.id == vehicleId).vehicleNumber;
+      return widget.customers.firstWhere((c) => c.id == customerId).name;
     } catch (_) {
-      return 'Vehicle #$vehicleId';
-    }
-  }
-
-  String _getPartyName(int partyId) {
-    try {
-      return widget.parties.firstWhere((p) => p.id == partyId).name;
-    } catch (_) {
-      return 'Party #$partyId';
+      return 'Customer #$customerId';
     }
   }
 
@@ -85,24 +69,12 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
     }
   }
 
-  Vehicle? _getVehicle(int vehicleId) {
+  Customer? _getCustomer(int customerId) {
     try {
-      return widget.vehicles.firstWhere((v) => v.id == vehicleId);
+      return widget.customers.firstWhere((c) => c.id == customerId);
     } catch (_) {
       return null;
     }
-  }
-
-  Party? _getParty(int partyId) {
-    try {
-      return widget.parties.firstWhere((p) => p.id == partyId);
-    } catch (_) {
-      return null;
-    }
-  }
-
-  void _onLoadPendingBill(Weighment bill) {
-    widget.onLoadPendingBill?.call(bill.id);
   }
 
   DateTime get _selectedDay {
@@ -139,17 +111,14 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
   }
 
   void _showBillSlipDialog(Weighment bill) {
-    final vehicle = _getVehicle(bill.vehicleId);
-    final party = _getParty(bill.partyId);
+    final customer = _getCustomer(bill.customerId);
     final materialName = _getMaterialName(bill.materialId);
 
     showDialog(
       context: context,
       builder: (context) => WeighmentSlipDialog(
         bill: bill,
-        vehicle: vehicle,
-        party: party,
-        vehicleTypes: widget.vehicleTypes,
+        customer: customer,
         materialName: materialName,
       ),
     );
@@ -186,23 +155,21 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
 
     // Filter bills based on search query and status filter
     final filteredBills = displayBills.where((bill) {
-      final vehicleNo = _getVehicleNumber(bill.vehicleId).toLowerCase();
-      final partyName = _getPartyName(bill.partyId).toLowerCase();
+      final vehicleNo = bill.vehicleNumber.toLowerCase();
+      final customerName = _getCustomerName(bill.customerId).toLowerCase();
       final billNo = bill.billNumber.toLowerCase();
       final query = _searchQuery.toLowerCase();
 
       final matchesSearch =
           query.isEmpty ||
           vehicleNo.contains(query) ||
-          partyName.contains(query) ||
+          customerName.contains(query) ||
           billNo.contains(query);
 
       if (!matchesSearch) return false;
 
       if (_filterType == 'COMPLETED') {
         return bill.isCompleted;
-      } else if (_filterType == 'PENDING') {
-        return bill.isPending;
       }
       return true;
     }).toList();
@@ -410,8 +377,6 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                           _buildFilterChip('ALL', 'All'),
                           const SizedBox(width: 4),
                           _buildFilterChip('COMPLETED', 'Done'),
-                          const SizedBox(width: 4),
-                          _buildFilterChip('PENDING', 'Pending'),
                         ],
                       ),
                     ] else
@@ -429,8 +394,6 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                           _buildFilterChip('ALL', 'All'),
                           const SizedBox(width: 4),
                           _buildFilterChip('COMPLETED', 'Done'),
-                          const SizedBox(width: 4),
-                          _buildFilterChip('PENDING', 'Pending'),
                         ],
                       ),
                   ],
@@ -617,7 +580,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
       },
       style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13),
       decoration: InputDecoration(
-        hintText: 'Search bill #, vehicle, or party...',
+        hintText: 'Search bill #, vehicle, or customer...',
         hintStyle: TextStyle(
           fontFamily: 'PlusJakartaSans',
           fontSize: 12,
@@ -659,12 +622,10 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
   }
 
   Widget _buildBillCard(Weighment bill) {
-    final vehicleNo = _getVehicleNumber(bill.vehicleId);
-    final partyName = _getPartyName(bill.partyId);
+    final vehicleNo = bill.vehicleNumber;
+    final customerName = _getCustomerName(bill.customerId);
     final materialName = _getMaterialName(bill.materialId);
-    final isCompleted =
-        bill.status.toLowerCase() == 'completed' || bill.isCompleted;
-    final isTareFirst = bill.firstWeightType.toUpperCase() == 'TARE';
+    final isCompleted = bill.isCompleted;
     final timeStr = DateFormat('hh:mm a').format(bill.createdAt);
     final dateStr = DateFormat('dd MMM').format(bill.createdAt);
     final timestampLabel = _isSameDay(bill.createdAt, DateTime.now())
@@ -675,24 +636,12 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
     final Color statusBadgeBg;
     final Color statusBadgeColor;
 
-    if (isCompleted) {
-      statusBadgeText = 'COMPLETED';
-      statusBadgeBg = const Color(0xFFDCFCE7);
-      statusBadgeColor = const Color(0xFF16A34A);
-    } else if (isTareFirst) {
-      statusBadgeText = 'PENDING • GROSS WT';
-      statusBadgeBg = const Color(0xFFFEF3C7);
-      statusBadgeColor = const Color(0xFFD97706);
-    } else {
-      statusBadgeText = 'PENDING • TARE WT';
-      statusBadgeBg = const Color(0xFFFEF3C7);
-      statusBadgeColor = const Color(0xFFD97706);
-    }
+    statusBadgeText = 'COMPLETED';
+    statusBadgeBg = const Color(0xFFDCFCE7);
+    statusBadgeColor = const Color(0xFF16A34A);
 
     final String grossDisplay;
-    final Color? grossColor;
     final String tareDisplay;
-    final Color? tareColor;
     final String netDisplay;
 
     final unit = bill.weightUnit;
@@ -703,45 +652,21 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
       return isTon ? kg / 1000 : kg;
     }
 
-    if (isCompleted) {
-      grossDisplay = bill.grossWeightKg != null
-          ? '${toDisplay(bill.grossWeightKg)!.toStringAsFixed(decimals)} $unit'
-          : '—';
-      grossColor = null;
-      tareDisplay = bill.tareWeightKg != null
-          ? '${toDisplay(bill.tareWeightKg)!.toStringAsFixed(decimals)} $unit'
-          : '—';
-      tareColor = null;
-      netDisplay = bill.netWeightKg != null
-          ? '${toDisplay(bill.netWeightKg)!.toStringAsFixed(decimals)} $unit'
-          : '—';
-    } else {
-      netDisplay = '—';
-      if (isTareFirst) {
-        grossDisplay = '—';
-        grossColor = null;
-        tareDisplay =
-            '${(toDisplay(bill.firstWeightKg) ?? 0).toStringAsFixed(decimals)} $unit';
-        tareColor = null;
-      } else {
-        grossDisplay =
-            '${(toDisplay(bill.firstWeightKg) ?? 0).toStringAsFixed(decimals)} $unit';
-        grossColor = null;
-        tareDisplay = 'Waiting...';
-        tareColor = const Color(0xFFD97706);
-      }
-    }
+    grossDisplay = bill.grossWeightKg != null && isCompleted
+        ? '${toDisplay(bill.grossWeightKg)!.toStringAsFixed(decimals)} $unit'
+        : '—';
+    tareDisplay = bill.tareWeightKg != null && isCompleted
+        ? '${toDisplay(bill.tareWeightKg)!.toStringAsFixed(decimals)} $unit'
+        : '—';
+    netDisplay = bill.netWeightKg != null && isCompleted
+        ? '${toDisplay(bill.netWeightKg)!.toStringAsFixed(decimals)} $unit'
+        : '—';
 
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isCompleted
-              ? const Color(0xFFE2E8F0)
-              : const Color(0xFFFDE68A), // Amber border for pending tare wt
-          width: isCompleted ? 1.0 : 1.5,
-        ),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.0),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -804,7 +729,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
           ),
           const SizedBox(height: 10),
 
-          // Row 2: Vehicle Plate & Party & Material
+          // Row 2: Vehicle Plate & Customer & Material
           Row(
             children: [
               // Styled Vehicle Plate
@@ -840,7 +765,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
-                  partyName,
+                  customerName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
@@ -884,13 +809,9 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
             ),
             child: Row(
               children: [
-                _buildWeightCell(
-                  'Gross Wt',
-                  grossDisplay,
-                  textColor: grossColor,
-                ),
+                _buildWeightCell('Gross Wt', grossDisplay),
                 _buildVerticalLine(),
-                _buildWeightCell('Tare Wt', tareDisplay, textColor: tareColor),
+                _buildWeightCell('Tare Wt', tareDisplay),
                 _buildVerticalLine(),
                 _buildWeightCell(
                   'Net Weight',
@@ -933,37 +854,14 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                 ),
               ),
               const Spacer(),
-              if (!isCompleted) ...[
-                IconButton(
-                  key: Key('print_slip_button_${bill.billNumber}'),
-                  icon: const Icon(Icons.print_outlined, size: 18),
-                  color: const Color(0xFF0D3B82),
-                  tooltip: 'View & Print Pending Slip',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => _showBillSlipDialog(bill),
-                ),
-                TextButton.icon(
-                  key: Key('continue_bill_button_${bill.billNumber}'),
-                  onPressed: () => _onLoadPendingBill(bill),
-                  icon: const Icon(Icons.arrow_forward_rounded, size: 16),
-                  label: const Text('Continue'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFFD97706),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                  ),
-                ),
-              ] else
-                IconButton(
-                  key: Key('print_slip_button_${bill.billNumber}'),
-                  icon: const Icon(Icons.print_outlined, size: 18),
-                  color: const Color(0xFF0D3B82),
-                  tooltip: 'View & Print Slip',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => _showBillSlipDialog(bill),
-                ),
+              IconButton(
+                key: Key('print_slip_button_${bill.billNumber}'),
+                icon: const Icon(Icons.print_outlined, size: 18),
+                color: const Color(0xFF0D3B82),
+                tooltip: 'View & Print Slip',
+                visualDensity: VisualDensity.compact,
+                onPressed: () => _showBillSlipDialog(bill),
+              ),
             ],
           ),
         ],
@@ -1040,8 +938,6 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
             Text(
               _searchQuery.isNotEmpty
                   ? 'No matching billings'
-                  : _filterType == 'PENDING'
-                  ? 'No Pending Billings'
                   : _filterType == 'COMPLETED'
                   ? 'No Completed Billings'
                   : _isViewingToday
@@ -1058,8 +954,6 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
             Text(
               _searchQuery.isNotEmpty
                   ? 'Try searching with a different keyword'
-                  : _filterType == 'PENDING'
-                  ? 'All weighments are complete.'
                   : _filterType == 'COMPLETED'
                   ? 'No completed weighments yet.'
                   : _isViewingToday

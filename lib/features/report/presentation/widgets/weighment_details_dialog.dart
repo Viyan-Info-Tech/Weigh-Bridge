@@ -4,43 +4,33 @@ import 'package:intl/intl.dart';
 import '../../../bill/domain/entities/weighment.dart';
 import '../../../bill/presentation/widgets/weighment_slip_dialog.dart';
 import '../../../material/domain/entities/material_item.dart';
-import '../../../party/domain/entities/party.dart';
-import '../../../vehicle/domain/entities/vehicle.dart';
-import '../../../vehicle_type/domain/entities/vehicle_type.dart';
+import '../../../customer/domain/entities/customer.dart';
 import '../../domain/entities/weighment_report_item.dart';
 
 class WeighmentDetailsDialog extends StatelessWidget {
   final WeighmentReportItem record;
-  final List<Party> parties;
-  final List<Vehicle> vehicles;
+  final List<Customer> customers;
   final List<MaterialItem> materials;
-  final List<VehicleType> vehicleTypes;
 
   const WeighmentDetailsDialog({
     super.key,
     required this.record,
-    this.parties = const [],
-    this.vehicles = const [],
+    this.customers = const [],
     this.materials = const [],
-    this.vehicleTypes = const [],
   });
 
   static Future<void> show({
     required BuildContext context,
     required WeighmentReportItem record,
-    List<Party> parties = const [],
-    List<Vehicle> vehicles = const [],
+    List<Customer> customers = const [],
     List<MaterialItem> materials = const [],
-    List<VehicleType> vehicleTypes = const [],
   }) {
     return showDialog<void>(
       context: context,
       builder: (dialogContext) => WeighmentDetailsDialog(
         record: record,
-        parties: parties,
-        vehicles: vehicles,
+        customers: customers,
         materials: materials,
-        vehicleTypes: vehicleTypes,
       ),
     );
   }
@@ -52,8 +42,8 @@ class WeighmentDetailsDialog extends StatelessWidget {
     final billEntity = Weighment(
       id: record.id,
       billNumber: record.billNumber,
-      partyId: record.partyId,
-      vehicleId: record.vehicleId,
+      customerId: record.customerId,
+      vehicleNumber: record.vehicleNumber,
       materialId: record.materialId,
       paymentMode: record.paymentMode,
       grossWeightKg: record.grossWeightKg ?? record.firstWeightKg,
@@ -62,30 +52,22 @@ class WeighmentDetailsDialog extends StatelessWidget {
       vehicleCharge: record.vehicleCharge,
       amount: record.amount,
       remarks: record.remarks,
-      status: record.isCompleted ? 'completed' : 'pending',
       firstWeightType: record.firstWeightType,
       secondWeightType: record.secondWeightType,
       createdAt: record.createdAt,
       updatedAt: record.createdAt,
     );
 
-    Vehicle? foundVehicle;
+    Customer? foundCustomer;
     try {
-      foundVehicle = vehicles.firstWhere((v) => v.id == record.vehicleId);
-    } catch (_) {}
-
-    Party? foundParty;
-    try {
-      foundParty = parties.firstWhere((p) => p.id == record.partyId);
+      foundCustomer = customers.firstWhere((c) => c.id == record.customerId);
     } catch (_) {}
 
     showDialog(
       context: context,
       builder: (dialogContext) => WeighmentSlipDialog(
         bill: billEntity,
-        vehicle: foundVehicle,
-        party: foundParty,
-        vehicleTypes: vehicleTypes,
+        customer: foundCustomer,
         materialName: record.materialName,
       ),
     );
@@ -189,7 +171,7 @@ class WeighmentDetailsDialog extends StatelessWidget {
                       ),
                     ),
                     child: Text(
-                      record.displayStatus,
+                      record.isCompleted ? 'COMPLETED' : 'INCOMPLETE',
                       style: TextStyle(
                         fontFamily: 'PlusJakartaSans',
                         fontSize: 11,
@@ -203,12 +185,11 @@ class WeighmentDetailsDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Vehicle, Party, Material Info
+            // Vehicle, Customer, Material Info
             _buildInfoGrid([
               _InfoRow('Vehicle', record.vehicleNumber),
-              _InfoRow('Party', record.partyName),
+              _InfoRow('Customer', record.customerName),
               _InfoRow('Material', record.materialName),
-              _InfoRow('Vehicle Type', record.vehicleTypeName),
             ]),
             const SizedBox(height: 16),
 
@@ -255,9 +236,6 @@ class WeighmentDetailsDialog extends StatelessWidget {
                             ? (record.secondWeightType ?? '')
                             : '',
                         badgeColor: Colors.blueGrey,
-                        isPending:
-                            record.secondWeightKg == null ||
-                            record.secondWeightKg == 0,
                       ),
                       const Divider(height: 14, color: Color(0xFFE2E8F0)),
                       _buildSummaryWeightRow(
@@ -487,7 +465,6 @@ class WeighmentDetailsDialog extends StatelessWidget {
     required String weight,
     required String badge,
     required Color badgeColor,
-    bool isPending = false,
   }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -504,13 +481,11 @@ class WeighmentDetailsDialog extends StatelessWidget {
           children: [
             Text(
               weight,
-              style: TextStyle(
+              style: const TextStyle(
                 fontFamily: 'PlusJakartaSans',
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: isPending
-                    ? const Color(0xFFD97706)
-                    : const Color(0xFF0F172A),
+                color: Color(0xFF0F172A),
               ),
             ),
             if (badge.isNotEmpty) ...[

@@ -10,41 +10,36 @@ abstract class MaterialEvent extends Equatable {
 class LoadMaterials extends MaterialEvent {
   final String? searchQuery;
   final bool? filterActive;
-  final String? filterCategory;
 
-  const LoadMaterials({
-    this.searchQuery,
-    this.filterActive,
-    this.filterCategory,
-  });
+  const LoadMaterials({this.searchQuery, this.filterActive});
 
   @override
-  List<Object?> get props => [searchQuery, filterActive, filterCategory];
+  List<Object?> get props => [searchQuery, filterActive];
 }
 
 class CreateMaterialRequested extends MaterialEvent {
+  final String code;
   final String name;
-  final String? category;
 
-  const CreateMaterialRequested({required this.name, this.category});
+  const CreateMaterialRequested({required this.code, required this.name});
 
   @override
-  List<Object?> get props => [name, category];
+  List<Object?> get props => [code, name];
 }
 
 class UpdateMaterialRequested extends MaterialEvent {
   final int id;
+  final String code;
   final String name;
-  final String? category;
 
   const UpdateMaterialRequested({
     required this.id,
+    required this.code,
     required this.name,
-    this.category,
   });
 
   @override
-  List<Object?> get props => [id, name, category];
+  List<Object?> get props => [id, code, name];
 }
 
 class DeactivateMaterialRequested extends MaterialEvent {

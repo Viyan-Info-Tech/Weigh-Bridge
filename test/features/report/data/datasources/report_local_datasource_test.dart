@@ -9,7 +9,7 @@ void main() {
   late AppDatabase db;
   late ReportLocalDataSource source;
   late SeededRefs refs;
-  late int party2;
+  late int customer2;
 
   final todayNoon = DateTime.now();
   final todayMorning = DateTime.now().subtract(const Duration(hours: 6));
@@ -21,31 +21,27 @@ void main() {
 
     await seedWeighment(
       db,
-      partyId: refs.partyId,
-      vehicleId: refs.vehicleId,
+      customerId: refs.customerId,
       materialId: refs.materialId,
       billNumber: 'WB-00001',
       paymentMode: 'cash',
       firstWeightKg: 20000,
       secondWeightKg: 5000,
-      status: 'completed',
       amount: 250,
       createdAt: todayMorning,
     );
     await seedWeighment(
       db,
-      partyId: refs.partyId,
-      vehicleId: refs.vehicleId,
+      customerId: refs.customerId,
       materialId: refs.materialId,
       billNumber: 'WB-00002',
       paymentMode: 'credit',
       firstWeightKg: 30000,
-      status: 'pending',
       amount: 300,
       createdAt: todayNoon,
     );
 
-    party2 = await seedParty(db, name: 'Second Party');
+    customer2 = await seedCustomer(db, name: 'Second Customer');
   });
 
   tearDown(() async {
@@ -53,15 +49,16 @@ void main() {
   });
 
   group('ReportLocalDataSource.getReportRecords', () {
-    test('returns all today records ordered newest first with joined names',
-        () async {
-      final records = await source.getReportRecords(const ReportFilter());
-      expect(records.map((r) => r.billNumber), ['WB-00002', 'WB-00001']);
-      expect(records.first.partyName, 'Seed Party');
-      expect(records.first.vehicleNumber, 'TN31SEED01');
-      expect(records.first.vehicleTypeName, 'Truck');
-      expect(records.first.materialName, 'Cement');
-    });
+    test(
+      'returns all today records ordered newest first with joined names',
+      () async {
+        final records = await source.getReportRecords(const ReportFilter());
+        expect(records.map((r) => r.billNumber), ['WB-00002', 'WB-00001']);
+        expect(records.first.customerName, 'Seed Customer');
+        expect(records.first.vehicleNumber, 'TN31SEED01');
+        expect(records.first.materialName, 'Cement');
+      },
+    );
 
     test('excludes records outside the date preset', () async {
       final records = await source.getReportRecords(
@@ -70,40 +67,19 @@ void main() {
       expect(records, isEmpty);
     });
 
-    test('filters by party', () async {
+    test('filters by customer', () async {
       final records = await source.getReportRecords(
-        ReportFilter(
-          datePreset: DateRangePreset.today,
-          partyId: party2,
-        ),
+        ReportFilter(datePreset: DateRangePreset.today, customerId: customer2),
       );
       expect(records, isEmpty);
 
       final forSeed = await source.getReportRecords(
         ReportFilter(
           datePreset: DateRangePreset.today,
-          partyId: refs.partyId,
+          customerId: refs.customerId,
         ),
       );
       expect(forSeed.length, 2);
-    });
-
-    test('filters by status using the stored status column', () async {
-      final completed = await source.getReportRecords(
-        const ReportFilter(
-          datePreset: DateRangePreset.today,
-          status: 'completed',
-        ),
-      );
-      expect(completed.map((r) => r.billNumber), ['WB-00001']);
-
-      final pending = await source.getReportRecords(
-        const ReportFilter(
-          datePreset: DateRangePreset.today,
-          status: 'pending',
-        ),
-      );
-      expect(pending.map((r) => r.billNumber), ['WB-00002']);
     });
 
     test('filters by payment mode case-insensitively', () async {
@@ -124,7 +100,7 @@ void main() {
       expect(cash.map((r) => r.billNumber), ['WB-00001']);
     });
 
-    test('searches by bill number, vehicle, party and material', () async {
+    test('searches by bill number, vehicle, customer and material', () async {
       final byBill = await source.getReportRecords(
         const ReportFilter(
           datePreset: DateRangePreset.today,
@@ -141,13 +117,13 @@ void main() {
       );
       expect(byVehicle.length, 2);
 
-      final byParty = await source.getReportRecords(
+      final byCustomer = await source.getReportRecords(
         const ReportFilter(
           datePreset: DateRangePreset.today,
-          searchQuery: 'seed party',
+          searchQuery: 'seed customer',
         ),
       );
-      expect(byParty.length, 2);
+      expect(byCustomer.length, 2);
 
       final byMaterial = await source.getReportRecords(
         const ReportFilter(
@@ -167,24 +143,27 @@ void main() {
     });
 
     test('falls back to ids for missing parent records', () async {
-      // Remove the vehicle for WB-00002 first so lookups miss.
-      final pendingBill = await db.billDao.getWeighmentByBillNumber('WB-00002');
-      await db.vehicleDao.deleteVehicle(pendingBill!.vehicleId);
+      await seedWeighment(
+        db,
+        customerId: 9999,
+        materialId: 8888,
+        billNumber: 'WB-00003',
+        firstWeightKg: 1000,
+        createdAt: DateTime.now(),
+      );
 
       final records = await source.getReportRecords(const ReportFilter());
-      final orphan = records.firstWhere((r) => r.billNumber == 'WB-00002');
-      expect(orphan.vehicleNumber, 'Vehicle #${pendingBill.vehicleId}');
-      expect(orphan.vehicleTypeName, '—');
+      final orphan = records.firstWhere((r) => r.billNumber == 'WB-00003');
+      expect(orphan.customerName, 'Customer #9999');
+      expect(orphan.materialName, 'Material #8888');
     });
 
-    test('maps weights and computed status onto report items', () async {
+    test('maps weights and completion onto report items', () async {
       final records = await source.getReportRecords(const ReportFilter());
       final first = records.firstWhere((r) => r.billNumber == 'WB-00002');
       expect(first.firstWeightKg, 30000);
       expect(first.grossWeightKg, 30000);
-      expect(first.displayStatus, 'PENDING');
       expect(first.isCompleted, isFalse);
-      expect(first.rawStatus, 'pending');
 
       final second = records.firstWhere((r) => r.billNumber == 'WB-00001');
       expect(second.netWeightKg, 15000);

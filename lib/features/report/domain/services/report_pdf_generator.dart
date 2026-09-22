@@ -18,7 +18,7 @@ class ReportPdfGenerator {
     String? address,
     String? phone,
     String? gstin,
-    String partyLabel = 'All Parties',
+    String customerLabel = 'All Customers',
     String vehicleLabel = 'All Vehicles',
     String materialLabel = 'All Materials',
   }) async {
@@ -26,7 +26,9 @@ class ReportPdfGenerator {
 
     final dateFormat = DateFormat('dd/MM/yyyy');
     final timeFormat = DateFormat('hh:mm a');
-    final printDateTime = DateFormat('dd/MM/yyyy hh:mm a').format(DateTime.now());
+    final printDateTime = DateFormat(
+      'dd/MM/yyyy hh:mm a',
+    ).format(DateTime.now());
 
     String filterDateLabel = filter.datePreset.label;
     if (filter.datePreset == DateRangePreset.custom &&
@@ -39,13 +41,11 @@ class ReportPdfGenerator {
           '${filter.datePreset.label} (${dateFormat.format(filter.effectiveStartDate)} - ${dateFormat.format(filter.effectiveEndDate)})';
     }
 
-    final effectiveCompanyName = (companyName != null && companyName.trim().isNotEmpty)
+    final effectiveCompanyName =
+        (companyName != null && companyName.trim().isNotEmpty)
         ? companyName.trim()
         : 'VIYAN WEIGHBRIDGE';
 
-    final statusLabel = filter.status == 'all'
-        ? 'All Statuses'
-        : filter.status.toUpperCase();
     final paymentLabel = filter.paymentMode == 'all'
         ? 'All Modes'
         : filter.paymentMode.toUpperCase();
@@ -91,8 +91,10 @@ class ReportPdfGenerator {
                         (gstin != null && gstin.isNotEmpty))
                       pw.Text(
                         [
-                          if (phone != null && phone.isNotEmpty) 'Phone: $phone',
-                          if (gstin != null && gstin.isNotEmpty) 'GSTIN: $gstin',
+                          if (phone != null && phone.isNotEmpty)
+                            'Phone: $phone',
+                          if (gstin != null && gstin.isNotEmpty)
+                            'GSTIN: $gstin',
                         ].join(' | '),
                         style: pw.TextStyle(
                           fontSize: 8,
@@ -108,10 +110,16 @@ class ReportPdfGenerator {
 
               // Filter & Report Info Section
               pw.Container(
-                padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                padding: const pw.EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 6,
+                ),
                 decoration: pw.BoxDecoration(
                   color: PdfColor.fromHex('#F8FAFC'),
-                  border: pw.Border.all(color: PdfColor.fromHex('#E2E8F0'), width: 0.6),
+                  border: pw.Border.all(
+                    color: PdfColor.fromHex('#E2E8F0'),
+                    width: 0.6,
+                  ),
                   borderRadius: pw.BorderRadius.circular(4),
                 ),
                 child: pw.Row(
@@ -122,7 +130,7 @@ class ReportPdfGenerator {
                       children: [
                         _pdfMetaText('Period', filterDateLabel),
                         pw.SizedBox(height: 2),
-                        _pdfMetaText('Party', partyLabel),
+                        _pdfMetaText('Customer', customerLabel),
                         pw.SizedBox(height: 2),
                         _pdfMetaText('Vehicle', vehicleLabel),
                       ],
@@ -133,8 +141,6 @@ class ReportPdfGenerator {
                         _pdfMetaText('Generated', printDateTime),
                         pw.SizedBox(height: 2),
                         _pdfMetaText('Material', materialLabel),
-                        pw.SizedBox(height: 2),
-                        _pdfMetaText('Status', statusLabel),
                       ],
                     ),
                     pw.Column(
@@ -159,7 +165,10 @@ class ReportPdfGenerator {
             padding: const pw.EdgeInsets.only(top: 8),
             decoration: pw.BoxDecoration(
               border: pw.Border(
-                top: pw.BorderSide(color: PdfColor.fromHex('#E2E8F0'), width: 0.5),
+                top: pw.BorderSide(
+                  color: PdfColor.fromHex('#E2E8F0'),
+                  width: 0.5,
+                ),
               ),
             ),
             child: pw.Row(
@@ -191,7 +200,7 @@ class ReportPdfGenerator {
                 'BILL NO',
                 'DATE & TIME',
                 'VEHICLE',
-                'PARTY',
+                'CUSTOMER',
                 'MATERIAL',
                 'GROSS',
                 'TARE',
@@ -200,7 +209,8 @@ class ReportPdfGenerator {
                 'STATUS',
               ],
               data: records.map((r) {
-                final isTon = r.weightUnit.toLowerCase() == 'ton' ||
+                final isTon =
+                    r.weightUnit.toLowerCase() == 'ton' ||
                     r.weightUnit.toLowerCase() == 'tonne';
                 final decimals = isTon ? 3 : 0;
 
@@ -221,13 +231,13 @@ class ReportPdfGenerator {
                   r.billNumber,
                   dateStr,
                   r.vehicleNumber,
-                  r.partyName,
+                  r.customerName,
                   r.materialName,
                   grossStr,
                   tareStr,
                   netStr,
                   amtStr,
-                  r.displayStatus,
+                  'COMPLETED',
                 ];
               }).toList(),
               headerStyle: pw.TextStyle(
@@ -273,7 +283,10 @@ class ReportPdfGenerator {
                 color: PdfColor.fromHex('#CBD5E1'),
                 width: 0.5,
               ),
-              cellPadding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 3.5),
+              cellPadding: const pw.EdgeInsets.symmetric(
+                horizontal: 4,
+                vertical: 3.5,
+              ),
             ),
             pw.SizedBox(height: 12),
 
@@ -292,7 +305,10 @@ class ReportPdfGenerator {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceAround,
                 children: [
                   _pdfSummaryCol('Total Bills', '${summary.totalBills}'),
-                  _pdfSummaryCol('Total Gross', '${summary.totalGrossTons} ton'),
+                  _pdfSummaryCol(
+                    'Total Gross',
+                    '${summary.totalGrossTons} ton',
+                  ),
                   _pdfSummaryCol(
                     'Total Tare',
                     '${(summary.totalTareWeightKg / 1000).toStringAsFixed(3)} ton',
@@ -302,7 +318,6 @@ class ReportPdfGenerator {
                     'Total Revenue',
                     'Rs. ${summary.totalRevenue.toStringAsFixed(0)}',
                   ),
-                  _pdfSummaryCol('Pending', '${summary.pendingCount}'),
                   _pdfSummaryCol('Completed', '${summary.completedCount}'),
                 ],
               ),

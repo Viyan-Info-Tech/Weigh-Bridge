@@ -14,9 +14,7 @@ void main() async {
       providers: [
         BlocProvider.value(value: injection.authBloc),
         BlocProvider.value(value: injection.billBloc),
-        BlocProvider.value(value: injection.partyBloc),
-        BlocProvider.value(value: injection.vehicleBloc),
-        BlocProvider.value(value: injection.vehicleTypeBloc),
+        BlocProvider.value(value: injection.customerBloc),
         BlocProvider.value(value: injection.materialBloc),
         BlocProvider.value(value: injection.settingsBloc),
         BlocProvider.value(value: injection.reportBloc),

@@ -16,15 +16,18 @@ class LicenseRepositoryImpl {
     LicenseLocalDataSource? licenseDataSource,
     LicenseValidatorImpl? validator,
     MachineIdentityService? machineIdentityService,
-  })  : _licenseDataSource = licenseDataSource ?? LicenseLocalDataSource(),
-        _validator = validator ?? LicenseValidatorImpl(
-          machineIdentityService: MachineIdentityService(
-            WindowsMachineIdentityDatasource(),
-          ),
-          clockRollbackDataSource: ClockRollbackDataSource(),
-        ),
-        _machineIdentityService =
-            machineIdentityService ?? MachineIdentityService(WindowsMachineIdentityDatasource());
+  }) : _licenseDataSource = licenseDataSource ?? LicenseLocalDataSource(),
+       _validator =
+           validator ??
+           LicenseValidatorImpl(
+             machineIdentityService: MachineIdentityService(
+               WindowsMachineIdentityDatasource(),
+             ),
+             clockRollbackDataSource: ClockRollbackDataSource(),
+           ),
+       _machineIdentityService =
+           machineIdentityService ??
+           MachineIdentityService(WindowsMachineIdentityDatasource());
 
   Future<LicenseStatus> validateLicense() async {
     final license = await _loadLicenseEntity();

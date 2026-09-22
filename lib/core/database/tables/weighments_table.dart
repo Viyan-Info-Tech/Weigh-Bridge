@@ -1,14 +1,13 @@
 import 'package:drift/drift.dart';
 
-import 'parties_table.dart';
-import 'vehicles_table.dart';
+import 'customers_table.dart';
 import 'materials_table.dart';
 
 class Weighments extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get billNumber => text().withLength(min: 1, max: 20).unique()();
-  IntColumn get partyId => integer().references(Parties, #id)();
-  IntColumn get vehicleId => integer().references(Vehicles, #id)();
+  IntColumn get customerId => integer().references(Customers, #id)();
+  TextColumn get vehicleNumber => text().withLength(min: 1, max: 30)();
   IntColumn get materialId => integer().references(Materials, #id)();
   TextColumn get paymentMode => text().withLength(min: 1, max: 20)();
   RealColumn get firstWeightKg => real()();
@@ -21,9 +20,6 @@ class Weighments extends Table {
   RealColumn get vehicleCharge => real().withDefault(const Constant(0))();
   RealColumn get amount => real().withDefault(const Constant(0))();
   TextColumn get remarks => text().withLength(min: 0, max: 500).nullable()();
-  TextColumn get status => text()
-      .withLength(min: 1, max: 20)
-      .withDefault(const Constant('pending'))();
   TextColumn get weightUnit =>
       text().withLength(min: 1, max: 10).withDefault(const Constant('ton'))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();

@@ -26,15 +26,14 @@ void main() {
     double firstWeightKg = 20000,
     double? secondWeightKg = 5000,
     double? netWeightKg,
-    String status = 'completed',
     double amount = 250,
     double vehicleCharge = 250,
   }) {
     return Weighment(
       id: 0,
       billNumber: billNumber,
-      partyId: refs.partyId,
-      vehicleId: refs.vehicleId,
+      customerId: refs.customerId,
+      vehicleNumber: 'TN31SEED01',
       materialId: refs.materialId,
       paymentMode: 'cash',
       firstWeightKg: firstWeightKg,
@@ -42,7 +41,6 @@ void main() {
       netWeightKg: netWeightKg,
       vehicleCharge: vehicleCharge,
       amount: amount,
-      status: status,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
@@ -54,37 +52,30 @@ void main() {
       final stored = await db.billDao.getWeighmentById(id);
       expect(stored, isNotNull);
       expect(stored!.billNumber, 'WB-00001');
-      expect(stored.partyId, refs.partyId);
-      expect(stored.vehicleId, refs.vehicleId);
+      expect(stored.customerId, refs.customerId);
+      expect(stored.vehicleNumber, 'TN31SEED01');
       expect(stored.materialId, refs.materialId);
       expect(stored.paymentMode, 'cash');
       expect(stored.firstWeightKg, 20000);
       expect(stored.secondWeightKg, 5000);
       expect(stored.amount, 250);
       expect(stored.vehicleCharge, 250);
-      expect(stored.status, 'completed');
       expect(stored.weightUnit, 'ton');
     });
 
-    test('getRecentBills, getPendingBills and by-id lookups map entities',
-        () async {
+    test('getRecentBills and by-id lookups map entities', () async {
       final id = await source.saveWeighment(buildEntity());
-      await source.saveWeighment(
-        buildEntity(billNumber: 'WB-00002', status: 'pending'),
-      );
+      await source.saveWeighment(buildEntity(billNumber: 'WB-00002'));
 
       final today = await source.getRecentBills();
       expect(today, hasLength(2));
-
-      final pending = await source.getPendingBills();
-      expect(pending.single.billNumber, 'WB-00002');
 
       final byId = await source.getWeighmentById(id);
       expect(byId!.amount, 250);
 
       final byBill = await source.getWeighmentByBillNumber('WB-00002');
       expect(byBill, isNotNull);
-      expect(byBill!.status, 'pending');
+      expect(byBill!.billNumber, 'WB-00002');
     });
 
     test('getRecentBillsByDateRange filters inclusively', () async {
@@ -96,9 +87,9 @@ void main() {
       expect(future, isEmpty);
     });
 
-    test('updateWeighment replaces weights, amount and status', () async {
+    test('updateWeighment replaces weights and amount', () async {
       final id = await source.saveWeighment(
-        buildEntity(billNumber: 'WB-00001', status: 'pending'),
+        buildEntity(billNumber: 'WB-00001'),
       );
       await source.updateWeighment(
         id,
@@ -107,7 +98,6 @@ void main() {
           firstWeightKg: 25000,
           secondWeightKg: 8000,
           netWeightKg: 17000,
-          status: 'completed',
           amount: 350,
         ),
       );
@@ -116,21 +106,18 @@ void main() {
       expect(updated!.firstWeightKg, 25000);
       expect(updated.secondWeightKg, 8000);
       expect(updated.netWeightKg, 17000);
-      expect(updated.status, 'completed');
       expect(updated.amount, 350);
     });
 
     test('self-heals legacy zero-first-weight rows into TARE', () async {
       final id = await seedWeighment(
         db,
-        partyId: refs.partyId,
-        vehicleId: refs.vehicleId,
+        customerId: refs.customerId,
         materialId: refs.materialId,
         billNumber: 'WB-00001',
         firstWeightKg: 0,
         secondWeightKg: 5000,
         secondWeightType: 'TARE',
-        status: 'pending',
       );
 
       final entity = await source.getWeighmentById(id);
@@ -140,19 +127,21 @@ void main() {
       expect(entity.secondWeightType, isNull);
     });
 
-    test('generateNextBillNumber honours the configured bill settings',
-        () async {
-      await db.appSettingsDao.updateSettings(
-        const AppSettingsCompanion(
-          billPrefix: Value('RM'),
-          billNumberDigits: Value(3),
-        ),
-      );
-      expect(await source.generateNextBillNumber(), 'RM-001');
+    test(
+      'generateNextBillNumber honours the configured bill settings',
+      () async {
+        await db.appSettingsDao.updateSettings(
+          const AppSettingsCompanion(
+            billPrefix: Value('RM'),
+            billNumberDigits: Value(3),
+          ),
+        );
+        expect(await source.generateNextBillNumber(), 'RM-001');
 
-      await source.saveWeighment(buildEntity(billNumber: 'RM-001'));
-      expect(await source.generateNextBillNumber(), 'RM-002');
-    });
+        await source.saveWeighment(buildEntity(billNumber: 'RM-001'));
+        expect(await source.generateNextBillNumber(), 'RM-002');
+      },
+    );
 
     test('deleteWeighment removes the record', () async {
       final id = await source.saveWeighment(buildEntity());

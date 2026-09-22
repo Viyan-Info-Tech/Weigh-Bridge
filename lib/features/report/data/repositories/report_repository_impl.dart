@@ -20,7 +20,6 @@ class ReportRepositoryImpl implements ReportRepository {
     double totalTare = 0;
     double totalNet = 0;
     double totalRev = 0;
-    int pending = 0;
     int completed = 0;
 
     for (final item in records) {
@@ -37,8 +36,6 @@ class ReportRepositoryImpl implements ReportRepository {
 
       if (item.isCompleted) {
         completed++;
-      } else {
-        pending++;
       }
     }
 
@@ -48,7 +45,6 @@ class ReportRepositoryImpl implements ReportRepository {
       totalTareWeightKg: totalTare,
       totalNetWeightKg: totalNet,
       totalRevenue: totalRev,
-      pendingCount: pending,
       completedCount: completed,
     );
   }

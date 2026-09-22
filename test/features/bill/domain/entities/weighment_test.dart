@@ -5,7 +5,6 @@ void main() {
   final base = DateTime(2026, 9, 18, 10, 30);
 
   Weighment build({
-    String status = 'pending',
     double? firstWeightKg,
     String firstWeightType = 'GROSS',
     double? secondWeightKg,
@@ -14,8 +13,8 @@ void main() {
     return Weighment(
       id: 1,
       billNumber: 'WB-00001',
-      partyId: 1,
-      vehicleId: 1,
+      customerId: 1,
+      vehicleNumber: 'TN31AB1234',
       materialId: 1,
       paymentMode: 'cash',
       firstWeightKg: firstWeightKg,
@@ -24,61 +23,60 @@ void main() {
       netWeightKg: netWeightKg,
       vehicleCharge: 0,
       amount: 0,
-      status: status,
       createdAt: base,
       updatedAt: base,
     );
   }
 
   group('Weighment construction', () {
-    test('uses default firstWeightType, status and weightUnit', () {
+    test('uses default firstWeightType and weightUnit', () {
       final w = build();
       expect(w.firstWeightType, 'GROSS');
-      expect(w.status, 'pending');
       expect(w.weightUnit, 'ton');
     });
 
-    test('maps grossWeightKg into firstWeightKg when firstWeightType is TARE',
-        () {
-      final w = Weighment(
-        id: 1,
-        billNumber: 'WB-00001',
-        partyId: 1,
-        vehicleId: 1,
-        materialId: 1,
-        paymentMode: 'cash',
-        firstWeightType: 'TARE',
-        tareWeightKg: 5000,
-        vehicleCharge: 0,
-        amount: 0,
-        createdAt: base,
-        updatedAt: base,
-      );
-      expect(w.firstWeightKg, 5000);
-      expect(w.explicitNetWeightKg, isNull);
-    });
+    test(
+      'maps grossWeightKg into firstWeightKg when firstWeightType is TARE',
+      () {
+        final w = Weighment(
+          id: 1,
+          billNumber: 'WB-00001',
+          customerId: 1,
+          vehicleNumber: 'TN31AB1234',
+          materialId: 1,
+          paymentMode: 'cash',
+          firstWeightType: 'TARE',
+          tareWeightKg: 5000,
+          vehicleCharge: 0,
+          amount: 0,
+          createdAt: base,
+          updatedAt: base,
+        );
+        expect(w.firstWeightKg, 5000);
+        expect(w.explicitNetWeightKg, isNull);
+      },
+    );
   });
 
-  group('isCompleted / isPending', () {
-    test('returns true when status is completed', () {
-      expect(build(status: 'completed').isCompleted, isTrue);
-      expect(build(status: 'completed').isPending, isFalse);
-    });
-
-    test('returns true from matching weights even when status is pending', () {
-      final w = build(
-        status: 'pending',
-        firstWeightKg: 20000,
-        secondWeightKg: 5000,
+  group('isCompleted', () {
+    test('returns true when both weights are present', () {
+      expect(
+        build(firstWeightKg: 20000, secondWeightKg: 5000).isCompleted,
+        isTrue,
       );
-      expect(w.isCompleted, isTrue);
-      expect(w.isPending, isFalse);
     });
 
     test('returns false for a one-stage weighment', () {
-      final w = build(status: 'pending', firstWeightKg: 20000);
+      final w = build(firstWeightKg: 20000);
       expect(w.isCompleted, isFalse);
-      expect(w.isPending, isTrue);
+    });
+
+    test('returns false when either weight is missing', () {
+      expect(build().isCompleted, isFalse);
+      expect(
+        build(firstWeightKg: 0, secondWeightKg: 5000).isCompleted,
+        isFalse,
+      );
     });
   });
 

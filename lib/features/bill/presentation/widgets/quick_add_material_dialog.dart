@@ -3,13 +3,13 @@ import 'package:flutter/material.dart';
 import '../../../material/domain/entities/material_item.dart';
 
 class QuickAddMaterialDialog extends StatefulWidget {
-  final Future<MaterialItem?> Function(String name) onSave;
+  final Future<MaterialItem?> Function(String code, String name) onSave;
 
   const QuickAddMaterialDialog({super.key, required this.onSave});
 
   static Future<MaterialItem?> show(
     BuildContext context, {
-    required Future<MaterialItem?> Function(String name) onSave,
+    required Future<MaterialItem?> Function(String code, String name) onSave,
   }) {
     return showDialog<MaterialItem?>(
       context: context,
@@ -24,12 +24,14 @@ class QuickAddMaterialDialog extends StatefulWidget {
 
 class _QuickAddMaterialDialogState extends State<QuickAddMaterialDialog> {
   final _formKey = GlobalKey<FormState>();
+  final _codeController = TextEditingController();
   final _nameController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
 
   @override
   void dispose() {
+    _codeController.dispose();
     _nameController.dispose();
     super.dispose();
   }
@@ -43,7 +45,10 @@ class _QuickAddMaterialDialogState extends State<QuickAddMaterialDialog> {
       });
 
       try {
-        final created = await widget.onSave(_nameController.text.trim());
+        final created = await widget.onSave(
+          _codeController.text.trim(),
+          _nameController.text.trim(),
+        );
         if (mounted) {
           if (created != null) {
             Navigator.of(context).pop(created);
@@ -193,6 +198,90 @@ class _QuickAddMaterialDialogState extends State<QuickAddMaterialDialog> {
 
                 const SizedBox(height: 20),
 
+                // Material Code Field
+                Text.rich(
+                  TextSpan(
+                    text: 'Material Code ',
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF334155),
+                    ),
+                    children: const [
+                      TextSpan(
+                        text: '*',
+                        style: TextStyle(color: Color(0xFFE11D48)),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 7),
+                TextFormField(
+                  controller: _codeController,
+                  autofocus: true,
+                  enabled: !_isLoading,
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF0F172A),
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'e.g. 1, 2, 3',
+                    hintStyle: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      color: Colors.grey.shade400,
+                      fontSize: 13,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFFF8FAFC),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF0D3B82),
+                        width: 1.5,
+                      ),
+                    ),
+                    errorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(color: Color(0xFFE11D48)),
+                    ),
+                    focusedErrorBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      borderSide: const BorderSide(
+                        color: Color(0xFFE11D48),
+                        width: 1.5,
+                      ),
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Material code is required';
+                    }
+                    return null;
+                  },
+                  onChanged: (_) {
+                    if (_errorMessage != null) {
+                      setState(() => _errorMessage = null);
+                    }
+                  },
+                ),
+
+                const SizedBox(height: 16),
+
                 // Material Name Field
                 Text.rich(
                   TextSpan(
@@ -214,9 +303,9 @@ class _QuickAddMaterialDialogState extends State<QuickAddMaterialDialog> {
                 const SizedBox(height: 7),
                 TextFormField(
                   controller: _nameController,
-                  autofocus: true,
                   enabled: !_isLoading,
                   textCapitalization: TextCapitalization.words,
+                  onFieldSubmitted: (_) => _save(),
                   style: const TextStyle(
                     fontFamily: 'PlusJakartaSans',
                     fontSize: 13.5,
@@ -269,7 +358,6 @@ class _QuickAddMaterialDialogState extends State<QuickAddMaterialDialog> {
                     }
                     return null;
                   },
-                  onFieldSubmitted: (_) => _save(),
                   onChanged: (_) {
                     if (_errorMessage != null) {
                       setState(() => _errorMessage = null);

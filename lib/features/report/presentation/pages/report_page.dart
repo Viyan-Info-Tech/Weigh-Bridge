@@ -4,9 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 
-import '../../../vehicle_type/domain/entities/vehicle_type.dart';
-import '../../../vehicle_type/presentation/bloc/vehicle_type_bloc.dart';
-import '../../../vehicle_type/presentation/bloc/vehicle_type_state.dart';
 import '../../domain/entities/report_filter.dart';
 import '../../domain/entities/report_summary.dart';
 import '../../domain/entities/weighment_report_item.dart';
@@ -30,6 +27,8 @@ class _ReportPageState extends State<ReportPage> {
   static const double _shortViewportHeight = 560;
 
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _vehicleNumberController =
+      TextEditingController();
   final DateFormat _datePickerFormat = DateFormat('dd/MM/yyyy');
   final ScrollController _hScrollController = ScrollController();
 
@@ -42,6 +41,7 @@ class _ReportPageState extends State<ReportPage> {
   @override
   void dispose() {
     _searchController.dispose();
+    _vehicleNumberController.dispose();
     _hScrollController.dispose();
     super.dispose();
   }
@@ -274,9 +274,7 @@ class _ReportPageState extends State<ReportPage> {
                     const SizedBox(height: 16),
                     _buildSearchAndActionBar(context, state),
                     const SizedBox(height: 12),
-                    Expanded(
-                      child: _buildReportTableContainer(context, state),
-                    ),
+                    Expanded(child: _buildReportTableContainer(context, state)),
                   ],
                 );
 
@@ -396,17 +394,6 @@ class _ReportPageState extends State<ReportPage> {
                 icon: Icons.currency_rupee_rounded,
                 iconColor: const Color(0xFFD97706),
                 bgColor: const Color(0xFFFEF3C7),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildSummaryCard(
-                title: 'Pending',
-                value: '${summary.pendingCount}',
-                subtitle: 'Waiting 2nd weight',
-                icon: Icons.pending_actions_outlined,
-                iconColor: const Color(0xFFEA580C),
-                bgColor: const Color(0xFFFFEDD5),
               ),
             ),
           ],
@@ -604,14 +591,14 @@ class _ReportPageState extends State<ReportPage> {
                 const SizedBox(width: 10),
               ],
 
-              // Party Dropdown
+              // Customer Dropdown
               Expanded(
                 flex: 2,
                 child: _buildDropdownContainer(
-                  label: 'Party',
+                  label: 'Customer',
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<int?>(
-                      value: filter.partyId,
+                      value: filter.customerId,
                       isExpanded: true,
                       icon: const Icon(Icons.arrow_drop_down, size: 20),
                       style: const TextStyle(
@@ -621,22 +608,22 @@ class _ReportPageState extends State<ReportPage> {
                       ),
                       onChanged: (val) {
                         context.read<ReportBloc>().add(
-                          ReportPartyFilterChanged(val),
+                          ReportCustomerFilterChanged(val),
                         );
                       },
                       items: [
                         const DropdownMenuItem<int?>(
                           value: null,
                           child: Text(
-                            'All Parties',
+                            'All Customers',
                             style: TextStyle(fontWeight: FontWeight.w600),
                           ),
                         ),
-                        ...state.parties.map(
-                          (p) => DropdownMenuItem<int?>(
-                            value: p.id,
+                        ...state.customers.map(
+                          (c) => DropdownMenuItem<int?>(
+                            value: c.id,
                             child: Text(
-                              p.name,
+                              c.name,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
@@ -648,45 +635,62 @@ class _ReportPageState extends State<ReportPage> {
               ),
               const SizedBox(width: 10),
 
-              // Vehicle Dropdown
+              // Vehicle Number Filter
               Expanded(
                 flex: 2,
-                child: _buildDropdownContainer(
-                  label: 'Vehicle',
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<int?>(
-                      value: filter.vehicleId,
-                      isExpanded: true,
-                      icon: const Icon(Icons.arrow_drop_down, size: 20),
-                      style: const TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 13,
-                        color: Color(0xFF0F172A),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: const Color(0xFFCBD5E1)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text(
+                        'Vehicle No',
+                        style: TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF64748B),
+                        ),
                       ),
-                      onChanged: (val) {
-                        context.read<ReportBloc>().add(
-                          ReportVehicleFilterChanged(val),
-                        );
-                      },
-                      items: [
-                        const DropdownMenuItem<int?>(
-                          value: null,
-                          child: Text(
-                            'All Vehicles',
-                            style: TextStyle(fontWeight: FontWeight.w600),
+                      TextField(
+                        key: const Key('report_vehicle_number_field'),
+                        controller: _vehicleNumberController,
+                        textCapitalization: TextCapitalization.characters,
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 13,
+                          color: Color(0xFF0F172A),
+                        ),
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 2,
+                            vertical: 5,
+                          ),
+                          border: InputBorder.none,
+                          hintText: 'Enter Vehicle No',
+                          hintStyle: TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontSize: 12,
+                            color: Color(0xFF94A3B8),
                           ),
                         ),
-                        ...state.vehicles.map(
-                          (v) => DropdownMenuItem<int?>(
-                            value: v.id,
-                            child: Text(
-                              v.vehicleNumber,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                        onChanged: (val) {
+                          context.read<ReportBloc>().add(
+                            ReportVehicleFilterChanged(val),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -731,48 +735,6 @@ class _ReportPageState extends State<ReportPage> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-
-              // Status Dropdown
-              Expanded(
-                flex: 2,
-                child: _buildDropdownContainer(
-                  label: 'Status',
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: filter.status,
-                      isExpanded: true,
-                      icon: const Icon(Icons.arrow_drop_down, size: 20),
-                      style: const TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 13,
-                        color: Color(0xFF0F172A),
-                      ),
-                      onChanged: (val) {
-                        if (val != null) {
-                          context.read<ReportBloc>().add(
-                            ReportStatusFilterChanged(val),
-                          );
-                        }
-                      },
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'all',
-                          child: Text('All Status'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'completed',
-                          child: Text('Completed'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'pending',
-                          child: Text('Pending'),
                         ),
                       ],
                     ),
@@ -827,6 +789,7 @@ class _ReportPageState extends State<ReportPage> {
                   OutlinedButton(
                     onPressed: () {
                       _searchController.clear();
+                      _vehicleNumberController.clear();
                       context.read<ReportBloc>().add(
                         const ResetReportFilters(),
                       );
@@ -996,7 +959,7 @@ class _ReportPageState extends State<ReportPage> {
                 color: Color(0xFF0F172A),
               ),
               decoration: InputDecoration(
-                hintText: 'Search bill number, vehicle, party, material...',
+                hintText: 'Search bill number, vehicle, customer, material...',
                 hintStyle: const TextStyle(
                   fontFamily: 'PlusJakartaSans',
                   fontSize: 12.5,
@@ -1036,18 +999,15 @@ class _ReportPageState extends State<ReportPage> {
         // Print Report button
         OutlinedButton.icon(
           onPressed: () {
-            final partyLabel =
-                state.parties
-                    .where((p) => p.id == state.filter.partyId)
-                    .map((p) => p.name)
+            final customerLabel =
+                state.customers
+                    .where((c) => c.id == state.filter.customerId)
+                    .map((c) => c.name)
                     .firstOrNull ??
-                'All Parties';
-            final vehicleLabel =
-                state.vehicles
-                    .where((v) => v.id == state.filter.vehicleId)
-                    .map((v) => v.vehicleNumber)
-                    .firstOrNull ??
-                'All Vehicles';
+                'All Customers';
+            final vehicleLabel = state.filter.vehicleNumber.trim().isEmpty
+                ? 'All Vehicles'
+                : state.filter.vehicleNumber;
             final materialLabel =
                 state.materials
                     .where((m) => m.id == state.filter.materialId)
@@ -1060,7 +1020,7 @@ class _ReportPageState extends State<ReportPage> {
               records: state.records,
               summary: state.summary,
               filter: state.filter,
-              partyLabel: partyLabel,
+              customerLabel: customerLabel,
               vehicleLabel: vehicleLabel,
               materialLabel: materialLabel,
             );
@@ -1176,119 +1136,106 @@ class _ReportPageState extends State<ReportPage> {
       );
     }
 
-    return BlocBuilder<VehicleTypeBloc, VehicleTypeState>(
-      builder: (context, vtState) {
-        final vehicleTypes = vtState.vehicleTypes;
-
-        return Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.02),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              ),
-            ],
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
           ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final tableWidth = constraints.maxWidth < _minTableWidth
-                  ? _minTableWidth
-                  : constraints.maxWidth;
+        ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final tableWidth = constraints.maxWidth < _minTableWidth
+              ? _minTableWidth
+              : constraints.maxWidth;
 
-              // Whole-page scroll mode (very short window): the table is given
-              // unbounded height, so render it at its natural size and let the
-              // page scroll vertically.
-              if (!constraints.maxHeight.isFinite) {
-                return SingleChildScrollView(
-                  controller: _hScrollController,
-                  scrollDirection: Axis.horizontal,
-                  child: SizedBox(
-                    width: tableWidth,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _tableHeader(),
-                        const Divider(height: 1, color: Color(0xFFE2E8F0)),
-                        ..._tableRows(context, state, vehicleTypes),
-                        _tableFooter(state),
-                      ],
-                    ),
-                  ),
-                );
-              }
+          // Whole-page scroll mode (very short window): the table is given
+          // unbounded height, so render it at its natural size and let the
+          // page scroll vertically.
+          if (!constraints.maxHeight.isFinite) {
+            return SingleChildScrollView(
+              controller: _hScrollController,
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: tableWidth,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _tableHeader(),
+                    const Divider(height: 1, color: Color(0xFFE2E8F0)),
+                    ..._tableRows(context, state),
+                    _tableFooter(state),
+                  ],
+                ),
+              ),
+            );
+          }
 
-              // The fixed table chrome (header 42 + divider 1 + footer 40)
-              // needs at least 83px. When the available height is smaller the
-              // Expanded rows list would overflow, so switch to a naturally
-              // sized table inside a vertical scroll instead.
-              if (constraints.maxHeight < _minTableChromeHeight) {
-                return SingleChildScrollView(
-                  controller: _hScrollController,
-                  scrollDirection: Axis.horizontal,
-                  child: SizedBox(
-                    width: tableWidth,
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.vertical,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _tableHeader(),
-                          const Divider(height: 1, color: Color(0xFFE2E8F0)),
-                          ..._tableRows(context, state, vehicleTypes),
-                          _tableFooter(state),
-                        ],
-                      ),
-                    ),
-                  ),
-                );
-              }
-
-              return SingleChildScrollView(
-                controller: _hScrollController,
-                scrollDirection: Axis.horizontal,
-                child: SizedBox(
-                  width: tableWidth,
+          // The fixed table chrome (header 42 + divider 1 + footer 40)
+          // needs at least 83px. When the available height is smaller the
+          // Expanded rows list would overflow, so switch to a naturally
+          // sized table inside a vertical scroll instead.
+          if (constraints.maxHeight < _minTableChromeHeight) {
+            return SingleChildScrollView(
+              controller: _hScrollController,
+              scrollDirection: Axis.horizontal,
+              child: SizedBox(
+                width: tableWidth,
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
                   child: Column(
-                    mainAxisSize: MainAxisSize.max,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Header Row
                       _tableHeader(),
                       const Divider(height: 1, color: Color(0xFFE2E8F0)),
-
-                      // Data Rows
-                      Expanded(
-                        child: ListView.separated(
-                          itemCount: state.records.length,
-                          separatorBuilder: (context, index) => const Divider(
-                            height: 1,
-                            color: Color(0xFFF1F5F9),
-                          ),
-                          itemBuilder: (context, index) {
-                            final item = state.records[index];
-                            return _buildTableRow(
-                              context,
-                              item,
-                              state,
-                              vehicleTypes,
-                            );
-                          },
-                        ),
-                      ),
-
-                      // Table Footer Summary Bar
+                      ..._tableRows(context, state),
                       _tableFooter(state),
                     ],
                   ),
                 ),
-              );
-            },
-          ),
-        );
-      },
+              ),
+            );
+          }
+
+          return SingleChildScrollView(
+            controller: _hScrollController,
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: tableWidth,
+              child: Column(
+                mainAxisSize: MainAxisSize.max,
+                children: [
+                  // Header Row
+                  _tableHeader(),
+                  const Divider(height: 1, color: Color(0xFFE2E8F0)),
+
+                  // Data Rows
+                  Expanded(
+                    child: ListView.separated(
+                      itemCount: state.records.length,
+                      separatorBuilder: (context, index) =>
+                          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                      itemBuilder: (context, index) {
+                        final item = state.records[index];
+                        return _buildTableRow(context, item, state);
+                      },
+                    ),
+                  ),
+
+                  // Table Footer Summary Bar
+                  _tableFooter(state),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 
@@ -1305,7 +1252,7 @@ class _ReportPageState extends State<ReportPage> {
           Expanded(flex: 11, child: _HeaderCell('BILL NO')),
           Expanded(flex: 13, child: _HeaderCell('DATE & TIME')),
           Expanded(flex: 11, child: _HeaderCell('VEHICLE')),
-          Expanded(flex: 13, child: _HeaderCell('PARTY')),
+          Expanded(flex: 13, child: _HeaderCell('CUSTOMER')),
           Expanded(flex: 11, child: _HeaderCell('MATERIAL')),
           Expanded(
             flex: 12,
@@ -1385,15 +1332,11 @@ class _ReportPageState extends State<ReportPage> {
     );
   }
 
-  List<Widget> _tableRows(
-    BuildContext context,
-    ReportState state,
-    List<VehicleType> vehicleTypes,
-  ) {
+  List<Widget> _tableRows(BuildContext context, ReportState state) {
     return [
       for (var i = 0; i < state.records.length; i++) ...[
         if (i > 0) const Divider(height: 1, color: Color(0xFFF1F5F9)),
-        _buildTableRow(context, state.records[i], state, vehicleTypes),
+        _buildTableRow(context, state.records[i], state),
       ],
     ];
   }
@@ -1402,7 +1345,6 @@ class _ReportPageState extends State<ReportPage> {
     BuildContext context,
     WeighmentReportItem item,
     ReportState state,
-    List<VehicleType> vehicleTypes,
   ) {
     final dateFormat = DateFormat('dd/MM/yy');
     final timeFormat = DateFormat('hh:mm a');
@@ -1420,10 +1362,8 @@ class _ReportPageState extends State<ReportPage> {
         WeighmentDetailsDialog.show(
           context: context,
           record: item,
-          parties: state.parties,
-          vehicles: state.vehicles,
+          customers: state.customers,
           materials: state.materials,
-          vehicleTypes: vehicleTypes,
         );
       },
       hoverColor: const Color(0xFFF1F5F9).withValues(alpha: 0.5),
@@ -1486,11 +1426,11 @@ class _ReportPageState extends State<ReportPage> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            // Party
+            // Customer
             Expanded(
               flex: 13,
               child: Text(
-                item.partyName,
+                item.customerName,
                 style: const TextStyle(
                   fontFamily: 'PlusJakartaSans',
                   fontSize: 12,
@@ -1618,7 +1558,7 @@ class _ReportPageState extends State<ReportPage> {
                       const SizedBox(width: 5),
                       Flexible(
                         child: Text(
-                          item.displayStatus,
+                          item.isCompleted ? 'COMPLETED' : 'INCOMPLETE',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
@@ -1651,10 +1591,8 @@ class _ReportPageState extends State<ReportPage> {
                     WeighmentDetailsDialog.show(
                       context: context,
                       record: item,
-                      parties: state.parties,
-                      vehicles: state.vehicles,
+                      customers: state.customers,
                       materials: state.materials,
-                      vehicleTypes: vehicleTypes,
                     );
                   },
                 ),

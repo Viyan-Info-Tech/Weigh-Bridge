@@ -59,15 +59,13 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _showTime = true;
   bool _showVehicleNumber = true;
   bool _showMaterial = true;
-  bool _showParty = true;
-  bool _showVehicleType = true;
+  bool _showCustomer = true;
   bool _showGrossWeight = true;
   bool _showTareWeight = true;
   bool _showNetWeight = true;
   bool _showAmount = true;
   bool _showPaymentMode = true;
   bool _showCashReceived = true;
-  bool _showPendingAmount = true;
   bool _showRemarks = true;
   bool _showFooterNote = true;
 
@@ -126,15 +124,13 @@ class _SettingsPageState extends State<SettingsPage> {
     _showTime = settings.showTime;
     _showVehicleNumber = settings.showVehicleNumber;
     _showMaterial = settings.showMaterial;
-    _showParty = settings.showParty;
-    _showVehicleType = settings.showVehicleType;
+    _showCustomer = settings.showCustomer;
     _showGrossWeight = settings.showGrossWeight;
     _showTareWeight = settings.showTareWeight;
     _showNetWeight = settings.showNetWeight;
     _showAmount = settings.showAmount;
     _showPaymentMode = settings.showPaymentMode;
     _showCashReceived = settings.showCashReceived;
-    _showPendingAmount = settings.showPendingAmount;
     _showRemarks = settings.showRemarks;
     _showFooterNote = settings.showFooterNote;
   }
@@ -255,15 +251,13 @@ class _SettingsPageState extends State<SettingsPage> {
       _showTime = true;
       _showVehicleNumber = true;
       _showMaterial = true;
-      _showParty = true;
-      _showVehicleType = true;
+      _showCustomer = true;
       _showGrossWeight = true;
       _showTareWeight = true;
       _showNetWeight = true;
       _showAmount = true;
       _showPaymentMode = true;
       _showCashReceived = true;
-      _showPendingAmount = true;
       _showRemarks = true;
       _showFooterNote = true;
     });
@@ -276,15 +270,13 @@ class _SettingsPageState extends State<SettingsPage> {
       _showTime = select;
       _showVehicleNumber = select;
       _showMaterial = select;
-      _showParty = select;
-      _showVehicleType = select;
+      _showCustomer = select;
       _showGrossWeight = select;
       _showTareWeight = select;
       _showNetWeight = select;
       _showAmount = select;
       _showPaymentMode = select;
       _showCashReceived = select;
-      _showPendingAmount = select;
       _showRemarks = select;
       _showFooterNote = select;
     });
@@ -357,15 +349,13 @@ class _SettingsPageState extends State<SettingsPage> {
       showTime: _showTime,
       showVehicleNumber: _showVehicleNumber,
       showMaterial: _showMaterial,
-      showParty: _showParty,
-      showVehicleType: _showVehicleType,
+      showCustomer: _showCustomer,
       showGrossWeight: _showGrossWeight,
       showTareWeight: _showTareWeight,
       showNetWeight: _showNetWeight,
       showAmount: _showAmount,
       showPaymentMode: _showPaymentMode,
       showCashReceived: _showCashReceived,
-      showPendingAmount: _showPendingAmount,
       showRemarks: _showRemarks,
       showFooterNote: _showFooterNote,
       footerNote: _footerNoteController.text.trim().isEmpty
@@ -421,15 +411,13 @@ class _SettingsPageState extends State<SettingsPage> {
       showTime: _showTime,
       showVehicleNumber: _showVehicleNumber,
       showMaterial: _showMaterial,
-      showParty: _showParty,
-      showVehicleType: _showVehicleType,
+      showCustomer: _showCustomer,
       showGrossWeight: _showGrossWeight,
       showTareWeight: _showTareWeight,
       showNetWeight: _showNetWeight,
       showAmount: _showAmount,
       showPaymentMode: _showPaymentMode,
       showCashReceived: _showCashReceived,
-      showPendingAmount: _showPendingAmount,
       showRemarks: _showRemarks,
       showFooterNote: _showFooterNote,
       footerNote: _footerNoteController.text.trim().isEmpty
@@ -1345,14 +1333,9 @@ class _SettingsPageState extends State<SettingsPage> {
                   (v) => setState(() => _showMaterial = v),
                 ),
                 _buildToggleChip(
-                  'Party',
-                  _showParty,
-                  (v) => setState(() => _showParty = v),
-                ),
-                _buildToggleChip(
-                  'Vehicle Type',
-                  _showVehicleType,
-                  (v) => setState(() => _showVehicleType = v),
+                  'Customer',
+                  _showCustomer,
+                  (v) => setState(() => _showCustomer = v),
                 ),
                 _buildToggleChip(
                   'Gross Weight',
@@ -1383,11 +1366,6 @@ class _SettingsPageState extends State<SettingsPage> {
                   'Cash Received',
                   _showCashReceived,
                   (v) => setState(() => _showCashReceived = v),
-                ),
-                _buildToggleChip(
-                  'Pending Amount',
-                  _showPendingAmount,
-                  (v) => setState(() => _showPendingAmount = v),
                 ),
                 _buildToggleChip(
                   'Remarks',
@@ -1728,8 +1706,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
                           if (_showVehicleNumber ||
                               _showMaterial ||
-                              _showParty ||
-                              _showVehicleType) ...[
+                              _showCustomer) ...[
                             _buildDashedDivider(),
                             const SizedBox(height: 4),
                             if (_showVehicleNumber)
@@ -1739,15 +1716,10 @@ class _SettingsPageState extends State<SettingsPage> {
                                 'Material',
                                 'Crushed Stone (Gravel)',
                               ),
-                            if (_showParty)
+                            if (_showCustomer)
                               _buildReceiptRow(
-                                'Party',
+                                'Customer',
                                 'UltraTech Cement Ltd.',
-                              ),
-                            if (_showVehicleType)
-                              _buildReceiptRow(
-                                'Vehicle Type',
-                                '10 Wheeler Truck',
                               ),
                             const SizedBox(height: 4),
                           ],
@@ -1788,8 +1760,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
                           if (_showAmount ||
                               _showPaymentMode ||
-                              _showCashReceived ||
-                              _showPendingAmount) ...[
+                              _showCashReceived) ...[
                             _buildDashedDivider(),
                             const SizedBox(height: 4),
                             if (_showAmount)
@@ -1798,8 +1769,6 @@ class _SettingsPageState extends State<SettingsPage> {
                               _buildReceiptRow('Payment', 'CASH'),
                             if (_showCashReceived)
                               _buildReceiptRow('Cash Received', 'Rs. 350.00'),
-                            if (_showPendingAmount)
-                              _buildReceiptRow('Pending', 'Rs. 0.00'),
                             const SizedBox(height: 4),
                           ],
 

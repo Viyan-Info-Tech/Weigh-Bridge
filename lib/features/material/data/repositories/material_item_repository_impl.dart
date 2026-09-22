@@ -18,23 +18,23 @@ class MaterialItemRepositoryImpl implements MaterialItemRepository {
       _localDataSource.getMaterialsByStatus(isActive: isActive);
 
   @override
-  Future<List<MaterialItem>> getMaterialsByCategory(String category) =>
-      _localDataSource.getMaterialsByCategory(category);
-
-  @override
   Future<MaterialItem?> getMaterialById(int id) =>
       _localDataSource.getMaterialById(id);
 
   @override
-  Future<int> createMaterial({required String name, String? category}) =>
-      _localDataSource.insertMaterial(name: name, category: category);
+  Future<MaterialItem?> getMaterialByCode(String code) =>
+      _localDataSource.getMaterialByCode(code);
+
+  @override
+  Future<int> createMaterial({required String code, required String name}) =>
+      _localDataSource.insertMaterial(code: code, name: name);
 
   @override
   Future<bool> updateMaterial({
     required int id,
+    required String code,
     required String name,
-    String? category,
-  }) => _localDataSource.updateMaterial(id: id, name: name, category: category);
+  }) => _localDataSource.updateMaterial(id: id, code: code, name: name);
 
   @override
   Future<void> deactivateMaterial(int id) =>

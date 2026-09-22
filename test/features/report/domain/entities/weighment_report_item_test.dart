@@ -8,17 +8,14 @@ void main() {
     double firstWeightKg = 0,
     String firstWeightType = 'GROSS',
     double? secondWeightKg,
-    String rawStatus = 'completed',
   }) {
     return WeighmentReportItem(
       id: 1,
       billNumber: 'WB-00001',
       createdAt: created,
-      vehicleId: 1,
       vehicleNumber: 'TN31CM2026',
-      vehicleTypeName: 'Truck',
-      partyId: 1,
-      partyName: 'Party',
+      customerId: 1,
+      customerName: 'Customer',
       materialId: 1,
       materialName: 'Cement',
       paymentMode: 'cash',
@@ -27,7 +24,6 @@ void main() {
       firstWeightKg: firstWeightKg,
       firstWeightType: firstWeightType,
       secondWeightKg: secondWeightKg,
-      rawStatus: rawStatus,
     );
   }
 
@@ -66,23 +62,19 @@ void main() {
     });
   });
 
-  group('displayStatus', () {
-    test('COMPLETED when both weights are present', () {
+  group('isCompleted', () {
+    test('returns true when both weights are present', () {
       final item = build(firstWeightKg: 20000, secondWeightKg: 5000);
-      expect(item.displayStatus, 'COMPLETED');
       expect(item.isCompleted, isTrue);
-      expect(item.isPending, isFalse);
     });
 
-    test('PENDING when only a first weight is present', () {
+    test('returns false when only a first weight is present', () {
       final item = build(firstWeightKg: 20000);
-      expect(item.displayStatus, 'PENDING');
       expect(item.isCompleted, isFalse);
-      expect(item.isPending, isTrue);
     });
 
-    test('PENDING when no weights are present', () {
-      expect(build().displayStatus, 'PENDING');
+    test('returns false when no weights are present', () {
+      expect(build().isCompleted, isFalse);
     });
   });
 }

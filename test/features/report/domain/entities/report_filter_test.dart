@@ -6,14 +6,13 @@ void main() {
   final today = DateTime(now.year, now.month, now.day);
 
   group('defaults', () {
-    test('uses today, all statuses/modes and empty search', () {
+    test('uses today, all modes and empty search', () {
       const filter = ReportFilter();
       expect(filter.datePreset, DateRangePreset.today);
-      expect(filter.status, 'all');
       expect(filter.paymentMode, 'all');
       expect(filter.searchQuery, '');
-      expect(filter.partyId, isNull);
-      expect(filter.vehicleId, isNull);
+      expect(filter.customerId, isNull);
+      expect(filter.vehicleNumber, '');
       expect(filter.materialId, isNull);
     });
   });
@@ -34,7 +33,10 @@ void main() {
 
     test('thisWeek starts at the beginning of the current week', () {
       const filter = ReportFilter(datePreset: DateRangePreset.thisWeek);
-      expect(filter.effectiveStartDate, today.subtract(Duration(days: now.weekday - 1)));
+      expect(
+        filter.effectiveStartDate,
+        today.subtract(Duration(days: now.weekday - 1)),
+      );
     });
 
     test('thisMonth starts on the first of the month', () {
@@ -60,7 +62,10 @@ void main() {
   group('effectiveEndDate', () {
     test('today ends at the end of the day', () {
       const filter = ReportFilter(datePreset: DateRangePreset.today);
-      expect(filter.effectiveEndDate, DateTime(now.year, now.month, now.day, 23, 59, 59, 999));
+      expect(
+        filter.effectiveEndDate,
+        DateTime(now.year, now.month, now.day, 23, 59, 59, 999),
+      );
     });
 
     test('lastMonth ends on the last day of the previous month', () {
@@ -78,10 +83,7 @@ void main() {
         customStartDate: DateTime(2026, 9, 1),
         customEndDate: DateTime(2026, 9, 13, 8, 0),
       );
-      expect(
-        filter.effectiveEndDate,
-        DateTime(2026, 9, 13, 23, 59, 59, 999),
-      );
+      expect(filter.effectiveEndDate, DateTime(2026, 9, 13, 23, 59, 59, 999));
     });
   });
 
@@ -90,30 +92,23 @@ void main() {
       datePreset: DateRangePreset.custom,
       customStartDate: DateTime(2026, 9, 1),
       customEndDate: DateTime(2026, 9, 13),
-      partyId: 5,
-      vehicleId: 9,
+      customerId: 5,
+      vehicleNumber: 'KA01AB2345',
       materialId: 2,
-      status: 'pending',
       paymentMode: 'cash',
       searchQuery: 'TN',
     );
 
     test('updates individual fields', () {
-      final updated = filter.copyWith(status: 'completed', searchQuery: 'KA');
-      expect(updated.status, 'completed');
+      final updated = filter.copyWith(searchQuery: 'KA');
       expect(updated.searchQuery, 'KA');
-      expect(updated.partyId, 5);
+      expect(updated.customerId, 5);
       expect(updated.datePreset, DateRangePreset.custom);
     });
 
     test('clears relational filters with clear flags', () {
-      final cleared = filter.copyWith(
-        clearParty: true,
-        clearVehicle: true,
-        clearMaterial: true,
-      );
-      expect(cleared.partyId, isNull);
-      expect(cleared.vehicleId, isNull);
+      final cleared = filter.copyWith(clearCustomer: true, clearMaterial: true);
+      expect(cleared.customerId, isNull);
       expect(cleared.materialId, isNull);
     });
 

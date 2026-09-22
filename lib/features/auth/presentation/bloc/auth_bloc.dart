@@ -1,3 +1,4 @@
+import 'package:dartz/dartz.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/error/failures.dart';
@@ -32,7 +33,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   Future<void> _onAppStarted(AppStarted event, Emitter<AuthState> emit) async {
     emit(state.copyWith(status: AuthStatus.checking, clearErrorMessage: true));
 
-    final authResult = await _isAuthenticatedUseCase();
+    final authResult = await _safeRun(() => _isAuthenticatedUseCase());
     final isAuth = authResult.fold(
       (failure) => false,
       (authenticated) => authenticated,
@@ -42,13 +43,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(
         state.copyWith(
           status: AuthStatus.unauthenticated,
+          clearUser: true,
           clearErrorMessage: true,
         ),
       );
       return;
     }
 
-    final userResult = await _getCurrentUserUseCase();
+    final userResult = await _safeRun(() => _getCurrentUserUseCase());
     final user = userResult.fold((failure) => null, (user) => user);
 
     if (user != null) {
@@ -63,6 +65,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(
         state.copyWith(
           status: AuthStatus.unauthenticated,
+          clearUser: true,
           clearErrorMessage: true,
         ),
       );
@@ -100,7 +103,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       ),
     );
 
-    final result = await _loginUseCase(event.username, event.password);
+    final result = await _safeRun(
+      () => _loginUseCase(event.username, event.password),
+    );
     result.fold(
       (failure) {
         final message = switch (failure) {
@@ -110,7 +115,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           ValidationFailure() => failure.message,
           UnknownFailure() => failure.message,
         };
-        emit(state.copyWith(status: AuthStatus.failure, errorMessage: message));
+        emit(
+          state.copyWith(
+            status: AuthStatus.failure,
+            errorMessage: message,
+            clearUser: true,
+          ),
+        );
       },
       (user) => emit(
         state.copyWith(
@@ -126,13 +137,25 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     LogoutRequested event,
     Emitter<AuthState> emit,
   ) async {
-    await _logoutUseCase();
+    await _safeRun(() => _logoutUseCase());
     emit(
       state.copyWith(
         status: AuthStatus.unauthenticated,
-        user: null,
+        clearUser: true,
         clearErrorMessage: true,
       ),
     );
+  }
+
+  Future<Either<Failure, dynamic>> _safeRun<T>(
+    Future<Either<Failure, T>> Function() operation,
+  ) async {
+    try {
+      return await operation();
+    } on Failure catch (failure) {
+      return Left(failure);
+    } catch (_) {
+      return const Left(UnknownFailure());
+    }
   }
 }

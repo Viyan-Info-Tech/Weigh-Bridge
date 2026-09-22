@@ -1,8 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../party/domain/entities/party.dart';
-import '../../../vehicle/domain/entities/vehicle.dart';
-import '../../../vehicle_type/domain/entities/vehicle_type.dart';
+import '../../../customer/domain/entities/customer.dart';
 import '../../../material/domain/entities/material_item.dart';
 import '../../domain/entities/weighment.dart';
 
@@ -20,19 +18,15 @@ class BillState extends Equatable {
   final BillScreenStatus status;
   final String? errorMessage;
 
-  final List<Party> parties;
-  final List<Vehicle> vehicles;
-  final List<VehicleType> vehicleTypes;
+  final List<Customer> customers;
   final List<MaterialItem> materials;
   final List<Weighment> recentBills;
-  final List<Weighment> pendingBills;
   final DateTime? billsDate;
   final DateTime? billsStartDate;
   final DateTime? billsEndDate;
 
-  final Party? selectedParty;
-  final Vehicle? selectedVehicle;
-  final VehicleType? selectedVehicleType;
+  final Customer? selectedCustomer;
+  final String vehicleNumber;
   final MaterialItem? selectedMaterial;
 
   final String paymentMode;
@@ -45,8 +39,6 @@ class BillState extends Equatable {
   final double tareWeightKg;
   final double netWeightKg;
   final double vehicleCharge;
-  final double defaultVehicleCharge;
-  final bool isVehicleChargeManuallyEdited;
   final double amount;
 
   final String currentBillNumber;
@@ -57,26 +49,29 @@ class BillState extends Equatable {
   final String? weightValidationError;
   final String weightUnit;
 
+  final double liveScaleWeightKg;
+  final bool isScaleStable;
+  final bool isScaleMotion;
+  final bool isScaleOverload;
+  final String selectedWeightType;
+  final DateTime? grossCapturedAt;
+  final DateTime? tareCapturedAt;
+
   final Weighment? printReceiptBill;
-  final Vehicle? printReceiptVehicle;
-  final Party? printReceiptParty;
+  final Customer? printReceiptCustomer;
   final String? printReceiptMaterialName;
 
   const BillState({
     this.status = BillScreenStatus.initial,
     this.errorMessage,
-    this.parties = const [],
-    this.vehicles = const [],
-    this.vehicleTypes = const [],
+    this.customers = const [],
     this.materials = const [],
     this.recentBills = const [],
-    this.pendingBills = const [],
     this.billsDate,
     this.billsStartDate,
     this.billsEndDate,
-    this.selectedParty,
-    this.selectedVehicle,
-    this.selectedVehicleType,
+    this.selectedCustomer,
+    this.vehicleNumber = '',
     this.selectedMaterial,
     this.paymentMode = 'Cash',
     this.grossWeightText = '',
@@ -86,8 +81,6 @@ class BillState extends Equatable {
     this.tareWeightKg = 0,
     this.netWeightKg = 0,
     this.vehicleCharge = 0,
-    this.defaultVehicleCharge = 0,
-    this.isVehicleChargeManuallyEdited = false,
     this.amount = 0,
     this.currentBillNumber = 'WB-00001',
     this.editingBillId,
@@ -96,15 +89,21 @@ class BillState extends Equatable {
     this.editingBillCreatedAt,
     this.weightValidationError,
     this.weightUnit = 'kg',
+    this.liveScaleWeightKg = 25500.0,
+    this.isScaleStable = true,
+    this.isScaleMotion = false,
+    this.isScaleOverload = false,
+    this.selectedWeightType = 'Gross',
+    this.grossCapturedAt,
+    this.tareCapturedAt,
     this.printReceiptBill,
-    this.printReceiptVehicle,
-    this.printReceiptParty,
+    this.printReceiptCustomer,
     this.printReceiptMaterialName,
   });
 
   bool get isEditing => editingBillId != null;
   bool get isCompleted => grossWeightKg > 0 && tareWeightKg > 0;
-  bool get isPending => !isCompleted;
+  bool get isKg => weightUnit.trim().toLowerCase() == 'kg';
 
   DateTime get effectiveBillsDate {
     final d = billsDate ?? DateTime.now();
@@ -124,22 +123,16 @@ class BillState extends Equatable {
     BillScreenStatus? status,
     String? errorMessage,
     bool clearError = false,
-    List<Party>? parties,
-    List<Vehicle>? vehicles,
-    List<VehicleType>? vehicleTypes,
+    List<Customer>? customers,
     List<MaterialItem>? materials,
     List<Weighment>? recentBills,
-    List<Weighment>? pendingBills,
     DateTime? billsDate,
     DateTime? billsStartDate,
     DateTime? billsEndDate,
     bool clearDateRange = false,
-    Party? selectedParty,
-    bool clearParty = false,
-    Vehicle? selectedVehicle,
-    bool clearVehicle = false,
-    VehicleType? selectedVehicleType,
-    bool clearVehicleType = false,
+    Customer? selectedCustomer,
+    bool clearCustomer = false,
+    String? vehicleNumber,
     MaterialItem? selectedMaterial,
     bool clearMaterial = false,
     String? paymentMode,
@@ -150,9 +143,6 @@ class BillState extends Equatable {
     double? tareWeightKg,
     double? netWeightKg,
     double? vehicleCharge,
-    double? defaultVehicleCharge,
-    bool clearManualCharge = false,
-    bool? isVehicleChargeManuallyEdited,
     double? amount,
     String? currentBillNumber,
     int? editingBillId,
@@ -163,9 +153,15 @@ class BillState extends Equatable {
     String? weightValidationError,
     bool clearWeightError = false,
     String? weightUnit,
+    double? liveScaleWeightKg,
+    bool? isScaleStable,
+    bool? isScaleMotion,
+    bool? isScaleOverload,
+    String? selectedWeightType,
+    DateTime? grossCapturedAt,
+    DateTime? tareCapturedAt,
     Weighment? printReceiptBill,
-    Vehicle? printReceiptVehicle,
-    Party? printReceiptParty,
+    Customer? printReceiptCustomer,
     String? printReceiptMaterialName,
     bool clearPrintReceipt = false,
     DateTime? editingBillCreatedAt,
@@ -174,24 +170,18 @@ class BillState extends Equatable {
     return BillState(
       status: status ?? this.status,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
-      parties: parties ?? this.parties,
-      vehicles: vehicles ?? this.vehicles,
-      vehicleTypes: vehicleTypes ?? this.vehicleTypes,
+      customers: customers ?? this.customers,
       materials: materials ?? this.materials,
       recentBills: recentBills ?? this.recentBills,
-      pendingBills: pendingBills ?? this.pendingBills,
       billsDate: billsDate ?? this.billsDate,
       billsStartDate: clearDateRange
           ? null
           : (billsStartDate ?? this.billsStartDate),
       billsEndDate: clearDateRange ? null : (billsEndDate ?? this.billsEndDate),
-      selectedParty: clearParty ? null : (selectedParty ?? this.selectedParty),
-      selectedVehicle: clearVehicle
+      selectedCustomer: clearCustomer
           ? null
-          : (selectedVehicle ?? this.selectedVehicle),
-      selectedVehicleType: clearVehicleType
-          ? null
-          : (selectedVehicleType ?? this.selectedVehicleType),
+          : (selectedCustomer ?? this.selectedCustomer),
+      vehicleNumber: vehicleNumber ?? this.vehicleNumber,
       selectedMaterial: clearMaterial
           ? null
           : (selectedMaterial ?? this.selectedMaterial),
@@ -203,13 +193,6 @@ class BillState extends Equatable {
       tareWeightKg: tareWeightKg ?? this.tareWeightKg,
       netWeightKg: netWeightKg ?? this.netWeightKg,
       vehicleCharge: vehicleCharge ?? this.vehicleCharge,
-      defaultVehicleCharge: clearManualCharge
-          ? (vehicleCharge ?? this.vehicleCharge)
-          : (defaultVehicleCharge ?? this.defaultVehicleCharge),
-      isVehicleChargeManuallyEdited: clearManualCharge
-          ? false
-          : (isVehicleChargeManuallyEdited ??
-                this.isVehicleChargeManuallyEdited),
       amount: amount ?? this.amount,
       currentBillNumber: currentBillNumber ?? this.currentBillNumber,
       editingBillId: clearEditingBillId
@@ -228,15 +211,19 @@ class BillState extends Equatable {
           ? null
           : (weightValidationError ?? this.weightValidationError),
       weightUnit: weightUnit ?? this.weightUnit,
+      liveScaleWeightKg: liveScaleWeightKg ?? this.liveScaleWeightKg,
+      isScaleStable: isScaleStable ?? this.isScaleStable,
+      isScaleMotion: isScaleMotion ?? this.isScaleMotion,
+      isScaleOverload: isScaleOverload ?? this.isScaleOverload,
+      selectedWeightType: selectedWeightType ?? this.selectedWeightType,
+      grossCapturedAt: grossCapturedAt ?? this.grossCapturedAt,
+      tareCapturedAt: tareCapturedAt ?? this.tareCapturedAt,
       printReceiptBill: clearPrintReceipt
           ? null
           : (printReceiptBill ?? this.printReceiptBill),
-      printReceiptVehicle: clearPrintReceipt
+      printReceiptCustomer: clearPrintReceipt
           ? null
-          : (printReceiptVehicle ?? this.printReceiptVehicle),
-      printReceiptParty: clearPrintReceipt
-          ? null
-          : (printReceiptParty ?? this.printReceiptParty),
+          : (printReceiptCustomer ?? this.printReceiptCustomer),
       printReceiptMaterialName: clearPrintReceipt
           ? null
           : (printReceiptMaterialName ?? this.printReceiptMaterialName),
@@ -247,18 +234,14 @@ class BillState extends Equatable {
   List<Object?> get props => [
     status,
     errorMessage,
-    parties,
-    vehicles,
-    vehicleTypes,
+    customers,
     materials,
     recentBills,
-    pendingBills,
     billsDate,
     billsStartDate,
     billsEndDate,
-    selectedParty,
-    selectedVehicle,
-    selectedVehicleType,
+    selectedCustomer,
+    vehicleNumber,
     selectedMaterial,
     paymentMode,
     grossWeightText,
@@ -268,8 +251,6 @@ class BillState extends Equatable {
     tareWeightKg,
     netWeightKg,
     vehicleCharge,
-    defaultVehicleCharge,
-    isVehicleChargeManuallyEdited,
     amount,
     currentBillNumber,
     editingBillId,
@@ -278,9 +259,15 @@ class BillState extends Equatable {
     editingBillCreatedAt,
     weightValidationError,
     weightUnit,
+    liveScaleWeightKg,
+    isScaleStable,
+    isScaleMotion,
+    isScaleOverload,
+    selectedWeightType,
+    grossCapturedAt,
+    tareCapturedAt,
     printReceiptBill,
-    printReceiptVehicle,
-    printReceiptParty,
+    printReceiptCustomer,
     printReceiptMaterialName,
   ];
 }

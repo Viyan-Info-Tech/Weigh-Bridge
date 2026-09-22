@@ -126,8 +126,10 @@ void _handleGenerateKeypair(List<String> args) {
   if (outputPath != null) {
     final file = File(outputPath);
     file.writeAsStringSync('private=$privateKeyHex\npublic=$publicKeyHex\n');
-    stdout.writeln('Private key written to: $outputPath (do not commit this '
-        'file to version control).');
+    stdout.writeln(
+      'Private key written to: $outputPath (do not commit this '
+      'file to version control).',
+    );
   }
 }
 
@@ -148,8 +150,10 @@ void _handleIssue(List<String> args) {
   try {
     final bytes = hexToBytes(privateKeyHex);
     if (bytes.length != PrivateKeySize) {
-      stderr.writeln('Error: --private-key must be exactly '
-          '${PrivateKeySize * 2} hex chars (found ${bytes.length * 2}).');
+      stderr.writeln(
+        'Error: --private-key must be exactly '
+        '${PrivateKeySize * 2} hex chars (found ${bytes.length * 2}).',
+      );
       exitCode = 1;
       return;
     }
@@ -161,8 +165,10 @@ void _handleIssue(List<String> args) {
   }
 
   if (machineHash.length != 64) {
-    stderr.writeln('Error: --machine-hash must be a 64-char SHA-256 hex '
-        'value (found ${machineHash.length} chars).');
+    stderr.writeln(
+      'Error: --machine-hash must be a 64-char SHA-256 hex '
+      'value (found ${machineHash.length} chars).',
+    );
     exitCode = 1;
     return;
   }
@@ -177,8 +183,7 @@ void _handleIssue(List<String> args) {
       return;
     }
   } else {
-    final months =
-        int.tryParse(options['months'] ?? '') ?? _kDefaultMonths;
+    final months = int.tryParse(options['months'] ?? '') ?? _kDefaultMonths;
     expiresAt = DateTime.now().toUtc().add(Duration(days: months * 30));
   }
 
@@ -199,10 +204,7 @@ void _handleIssue(List<String> args) {
 
   final model = LicenseModel(license: license, rawJson: '');
   final payload = model.payloadJson;
-  final signature = sign(
-    privateKey,
-    Uint8List.fromList(utf8.encode(payload)),
-  );
+  final signature = sign(privateKey, Uint8List.fromList(utf8.encode(payload)));
 
   final signed = Map<String, dynamic>.from(license.toPayload())
     ..['signature'] = bytesToHex(signature);
@@ -214,8 +216,10 @@ void _handleIssue(List<String> args) {
   stdout.writeln('  licenseId:     ${license.licenseId}');
   stdout.writeln('  productId:     ${license.productId}');
   stdout.writeln('  machineHash:   ${license.machineHash}');
-  stdout.writeln('  customer:      '
-      '${license.customerName.isEmpty ? '-' : license.customerName}');
+  stdout.writeln(
+    '  customer:      '
+    '${license.customerName.isEmpty ? '-' : license.customerName}',
+  );
   stdout.writeln('  issuedAt:      ${license.issuedAt.toIso8601String()}');
   stdout.writeln('  expiresAt:     ${license.expiresAt.toIso8601String()}');
   stdout.writeln('  licenseType:   ${license.licenseType}');
@@ -278,8 +282,6 @@ Map<String, String?> _parseOptions(List<String> args) {
 
 String _newLicenseId() {
   final rng = Random.secure();
-  final randomHex = bytesToHex(
-    List<int>.generate(8, (_) => rng.nextInt(256)),
-  );
+  final randomHex = bytesToHex(List<int>.generate(8, (_) => rng.nextInt(256)));
   return 'WB-${DateTime.now().toUtc().millisecondsSinceEpoch}-$randomHex';
 }

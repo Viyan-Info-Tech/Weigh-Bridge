@@ -4,10 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:weighbridge/core/database/app_database.dart'
-    hide Weighment, Vehicle, Party;
+    hide Weighment, Customer;
 import 'package:weighbridge/features/bill/domain/entities/weighment.dart';
 import 'package:weighbridge/features/bill/presentation/widgets/weighment_slip_dialog.dart';
-import 'package:weighbridge/features/party/domain/entities/party.dart';
+import 'package:weighbridge/features/customer/domain/entities/customer.dart';
 import 'package:weighbridge/features/settings/data/datasources/settings_local_datasource.dart';
 import 'package:weighbridge/features/settings/data/repositories/settings_repository_impl.dart';
 import 'package:weighbridge/features/settings/domain/entities/billing_settings.dart';
@@ -17,7 +17,6 @@ import 'package:weighbridge/features/settings/presentation/bloc/settings_bloc.da
 import 'package:weighbridge/features/settings/presentation/bloc/settings_event.dart';
 import 'package:weighbridge/features/settings/presentation/bloc/settings_state.dart';
 import 'package:weighbridge/features/settings/presentation/pages/settings_page.dart';
-import 'package:weighbridge/features/vehicle/domain/entities/vehicle.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -70,8 +69,8 @@ void main() {
 
         // 2. Insert weighment with WB-00001
         await db.customStatement(
-          "INSERT INTO weighments (bill_number, party_id, vehicle_id, material_id, payment_mode, first_weight_kg) "
-          "VALUES ('WB-00001', 1, 1, 1, 'Cash', 15000)",
+          "INSERT INTO weighments (bill_number, customer_id, vehicle_number, material_id, payment_mode, first_weight_kg) "
+          "VALUES ('WB-00001', 1, 'MH 12 AB 1234', 1, 'Cash', 15000)",
         );
 
         final next2 = await db.appSettingsDao.generateNextBillNumber(
@@ -91,8 +90,8 @@ void main() {
 
         // 4. Insert INV-000100 and verify increment to INV-000101
         await db.customStatement(
-          "INSERT INTO weighments (bill_number, party_id, vehicle_id, material_id, payment_mode, first_weight_kg) "
-          "VALUES ('INV-000100', 1, 1, 1, 'Cash', 15000)",
+          "INSERT INTO weighments (bill_number, customer_id, vehicle_number, material_id, payment_mode, first_weight_kg) "
+          "VALUES ('INV-000100', 1, 'MH 12 AB 1234', 1, 'Cash', 15000)",
         );
 
         final invNext2 = await db.appSettingsDao.generateNextBillNumber(
@@ -202,8 +201,8 @@ void main() {
     final testBill = Weighment(
       id: 1,
       billNumber: 'WB-00001',
-      partyId: 1,
-      vehicleId: 1,
+      customerId: 1,
+      vehicleNumber: 'MH 12 AB 1234',
       materialId: 1,
       paymentMode: 'Cash',
       grossWeightKg: 25000,
@@ -211,21 +210,12 @@ void main() {
       netWeightKg: 15000,
       amount: 450,
       vehicleCharge: 50.0,
-      status: 'completed',
       remarks: 'Customer special order',
       createdAt: now,
       updatedAt: now,
     );
 
-    final testVehicle = Vehicle(
-      id: 1,
-      vehicleNumber: 'MH 12 AB 1234',
-      vehicleTypeId: 1,
-      createdAt: now,
-      updatedAt: now,
-    );
-
-    final testParty = Party(
+    final testCustomer = Customer(
       id: 1,
       name: 'UltraTech Cement',
       mobile: '9876543210',
@@ -247,7 +237,7 @@ void main() {
           businessName: 'CUSTOM INDUSTRIAL WEIGHBRIDGE',
           receiptTitle: 'OFFICIAL WEIGH SLIP',
           showRemarks: false, // Hidden!
-          showParty: false, // Hidden!
+          showCustomer: false, // Hidden!
           footerNote: 'Mandatory verification before gate exit.',
           updatedAt: now,
         );
@@ -257,8 +247,7 @@ void main() {
             home: Scaffold(
               body: WeighmentSlipDialog(
                 bill: testBill,
-                vehicle: testVehicle,
-                party: testParty,
+                customer: testCustomer,
                 materialName: 'River Sand',
                 settings: customSettings,
               ),
@@ -330,7 +319,7 @@ void main() {
       await tester.pumpWidget(const SizedBox());
       await tester.pumpAndSettle();
 
-      await settingsBloc.close();
+      settingsBloc.close();
     });
 
     testWidgets('settings controls remain visible at minimum desktop sizes', (
@@ -374,7 +363,7 @@ void main() {
 
         await tester.pumpWidget(const SizedBox());
         await tester.pumpAndSettle();
-        await settingsBloc.close();
+        settingsBloc.close();
       }
 
       addTearDown(() {

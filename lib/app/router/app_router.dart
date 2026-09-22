@@ -20,7 +20,8 @@ class AppRouter {
       final authState = authBloc.state;
       final isOnLogin = state.matchedLocation == '/login';
 
-      if (authState.status == AuthStatus.checking) {
+      if (authState.status == AuthStatus.initial ||
+          authState.status == AuthStatus.checking) {
         return null;
       }
 

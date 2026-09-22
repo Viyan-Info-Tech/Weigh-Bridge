@@ -56,11 +56,7 @@ class _LicenseGateState extends State<LicenseGate> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_licenseStatus == LicenseStatus.valid) {

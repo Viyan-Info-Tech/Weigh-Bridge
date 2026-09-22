@@ -12,7 +12,6 @@ class MaterialState extends Equatable {
   final String? successMessage;
   final String? searchQuery;
   final bool? filterActive;
-  final String? filterCategory;
 
   const MaterialState({
     this.status = AppMaterialStatus.initial,
@@ -22,7 +21,6 @@ class MaterialState extends Equatable {
     this.successMessage,
     this.searchQuery,
     this.filterActive,
-    this.filterCategory,
   });
 
   MaterialState copyWith({
@@ -33,7 +31,6 @@ class MaterialState extends Equatable {
     String? successMessage,
     String? searchQuery,
     bool? filterActive,
-    String? filterCategory,
   }) {
     return MaterialState(
       status: status ?? this.status,
@@ -43,7 +40,6 @@ class MaterialState extends Equatable {
       successMessage: successMessage,
       searchQuery: searchQuery ?? this.searchQuery,
       filterActive: filterActive ?? this.filterActive,
-      filterCategory: filterCategory ?? this.filterCategory,
     );
   }
 
@@ -56,6 +52,5 @@ class MaterialState extends Equatable {
     successMessage,
     searchQuery,
     filterActive,
-    filterCategory,
   ];
 }

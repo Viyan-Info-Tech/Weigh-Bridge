@@ -22,28 +22,26 @@ class MaterialItemLocalDataSource {
     return records.map(_toEntity).toList();
   }
 
-  Future<List<MaterialItem>> getMaterialsByCategory(String category) async {
-    final records = await _database.materialDao.getMaterialsByCategory(
-      category,
-    );
-    return records.map(_toEntity).toList();
-  }
-
   Future<MaterialItem?> getMaterialById(int id) async {
     final record = await _database.materialDao.getMaterialById(id);
     return record != null ? _toEntity(record) : null;
   }
 
+  Future<MaterialItem?> getMaterialByCode(String code) async {
+    final record = await _database.materialDao.getMaterialByCode(code);
+    return record != null ? _toEntity(record) : null;
+  }
+
   Future<int> insertMaterial({
+    required String code,
     required String name,
-    String? category,
     bool isActive = true,
   }) async {
     final now = DateTime.now();
     return _database.materialDao.insertMaterial(
       MaterialsCompanion(
+        code: Value(code),
         name: Value(name),
-        category: Value(category),
         isActive: Value(isActive),
         createdAt: Value(now),
         updatedAt: Value(now),
@@ -53,14 +51,14 @@ class MaterialItemLocalDataSource {
 
   Future<bool> updateMaterial({
     required int id,
+    required String code,
     required String name,
-    String? category,
   }) async {
     return _database.materialDao.updateMaterial(
       MaterialsCompanion(
         id: Value(id),
+        code: Value(code),
         name: Value(name),
-        category: Value(category),
         updatedAt: Value(DateTime.now()),
       ),
     );
@@ -86,8 +84,8 @@ class MaterialItemLocalDataSource {
   MaterialItem _toEntity(dynamic record) {
     return MaterialItem(
       id: record.id,
+      code: record.code,
       name: record.name,
-      category: record.category,
       isActive: record.isActive,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,

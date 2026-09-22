@@ -1,20 +1,23 @@
-import 'package:flutter/material.dart' hide Material;
-import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
-import '../../../party/domain/entities/party.dart';
-import '../../../vehicle/domain/entities/vehicle.dart';
-import '../../../vehicle_type/domain/entities/vehicle_type.dart';
+import '../../../../core/utils/text_formatters.dart';
+import '../../../customer/domain/entities/customer.dart';
 import '../../../material/domain/entities/material_item.dart' as domain;
-import 'searchable_dropdown.dart';
 
+/// Industrial 2-Column Weighment Ticket Form
+/// Designed with premium tactile instrument aesthetics:
+/// - Framed icon prefix badges with soft slate background
+/// - Integrated blue search action buttons for codes
+/// - Precision currency stepper for charges
+/// - Clean proportional Weight, Date & Time pickers
+/// - Balanced 2-column layout with subtle dividing rhythm
 class BillForm extends StatefulWidget {
   final String billNumber;
-  final List<Party> parties;
-  final List<Vehicle> vehicles;
+  final List<Customer> customers;
   final List<domain.MaterialItem> materials;
-  final Party? selectedParty;
-  final Vehicle? selectedVehicle;
-  final VehicleType? selectedVehicleType;
+  final Customer? selectedCustomer;
+  final String vehicleNumber;
   final domain.MaterialItem? selectedMaterial;
   final String paymentMode;
   final bool isEditing;
@@ -23,16 +26,21 @@ class BillForm extends StatefulWidget {
   final TextEditingController tareWeightController;
   final TextEditingController remarksController;
   final TextEditingController? vehicleChargeController;
+  final TextEditingController? vehicleNumberController;
+  final double grossWeightKg;
+  final double tareWeightKg;
   final double netWeightKg;
   final double vehicleCharge;
-  final double defaultVehicleCharge;
-  final bool isVehicleChargeManuallyEdited;
   final double amount;
   final String weightUnit;
   final String? weightValidationError;
   final bool isReady;
+  final DateTime? grossCapturedAt;
+  final DateTime? tareCapturedAt;
+  final String selectedType;
+  final ValueChanged<String>? onTypeChanged;
 
-  final FocusNode? partyFocusNode;
+  final FocusNode? customerFocusNode;
   final FocusNode? vehicleFocusNode;
   final FocusNode? materialFocusNode;
   final FocusNode? remarksFocusNode;
@@ -41,8 +49,8 @@ class BillForm extends StatefulWidget {
   final FocusNode? vehicleChargeFocusNode;
   final FocusNode? paymentModeFocusNode;
 
-  final ValueChanged<Party> onPartyChanged;
-  final ValueChanged<Vehicle> onVehicleChanged;
+  final ValueChanged<Customer> onCustomerChanged;
+  final ValueChanged<String> onVehicleNumberChanged;
   final ValueChanged<domain.MaterialItem> onMaterialChanged;
   final ValueChanged<String> onGrossWeightChanged;
   final ValueChanged<String> onTareWeightChanged;
@@ -51,19 +59,16 @@ class BillForm extends StatefulWidget {
   final ValueChanged<String>? onWeightUnitChanged;
   final ValueChanged<String> onVehicleChargeChanged;
   final VoidCallback onResetVehicleCharge;
-  final Future<void> Function()? onAddParty;
-  final VoidCallback? onAddVehicle;
+  final Future<void> Function()? onAddCustomer;
   final Future<void> Function()? onAddMaterial;
 
   const BillForm({
     super.key,
     required this.billNumber,
-    required this.parties,
-    required this.vehicles,
+    required this.customers,
     required this.materials,
-    this.selectedParty,
-    this.selectedVehicle,
-    this.selectedVehicleType,
+    this.selectedCustomer,
+    this.vehicleNumber = '',
     this.selectedMaterial,
     required this.paymentMode,
     this.isEditing = false,
@@ -72,15 +77,20 @@ class BillForm extends StatefulWidget {
     required this.tareWeightController,
     required this.remarksController,
     this.vehicleChargeController,
+    this.vehicleNumberController,
+    this.grossWeightKg = 0,
+    this.tareWeightKg = 0,
     required this.netWeightKg,
     required this.vehicleCharge,
-    this.defaultVehicleCharge = 0,
-    this.isVehicleChargeManuallyEdited = false,
     required this.amount,
     this.weightUnit = 'kg',
     this.weightValidationError,
     this.isReady = true,
-    this.partyFocusNode,
+    this.grossCapturedAt,
+    this.tareCapturedAt,
+    this.selectedType = 'Gross',
+    this.onTypeChanged,
+    this.customerFocusNode,
     this.vehicleFocusNode,
     this.materialFocusNode,
     this.remarksFocusNode,
@@ -88,8 +98,8 @@ class BillForm extends StatefulWidget {
     this.tareWeightFocusNode,
     this.vehicleChargeFocusNode,
     this.paymentModeFocusNode,
-    required this.onPartyChanged,
-    required this.onVehicleChanged,
+    required this.onCustomerChanged,
+    required this.onVehicleNumberChanged,
     required this.onMaterialChanged,
     required this.onGrossWeightChanged,
     required this.onTareWeightChanged,
@@ -98,8 +108,7 @@ class BillForm extends StatefulWidget {
     this.onWeightUnitChanged,
     required this.onVehicleChargeChanged,
     required this.onResetVehicleCharge,
-    this.onAddParty,
-    this.onAddVehicle,
+    this.onAddCustomer,
     this.onAddMaterial,
   });
 
@@ -108,888 +117,1203 @@ class BillForm extends StatefulWidget {
 }
 
 class _BillFormState extends State<BillForm> {
-  TextEditingController? _internalVehicleChargeController;
+  late final TextEditingController _mobileController;
+  late final TextEditingController _materialCodeController;
+  late final TextEditingController _customerCodeController;
 
-  TextEditingController get _effectiveVehicleChargeController =>
-      widget.vehicleChargeController ??
-      (_internalVehicleChargeController ??= TextEditingController(
-        text: _formatCharge(widget.vehicleCharge),
-      ));
+  String? _selectedType;
 
-  static String _formatCharge(double charge) {
-    if (charge <= 0) return '';
-    return charge % 1 == 0
-        ? charge.toStringAsFixed(0)
-        : charge.toStringAsFixed(2);
-  }
+  DateTime _grossDate = DateTime.now();
+  TimeOfDay _grossTime = TimeOfDay.now();
+
+  DateTime _tareDate = DateTime.now();
+  TimeOfDay _tareTime = TimeOfDay.now();
 
   @override
   void initState() {
     super.initState();
-    if (widget.vehicleChargeController != null &&
-        widget.vehicleChargeController!.text.isEmpty &&
-        widget.vehicleCharge > 0) {
-      widget.vehicleChargeController!.text = _formatCharge(
-        widget.vehicleCharge,
-      );
+    _selectedType = widget.selectedType;
+    if (widget.grossCapturedAt != null) {
+      _grossDate = widget.grossCapturedAt!;
+      _grossTime = TimeOfDay.fromDateTime(widget.grossCapturedAt!);
     }
+    if (widget.tareCapturedAt != null) {
+      _tareDate = widget.tareCapturedAt!;
+      _tareTime = TimeOfDay.fromDateTime(widget.tareCapturedAt!);
+    }
+    _mobileController = TextEditingController(
+      text: widget.selectedCustomer?.mobile ?? '',
+    );
+    _materialCodeController = TextEditingController(
+      text:
+          widget.selectedMaterial != null &&
+              widget.selectedMaterial!.code.isNotEmpty
+          ? widget.selectedMaterial!.code
+          : '',
+    );
+    _customerCodeController = TextEditingController(
+      text: widget.selectedCustomer != null
+          ? 'C-${widget.selectedCustomer!.id.toString().padLeft(3, '0')}'
+          : '',
+    );
   }
 
   @override
   void didUpdateWidget(covariant BillForm oldWidget) {
     super.didUpdateWidget(oldWidget);
 
-    if (widget.vehicleChargeController != oldWidget.vehicleChargeController) {
-      _internalVehicleChargeController?.dispose();
-      _internalVehicleChargeController = null;
+    if (widget.selectedMaterial != oldWidget.selectedMaterial) {
+      _materialCodeController.text =
+          widget.selectedMaterial != null &&
+              widget.selectedMaterial!.code.isNotEmpty
+          ? widget.selectedMaterial!.code
+          : '';
     }
 
-    final controller = _effectiveVehicleChargeController;
-
-    // In auto mode, or when bill number changes, sync controller text from state.
-    // While user is manually editing (isVehicleChargeManuallyEdited == true and same bill),
-    // do NOT touch the controller so focus and cursor remain intact.
-    if (!widget.isVehicleChargeManuallyEdited ||
-        widget.billNumber != oldWidget.billNumber) {
-      final text = _formatCharge(widget.vehicleCharge);
-      if (controller.text != text) {
-        controller.text = text;
+    if (widget.selectedCustomer != oldWidget.selectedCustomer) {
+      _customerCodeController.text = widget.selectedCustomer != null
+          ? 'C-${widget.selectedCustomer!.id.toString().padLeft(3, '0')}'
+          : '';
+      if (_mobileController.text.isEmpty &&
+          widget.selectedCustomer?.mobile != null) {
+        _mobileController.text = widget.selectedCustomer!.mobile!;
       }
+    }
+
+    if (widget.selectedType != oldWidget.selectedType) {
+      _selectedType = widget.selectedType;
+    }
+    if (widget.grossCapturedAt != null &&
+        widget.grossCapturedAt != oldWidget.grossCapturedAt) {
+      _grossDate = widget.grossCapturedAt!;
+      _grossTime = TimeOfDay.fromDateTime(widget.grossCapturedAt!);
+    }
+    if (widget.tareCapturedAt != null &&
+        widget.tareCapturedAt != oldWidget.tareCapturedAt) {
+      _tareDate = widget.tareCapturedAt!;
+      _tareTime = TimeOfDay.fromDateTime(widget.tareCapturedAt!);
     }
   }
 
   @override
   void dispose() {
-    _internalVehicleChargeController?.dispose();
+    _mobileController.dispose();
+    _materialCodeController.dispose();
+    _customerCodeController.dispose();
     super.dispose();
   }
 
-  bool get isEditing => widget.isEditing;
-  List<Party> get parties => widget.parties;
-  Party? get selectedParty => widget.selectedParty;
+  void _stepCharge(double delta) {
+    final current =
+        double.tryParse(widget.vehicleChargeController?.text ?? '') ??
+        widget.vehicleCharge;
+    final updated = (current + delta).clamp(0.0, 999999.0);
+    final strVal = updated % 1 == 0
+        ? updated.toStringAsFixed(0)
+        : updated.toStringAsFixed(2);
+    widget.vehicleChargeController?.text = strVal;
+    widget.onVehicleChargeChanged(strVal);
+  }
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final formWidth = constraints.maxWidth;
-        final isCompact = formWidth < 480;
-        final isWeightCompact = formWidth < 440;
-        final isHeaderCompact = formWidth < 400;
+    final isGrossEnabled =
+        !widget.isEditing || widget.editingFirstWeightType == 'GROSS';
+    final isTareEnabled =
+        !widget.isEditing || widget.editingFirstWeightType == 'TARE';
 
-        final bool isGrossEnabled =
-            widget.isReady &&
-            (!widget.isEditing ||
-                widget.editingFirstWeightType?.toUpperCase() == 'TARE');
-        final bool isTareEnabled =
-            widget.isReady &&
-            (!widget.isEditing ||
-                widget.editingFirstWeightType?.toUpperCase() == 'GROSS');
-        final isKg = widget.weightUnit.toLowerCase() == 'kg';
-        final netWeightDisplay =
-            widget.weightValidationError != null || widget.netWeightKg <= 0
-            ? '—'
-            : (isKg
-                  ? '${widget.netWeightKg.toStringAsFixed(0)} kg'
-                  : '${(widget.netWeightKg / 1000).toStringAsFixed(3)} ton');
-
-        return Container(
-          padding: EdgeInsets.all(formWidth < 500 ? 16 : 24),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFCBD5E1), width: 1.0),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Row 1: Bill Number Badge + Payment Mode + Weight Unit
-              if (isHeaderCompact)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildBillNumberBadge(),
-                    const SizedBox(height: 12),
-                    _buildPaymentModeDropdown(),
-                    const SizedBox(height: 12),
-                    _buildWeightUnitDropdown(),
-                  ],
-                )
-              else
-                Row(
-                  children: [
-                    _buildBillNumberBadge(),
-                    const SizedBox(width: 16),
-                    Expanded(child: _buildPaymentModeDropdown()),
-                    const SizedBox(width: 16),
-                    Expanded(child: _buildWeightUnitDropdown()),
-                  ],
-                ),
-              const SizedBox(height: 20),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isNarrow = constraints.maxWidth < 980;
 
-              // Row 2: Party & Vehicle
-              if (isCompact)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              if (isNarrow) {
+                return Column(
                   children: [
-                    _buildPartyDropdown(),
+                    _buildLeftColumn(isGrossEnabled, isTareEnabled),
                     const SizedBox(height: 14),
-                    _buildVehicleDropdown(),
-                  ],
-                )
-              else
-                Row(
-                  children: [
-                    Expanded(child: _buildPartyDropdown()),
-                    const SizedBox(width: 16),
-                    Expanded(child: _buildVehicleDropdown()),
-                  ],
-                ),
-              const SizedBox(height: 16),
-
-              // Row 3: Vehicle Type & Material
-              if (isCompact)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildVehicleTypeDisplay(),
+                    const Divider(color: Color(0xFFE2E8F0)),
                     const SizedBox(height: 14),
-                    _buildMaterialDropdown(),
+                    _buildRightColumn(isGrossEnabled, isTareEnabled),
                   ],
-                )
-              else
-                Row(
-                  children: [
-                    Expanded(child: _buildVehicleTypeDisplay()),
-                    const SizedBox(width: 16),
-                    Expanded(child: _buildMaterialDropdown()),
-                  ],
-                ),
-              const SizedBox(height: 16),
+                );
+              }
 
-              // Row 4: Remarks
-              _buildRemarksField(isGrossEnabled, isTareEnabled),
-              const SizedBox(height: 20),
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Left Column: TRUCK NO, TYPE, CODES, CHARGES, CONTAINER, MOBILE
+                  Expanded(
+                    flex: 1,
+                    child: _buildLeftColumn(isGrossEnabled, isTareEnabled),
+                  ),
 
-              // Row 5: Gross & Tare Weight
-              if (isWeightCompact)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildProminentWeightField(
-                      'Gross Weight (${widget.weightUnit}) *',
-                      widget.grossWeightController,
-                      widget.onGrossWeightChanged,
-                      enabled: isGrossEnabled,
-                      focusNode: widget.grossWeightFocusNode,
-                      nextFocusNode: isTareEnabled
-                          ? widget.tareWeightFocusNode
-                          : widget.vehicleChargeFocusNode,
-                    ),
-                    const SizedBox(height: 14),
-                    _buildProminentWeightField(
-                      'Tare Weight (${widget.weightUnit}) *',
-                      widget.tareWeightController,
-                      widget.onTareWeightChanged,
-                      enabled: isTareEnabled,
-                      focusNode: widget.tareWeightFocusNode,
-                      nextFocusNode: widget.vehicleChargeFocusNode,
-                    ),
-                  ],
-                )
-              else
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildProminentWeightField(
-                        'Gross Weight (${widget.weightUnit}) *',
-                        widget.grossWeightController,
-                        widget.onGrossWeightChanged,
-                        enabled: isGrossEnabled,
-                        focusNode: widget.grossWeightFocusNode,
-                        nextFocusNode: isTareEnabled
-                            ? widget.tareWeightFocusNode
-                            : widget.vehicleChargeFocusNode,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildProminentWeightField(
-                        'Tare Weight (${widget.weightUnit}) *',
-                        widget.tareWeightController,
-                        widget.onTareWeightChanged,
-                        enabled: isTareEnabled,
-                        focusNode: widget.tareWeightFocusNode,
-                        nextFocusNode: widget.vehicleChargeFocusNode,
-                      ),
-                    ),
-                  ],
-                ),
-              if (widget.weightValidationError != null) ...[
-                const SizedBox(height: 6),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.warning_amber_rounded,
-                      size: 14,
-                      color: Color(0xFFDC2626),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        widget.weightValidationError!,
-                        style: const TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFFDC2626),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-              const SizedBox(height: 16),
+                  const SizedBox(width: 24),
 
-              // Row 6: Net Weight & Vehicle Charge
-              if (isWeightCompact)
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildAutoField(
-                      'Net Weight (${widget.weightUnit})',
-                      netWeightDisplay,
-                    ),
-                    const SizedBox(height: 14),
-                    _buildVehicleChargeField(),
-                  ],
-                )
-              else
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildAutoField(
-                        'Net Weight (${widget.weightUnit})',
-                        netWeightDisplay,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(child: _buildVehicleChargeField()),
-                  ],
-                ),
-              const SizedBox(height: 16),
+                  // Elegant Vertical Separator
+                  Container(
+                    width: 1,
+                    height: 335,
+                    color: const Color(0xFFF1F5F9),
+                  ),
 
-              // Row 7: Amount
-              if (isCompact)
-                _buildAutoField(
-                  'Amount (₹)',
-                  '₹${widget.amount.toStringAsFixed(2)}',
-                  showBadge: false,
-                )
-              else
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildAutoField(
-                        'Amount (₹)',
-                        '₹${widget.amount.toStringAsFixed(2)}',
-                        showBadge: false,
-                      ),
-                    ),
-                    const Spacer(),
-                  ],
-                ),
-            ],
+                  const SizedBox(width: 24),
+
+                  // Right Column: SERIAL NO, NAMES, GROSS, TARE, NETT WEIGHT
+                  Expanded(
+                    flex: 1,
+                    child: _buildRightColumn(isGrossEnabled, isTareEnabled),
+                  ),
+                ],
+              );
+            },
           ),
-        );
-      },
+
+          if (widget.weightValidationError != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFEF2F2),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFFCA5A5)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.warning_amber_rounded,
+                    size: 16,
+                    color: Color(0xFFDC2626),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      widget.weightValidationError!,
+                      style: const TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFFDC2626),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 
-  Widget _buildBillNumberBadge() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0D3B82).withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(
-          color: const Color(0xFF0D3B82).withValues(alpha: 0.2),
+  /// Left Column Field Rows
+  Widget _buildLeftColumn(bool isGrossEnabled, bool isTareEnabled) {
+    const labelWidth = 142.0;
+
+    return Column(
+      children: [
+        _buildRow(
+          label: 'TRUCK NO',
+          labelWidth: labelWidth,
+          child: _buildTruckNoField(),
         ),
-      ),
-      child: Text(
-        'Bill #${widget.billNumber}',
-        overflow: TextOverflow.ellipsis,
+        const SizedBox(height: 9),
+        _buildRow(
+          label: 'TYPE',
+          labelWidth: labelWidth,
+          child: _buildTypeSelector(),
+        ),
+        const SizedBox(height: 9),
+        _buildRow(
+          label: 'MATERIAL CODE',
+          labelWidth: labelWidth,
+          child: _buildMaterialCodeField(),
+        ),
+        const SizedBox(height: 9),
+        _buildRow(
+          label: 'CUSTOMER CODE',
+          labelWidth: labelWidth,
+          child: _buildCustomerCodeField(),
+        ),
+        const SizedBox(height: 9),
+        _buildRow(
+          label: 'CHARGES (₹)',
+          labelWidth: labelWidth,
+          child: _buildChargesField(),
+        ),
+        const SizedBox(height: 9),
+        _buildRow(
+          label: 'CONTAINER NO',
+          labelWidth: labelWidth,
+          child: _buildContainerNoField(),
+        ),
+        const SizedBox(height: 9),
+        _buildRow(
+          label: 'MOBILE NO',
+          labelWidth: labelWidth,
+          child: _buildMobileNoField(),
+        ),
+      ],
+    );
+  }
+
+  /// Right Column Field Rows
+  Widget _buildRightColumn(bool isGrossEnabled, bool isTareEnabled) {
+    const labelWidth = 142.0;
+
+    return Column(
+      children: [
+        _buildRow(
+          label: 'SERIAL NO',
+          labelWidth: labelWidth,
+          child: _buildSerialNoDisplay(),
+        ),
+        const SizedBox(height: 9),
+        _buildRow(
+          label: 'MATERIAL NAME',
+          labelWidth: labelWidth,
+          child: _buildMaterialNameField(),
+        ),
+        const SizedBox(height: 9),
+        _buildRow(
+          label: 'CUSTOMER NAME',
+          labelWidth: labelWidth,
+          child: _buildCustomerNameField(),
+        ),
+        const SizedBox(height: 9),
+        _buildRow(
+          label: 'GROSS WEIGHT',
+          labelWidth: labelWidth,
+          child: _buildWeightRowWithDateTime(
+            controller: widget.grossWeightController,
+            weightKg: widget.grossWeightKg,
+            enabled: isGrossEnabled,
+            date: _grossDate,
+            time: _grossTime,
+            onSelectDate: (d) => setState(() => _grossDate = d),
+            onSelectTime: (t) => setState(() => _grossTime = t),
+            isCaptured: widget.grossWeightKg > 0,
+          ),
+        ),
+        const SizedBox(height: 9),
+        _buildRow(
+          label: 'TARE WEIGHT',
+          labelWidth: labelWidth,
+          child: _buildWeightRowWithDateTime(
+            controller: widget.tareWeightController,
+            weightKg: widget.tareWeightKg,
+            enabled: isTareEnabled,
+            date: _tareDate,
+            time: _tareTime,
+            onSelectDate: (d) => setState(() => _tareDate = d),
+            onSelectTime: (t) => setState(() => _tareTime = t),
+            isCaptured: widget.tareWeightKg > 0,
+          ),
+        ),
+        const SizedBox(height: 9),
+        _buildRow(
+          label: 'NETT WEIGHT',
+          labelWidth: labelWidth,
+          child: _buildNettWeightDisplay(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRow({
+    required String label,
+    required double labelWidth,
+    required Widget child,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: labelWidth,
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF0F172A),
+              letterSpacing: 0.4,
+            ),
+          ),
+        ),
+        Expanded(child: child),
+      ],
+    );
+  }
+
+  // --- Left Column Field Builders ---
+
+  /// 1. TRUCK NO
+  Widget _buildTruckNoField() {
+    return _buildFieldShell(
+      prefixIcon: Icons.local_shipping_outlined,
+      child: TextField(
+        key: const Key('bill_vehicle_number_field'),
+        controller: widget.vehicleNumberController,
+        focusNode: widget.vehicleFocusNode,
+        inputFormatters: [VehicleNumberFormatter()],
+        textCapitalization: TextCapitalization.characters,
         style: const TextStyle(
           fontFamily: 'PlusJakartaSans',
-          fontSize: 14,
-          fontWeight: FontWeight.w800,
-          color: Color(0xFF0D3B82),
-          letterSpacing: -0.3,
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF0F172A),
+        ),
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          isDense: true,
+          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          hintText: 'Enter Vehicle Number',
+          hintStyle: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            color: Color(0xFF94A3B8),
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        onChanged: widget.onVehicleNumberChanged,
+      ),
+    );
+  }
+
+  /// 2. TYPE Selector (● GROSS   ○ TARE)
+  Widget _buildTypeSelector() {
+    final currentType = (_selectedType ?? widget.selectedType).toLowerCase();
+    final isGross = currentType == 'gross';
+
+    return Row(
+      children: [
+        Expanded(
+          child: _buildTypeOption(
+            label: 'GROSS',
+            isSelected: isGross,
+            onTap: () {
+              setState(() => _selectedType = 'Gross');
+              widget.onTypeChanged?.call('Gross');
+            },
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildTypeOption(
+            label: 'TARE',
+            isSelected: !isGross,
+            onTap: () {
+              setState(() => _selectedType = 'Tare');
+              widget.onTypeChanged?.call('Tare');
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTypeOption({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          height: 38,
+          decoration: BoxDecoration(
+            color: isSelected
+                ? const Color(0xFFEFF6FF)
+                : const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(
+              color: isSelected
+                  ? const Color(0xFF3B82F6)
+                  : const Color(0xFFCBD5E1),
+              width: isSelected ? 1.5 : 1.0,
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 15,
+                height: 15,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: isSelected
+                        ? const Color(0xFF0D53FC)
+                        : const Color(0xFF94A3B8),
+                    width: 2,
+                  ),
+                ),
+                child: isSelected
+                    ? Center(
+                        child: Container(
+                          width: 7,
+                          height: 7,
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Color(0xFF0D53FC),
+                          ),
+                        ),
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 12.5,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+                  color: isSelected
+                      ? const Color(0xFF0D53FC)
+                      : const Color(0xFF334155),
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildPaymentModeDropdown() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Payment Mode',
-          style: TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey.shade600,
-          ),
+  /// 3. MATERIAL CODE
+  Widget _buildMaterialCodeField() {
+    return _buildFieldShell(
+      prefixIcon: Icons.search_rounded,
+      suffix: _buildSearchButton(widget.onAddMaterial, 'Search Material Code'),
+      child: TextField(
+        controller: _materialCodeController,
+        style: const TextStyle(
+          fontFamily: 'PlusJakartaSans',
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF0F172A),
         ),
-        const SizedBox(height: 6),
-        DropdownButtonFormField<String>(
-          key: ValueKey('payment_${widget.paymentMode}'),
-          focusNode: widget.paymentModeFocusNode,
-          initialValue: widget.paymentMode,
-          isExpanded: true,
+        decoration: const InputDecoration(
+          border: InputBorder.none,
           isDense: true,
-          decoration: InputDecoration(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 8,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(
-                color: Color(0xFF0D3B82),
-                width: 2.0,
-              ),
-            ),
-          ),
-          items: const [
-            DropdownMenuItem(
-              value: 'Cash',
-              child: Text('Cash', overflow: TextOverflow.ellipsis),
-            ),
-            DropdownMenuItem(
-              value: 'Credit',
-              child: Text('Credit', overflow: TextOverflow.ellipsis),
-            ),
-            DropdownMenuItem(
-              value: 'UPI',
-              child: Text('UPI', overflow: TextOverflow.ellipsis),
-            ),
-          ],
-          onChanged: (value) {
-            if (value != null) widget.onPaymentModeChanged(value);
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildWeightUnitDropdown() {
-    final isLocked = widget.isEditing || !widget.isReady;
-    final currentUnit = widget.weightUnit.toLowerCase() == 'ton' ? 'ton' : 'kg';
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              'Weight Unit',
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            if (isLocked) ...[
-              const SizedBox(width: 4),
-              Icon(
-                Icons.lock_outline_rounded,
-                size: 13,
-                color: Colors.grey.shade500,
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: 6),
-        Focus(
-          canRequestFocus: false,
-          skipTraversal: true,
-          child: DropdownButtonFormField<String>(
-            key: ValueKey('weight_unit_${currentUnit}_$isLocked'),
-            focusNode: FocusNode(canRequestFocus: false, skipTraversal: true),
-            initialValue: currentUnit,
-            isExpanded: true,
-            isDense: true,
-            decoration: InputDecoration(
-              fillColor: isLocked ? const Color(0xFFF8FAFC) : Colors.white,
-              filled: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 8,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              disabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade200),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(color: Color(0xFF0D3B82)),
-              ),
-            ),
-            items: const [
-              DropdownMenuItem(
-                value: 'kg',
-                child: Text('Kilogram (kg)', overflow: TextOverflow.ellipsis),
-              ),
-              DropdownMenuItem(
-                value: 'ton',
-                child: Text('Tonne (ton)', overflow: TextOverflow.ellipsis),
-              ),
-            ],
-            onChanged: isLocked
-                ? null
-                : (value) {
-                    if (value != null && widget.onWeightUnitChanged != null) {
-                      widget.onWeightUnitChanged!(value);
-                    }
-                  },
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPartyDropdown() {
-    return SearchableDropdown<Party>(
-      label: 'Party Name',
-      isRequired: true,
-      items: widget.parties,
-      selectedItem: widget.selectedParty,
-      itemLabel: (p) => p.name,
-      hintText: 'Select or type party...',
-      addNewLabel: 'Add Party',
-      onAddNew: widget.onAddParty != null ? () => widget.onAddParty!() : null,
-      enabled: !widget.isEditing,
-      focusNode: widget.partyFocusNode,
-      nextFocusNode: widget.vehicleFocusNode,
-      onChanged: widget.onPartyChanged,
-    );
-  }
-
-  Widget _buildVehicleDropdown() {
-    return SearchableDropdown<Vehicle>(
-      label: 'Vehicle Number',
-      isRequired: true,
-      items: widget.vehicles,
-      selectedItem: widget.selectedVehicle,
-      itemLabel: (v) => v.vehicleNumber,
-      hintText: 'Select or type vehicle...',
-      addNewLabel: 'Add Vehicle',
-      onAddNew: widget.onAddVehicle != null
-          ? () => widget.onAddVehicle!()
-          : null,
-      enabled: !widget.isEditing,
-      focusNode: widget.vehicleFocusNode,
-      nextFocusNode: widget.materialFocusNode,
-      onChanged: widget.onVehicleChanged,
-    );
-  }
-
-  Widget _buildVehicleTypeDisplay() {
-    final typeName = widget.selectedVehicleType?.name ?? '—';
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Vehicle Type',
-          style: TextStyle(
+          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          hintText: 'Select Material Code',
+          hintStyle: TextStyle(
             fontFamily: 'PlusJakartaSans',
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey.shade600,
+            color: Color(0xFF94A3B8),
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
           ),
         ),
-        const SizedBox(height: 6),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F9),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+    );
+  }
+
+  /// 4. CUSTOMER CODE
+  Widget _buildCustomerCodeField() {
+    return _buildFieldShell(
+      prefixIcon: Icons.domain_rounded,
+      suffix: _buildSearchButton(widget.onAddCustomer, 'Search Customer Code'),
+      child: TextField(
+        controller: _customerCodeController,
+        style: const TextStyle(
+          fontFamily: 'PlusJakartaSans',
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF0F172A),
+        ),
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          isDense: true,
+          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          hintText: 'Select Customer Code',
+          hintStyle: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            color: Color(0xFF94A3B8),
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
           ),
-          child: Tooltip(
-            message: typeName,
-            waitDuration: const Duration(milliseconds: 500),
+        ),
+      ),
+    );
+  }
+
+  /// 5. CHARGES (₹)
+  Widget _buildChargesField() {
+    return _buildFieldShell(
+      prefixText: '₹',
+      suffix: Container(
+        width: 28,
+        decoration: const BoxDecoration(
+          border: Border(left: BorderSide(color: Color(0xFFE2E8F0))),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Expanded(
+              child: InkWell(
+                onTap: () => _stepCharge(50.0),
+                child: const Center(
+                  child: Icon(
+                    Icons.keyboard_arrow_up_rounded,
+                    size: 16,
+                    color: Color(0xFF475569),
+                  ),
+                ),
+              ),
+            ),
+            Container(height: 1, color: const Color(0xFFE2E8F0)),
+            Expanded(
+              child: InkWell(
+                onTap: () => _stepCharge(-50.0),
+                child: const Center(
+                  child: Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    size: 16,
+                    color: Color(0xFF475569),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      child: TextField(
+        controller: widget.vehicleChargeController,
+        focusNode: widget.vehicleChargeFocusNode,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        onChanged: widget.onVehicleChargeChanged,
+        style: const TextStyle(
+          fontFamily: 'PlusJakartaSans',
+          fontSize: 13,
+          fontWeight: FontWeight.w700,
+          color: Color(0xFF0F172A),
+        ),
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          isDense: true,
+          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          hintText: '0.00',
+          hintStyle: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            color: Color(0xFF94A3B8),
+            fontSize: 13,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 6. CONTAINER NO
+  Widget _buildContainerNoField() {
+    return _buildFieldShell(
+      prefixIcon: Icons.view_in_ar_outlined,
+      child: TextField(
+        controller: widget.remarksController,
+        focusNode: widget.remarksFocusNode,
+        onChanged: widget.onRemarksChanged,
+        style: const TextStyle(
+          fontFamily: 'PlusJakartaSans',
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF0F172A),
+        ),
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          isDense: true,
+          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          hintText: 'Container / Trailer No',
+          hintStyle: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            color: Color(0xFF94A3B8),
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 7. MOBILE NO
+  Widget _buildMobileNoField() {
+    return _buildFieldShell(
+      prefixIcon: Icons.phone_outlined,
+      child: TextField(
+        controller: _mobileController,
+        keyboardType: TextInputType.phone,
+        style: const TextStyle(
+          fontFamily: 'PlusJakartaSans',
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF0F172A),
+        ),
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          isDense: true,
+          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          hintText: 'Mobile / Phone No',
+          hintStyle: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            color: Color(0xFF94A3B8),
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // --- Right Column Field Builders ---
+
+  /// 1. SERIAL NO
+  Widget _buildSerialNoDisplay() {
+    return _buildFieldShell(
+      prefixText: '#',
+      backgroundColor: const Color(0xFFF8FAFC),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: Text(
+          widget.billNumber,
+          style: const TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 13.5,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF0F172A),
+            letterSpacing: 0.5,
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// 2. MATERIAL NAME
+  Widget _buildMaterialNameField() {
+    return _buildFieldShell(
+      prefixIcon: Icons.inventory_2_outlined,
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<domain.MaterialItem>(
+          value: widget.selectedMaterial,
+          focusNode: widget.materialFocusNode,
+          isExpanded: true,
+          hint: const Padding(
+            padding: EdgeInsets.only(left: 10),
             child: Text(
-              typeName,
-              overflow: TextOverflow.ellipsis,
+              'Select Material Name',
               style: TextStyle(
                 fontFamily: 'PlusJakartaSans',
                 fontSize: 13,
-                fontWeight: widget.selectedVehicleType != null
-                    ? FontWeight.w600
-                    : FontWeight.w400,
-                color: widget.selectedVehicleType != null
-                    ? const Color(0xFF0F172A)
-                    : Colors.grey.shade400,
+                color: Color(0xFF94A3B8),
+                fontWeight: FontWeight.w400,
               ),
             ),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMaterialDropdown() {
-    return SearchableDropdown<domain.MaterialItem>(
-      label: 'Material Type',
-      isRequired: true,
-      items: widget.materials,
-      selectedItem: widget.selectedMaterial,
-      itemLabel: (m) => m.name,
-      hintText: 'Select or type material...',
-      addNewLabel: 'Add Material',
-      onAddNew: widget.onAddMaterial != null
-          ? () => widget.onAddMaterial!()
-          : null,
-      enabled: !widget.isEditing,
-      focusNode: widget.materialFocusNode,
-      nextFocusNode: widget.remarksFocusNode,
-      onChanged: widget.onMaterialChanged,
-    );
-  }
-
-  Widget _buildProminentWeightField(
-    String label,
-    TextEditingController controller,
-    ValueChanged<String> onChanged, {
-    bool enabled = true,
-    FocusNode? focusNode,
-    FocusNode? nextFocusNode,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: Colors.grey.shade700,
-          ),
-        ),
-        const SizedBox(height: 6),
-        TextFormField(
-          controller: controller,
-          focusNode: focusNode,
-          enabled: enabled,
-          textInputAction: TextInputAction.next,
-          onFieldSubmitted: (_) {
-            nextFocusNode?.requestFocus();
-          },
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,3}')),
-          ],
-          onChanged: onChanged,
-          style: const TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
-          decoration: InputDecoration(
-            hintText: '0.000',
-            hintStyle: TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 16,
-              color: Colors.grey.shade300,
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 14,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
-            ),
-            disabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade200, width: 1.5),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF0D3B82), width: 2),
-            ),
-            filled: true,
-            fillColor: enabled ? Colors.white : const Color(0xFFF8FAFC),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAutoField(String label, String value, {bool showBadge = true}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              label,
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            if (showBadge) ...[
-              const SizedBox(width: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF16A34A).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(3),
-                ),
-                child: const Text(
-                  'Auto',
-                  style: TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF16A34A),
-                    letterSpacing: 0.3,
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-        const SizedBox(height: 6),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF1F5F9),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
-          ),
-          child: Text(
-            value,
-            style: const TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF0F172A),
+          icon: const Padding(
+            padding: EdgeInsets.only(right: 8),
+            child: Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 18,
+              color: Color(0xFF64748B),
             ),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildVehicleChargeField() {
-    final isManual = widget.isVehicleChargeManuallyEdited;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text(
-              'Vehicle Charge',
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade600,
-              ),
-            ),
-            const SizedBox(width: 6),
-            Tooltip(
-              message: isManual
-                  ? 'Manual charge override. Tap reset to restore auto calculation.'
-                  : 'Auto-calculated from vehicle type. Type here to manually override.',
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                decoration: BoxDecoration(
-                  color: isManual
-                      ? const Color(0xFF7C3AED).withValues(alpha: 0.1)
-                      : const Color(0xFF16A34A).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(3),
-                ),
+          items: widget.materials.map((m) {
+            return DropdownMenuItem<domain.MaterialItem>(
+              value: m,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 10),
                 child: Text(
-                  isManual ? 'Manual' : 'Auto',
-                  style: TextStyle(
+                  m.name,
+                  style: const TextStyle(
                     fontFamily: 'PlusJakartaSans',
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    color: isManual
-                        ? const Color(0xFF7C3AED)
-                        : const Color(0xFF16A34A),
-                    letterSpacing: 0.3,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF0F172A),
                   ),
                 ),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 6),
-        TextFormField(
-          controller: _effectiveVehicleChargeController,
-          focusNode: widget.vehicleChargeFocusNode,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          textInputAction: TextInputAction.next,
-          onFieldSubmitted: (_) {
-            widget.paymentModeFocusNode?.requestFocus();
+            );
+          }).toList(),
+          onChanged: (m) {
+            if (m != null) widget.onMaterialChanged(m);
           },
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}')),
-          ],
-          onChanged: widget.onVehicleChargeChanged,
+        ),
+      ),
+    );
+  }
+
+  /// 3. CUSTOMER NAME
+  Widget _buildCustomerNameField() {
+    return _buildFieldShell(
+      prefixIcon: Icons.person_outline_rounded,
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<Customer>(
+          value: widget.selectedCustomer,
+          focusNode: widget.customerFocusNode,
+          isExpanded: true,
+          hint: const Padding(
+            padding: EdgeInsets.only(left: 10),
+            child: Text(
+              'Select Customer Name',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 13,
+                color: Color(0xFF94A3B8),
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+          icon: const Padding(
+            padding: EdgeInsets.only(right: 8),
+            child: Icon(
+              Icons.keyboard_arrow_down_rounded,
+              size: 18,
+              color: Color(0xFF64748B),
+            ),
+          ),
+          items: widget.customers.map((c) {
+            return DropdownMenuItem<Customer>(
+              value: c,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 10),
+                child: Text(
+                  c.name,
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
+          onChanged: (c) {
+            if (c != null) widget.onCustomerChanged(c);
+          },
+        ),
+      ),
+    );
+  }
+
+  /// 4 & 5. GROSS / TARE WEIGHT Row with Read-Only Captured Box, Unit, Date & Time pickers
+  Widget _buildWeightRowWithDateTime({
+    required TextEditingController controller,
+    required double weightKg,
+    required bool enabled,
+    required DateTime date,
+    required TimeOfDay time,
+    required ValueChanged<DateTime> onSelectDate,
+    required ValueChanged<TimeOfDay> onSelectTime,
+    bool isCaptured = false,
+  }) {
+    final dateStr = DateFormat('dd/MM/yyyy').format(date);
+    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final minute = time.minute.toString().padLeft(2, '0');
+    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
+    final timeStr = '$hour:$minute $period';
+
+    final isKg = widget.weightUnit.toLowerCase() == 'kg';
+    final String displayWeight;
+    if (controller.text.isNotEmpty) {
+      displayWeight = controller.text;
+    } else if (weightKg > 0) {
+      displayWeight = isKg
+          ? weightKg.toStringAsFixed(0)
+          : (weightKg / 1000).toStringAsFixed(3);
+    } else {
+      displayWeight = isKg ? '0' : '0.000';
+    }
+
+    return Row(
+      children: [
+        // Read-only captured weight box
+        Expanded(
+          flex: 6,
+          child: Container(
+            height: 38,
+            decoration: BoxDecoration(
+              color: isCaptured
+                  ? const Color(0xFFF0FDF4)
+                  : const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                color: isCaptured
+                    ? const Color(0xFF86EFAC)
+                    : const Color(0xFFCBD5E1),
+                width: 1.0,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: isCaptured
+                        ? const Color(0xFFDCFCE7)
+                        : const Color(0xFFE2E8F0),
+                    borderRadius: const BorderRadius.horizontal(
+                      left: Radius.circular(5),
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.scale_rounded,
+                    size: 16,
+                    color: isCaptured
+                        ? const Color(0xFF16A34A)
+                        : const Color(0xFF475569),
+                  ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Text(
+                      displayWeight,
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w800,
+                        color: isCaptured
+                            ? const Color(0xFF15803D)
+                            : const Color(0xFF0F172A),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(width: 8),
+
+        // Unit label (Kg)
+        Text(
+          widget.weightUnit.toLowerCase() == 'kg' ? 'Kg' : 'Ton',
           style: const TextStyle(
             fontFamily: 'PlusJakartaSans',
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
+            fontSize: 12,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF334155),
           ),
-          decoration: InputDecoration(
-            hintText: '0',
-            hintStyle: TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 16,
-              color: Colors.grey.shade300,
+        ),
+
+        const SizedBox(width: 12),
+
+        // Date Label
+        const Text(
+          'Date',
+          style: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 11.5,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF334155),
+          ),
+        ),
+        const SizedBox(width: 6),
+
+        // Date Picker Box
+        Expanded(
+          flex: 5,
+          child: InkWell(
+            onTap: () async {
+              final picked = await showDatePicker(
+                context: context,
+                initialDate: date,
+                firstDate: DateTime(2020),
+                lastDate: DateTime(2035),
+              );
+              if (picked != null) onSelectDate(picked);
+            },
+            borderRadius: BorderRadius.circular(6),
+            child: Container(
+              height: 38,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFCBD5E1)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 38,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.horizontal(
+                        left: Radius.circular(5),
+                      ),
+                      border: Border(
+                        right: BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      Icons.calendar_month_outlined,
+                      size: 15,
+                      color: Color(0xFF475569),
+                    ),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        dateStr,
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            prefixText: '\u20B9',
-            prefixStyle: TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey.shade600,
+          ),
+        ),
+
+        const SizedBox(width: 10),
+
+        // Time Label
+        const Text(
+          'Time',
+          style: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 11.5,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF334155),
+          ),
+        ),
+        const SizedBox(width: 6),
+
+        // Time Picker Box
+        Expanded(
+          flex: 4,
+          child: InkWell(
+            onTap: () async {
+              final picked = await showTimePicker(
+                context: context,
+                initialTime: time,
+              );
+              if (picked != null) onSelectTime(picked);
+            },
+            borderRadius: BorderRadius.circular(6),
+            child: Container(
+              height: 38,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFCBD5E1)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 38,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.horizontal(
+                        left: Radius.circular(5),
+                      ),
+                      border: Border(
+                        right: BorderSide(color: Color(0xFFE2E8F0)),
+                      ),
+                    ),
+                    alignment: Alignment.center,
+                    child: const Icon(
+                      Icons.access_time_rounded,
+                      size: 15,
+                      color: Color(0xFF475569),
+                    ),
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Text(
+                        timeStr,
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            suffixIcon: isManual
-                ? IconButton(
-                    icon: const Icon(Icons.restart_alt_rounded, size: 18),
-                    color: const Color(0xFF7C3AED),
-                    visualDensity: VisualDensity.compact,
-                    tooltip:
-                        'Reset to default (\u20B9${_formatCharge(widget.defaultVehicleCharge)})',
-                    onPressed: () {
-                      widget.onResetVehicleCharge();
-                      _effectiveVehicleChargeController.text = _formatCharge(
-                        widget.defaultVehicleCharge,
-                      );
-                    },
-                  )
-                : null,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 14,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300, width: 1.5),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFF0D3B82), width: 2),
-            ),
-            filled: true,
-            fillColor: Colors.white,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildRemarksField(bool isGrossEnabled, bool isTareEnabled) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  /// 6. NETT WEIGHT Display
+  Widget _buildNettWeightDisplay() {
+    final isKg = widget.weightUnit.toLowerCase() == 'kg';
+    final String netDisplay = isKg
+        ? (widget.netWeightKg > 0 ? widget.netWeightKg.toStringAsFixed(0) : '0')
+        : (widget.netWeightKg > 0
+              ? (widget.netWeightKg / 1000).toStringAsFixed(3)
+              : '0.000');
+
+    return Row(
       children: [
+        // Net Value Container
+        Expanded(
+          flex: 6,
+          child: Container(
+            height: 38,
+            decoration: BoxDecoration(
+              color: const Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: const Color(0xFFCBD5E1)),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 34,
+                  height: 38,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFE2E8F0),
+                    borderRadius: BorderRadius.horizontal(
+                      left: Radius.circular(5),
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(
+                    Icons.scale_rounded,
+                    size: 16,
+                    color: Color(0xFF475569),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  netDisplay,
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+
+        const SizedBox(width: 8),
+
+        // Unit label (Kg)
         Text(
-          'Remarks',
-          style: TextStyle(
+          isKg ? 'Kg' : 'Ton',
+          style: const TextStyle(
             fontFamily: 'PlusJakartaSans',
             fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: Colors.grey.shade600,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF334155),
           ),
         ),
-        const SizedBox(height: 6),
-        TextFormField(
-          controller: widget.remarksController,
-          focusNode: widget.remarksFocusNode,
-          textInputAction: TextInputAction.next,
-          onFieldSubmitted: (_) {
-            if (isGrossEnabled) {
-              widget.grossWeightFocusNode?.requestFocus();
-            } else if (isTareEnabled) {
-              widget.tareWeightFocusNode?.requestFocus();
-            } else {
-              widget.vehicleChargeFocusNode?.requestFocus();
-            }
-          },
-          onChanged: widget.onRemarksChanged,
-          enabled: !widget.isEditing,
-          maxLines: 1,
-          style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13),
-          decoration: InputDecoration(
-            hintText: 'Optional remarks',
-            hintStyle: TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 13,
-              color: Colors.grey.shade400,
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 10,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(
-                color: Color(0xFF0D3B82),
-                width: 2.0,
-              ),
-            ),
-            isDense: true,
-          ),
-        ),
+
+        const Spacer(flex: 9),
       ],
+    );
+  }
+
+  // --- Shared Field Decoration Helpers ---
+
+  Widget _buildFieldShell({
+    IconData? prefixIcon,
+    String? prefixText,
+    Widget? suffix,
+    Color backgroundColor = Colors.white,
+    required Widget child,
+  }) {
+    return Container(
+      height: 38,
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: const Color(0xFFCBD5E1), width: 1.0),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (prefixIcon != null || prefixText != null)
+            Container(
+              width: 36,
+              height: 38,
+              decoration: const BoxDecoration(
+                color: Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.horizontal(left: Radius.circular(5)),
+                border: Border(
+                  right: BorderSide(color: Color(0xFFE2E8F0), width: 1.0),
+                ),
+              ),
+              alignment: Alignment.center,
+              child: prefixIcon != null
+                  ? Icon(prefixIcon, size: 17, color: const Color(0xFF475569))
+                  : Text(
+                      prefixText!,
+                      style: const TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
+            ),
+          Expanded(child: child),
+          ?suffix,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchButton(Future<void> Function()? onTap, String tooltip) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 4),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(4),
+        child: Container(
+          padding: const EdgeInsets.all(5),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEFF6FF),
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: const Color(0xFFBFDBFE), width: 0.8),
+          ),
+          child: const Icon(
+            Icons.search_rounded,
+            size: 16,
+            color: Color(0xFF2563EB),
+          ),
+        ),
+      ),
     );
   }
 }

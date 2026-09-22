@@ -1,19 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
-import '../../../bill/presentation/bloc/bill_bloc.dart';
-import '../../../bill/presentation/bloc/bill_state.dart';
 import '../../../bill/presentation/pages/bill_page.dart';
-import '../../../bill/presentation/pages/pending_page.dart';
-import '../../../party/presentation/pages/party_list_page.dart';
-import '../../../vehicle/presentation/pages/vehicles_merged_page.dart';
+import '../../../customer/presentation/pages/customer_list_page.dart';
 import '../../../material/presentation/pages/material_list_page.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
 import '../../../report/presentation/pages/report_page.dart';
-import '../../../auth/presentation/widgets/truck_logo.dart';
 import 'about_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -24,323 +22,618 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _selectedIndex = 0;
-  bool _isMastersExpanded = true;
+  // Index 3: Weighment (BillPage) as the primary home screen
+  int _selectedIndex = 3;
 
   late final List<Widget> _pages;
+  late Timer _clockTimer;
+  DateTime _currentTime = DateTime.now();
 
   @override
   void initState() {
     super.initState();
     _pages = [
-      const BillPage(),
-      const PartyListPage(),
-      const VehiclesMergedPage(),
-      const MaterialListPage(),
-      PendingPage(onSwitchToBill: () => setState(() => _selectedIndex = 0)),
-      const ReportPage(),
-      const SettingsPage(),
-      const AboutPage(),
+      const SettingsPage(), // 0: Configuration
+      const CustomerListPage(), // 1: Customer Master
+      const MaterialListPage(), // 2: Material Master
+      const BillPage(), // 3: Weighment
+      const ReportPage(), // 4: Reports
+      const AboutPage(), // 5: About
     ];
+
+    _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() {
+          _currentTime = DateTime.now();
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _clockTimer.cancel();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Row(
-        children: [
-          _buildSidebar(context),
-          Expanded(child: _pages[_selectedIndex]),
-        ],
+      backgroundColor: const Color(0xFFF1F5F9),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // 1. Top Application Header
+            _buildAppHeader(context),
+
+            // 2. Horizontal Navigation Tabs Bar
+            _buildTopNavigationBar(context),
+
+            // 3. Main Active Content Screen
+            Expanded(child: _pages[_selectedIndex]),
+
+            // 4. Bottom Industrial Status Bar
+            _buildAppStatusBar(context),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildSidebar(BuildContext context) {
-    return SizedBox(
-      width: 240,
-      child: Material(
-        color: Colors.blueGrey.shade900,
-        child: Column(
+  /// 1. Top Application Header (Branding, Live Date/Time, User Profile)
+  Widget _buildAppHeader(BuildContext context) {
+    final dateStr = DateFormat('EEEE, dd MMMM yyyy').format(_currentTime);
+    final timeStr = DateFormat('hh:mm:ss a').format(_currentTime);
+
+    return Container(
+      height: 64,
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1)),
+      ),
+      child: Row(
         children: [
-          Container(
-            height: 70,
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            alignment: Alignment.centerLeft,
-            child: Row(
-              children: [
-                const ViyanWeighbridgeLogo(size: 38),
-                const SizedBox(width: 10),
-                const Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'VIYAN',
-                        style: TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          color: Color(0xFF00F5FF),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      Text(
-                        'WEIGHBRIDGE',
-                        style: TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          color: Colors.white,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ],
-                  ),
+          // Left: Logo & Company Branding
+          _buildBrandLogo(),
+
+          const Spacer(),
+
+          // Right: Live Date
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.calendar_month_outlined,
+                size: 18,
+                color: Color(0xFF1E293B),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                dateStr,
+                style: const TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF1E293B),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const Divider(height: 1, color: Colors.blueGrey),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              children: [
-                _SidebarItem(
-                  icon: Icons.description_outlined,
-                  label: 'Bill',
-                  isSelected: _selectedIndex == 0,
-                  onTap: () => setState(() => _selectedIndex = 0),
+
+          const SizedBox(width: 24),
+
+          // Live Clock
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.access_time_rounded,
+                size: 18,
+                color: Color(0xFF1E293B),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                timeStr,
+                style: const TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1E293B),
+                  letterSpacing: 0.2,
                 ),
-                _buildMastersSection(),
-                _SidebarItem(
-                  icon: Icons.pending_outlined,
-                  label: 'Pending',
-                  isSelected: _selectedIndex == 4,
-                  onTap: () => setState(() => _selectedIndex = 4),
-                  trailing: BlocBuilder<BillBloc, BillState>(
-                    builder: (context, state) {
-                      final count = state.pendingBills.length;
-                      if (count == 0) return const SizedBox.shrink();
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFD97706),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          '$count',
-                          style: const TextStyle(
-                            fontFamily: 'PlusJakartaSans',
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.white,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                _SidebarItem(
-                  icon: Icons.report_outlined,
-                  label: 'Report',
-                  isSelected: _selectedIndex == 5,
-                  onTap: () => setState(() => _selectedIndex = 5),
-                ),
-                _SidebarItem(
-                  icon: Icons.settings_outlined,
-                  label: 'Settings',
-                  isSelected: _selectedIndex == 6,
-                  onTap: () => setState(() => _selectedIndex = 6),
-                ),
-                _SidebarItem(
-                  icon: Icons.info_outlined,
-                  label: 'About',
-                  isSelected: _selectedIndex == 7,
-                  onTap: () => setState(() => _selectedIndex = 7),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-          const Divider(height: 1, color: Colors.blueGrey),
+
+          const SizedBox(width: 24),
+
+          // User Profile Pill
           BlocBuilder<AuthBloc, AuthState>(
             builder: (context, state) {
               final username = state.user?.username ?? 'Admin';
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    radius: 16,
-                    backgroundColor: Colors.blueGrey.shade700,
-                    child: Text(
-                      username[0].toUpperCase(),
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
+              return Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: const Color(0xFFCBD5E1)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.person,
+                      size: 18,
+                      color: Color(0xFF1E293B),
                     ),
-                  ),
-                  title: Text(
-                    username,
-                    style: const TextStyle(color: Colors.white, fontSize: 14),
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(
-                      Icons.logout,
-                      color: Colors.white70,
-                      size: 20,
+                    const SizedBox(width: 8),
+                    Text(
+                      username,
+                      style: const TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF1E293B),
+                      ),
                     ),
-                    tooltip: 'Logout',
-                    onPressed: () {
-                      context.read<AuthBloc>().add(const LogoutRequested());
-                    },
-                  ),
+                  ],
                 ),
               );
             },
           ),
         ],
       ),
-    ),
-  );
-}
+    );
+  }
 
-  Widget _buildMastersSection() {
-    return Column(
+  Widget _buildBrandLogo() {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        ListTile(
-          leading: Icon(
-            Icons.storage_outlined,
-            color: Colors.blueGrey.shade300,
-            size: 20,
-          ),
-          title: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Masters',
-                  style: TextStyle(
-                    color: Colors.blueGrey.shade300,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-              Icon(
-                _isMastersExpanded
-                    ? Icons.keyboard_arrow_up
-                    : Icons.keyboard_arrow_down,
-                color: Colors.blueGrey.shade400,
-                size: 20,
+        // Blue square with white 'V'
+        Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: const Color(0xFF0D53FC),
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0D53FC).withValues(alpha: 0.3),
+                blurRadius: 6,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
-          dense: true,
-          onTap: () => setState(() => _isMastersExpanded = !_isMastersExpanded),
+          alignment: Alignment.center,
+          child: const Text(
+            'V',
+            style: TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
         ),
-        if (_isMastersExpanded) ...[
-          _SidebarSubItem(
-            icon: Icons.people_outline,
-            label: 'Parties',
-            isSelected: _selectedIndex == 1,
-            onTap: () => setState(() => _selectedIndex = 1),
-          ),
-          _SidebarSubItem(
-            icon: Icons.local_shipping_outlined,
-            label: 'Vehicles',
-            isSelected: _selectedIndex == 2,
-            onTap: () => setState(() => _selectedIndex = 2),
-          ),
-          _SidebarSubItem(
-            icon: Icons.inventory_2_outlined,
-            label: 'Materials',
-            isSelected: _selectedIndex == 3,
-            onTap: () => setState(() => _selectedIndex = 3),
-          ),
-        ],
+        const SizedBox(width: 12),
+        Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            RichText(
+              text: const TextSpan(
+                children: [
+                  TextSpan(
+                    text: 'VIYAN ',
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      color: Color(0xFF0F172A),
+                      fontSize: 17,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  TextSpan(
+                    text: 'WEIGHBRIDGE',
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      color: Color(0xFF0284C7),
+                      fontSize: 17,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Text(
+              'Accurate Weighing  Reliable Business',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                color: Color(0xFF64748B),
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 0.2,
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
-}
 
-class _SidebarItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final Widget? trailing;
-
-  const _SidebarItem({
-    required this.icon,
-    required this.label,
-    this.isSelected = false,
-    required this.onTap,
-    this.trailing,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: isSelected ? Colors.white : Colors.blueGrey.shade300,
-        size: 20,
+  /// 2. Horizontal Navigation Tabs Bar (Icon on Top, Label Below, with Clean Dividers)
+  Widget _buildTopNavigationBar(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1)),
       ),
-      title: Text(
-        label,
-        style: TextStyle(
-          color: isSelected ? Colors.white : Colors.blueGrey.shade300,
-          fontSize: 14,
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-        ),
+      child: Row(
+        children: [
+          _buildNavTab(
+            index: 0,
+            icon: Icons.settings_rounded,
+            label: 'Configuration',
+          ),
+          _buildNavDivider(),
+          _buildNavTab(
+            index: 1,
+            icon: Icons.people_alt_rounded,
+            label: 'Customer Master',
+          ),
+          _buildNavDivider(),
+          _buildNavTab(
+            index: 2,
+            icon: Icons.featured_play_list_rounded,
+            label: 'Material Master',
+          ),
+          _buildNavDivider(),
+          _buildNavTab(index: 3, icon: Icons.scale_rounded, label: 'Bill'),
+          _buildNavDivider(),
+          _buildNavTab(
+            index: 4,
+            icon: Icons.bar_chart_rounded,
+            label: 'Reports',
+          ),
+          _buildNavDivider(),
+          _buildExitButton(context),
+        ],
       ),
-      trailing: trailing,
-      selected: isSelected,
-      selectedTileColor: Colors.blueGrey.shade800,
-      dense: true,
-      onTap: onTap,
     );
   }
-}
 
-class _SidebarSubItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
+  Widget _buildNavDivider() {
+    return Container(width: 1, height: 36, color: const Color(0xFFE2E8F0));
+  }
 
-  const _SidebarSubItem({
-    required this.icon,
-    required this.label,
-    this.isSelected = false,
-    required this.onTap,
-  });
+  Widget _buildNavTab({
+    required int index,
+    required IconData icon,
+    required String label,
+    Widget? badge,
+  }) {
+    final isSelected = _selectedIndex == index;
 
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 16),
-      child: ListTile(
-        leading: Icon(
-          icon,
-          color: isSelected ? Colors.white : Colors.blueGrey.shade400,
-          size: 18,
-        ),
-        title: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Colors.blueGrey.shade400,
-            fontSize: 13,
-            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+    return Expanded(
+      child: Material(
+        color: isSelected ? const Color(0xFFEFF6FF) : Colors.transparent,
+        child: InkWell(
+          onTap: () => setState(() => _selectedIndex = index),
+          hoverColor: const Color(0xFFF8FAFC),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(
+                  color: isSelected
+                      ? const Color(0xFF0D53FC)
+                      : Colors.transparent,
+                  width: 3,
+                ),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 22, color: const Color(0xFF0D53FC)),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 12,
+                          fontWeight: isSelected
+                              ? FontWeight.w700
+                              : FontWeight.w600,
+                          color: isSelected
+                              ? const Color(0xFF0D53FC)
+                              : const Color(0xFF1E293B),
+                        ),
+                      ),
+                    ),
+                    if (badge != null) ...[const SizedBox(width: 4), badge],
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-        selected: isSelected,
-        selectedTileColor: Colors.blueGrey.shade800,
-        dense: true,
-        onTap: onTap,
       ),
     );
+  }
+
+  Widget _buildExitButton(BuildContext context) {
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _confirmLogout(context),
+          hoverColor: const Color(0xFFFEF2F2),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            decoration: const BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: Colors.transparent, width: 3),
+              ),
+            ),
+            child: const Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.power_settings_new_rounded,
+                  size: 22,
+                  color: Color(0xFFDC2626),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Exit',
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFFDC2626),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _confirmLogout(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: const Row(
+          children: [
+            Icon(Icons.logout_rounded, color: Color(0xFFDC2626), size: 24),
+            SizedBox(width: 10),
+            Text(
+              'Exit Application',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Are you sure you want to log out and exit your session?',
+          style: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 14,
+            color: Color(0xFF475569),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text(
+              'Cancel',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                color: Color(0xFF64748B),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(dialogContext);
+              context.read<AuthBloc>().add(const LogoutRequested());
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'Exit',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 4. Persistent Bottom Industrial Status Bar
+  Widget _buildAppStatusBar(BuildContext context) {
+    return Container(
+      height: 38,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: Color(0xFFE2E8F0), width: 1)),
+      ),
+      child: Row(
+        children: [
+          // Status cluster scrolls horizontally so it never overflows on
+          // narrow or compact window sizes.
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Ready indicator
+                  Container(
+                    width: 9,
+                    height: 9,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF10B981),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Ready',
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+
+                  const SizedBox(width: 20),
+                  _buildStatusDivider(),
+                  const SizedBox(width: 20),
+
+                  // Database: Connected
+                  const Icon(
+                    Icons.storage_rounded,
+                    size: 15,
+                    color: Color(0xFF1E293B),
+                  ),
+                  const SizedBox(width: 6),
+                  const Text(
+                    'Database: Connected',
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+
+                  const SizedBox(width: 20),
+                  _buildStatusDivider(),
+                  const SizedBox(width: 20),
+
+                  // Printer: Ready
+                  const Icon(
+                    Icons.print_rounded,
+                    size: 15,
+                    color: Color(0xFF1E293B),
+                  ),
+                  const SizedBox(width: 6),
+                  const Text(
+                    'Printer: Ready',
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+
+                  const SizedBox(width: 20),
+                  _buildStatusDivider(),
+                  const SizedBox(width: 20),
+
+                  // Weighbridge: COM3 (Connected)
+                  const Icon(
+                    Icons.link_rounded,
+                    size: 16,
+                    color: Color(0xFF1E293B),
+                  ),
+                  const SizedBox(width: 6),
+                  const Text(
+                    'Weighbridge: COM3 (Connected)',
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+
+                  const SizedBox(width: 20),
+                  _buildStatusDivider(),
+                  const SizedBox(width: 20),
+
+                  // Weight: Stable
+                  const Icon(
+                    Icons.show_chart_rounded,
+                    size: 16,
+                    color: Color(0xFF1E293B),
+                  ),
+                  const SizedBox(width: 6),
+                  const Text(
+                    'Weight: Stable',
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(width: 20),
+
+          // App Version / About
+          InkWell(
+            onTap: () => setState(() => _selectedIndex = 5),
+            borderRadius: BorderRadius.circular(4),
+            child: const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+              child: Text(
+                'Viyan Weighbridge v1.0.0',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF64748B),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatusDivider() {
+    return Container(width: 1, height: 16, color: const Color(0xFFCBD5E1));
   }
 }

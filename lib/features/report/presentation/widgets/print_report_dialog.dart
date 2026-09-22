@@ -18,7 +18,7 @@ class PrintReportDialog extends StatefulWidget {
   final List<WeighmentReportItem> records;
   final ReportSummary summary;
   final ReportFilter filter;
-  final String partyLabel;
+  final String customerLabel;
   final String vehicleLabel;
   final String materialLabel;
 
@@ -27,7 +27,7 @@ class PrintReportDialog extends StatefulWidget {
     required this.records,
     required this.summary,
     required this.filter,
-    this.partyLabel = 'All Parties',
+    this.customerLabel = 'All Customers',
     this.vehicleLabel = 'All Vehicles',
     this.materialLabel = 'All Materials',
   });
@@ -37,7 +37,7 @@ class PrintReportDialog extends StatefulWidget {
     required List<WeighmentReportItem> records,
     required ReportSummary summary,
     required ReportFilter filter,
-    String partyLabel = 'All Parties',
+    String customerLabel = 'All Customers',
     String vehicleLabel = 'All Vehicles',
     String materialLabel = 'All Materials',
   }) {
@@ -47,7 +47,7 @@ class PrintReportDialog extends StatefulWidget {
         records: records,
         summary: summary,
         filter: filter,
-        partyLabel: partyLabel,
+        customerLabel: customerLabel,
         vehicleLabel: vehicleLabel,
         materialLabel: materialLabel,
       ),
@@ -64,8 +64,7 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
 
   String _formatWeight(double? weightKg, String unit) {
     if (weightKg == null) return '—';
-    final isTon =
-        unit.toLowerCase() == 'ton' || unit.toLowerCase() == 'tonne';
+    final isTon = unit.toLowerCase() == 'ton' || unit.toLowerCase() == 'tonne';
     final val = isTon ? weightKg / 1000 : weightKg;
     final dec = isTon ? 3 : 0;
     return '${val.toStringAsFixed(dec)} $unit';
@@ -95,7 +94,7 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
         address: settings?.address,
         phone: settings?.phoneNumber,
         gstin: settings?.gstin,
-        partyLabel: widget.partyLabel,
+        customerLabel: widget.customerLabel,
         vehicleLabel: widget.vehicleLabel,
         materialLabel: widget.materialLabel,
       );
@@ -120,10 +119,10 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
             '${tempDir.path}\\weighment_report_${DateTime.now().millisecondsSinceEpoch}.pdf',
           );
           await tempFile.writeAsBytes(pdfBytes);
-          await Process.run(
-            'rundll32',
-            ['url.dll,FileProtocolHandler', tempFile.path],
-          );
+          await Process.run('rundll32', [
+            'url.dll,FileProtocolHandler',
+            tempFile.path,
+          ]);
           printed = true;
         } catch (_) {}
       }
@@ -135,16 +134,12 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
             children: [
               const Icon(Icons.print_rounded, color: Colors.white, size: 18),
               const SizedBox(width: 8),
-              Text(
-                'Print document ready (${widget.records.length} records)',
-              ),
+              Text('Print document ready (${widget.records.length} records)'),
             ],
           ),
           backgroundColor: const Color(0xFF0284C7),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       );
     } catch (e) {
@@ -153,9 +148,7 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
         SnackBar(
           content: Text('Failed to generate print document: $e'),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       );
     } finally {
@@ -189,13 +182,14 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
         address: settings?.address,
         phone: settings?.phoneNumber,
         gstin: settings?.gstin,
-        partyLabel: widget.partyLabel,
+        customerLabel: widget.customerLabel,
         vehicleLabel: widget.vehicleLabel,
         materialLabel: widget.materialLabel,
       );
 
-      final dateFormatted =
-          DateFormat('yyyy-MM-dd').format(widget.filter.effectiveStartDate);
+      final dateFormatted = DateFormat(
+        'yyyy-MM-dd',
+      ).format(widget.filter.effectiveStartDate);
       final suggestedName = 'weighment_report_$dateFormatted.pdf';
       final saveService = FilePickerSaveService();
       final savedPath = await saveService.saveFile(
@@ -238,9 +232,7 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
         SnackBar(
           content: Text('Failed to save PDF: $e'),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       );
     } finally {
@@ -281,9 +273,7 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
           final phone = settings?.phoneNumber ?? '';
           final gstin = settings?.gstin ?? '';
 
-          final statusLabel = widget.filter.status == 'all'
-              ? 'All Statuses'
-              : widget.filter.status.toUpperCase();
+          final statusLabel = 'All Statuses';
           final paymentLabel = widget.filter.paymentMode == 'all'
               ? 'All Modes'
               : widget.filter.paymentMode.toUpperCase();
@@ -433,7 +423,7 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
                                   children: [
                                     _metaRow('Period', filterDateLabel),
                                     const SizedBox(height: 4),
-                                    _metaRow('Party', widget.partyLabel),
+                                    _metaRow('Customer', widget.customerLabel),
                                     const SizedBox(height: 4),
                                     _metaRow('Vehicle', widget.vehicleLabel),
                                   ],
@@ -474,7 +464,7 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
                               0: FlexColumnWidth(1.2), // Bill
                               1: FlexColumnWidth(1.5), // Date & Time
                               2: FlexColumnWidth(1.3), // Vehicle
-                              3: FlexColumnWidth(1.5), // Party
+                              3: FlexColumnWidth(1.5), // Customer
                               4: FlexColumnWidth(1.2), // Material
                               5: FlexColumnWidth(1.2), // Gross
                               6: FlexColumnWidth(1.2), // Tare
@@ -492,7 +482,7 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
                                   _cell('BILL NO', isHeader: true),
                                   _cell('DATE & TIME', isHeader: true),
                                   _cell('VEHICLE', isHeader: true),
-                                  _cell('PARTY', isHeader: true),
+                                  _cell('CUSTOMER', isHeader: true),
                                   _cell('MATERIAL', isHeader: true),
                                   _cell(
                                     'GROSS',
@@ -530,7 +520,7 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
                                       '${dateFormat.format(r.createdAt)} ${timeFormat.format(r.createdAt)}',
                                     ),
                                     _cell(r.vehicleNumber),
-                                    _cell(r.partyName),
+                                    _cell(r.customerName),
                                     _cell(r.materialName),
                                     _cell(
                                       _formatWeight(
@@ -559,7 +549,7 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
                                       align: TextAlign.right,
                                     ),
                                     _cell(
-                                      r.displayStatus,
+                                      'COMPLETED',
                                       align: TextAlign.center,
                                       isStatusBadge: true,
                                     ),
@@ -605,10 +595,6 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
                                 _summaryItem(
                                   'Total Revenue',
                                   '₹${widget.summary.totalRevenue.toStringAsFixed(0)}',
-                                ),
-                                _summaryItem(
-                                  'Pending',
-                                  '${widget.summary.pendingCount}',
                                 ),
                                 _summaryItem(
                                   'Completed',

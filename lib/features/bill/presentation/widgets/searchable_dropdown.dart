@@ -58,7 +58,7 @@ class _SearchableDropdownState<T extends Object>
   List<T> _currentOptions = [];
   final ScrollController _scrollController = ScrollController();
   bool _overlayUpdateScheduled = false;
-  bool _pendingShouldShowOverlay = false;
+  bool _shouldShowOverlay = false;
   bool _isDismissed = false;
 
   @override
@@ -138,8 +138,9 @@ class _SearchableDropdownState<T extends Object>
 
       if (widget.selectedItem != null) {
         final currentText = _textController.text.trim().toLowerCase();
-        final selectedText =
-            widget.itemLabel(widget.selectedItem!).toLowerCase();
+        final selectedText = widget
+            .itemLabel(widget.selectedItem!)
+            .toLowerCase();
 
         if (currentText != selectedText) {
           _textController.text = widget.itemLabel(widget.selectedItem!);
@@ -269,7 +270,7 @@ class _SearchableDropdownState<T extends Object>
   // ---------------------------------------------------------------------------
 
   void _scheduleOverlayUpdate({required bool shouldShow}) {
-    _pendingShouldShowOverlay = shouldShow;
+    _shouldShowOverlay = shouldShow;
     if (_overlayUpdateScheduled) return;
     _overlayUpdateScheduled = true;
 
@@ -277,7 +278,7 @@ class _SearchableDropdownState<T extends Object>
       _overlayUpdateScheduled = false;
       if (!mounted || !_effectiveFocusNode.hasFocus) return;
 
-      final showOverlay = _pendingShouldShowOverlay;
+      final showOverlay = _shouldShowOverlay;
       if (showOverlay && _overlayEntry == null) {
         _showOverlay();
       } else if (!showOverlay && _overlayEntry != null) {
@@ -355,7 +356,7 @@ class _SearchableDropdownState<T extends Object>
     final query = _textController.text.trim();
     if (widget.items.isEmpty) {
       final labelLower = widget.label.toLowerCase();
-      if (labelLower.contains('party')) return 'No parties found';
+      if (labelLower.contains('customer')) return 'No customers found';
       if (labelLower.contains('vehicle')) return 'No vehicles found';
       if (labelLower.contains('material')) return 'No materials found';
       return 'No items found';

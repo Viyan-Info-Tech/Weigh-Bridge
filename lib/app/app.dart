@@ -3,6 +3,20 @@ import 'package:flutter/material.dart';
 import 'di/injection.dart';
 import 'router/app_router.dart';
 
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
+
+void showAppSnackBar(String message, {Color? backgroundColor}) {
+  final messenger = scaffoldMessengerKey.currentState;
+  if (messenger == null) return;
+
+  messenger
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: backgroundColor),
+    );
+}
+
 class WeighbridgeApp extends StatefulWidget {
   final Injection injection;
 
@@ -32,6 +46,7 @@ class _WeighbridgeAppState extends State<WeighbridgeApp> {
     return MaterialApp.router(
       title: 'Viyan Weighbridge',
       debugShowCheckedModeBanner: false,
+      scaffoldMessengerKey: scaffoldMessengerKey,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: Colors.blueGrey,

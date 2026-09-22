@@ -1,25 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:weighbridge/features/party/domain/entities/party.dart';
-import 'package:weighbridge/features/vehicle/domain/entities/vehicle.dart';
-import 'package:weighbridge/features/vehicle_type/domain/entities/vehicle_type.dart';
+import 'package:weighbridge/features/customer/domain/entities/customer.dart';
 import 'package:weighbridge/features/bill/domain/entities/weighment.dart';
 import 'package:weighbridge/features/bill/presentation/widgets/weighment_slip_dialog.dart';
 
 void main() {
   group('WeighmentSlipDialog Widget Tests', () {
     late Weighment testBill;
-    late Vehicle testVehicle;
-    late VehicleType testVehicleType;
-    late Party testParty;
+    late Customer testCustomer;
 
     setUp(() {
       final now = DateTime(2026, 9, 10, 16, 27);
       testBill = Weighment(
         id: 1,
         billNumber: 'WB-00001',
-        vehicleId: 10,
-        partyId: 20,
+        vehicleNumber: 'TN31CM2026',
+        customerId: 20,
         materialId: 30,
         grossWeightKg: 100000.0,
         tareWeightKg: 20000.0,
@@ -27,29 +23,12 @@ void main() {
         vehicleCharge: 1000.0,
         amount: 1000.0,
         paymentMode: 'Cash',
-        status: 'completed',
         remarks: 'Direct delivery to site',
         createdAt: now,
         updatedAt: now,
       );
 
-      testVehicle = Vehicle(
-        id: 10,
-        vehicleNumber: 'TN31CM2026',
-        vehicleTypeId: 1,
-        createdAt: now,
-        updatedAt: now,
-      );
-
-      testVehicleType = VehicleType(
-        id: 1,
-        name: '10 Wheeler Commercial',
-        loadPrice: 1000.0,
-        createdAt: now,
-        updatedAt: now,
-      );
-
-      testParty = Party(
+      testCustomer = Customer(
         id: 20,
         name: 'BTC Construction Ltd',
         contactPerson: 'Mr. Rajesh',
@@ -72,9 +51,7 @@ void main() {
           home: Scaffold(
             body: WeighmentSlipDialog(
               bill: testBill,
-              vehicle: testVehicle,
-              party: testParty,
-              vehicleTypes: [testVehicleType],
+              customer: testCustomer,
               materialName: 'Sand',
             ),
           ),
@@ -123,9 +100,7 @@ void main() {
                 context: context,
                 builder: (_) => WeighmentSlipDialog(
                   bill: testBill,
-                  vehicle: testVehicle,
-                  party: testParty,
-                  vehicleTypes: [testVehicleType],
+                  customer: testCustomer,
                   materialName: 'Sand',
                 ),
               ),

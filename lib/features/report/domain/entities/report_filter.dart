@@ -16,10 +16,9 @@ class ReportFilter extends Equatable {
   final DateRangePreset datePreset;
   final DateTime? customStartDate;
   final DateTime? customEndDate;
-  final int? partyId;
-  final int? vehicleId;
+  final int? customerId;
+  final String vehicleNumber;
   final int? materialId;
-  final String status; // 'all', 'completed', 'pending'
   final String paymentMode; // 'all', 'cash', 'credit'
   final String searchQuery;
 
@@ -27,10 +26,9 @@ class ReportFilter extends Equatable {
     this.datePreset = DateRangePreset.today,
     this.customStartDate,
     this.customEndDate,
-    this.partyId,
-    this.vehicleId,
+    this.customerId,
+    this.vehicleNumber = '',
     this.materialId,
-    this.status = 'all',
     this.paymentMode = 'all',
     this.searchQuery = '',
   });
@@ -113,14 +111,12 @@ class ReportFilter extends Equatable {
     DateRangePreset? datePreset,
     DateTime? customStartDate,
     DateTime? customEndDate,
-    int? partyId,
-    int? vehicleId,
+    int? customerId,
+    String? vehicleNumber,
     int? materialId,
-    String? status,
     String? paymentMode,
     String? searchQuery,
-    bool clearParty = false,
-    bool clearVehicle = false,
+    bool clearCustomer = false,
     bool clearMaterial = false,
     bool clearCustomDates = false,
   }) {
@@ -132,10 +128,9 @@ class ReportFilter extends Equatable {
       customEndDate: clearCustomDates
           ? null
           : (customEndDate ?? this.customEndDate),
-      partyId: clearParty ? null : (partyId ?? this.partyId),
-      vehicleId: clearVehicle ? null : (vehicleId ?? this.vehicleId),
+      customerId: clearCustomer ? null : (customerId ?? this.customerId),
+      vehicleNumber: vehicleNumber ?? this.vehicleNumber,
       materialId: clearMaterial ? null : (materialId ?? this.materialId),
-      status: status ?? this.status,
       paymentMode: paymentMode ?? this.paymentMode,
       searchQuery: searchQuery ?? this.searchQuery,
     );
@@ -146,10 +141,9 @@ class ReportFilter extends Equatable {
     datePreset,
     customStartDate,
     customEndDate,
-    partyId,
-    vehicleId,
+    customerId,
+    vehicleNumber,
     materialId,
-    status,
     paymentMode,
     searchQuery,
   ];

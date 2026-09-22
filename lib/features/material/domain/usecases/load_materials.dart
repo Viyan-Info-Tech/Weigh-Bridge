@@ -6,10 +6,7 @@ class LoadMaterialsUseCase {
 
   LoadMaterialsUseCase(this._repository);
 
-  Future<List<MaterialItem>> call({bool? isActive, String? category}) async {
-    if (category != null) {
-      return _repository.getMaterialsByCategory(category);
-    }
+  Future<List<MaterialItem>> call({bool? isActive}) async {
     if (isActive != null) {
       return _repository.getMaterialsByStatus(isActive: isActive);
     }

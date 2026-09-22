@@ -35,9 +35,8 @@ class AppSettings extends Table {
   BoolColumn get showVehicleNumber =>
       boolean().withDefault(const Constant(true))();
   BoolColumn get showMaterial => boolean().withDefault(const Constant(true))();
-  BoolColumn get showParty => boolean().withDefault(const Constant(true))();
-  BoolColumn get showVehicleType =>
-      boolean().withDefault(const Constant(true))();
+  BoolColumn get showCustomer =>
+      boolean().named('show_party').withDefault(const Constant(true))();
   BoolColumn get showGrossWeight =>
       boolean().withDefault(const Constant(true))();
   BoolColumn get showTareWeight =>
@@ -47,8 +46,6 @@ class AppSettings extends Table {
   BoolColumn get showPaymentMode =>
       boolean().withDefault(const Constant(true))();
   BoolColumn get showCashReceived =>
-      boolean().withDefault(const Constant(true))();
-  BoolColumn get showPendingAmount =>
       boolean().withDefault(const Constant(true))();
   BoolColumn get showRemarks => boolean().withDefault(const Constant(true))();
 

@@ -11,31 +11,20 @@ import '../../features/auth/domain/usecases/is_authenticated.dart';
 import '../../features/auth/domain/usecases/login.dart';
 import '../../features/auth/domain/usecases/logout.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../features/auth/presentation/bloc/auth_event.dart';
 import '../../features/bill/data/datasources/bill_local_datasource.dart';
 import '../../features/bill/data/repositories/bill_repository_impl.dart';
 import '../../features/bill/domain/usecases/save_bill.dart';
 import '../../features/bill/presentation/bloc/bill_bloc.dart';
-import '../../features/party/data/datasources/party_local_datasource.dart';
-import '../../features/party/data/repositories/party_repository_impl.dart';
-import '../../features/party/domain/usecases/load_parties.dart';
-import '../../features/party/domain/usecases/create_party.dart';
-import '../../features/party/domain/usecases/update_party.dart';
-import '../../features/party/domain/usecases/deactivate_party.dart';
-import '../../features/party/domain/usecases/delete_party.dart';
-import '../../features/party/domain/usecases/search_parties.dart';
-import '../../features/party/presentation/bloc/party_bloc.dart';
-import '../../features/vehicle/data/datasources/vehicle_local_datasource.dart';
-import '../../features/vehicle/data/repositories/vehicle_repository_impl.dart';
-import '../../features/vehicle/domain/usecases/load_vehicles.dart';
-import '../../features/vehicle/domain/usecases/create_vehicle.dart';
-import '../../features/vehicle/domain/usecases/delete_vehicle.dart';
-import '../../features/vehicle/presentation/bloc/vehicle_bloc.dart';
-import '../../features/vehicle_type/data/datasources/vehicle_type_local_datasource.dart';
-import '../../features/vehicle_type/data/repositories/vehicle_type_repository_impl.dart';
-import '../../features/vehicle_type/domain/usecases/load_vehicle_types.dart';
-import '../../features/vehicle_type/domain/usecases/create_vehicle_type.dart';
-import '../../features/vehicle_type/domain/usecases/delete_vehicle_type.dart';
-import '../../features/vehicle_type/presentation/bloc/vehicle_type_bloc.dart';
+import '../../features/customer/data/datasources/customer_local_datasource.dart';
+import '../../features/customer/data/repositories/customer_repository_impl.dart';
+import '../../features/customer/domain/usecases/load_customers.dart';
+import '../../features/customer/domain/usecases/create_customer.dart';
+import '../../features/customer/domain/usecases/update_customer.dart';
+import '../../features/customer/domain/usecases/deactivate_customer.dart';
+import '../../features/customer/domain/usecases/delete_customer.dart';
+import '../../features/customer/domain/usecases/search_customers.dart';
+import '../../features/customer/presentation/bloc/customer_bloc.dart';
 import '../../features/material/data/datasources/material_item_local_datasource.dart';
 import '../../features/material/data/repositories/material_item_repository_impl.dart';
 import '../../features/material/domain/usecases/load_materials.dart';
@@ -59,21 +48,17 @@ class Injection {
   final AppDatabase database;
   final AuthBloc authBloc;
   final BillBloc billBloc;
-  final PartyBloc partyBloc;
-  final VehicleBloc vehicleBloc;
-  final VehicleTypeBloc vehicleTypeBloc;
+  final CustomerBloc customerBloc;
   final MaterialBloc materialBloc;
   final SettingsBloc settingsBloc;
   final ReportBloc reportBloc;
   final LicenseService licenseService;
 
-  Injection._({
+  Injection({
     required this.database,
     required this.authBloc,
     required this.billBloc,
-    required this.partyBloc,
-    required this.vehicleBloc,
-    required this.vehicleTypeBloc,
+    required this.customerBloc,
     required this.materialBloc,
     required this.settingsBloc,
     required this.reportBloc,
@@ -106,66 +91,30 @@ class Injection {
       getCurrentUserUseCase: getCurrentUserUseCase,
       isAuthenticatedUseCase: isAuthenticatedUseCase,
     );
+    authBloc.add(const AppStarted());
 
-    // Party
-    final partyLocalDataSource = PartyLocalDataSource(database);
-    final partyRepository = PartyRepositoryImpl(partyLocalDataSource);
+    // Customer
+    final CustomerLocalDataSource customerLocalDataSource =
+        CustomerLocalDataSource(database);
+    final customerRepository = CustomerRepositoryImpl(customerLocalDataSource);
 
-    final loadPartiesUseCase = LoadPartiesUseCase(partyRepository);
-    final createPartyUseCase = CreatePartyUseCase(partyRepository);
-    final updatePartyUseCase = UpdatePartyUseCase(partyRepository);
-    final deactivatePartyUseCase = DeactivatePartyUseCase(partyRepository);
-    final deletePartyUseCase = DeletePartyUseCase(partyRepository);
-    final searchPartiesUseCase = SearchPartiesUseCase(partyRepository);
-
-    final partyBloc = PartyBloc(
-      loadPartiesUseCase: loadPartiesUseCase,
-      createPartyUseCase: createPartyUseCase,
-      updatePartyUseCase: updatePartyUseCase,
-      deactivatePartyUseCase: deactivatePartyUseCase,
-      deletePartyUseCase: deletePartyUseCase,
-      searchPartiesUseCase: searchPartiesUseCase,
-      partyRepository: partyRepository,
+    final loadCustomersUseCase = LoadCustomersUseCase(customerRepository);
+    final createCustomerUseCase = CreateCustomerUseCase(customerRepository);
+    final updateCustomerUseCase = UpdateCustomerUseCase(customerRepository);
+    final deactivateCustomerUseCase = DeactivateCustomerUseCase(
+      customerRepository,
     );
+    final deleteCustomerUseCase = DeleteCustomerUseCase(customerRepository);
+    final searchCustomersUseCase = SearchCustomersUseCase(customerRepository);
 
-    // Vehicle Type
-    final vehicleTypeLocalDataSource = VehicleTypeLocalDataSource(database);
-    final vehicleTypeRepository = VehicleTypeRepositoryImpl(
-      localDataSource: vehicleTypeLocalDataSource,
-    );
-
-    final loadVehicleTypesUseCase = LoadVehicleTypesUseCase(
-      vehicleTypeRepository,
-    );
-    final createVehicleTypeUseCase = CreateVehicleTypeUseCase(
-      vehicleTypeRepository,
-    );
-    final deleteVehicleTypeUseCase = DeleteVehicleTypeUseCase(
-      vehicleTypeRepository,
-    );
-
-    final vehicleTypeBloc = VehicleTypeBloc(
-      loadVehicleTypesUseCase: loadVehicleTypesUseCase,
-      createVehicleTypeUseCase: createVehicleTypeUseCase,
-      deleteVehicleTypeUseCase: deleteVehicleTypeUseCase,
-      vehicleTypeRepository: vehicleTypeRepository,
-    );
-
-    // Vehicle
-    final vehicleLocalDataSource = VehicleLocalDataSource(database);
-    final vehicleRepository = VehicleRepositoryImpl(
-      localDataSource: vehicleLocalDataSource,
-    );
-
-    final loadVehiclesUseCase = LoadVehiclesUseCase(vehicleRepository);
-    final createVehicleUseCase = CreateVehicleUseCase(vehicleRepository);
-    final deleteVehicleUseCase = DeleteVehicleUseCase(vehicleRepository);
-
-    final vehicleBloc = VehicleBloc(
-      loadVehiclesUseCase: loadVehiclesUseCase,
-      createVehicleUseCase: createVehicleUseCase,
-      deleteVehicleUseCase: deleteVehicleUseCase,
-      vehicleRepository: vehicleRepository,
+    final customerBloc = CustomerBloc(
+      loadCustomersUseCase: loadCustomersUseCase,
+      createCustomerUseCase: createCustomerUseCase,
+      updateCustomerUseCase: updateCustomerUseCase,
+      deactivateCustomerUseCase: deactivateCustomerUseCase,
+      deleteCustomerUseCase: deleteCustomerUseCase,
+      searchCustomersUseCase: searchCustomersUseCase,
+      customerRepository: customerRepository,
     );
 
     // Material
@@ -207,17 +156,13 @@ class Injection {
 
     final saveBillUseCase = SaveBillUseCase(billRepository);
     final loadRecentBillsUseCase = LoadRecentBillsUseCase(billRepository);
-    final loadPendingBillsUseCase = LoadPendingBillsUseCase(billRepository);
     final generateBillNumberUseCase = GenerateBillNumberUseCase(billRepository);
 
     final billBloc = BillBloc(
-      partyRepository: partyRepository,
-      vehicleRepository: vehicleRepository,
-      vehicleTypeRepository: vehicleTypeRepository,
+      customerRepository: customerRepository,
       materialRepository: materialItemRepository,
       saveBillUseCase: saveBillUseCase,
       loadRecentBillsUseCase: loadRecentBillsUseCase,
-      loadPendingBillsUseCase: loadPendingBillsUseCase,
       generateBillNumberUseCase: generateBillNumberUseCase,
       settingsRepository: settingsRepository,
     );
@@ -234,26 +179,21 @@ class Injection {
     );
     final reportBloc = ReportBloc(
       reportRepository: reportRepository,
-      partyRepository: partyRepository,
-      vehicleRepository: vehicleRepository,
+      customerRepository: customerRepository,
       materialRepository: materialItemRepository,
       exportReportUseCase: exportReportUseCase,
     );
-
-
 
     // License
     final licenseService = LicenseServiceImpl();
 
     await _seedInitialData(authLocalDataSource, passwordHasher);
 
-    return Injection._(
+    return Injection(
       database: database,
       authBloc: authBloc,
       billBloc: billBloc,
-      partyBloc: partyBloc,
-      vehicleBloc: vehicleBloc,
-      vehicleTypeBloc: vehicleTypeBloc,
+      customerBloc: customerBloc,
       materialBloc: materialBloc,
       settingsBloc: settingsBloc,
       reportBloc: reportBloc,

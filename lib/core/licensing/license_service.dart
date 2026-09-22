@@ -31,7 +31,9 @@ class LicenseServiceImpl implements LicenseService {
   }) : _licenseDataSource = licenseDataSource ?? LicenseLocalDataSource(),
        _machineIdentityService =
            machineIdentityService ??
-           MachineIdentityService(WindowsMachineIdentityDatasource()),
+           MachineIdentityService(
+             machineIdentityDataSource ?? WindowsMachineIdentityDatasource(),
+           ),
        _clockRollbackDataSource =
            clockRollbackDataSource ?? ClockRollbackDataSource() {
     _validator =

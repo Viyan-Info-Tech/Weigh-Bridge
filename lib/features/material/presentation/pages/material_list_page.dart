@@ -109,7 +109,7 @@ class _MaterialListPageState extends State<MaterialListPage> {
             ),
             SizedBox(height: 2),
             Text(
-              'Manage materials, categories, and inventory items',
+              'Manage materials and inventory items',
               style: TextStyle(
                 fontFamily: 'PlusJakartaSans',
                 fontSize: 12,
@@ -129,11 +129,6 @@ class _MaterialListPageState extends State<MaterialListPage> {
         final activeMaterials = state.materials.where((m) => m.isActive).length;
         final inactiveMaterials = totalMaterials - activeMaterials;
 
-        final categories = state.materials
-            .map((m) => (m.category ?? '').trim())
-            .where((c) => c.isNotEmpty)
-            .toSet();
-
         final activeRate = totalMaterials > 0
             ? ((activeMaterials / totalMaterials) * 100).round()
             : 100;
@@ -150,12 +145,12 @@ class _MaterialListPageState extends State<MaterialListPage> {
             ),
             const SizedBox(width: 14),
             _buildStatCard(
-              icon: Icons.category_rounded,
+              icon: Icons.tag_rounded,
               iconColor: const Color(0xFF7C3AED),
               iconBg: const Color(0xFFFAF5FF),
-              label: 'Material Categories',
-              value: '${categories.length}',
-              subtext: 'Distinct material groups',
+              label: 'Active Materials',
+              value: '$activeMaterials',
+              subtext: 'Currently in the catalog',
             ),
             const SizedBox(width: 14),
             _buildStatCard(
@@ -349,7 +344,7 @@ class _MaterialListPageState extends State<MaterialListPage> {
                   fontSize: 12,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'Search by material name, category...',
+                  hintText: 'Search by material name, code...',
                   hintStyle: const TextStyle(
                     fontFamily: 'PlusJakartaSans',
                     fontSize: 12,
@@ -518,8 +513,8 @@ class _MaterialListPageState extends State<MaterialListPage> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: [
+          Expanded(flex: 24, child: _buildHeaderText('CODE')),
           Expanded(flex: 42, child: _buildHeaderText('MATERIAL NAME')),
-          Expanded(flex: 30, child: _buildHeaderText('CATEGORY')),
           Expanded(flex: 28, child: _buildHeaderText('STATUS')),
           SizedBox(
             width: _actionColumnWidth,
@@ -554,6 +549,29 @@ class _MaterialListPageState extends State<MaterialListPage> {
     return _HoverableRow(
       child: Row(
         children: [
+          // Code
+          Expanded(
+            flex: 24,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Text(
+                material.code,
+                style: const TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF334155),
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+
           // Material Name
           Expanded(
             flex: 42,
@@ -588,34 +606,6 @@ class _MaterialListPageState extends State<MaterialListPage> {
             ),
           ),
 
-          // Category
-          Expanded(
-            flex: 30,
-            child: Align(
-              alignment: Alignment.centerLeft,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(6),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Text(
-                  material.category != null && material.category!.isNotEmpty
-                      ? material.category!
-                      : 'General',
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF334155),
-                  ),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ),
-          ),
-
           // Status
           Expanded(
             flex: 28,
@@ -636,9 +626,11 @@ class _MaterialListPageState extends State<MaterialListPage> {
                   isActive: material.isActive,
                   onView: () =>
                       MaterialDetailsDialog.show(context, material: material),
-                  onEdit: () => _navigateToForm(context, materialId: material.id),
+                  onEdit: () =>
+                      _navigateToForm(context, materialId: material.id),
                   onDelete: () => _confirmDeleteMaterial(context, material),
-                  onDeactivate: () => _confirmDeactivateMaterial(context, material),
+                  onDeactivate: () =>
+                      _confirmDeactivateMaterial(context, material),
                   onActivate: () => _confirmActivateMaterial(context, material),
                 ),
               ),
