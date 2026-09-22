@@ -63,7 +63,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('This computer has not been activated.'),
+        find.text(
+          'This computer has not been activated.\n'
+          'Please contact ViyanInfo to obtain a license.',
+        ),
         findsOneWidget,
       );
     });
