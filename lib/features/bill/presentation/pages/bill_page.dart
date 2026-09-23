@@ -25,6 +25,7 @@ class BillPage extends StatefulWidget {
 
 class _BillPageState extends State<BillPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  late final FocusNode _keyboardFocusNode;
 
   late final TextEditingController _grossWeightController;
   late final TextEditingController _tareWeightController;
@@ -46,12 +47,12 @@ class _BillPageState extends State<BillPage> {
   late final FocusNode _paymentModeFocusNode;
   late final FocusNode _searchFocusNode;
   bool _didRequestInitialFocus = false;
-  String? _lastControllerWeightUnit;
   StreamSubscription<SettingsState>? _settingsSubscription;
 
   @override
   void initState() {
     super.initState();
+    _keyboardFocusNode = FocusNode(debugLabel: 'weighmentKeyboardFocusNode');
     _grossWeightController = TextEditingController();
     _tareWeightController = TextEditingController();
     _remarksController = TextEditingController();
@@ -74,6 +75,7 @@ class _BillPageState extends State<BillPage> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
+        _keyboardFocusNode.requestFocus();
         context.read<BillBloc>().add(const LoadBillScreen());
         try {
           _settingsSubscription = context.read<SettingsBloc>().stream.listen((
@@ -94,6 +96,7 @@ class _BillPageState extends State<BillPage> {
   @override
   void dispose() {
     _settingsSubscription?.cancel();
+    _keyboardFocusNode.dispose();
     _grossWeightController.dispose();
     _tareWeightController.dispose();
     _remarksController.dispose();
@@ -130,24 +133,8 @@ class _BillPageState extends State<BillPage> {
   }
 
   void _syncWeightControllers(BillState state) {
-    final unitChanged = _lastControllerWeightUnit != state.weightUnit;
-    final shouldSyncGross =
-        unitChanged ||
-        (_grossWeightController.text.isEmpty &&
-            state.grossWeightText.isNotEmpty);
-    final shouldSyncTare =
-        unitChanged ||
-        (_tareWeightController.text.isEmpty && state.tareWeightText.isNotEmpty);
-
-    if (shouldSyncGross) {
-      _setControllerText(_grossWeightController, state.grossWeightText);
-    }
-
-    if (shouldSyncTare) {
-      _setControllerText(_tareWeightController, state.tareWeightText);
-    }
-
-    _lastControllerWeightUnit = state.weightUnit;
+    _setControllerText(_grossWeightController, state.grossWeightText);
+    _setControllerText(_tareWeightController, state.tareWeightText);
   }
 
   void _setControllerText(TextEditingController controller, String text) {
@@ -193,22 +180,22 @@ class _BillPageState extends State<BillPage> {
       ..showSnackBar(SnackBar(content: Text(message)));
   }
 
-  void _showManualTareDialog(BillState state) {
-    if (state.isEditing && state.editingFirstWeightType == 'TARE') {
-      _showKeyboardMessage('The original tare weight cannot be changed.');
+  void _focusTareWeightInput() {
+    final state = context.read<BillBloc>().state;
+    if (state.isEditing && state.editingFirstWeightType != 'TARE') {
+      _showKeyboardMessage(
+        'The tare weight cannot be changed for this ticket.',
+      );
       return;
     }
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => _ManualTareDialog(
-        initialValue: state.tareWeightText,
-        weightUnit: state.weightUnit,
-        onConfirm: (value) {
-          context.read<BillBloc>().add(TareWeightChanged(value));
-          Navigator.pop(dialogContext);
-        },
-      ),
-    );
+    _tareWeightFocusNode.requestFocus();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_tareWeightFocusNode.hasFocus) return;
+      _tareWeightController.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: _tareWeightController.text.length,
+      );
+    });
   }
 
   void _captureAutoTare(BillState state) {
@@ -322,6 +309,8 @@ class _BillPageState extends State<BillPage> {
           prev.errorMessage != curr.errorMessage ||
           prev.currentBillNumber != curr.currentBillNumber ||
           prev.weightUnit != curr.weightUnit ||
+          prev.grossWeightText != curr.grossWeightText ||
+          prev.tareWeightText != curr.tareWeightText ||
           (curr.status == BillScreenStatus.printing &&
               curr.printReceiptBill != null),
       listener: (context, state) {
@@ -411,129 +400,141 @@ class _BillPageState extends State<BillPage> {
         }
       },
       builder: (context, state) {
-        return CallbackShortcuts(
-          bindings: <ShortcutActivator, VoidCallback>{
-            // The weighment page owns these shortcuts; they do not leak
-            // into the master, report, or settings pages.
-            const SingleActivator(LogicalKeyboardKey.f1): () =>
-                _handleF1Workflow(),
-            const SingleActivator(LogicalKeyboardKey.keyS, control: true): () =>
-                _saveTicket(context, state),
-            const SingleActivator(LogicalKeyboardKey.f2): () =>
-                _showManualTareDialog(state),
-            const SingleActivator(LogicalKeyboardKey.escape): () =>
-                _onCancelPressed(context, state),
-            const SingleActivator(LogicalKeyboardKey.f4): () =>
-                _onReprintPressed(context, state),
-            const SingleActivator(LogicalKeyboardKey.f3): () =>
-                _captureAutoTare(state),
-            const SingleActivator(LogicalKeyboardKey.keyP, control: true): () =>
-                _saveAndPrintTicket(context, state),
-            const SingleActivator(LogicalKeyboardKey.f10): () =>
-                _saveAndPrintTicket(context, state),
-            const SingleActivator(LogicalKeyboardKey.f9): () =>
-                _onExitPressed(context, state),
-            const SingleActivator(LogicalKeyboardKey.tab): () =>
-                _moveWeighmentFocus(forward: true),
-            const SingleActivator(LogicalKeyboardKey.tab, shift: true): () =>
-                _moveWeighmentFocus(forward: false),
-          },
-          child: Scaffold(
-            key: _scaffoldKey,
-            backgroundColor: const Color(0xFFF1F5F9),
-            body: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  if (constraints.maxWidth < 1280) {
-                    return SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          _buildWeighmentArea(state),
-                          const SizedBox(height: 12),
-                          SizedBox(
-                            height: 440,
-                            child: _buildRecentBillsPanel(state),
-                          ),
-                        ],
-                      ),
-                    );
-                  }
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // ── LEFT PANEL: Weight Display + Form + Action Buttons ──
-                      Expanded(
-                        flex: 67,
+        return Focus(
+          focusNode: _keyboardFocusNode,
+          child: CallbackShortcuts(
+            bindings: <ShortcutActivator, VoidCallback>{
+              // The weighment page owns these shortcuts; they do not leak
+              // into the master, report, or settings pages.
+              const SingleActivator(LogicalKeyboardKey.f1): () =>
+                  _handleF1Workflow(),
+              const SingleActivator(
+                LogicalKeyboardKey.keyS,
+                control: true,
+              ): () =>
+                  _saveTicket(context, state),
+              const SingleActivator(LogicalKeyboardKey.f2): () =>
+                  _focusTareWeightInput(),
+              const SingleActivator(LogicalKeyboardKey.escape): () =>
+                  _onCancelPressed(context, state),
+              const SingleActivator(LogicalKeyboardKey.f4): () =>
+                  _onReprintPressed(context, state),
+              const SingleActivator(LogicalKeyboardKey.f3): () =>
+                  _captureAutoTare(state),
+              const SingleActivator(
+                LogicalKeyboardKey.keyP,
+                control: true,
+              ): () =>
+                  _saveAndPrintTicket(context, state),
+              const SingleActivator(LogicalKeyboardKey.f10): () =>
+                  _saveAndPrintTicket(context, state),
+              const SingleActivator(LogicalKeyboardKey.f9): () =>
+                  _onExitPressed(context, state),
+              const SingleActivator(LogicalKeyboardKey.tab): () =>
+                  _moveWeighmentFocus(forward: true),
+              const SingleActivator(LogicalKeyboardKey.tab, shift: true): () =>
+                  _moveWeighmentFocus(forward: false),
+            },
+            child: Scaffold(
+              key: _scaffoldKey,
+              backgroundColor: const Color(0xFFF1F5F9),
+              body: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    if (constraints.maxWidth < 1280) {
+                      return SingleChildScrollView(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            // 1. Hero Weight Display Banner
-                            WeightDisplay(
-                              netWeightKg: state.netWeightKg,
-                              grossWeight: state.grossWeightKg,
-                              tareWeight: state.tareWeightKg,
-                              weightUnit: state.weightUnit,
-                              liveScaleWeightKg: state.liveScaleWeightKg,
-                              activeMode: state.selectedWeightType
-                                  .toUpperCase(),
-                              isStable: state.isScaleStable,
-                              isMotion: state.isScaleMotion,
-                              isOverload: state.isScaleOverload,
+                            _buildWeighmentArea(state),
+                            const SizedBox(height: 12),
+                            SizedBox(
+                              height: 440,
+                              child: _buildRecentBillsPanel(state),
                             ),
-
-                            const SizedBox(height: 10),
-
-                            // 2. Main 2-Column Form
-                            Expanded(child: _buildBillForm(state)),
-
-                            const SizedBox(height: 10),
-
-                            // 3. Action Buttons Bar
-                            _buildActionButtons(state),
                           ],
                         ),
-                      ),
+                      );
+                    }
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        // ── LEFT PANEL: Weight Display + Form + Action Buttons ──
+                        Expanded(
+                          flex: 67,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              // 1. Hero Weight Display Banner
+                              WeightDisplay(
+                                netWeightKg: state.netWeightKg,
+                                grossWeight: state.grossWeightKg,
+                                tareWeight: state.tareWeightKg,
+                                weightUnit: state.weightUnit,
+                                liveScaleWeightKg: state.liveScaleWeightKg,
+                                activeMode: state.selectedWeightType
+                                    .toUpperCase(),
+                                isStable: state.isScaleStable,
+                                isMotion: state.isScaleMotion,
+                                isOverload: state.isScaleOverload,
+                              ),
 
-                      const SizedBox(width: 12),
+                              const SizedBox(height: 10),
 
-                      // ── RIGHT PANEL: Always-visible Recent Bills ──
-                      Expanded(
-                        flex: 33,
-                        child: RecentBillsPanel(
-                          searchFocusNode: _searchFocusNode,
-                          recentBills: state.recentBills,
-                          billsDate: state.effectiveBillsDate,
-                          billsStartDate: state.billsStartDate,
-                          billsEndDate: state.billsEndDate,
-                          customers: state.customers,
-                          materials: state.materials,
-                          weightUnit: state.weightUnit,
-                          onDateChanged: (date) {
-                            context.read<BillBloc>().add(
-                              LoadRecentBills(date: date),
-                            );
-                          },
-                          onDateRangeChanged: (startDate, endDate) {
-                            if (startDate != null && endDate != null) {
-                              context.read<BillBloc>().add(
-                                LoadRecentBills(
-                                  startDate: startDate,
-                                  endDate: endDate,
-                                ),
-                              );
-                            } else {
-                              context.read<BillBloc>().add(
-                                const LoadRecentBills(),
-                              );
-                            }
-                          },
+                              // 2. Main 2-Column Form
+                              Expanded(child: _buildBillForm(state)),
+
+                              const SizedBox(height: 10),
+
+                              // 3. Action Buttons Bar
+                              _buildActionButtons(state),
+                            ],
+                          ),
                         ),
-                      ),
-                    ],
-                  );
-                },
+
+                        const SizedBox(width: 12),
+
+                        // ── RIGHT PANEL: Always-visible Recent Bills ──
+                        Expanded(
+                          flex: 33,
+                          child: RecentBillsPanel(
+                            searchFocusNode: _searchFocusNode,
+                            recentBills: state.recentBills,
+                            billsDate: state.effectiveBillsDate,
+                            billsStartDate: state.billsStartDate,
+                            billsEndDate: state.billsEndDate,
+                            customers: state.customers,
+                            materials: state.materials,
+                            weightUnit: state.weightUnit,
+                            onDateChanged: (date) {
+                              context.read<BillBloc>().add(
+                                LoadRecentBills(date: date),
+                              );
+                            },
+                            onDateRangeChanged: (startDate, endDate) {
+                              if (startDate != null && endDate != null) {
+                                context.read<BillBloc>().add(
+                                  LoadRecentBills(
+                                    startDate: startDate,
+                                    endDate: endDate,
+                                  ),
+                                );
+                              } else {
+                                context.read<BillBloc>().add(
+                                  const LoadRecentBills(),
+                                );
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
               ),
             ),
           ),
@@ -743,7 +744,7 @@ class _BillPageState extends State<BillPage> {
             shortcut: 'F2',
             accentColor: const Color(0xFF0284C7),
             accentBgColor: const Color(0xFFE0F2FE),
-            onTap: isSaving ? null : () => _showManualTareDialog(state),
+            onTap: isSaving ? null : _focusTareWeightInput,
           ),
           // 5. F3: AUTO TARE
           _buildUnifiedActionButton(
@@ -858,7 +859,9 @@ class _BillPageState extends State<BillPage> {
           color: isEnabled ? Colors.white : const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isEnabled ? const Color(0xFFE2E8F0) : const Color(0xFFE2E8F0),
+            color: isEnabled
+                ? const Color(0xFFE2E8F0)
+                : const Color(0xFFE2E8F0),
             width: 1.2,
           ),
           boxShadow: isEnabled
@@ -871,11 +874,15 @@ class _BillPageState extends State<BillPage> {
                 ]
               : null,
         );
-        textColor = isEnabled ? const Color(0xFF0F172A) : const Color(0xFF94A3B8);
+        textColor = isEnabled
+            ? const Color(0xFF0F172A)
+            : const Color(0xFF94A3B8);
         iconColor = isEnabled ? accent : const Color(0xFF94A3B8);
         iconBoxBg = isEnabled ? bg : const Color(0xFFF1F5F9);
         keycapBg = isEnabled ? bg : const Color(0xFFF1F5F9);
-        keycapBorder = isEnabled ? accent.withValues(alpha: 0.25) : const Color(0xFFCBD5E1);
+        keycapBorder = isEnabled
+            ? accent.withValues(alpha: 0.25)
+            : const Color(0xFFCBD5E1);
         keycapText = isEnabled ? accent : const Color(0xFF94A3B8);
         break;
     }
@@ -918,11 +925,7 @@ class _BillPageState extends State<BillPage> {
                                 color: iconColor,
                               ),
                             )
-                          : Icon(
-                              icon,
-                              size: 15,
-                              color: iconColor,
-                            ),
+                          : Icon(icon, size: 15, color: iconColor),
                     ),
                   ),
                   const SizedBox(width: 7),
@@ -1008,78 +1011,4 @@ class _BillPageState extends State<BillPage> {
   }
 }
 
-class _ManualTareDialog extends StatefulWidget {
-  const _ManualTareDialog({
-    required this.initialValue,
-    required this.weightUnit,
-    required this.onConfirm,
-  });
-
-  final String initialValue;
-  final String weightUnit;
-  final ValueChanged<String> onConfirm;
-
-  @override
-  State<_ManualTareDialog> createState() => _ManualTareDialogState();
-}
-
-class _ManualTareDialogState extends State<_ManualTareDialog> {
-  late final TextEditingController _controller;
-  final _formKey = GlobalKey<FormState>();
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.initialValue);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _confirm() {
-    if (!_formKey.currentState!.validate()) return;
-    widget.onConfirm(_controller.text.trim());
-  }
-
-  @override
-  Widget build(BuildContext context) => AlertDialog(
-    title: const Text('Manual Tare'),
-    content: Form(
-      key: _formKey,
-      child: TextFormField(
-        autofocus: true,
-        controller: _controller,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
-        decoration: InputDecoration(
-          labelText: 'Tare Weight (${widget.weightUnit})',
-          border: const OutlineInputBorder(),
-        ),
-        onFieldSubmitted: (_) => _confirm(),
-        validator: (value) {
-          final weight = double.tryParse(value?.trim() ?? '');
-          if (weight == null || !weight.isFinite || weight <= 0) {
-            return 'Enter a valid weight greater than zero';
-          }
-          return null;
-        },
-      ),
-    ),
-    actions: [
-      TextButton(
-        onPressed: () => Navigator.pop(context),
-        child: const Text('Cancel'),
-      ),
-      FilledButton(onPressed: _confirm, child: const Text('Confirm')),
-    ],
-  );
-}
-
-enum _ActionButtonStyle {
-  primary,
-  danger,
-  neutral,
-}
+enum _ActionButtonStyle { primary, danger, neutral }
