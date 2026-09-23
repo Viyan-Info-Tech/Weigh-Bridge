@@ -8,6 +8,7 @@ class UpdateCustomerUseCase {
   Future<bool> call({
     required int id,
     required String name,
+    String? customerCode,
     String? contactPerson,
     String? mobile,
     String? email,
@@ -16,9 +17,18 @@ class UpdateCustomerUseCase {
     String? city,
     String? state,
   }) async {
+    final existing = customerCode == null || customerCode.isEmpty
+        ? null
+        : await _repository.getCustomerByCode(customerCode);
+    if (existing != null && existing.id != id) {
+      throw Exception(
+        'Customer code "$customerCode" already exists. Please enter a different customer code.',
+      );
+    }
     return await _repository.updateCustomer(
       id: id,
       name: name,
+      customerCode: customerCode,
       contactPerson: contactPerson,
       mobile: mobile,
       email: email,

@@ -28,7 +28,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 17;
+  int get schemaVersion => 18;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -585,6 +585,27 @@ class AppDatabase extends _$AppDatabase {
         );
         await customStatement('DROP TABLE materials');
         await customStatement('ALTER TABLE materials_new RENAME TO materials');
+      }
+
+      if (from < 18) {
+        // SQLite cannot ALTER TABLE to add a UNIQUE column. Add it nullable,
+        // seed legacy codes from their stable row ids, then enforce uniqueness.
+        final customerColumns = await customSelect(
+          "PRAGMA table_info('customers')",
+        ).get();
+        if (!customerColumns.any(
+          (column) => column.read<String>('name') == 'customer_code',
+        )) {
+          await customStatement(
+            'ALTER TABLE customers ADD COLUMN customer_code TEXT',
+          );
+        }
+        await customStatement(
+          "UPDATE customers SET customer_code = CAST(id AS TEXT) WHERE customer_code IS NULL",
+        );
+        await customStatement(
+          'CREATE UNIQUE INDEX IF NOT EXISTS customers_customer_code_unique ON customers (customer_code)',
+        );
       }
     },
   );

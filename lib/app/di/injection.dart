@@ -16,6 +16,7 @@ import '../../features/bill/data/datasources/bill_local_datasource.dart';
 import '../../features/bill/data/repositories/bill_repository_impl.dart';
 import '../../features/bill/domain/usecases/save_bill.dart';
 import '../../features/bill/presentation/bloc/bill_bloc.dart';
+import '../../features/bill/domain/repositories/bill_repository.dart';
 import '../../features/customer/data/datasources/customer_local_datasource.dart';
 import '../../features/customer/data/repositories/customer_repository_impl.dart';
 import '../../features/customer/domain/usecases/load_customers.dart';
@@ -25,12 +26,14 @@ import '../../features/customer/domain/usecases/deactivate_customer.dart';
 import '../../features/customer/domain/usecases/delete_customer.dart';
 import '../../features/customer/domain/usecases/search_customers.dart';
 import '../../features/customer/presentation/bloc/customer_bloc.dart';
+import '../../features/customer/domain/repositories/customer_repository.dart';
 import '../../features/material/data/datasources/material_item_local_datasource.dart';
 import '../../features/material/data/repositories/material_item_repository_impl.dart';
 import '../../features/material/domain/usecases/load_materials.dart';
 import '../../features/material/domain/usecases/create_material.dart';
 import '../../features/material/domain/usecases/delete_material.dart';
 import '../../features/material/presentation/bloc/material_bloc.dart';
+import '../../features/material/domain/repositories/material_item_repository.dart';
 import '../../features/settings/data/datasources/settings_local_datasource.dart';
 import '../../features/settings/data/repositories/settings_repository_impl.dart';
 import '../../features/settings/domain/usecases/get_settings.dart';
@@ -53,6 +56,9 @@ class Injection {
   final SettingsBloc settingsBloc;
   final ReportBloc reportBloc;
   final LicenseService licenseService;
+  final BillRepository billRepository;
+  final CustomerRepository customerRepository;
+  final MaterialItemRepository materialRepository;
 
   Injection({
     required this.database,
@@ -63,6 +69,9 @@ class Injection {
     required this.settingsBloc,
     required this.reportBloc,
     required this.licenseService,
+    required this.billRepository,
+    required this.customerRepository,
+    required this.materialRepository,
   });
 
   static Future<Injection> init() async {
@@ -182,6 +191,7 @@ class Injection {
       customerRepository: customerRepository,
       materialRepository: materialItemRepository,
       exportReportUseCase: exportReportUseCase,
+      settingsRepository: settingsRepository,
     );
 
     // License
@@ -198,6 +208,9 @@ class Injection {
       settingsBloc: settingsBloc,
       reportBloc: reportBloc,
       licenseService: licenseService,
+      billRepository: billRepository,
+      customerRepository: customerRepository,
+      materialRepository: materialItemRepository,
     );
   }
 

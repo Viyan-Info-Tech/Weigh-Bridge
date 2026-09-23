@@ -6,6 +6,7 @@ void main() {
 
   Customer buildCustomer({
     int id = 1,
+    String customerCode = 'C-001',
     String name = 'Test Customer',
     String? contactPerson = 'John',
     String? mobile = '9876543210',
@@ -18,6 +19,7 @@ void main() {
   }) {
     return Customer(
       id: id,
+      customerCode: customerCode,
       name: name,
       contactPerson: contactPerson,
       mobile: mobile,
@@ -97,6 +99,7 @@ void main() {
       final customer = buildCustomer();
       expect(customer.props, [
         1,
+        'C-001',
         'Test Customer',
         'John',
         '9876543210',

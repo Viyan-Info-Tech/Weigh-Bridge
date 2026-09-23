@@ -29,8 +29,13 @@ class CustomerRepositoryImpl implements CustomerRepository {
   }
 
   @override
+  Future<Customer?> getCustomerByCode(String code) =>
+      _dataSource.getCustomerByCode(code);
+
+  @override
   Future<int> createCustomer({
     required String name,
+    String? customerCode,
     String? contactPerson,
     String? mobile,
     String? email,
@@ -41,6 +46,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
   }) async {
     return await _dataSource.createCustomer(
       name: name,
+      customerCode: customerCode,
       contactPerson: contactPerson,
       mobile: mobile,
       email: email,
@@ -55,6 +61,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
   Future<bool> updateCustomer({
     required int id,
     required String name,
+    String? customerCode,
     String? contactPerson,
     String? mobile,
     String? email,
@@ -66,6 +73,7 @@ class CustomerRepositoryImpl implements CustomerRepository {
     return await _dataSource.updateCustomer(
       id: id,
       name: name,
+      customerCode: customerCode,
       contactPerson: contactPerson,
       mobile: mobile,
       email: email,

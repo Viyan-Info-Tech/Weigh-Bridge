@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart' hide Material;
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
@@ -40,6 +41,7 @@ void main() {
   final testCustomers = [
     Customer(
       id: 1,
+      customerCode: 'C-001',
       name: 'UltraTech Cement',
       mobile: '9876543210',
       address: 'Mumbai',
@@ -72,6 +74,10 @@ void main() {
       vehicleNumber: 'MH 12 AB 1234',
       materialId: 1,
       paymentMode: 'Cash',
+      firstWeightKg: 25000,
+      firstWeightType: 'GROSS',
+      secondWeightKg: 10000,
+      secondWeightType: 'TARE',
       grossWeightKg: 25000,
       tareWeightKg: 10000,
       netWeightKg: 15000,
@@ -91,8 +97,12 @@ void main() {
       vehicleNumber: 'MH 12 AB 1234',
       materialId: 1,
       paymentMode: 'Cash',
-      grossWeightKg: 10000,
-      tareWeightKg: 20000,
+      firstWeightKg: 10000,
+      firstWeightType: 'TARE',
+      secondWeightKg: 20000,
+      secondWeightType: 'GROSS',
+      grossWeightKg: 20000,
+      tareWeightKg: 10000,
       netWeightKg: 10000,
       vehicleCharge: 500,
       amount: 500,
@@ -112,8 +122,14 @@ void main() {
       () => mockCustomerRepository.getAllActiveCustomers(),
     ).thenAnswer((_) => Future.value(testCustomers));
     when(
+      () => mockCustomerRepository.getCustomerByCode(any()),
+    ).thenAnswer((_) => Future.value(testCustomers.first));
+    when(
       () => mockMaterialRepository.getMaterialsByStatus(isActive: true),
     ).thenAnswer((_) => Future.value(testMaterials));
+    when(
+      () => mockMaterialRepository.getMaterialByCode(any()),
+    ).thenAnswer((_) => Future.value(testMaterials.first));
     when(
       () => mockLoadRecentBillsUseCase(),
     ).thenAnswer((_) => Future.value(testBills));
@@ -178,7 +194,7 @@ void main() {
 
     // Verify Hero Scale Banner
     expect(find.text('WEIGHT'), findsOneWidget);
-    expect(find.text('STABLE'), findsOneWidget);
+    expect(find.text('STABLE'), findsNothing);
     expect(find.text('CAM 01'), findsOneWidget);
 
     // Verify Form Labels
@@ -194,8 +210,262 @@ void main() {
     expect(find.text('RE-PRINT'), findsOneWidget);
     expect(find.text('MANUAL TARE'), findsOneWidget);
     expect(find.text('AUTO TARE'), findsOneWidget);
-    expect(find.text('RE-SEND SMS'), findsOneWidget);
     expect(find.text('EXIT'), findsOneWidget);
+    expect(find.text('RE-SEND SMS'), findsNothing);
+  });
+
+  testWidgets('F2 opens manual tare and Enter confirms a valid value', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await pumpBillPage(tester);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.f2);
+    await tester.pumpAndSettle();
+    expect(find.text('Manual Tare'), findsOneWidget);
+
+    await tester.enterText(find.byType(TextFormField).last, '10.2');
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    expect(find.text('Manual Tare'), findsNothing);
+    expect(billBloc.state.tareWeightKg, 10.2);
+  });
+
+  testWidgets('F1 refuses to capture when there is no real live scale value', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await pumpBillPage(tester);
+
+    await tester.enterText(
+      find.byKey(const Key('bill_vehicle_number_field')),
+      'TN32AB1234',
+    );
+    await tester.enterText(
+      find.byKey(const Key('bill_material_code_field')),
+      'M-001',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('bill_customer_code_field')),
+      'C-001',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.f1);
+    await tester.pumpAndSettle();
+    expect(billBloc.state.tareWeightKg, 0);
+  });
+
+  testWidgets('F4 reports when there is no ticket to reprint', (tester) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    when(
+      () => mockLoadRecentBillsUseCase(date: any(named: 'date')),
+    ).thenAnswer((_) => Future.value(<Weighment>[]));
+
+    await pumpBillPage(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.f4);
+    await tester.pumpAndSettle();
+    expect(find.text('No ticket available for reprint.'), findsOneWidget);
+  });
+
+  testWidgets('F3 captures a stable live reading as tare', (tester) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await pumpBillPage(tester);
+    billBloc.add(const LiveScaleWeightUpdated(weightKg: 10200, isStable: true));
+    await tester.runAsync(() async {
+      await billBloc.stream.firstWhere(
+        (state) => state.liveScaleWeightKg == 10200,
+      );
+    });
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.f3);
+    await tester.pumpAndSettle();
+    expect(billBloc.state.tareWeightKg, 10200);
+  });
+
+  testWidgets('F4 opens the most recent valid ticket for reprint', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await pumpBillPage(tester);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.f4);
+    await tester.pumpAndSettle();
+    expect(find.text('Print Ticket'), findsOneWidget);
+    expect(find.text('WB-00001'), findsWidgets);
+  });
+
+  testWidgets('Enter resolves material and customer codes from repositories', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await pumpBillPage(tester);
+
+    await tester.enterText(
+      find.byKey(const Key('bill_material_code_field')),
+      'M-001',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    verify(() => mockMaterialRepository.getMaterialByCode('M-001')).called(1);
+
+    await tester.enterText(
+      find.byKey(const Key('bill_customer_code_field')),
+      'C-001',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    verify(() => mockCustomerRepository.getCustomerByCode('C-001')).called(1);
+    expect(billBloc.state.selectedCustomer?.name, 'UltraTech Cement');
+    expect(billBloc.state.selectedMaterial?.name, 'Sand');
+  });
+
+  testWidgets('F1 captures the selected gross and tare live weights', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await pumpBillPage(tester);
+
+    await tester.enterText(
+      find.byKey(const Key('bill_vehicle_number_field')),
+      'TN32AB1234',
+    );
+    await tester.enterText(
+      find.byKey(const Key('bill_material_code_field')),
+      'M-001',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('bill_customer_code_field')),
+      'C-001',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    billBloc.add(const LiveScaleWeightUpdated(weightKg: 25000, isStable: true));
+    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.f1);
+    await tester.pumpAndSettle();
+    expect(billBloc.state.grossWeightKg, 25000);
+
+    billBloc.add(const LiveScaleWeightUpdated(weightKg: 10000, isStable: true));
+    await tester.pump();
+    await tester.pumpAndSettle();
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('TARE'));
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.f1);
+    await tester.pumpAndSettle();
+    expect(billBloc.state.tareWeightKg, 10000);
+    expect(billBloc.state.netWeightKg, 15000);
+  });
+
+  testWidgets('Tab and Shift+Tab traverse the truck and weight type fields', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await pumpBillPage(tester);
+
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'vehicleFocusNode');
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    expect(
+      FocusManager.instance.primaryFocus?.debugLabel,
+      'weightTypeFocusNode',
+    );
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    expect(FocusManager.instance.primaryFocus?.debugLabel, 'vehicleFocusNode');
+  });
+
+  testWidgets('F9 confirms before clearing an unfinished weighment', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await pumpBillPage(tester);
+    await tester.enterText(
+      find.byKey(const Key('bill_vehicle_number_field')),
+      'TN32AB1234',
+    );
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.f9);
+    await tester.pumpAndSettle();
+    expect(find.text('Exit current weighment?'), findsOneWidget);
+    await tester.tap(find.text('Exit Ticket'));
+    await tester.pumpAndSettle();
+    await tester.runAsync(() async {
+      await billBloc.stream.firstWhere((state) => state.vehicleNumber.isEmpty);
+    });
+    expect(find.text('Exit current weighment?'), findsNothing);
+    expect(billBloc.state.vehicleNumber, isEmpty);
+  });
+
+  testWidgets('Escape clears an empty current operation without a dialog', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await pumpBillPage(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(find.text('Exit current weighment?'), findsNothing);
+    expect(billBloc.state.vehicleNumber, isEmpty);
   });
 
   testWidgets('hides yesterday bills from today recent billings in drawer', (

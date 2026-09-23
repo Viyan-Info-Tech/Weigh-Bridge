@@ -29,6 +29,12 @@ class CustomerDao extends DatabaseAccessor<AppDatabase>
     return query.getSingleOrNull();
   }
 
+  Future<Customer?> getCustomerByCode(String code) async {
+    final query = select(customers)
+      ..where((c) => c.customerCode.equals(code.toUpperCase()));
+    return query.getSingleOrNull();
+  }
+
   Future<Customer?> getCustomerByName(String name) async {
     final query = select(customers)..where((c) => c.name.equals(name));
     return query.getSingleOrNull();
@@ -72,6 +78,7 @@ class CustomerDao extends DatabaseAccessor<AppDatabase>
       ..where(
         (c) =>
             c.name.like('%$query%') |
+            c.customerCode.like('%$query%') |
             c.mobile.like('%$query%') |
             c.contactPerson.like('%$query%') |
             c.gstNumber.like('%$query%'),

@@ -34,7 +34,10 @@ class CsvGenerator {
   }
 
   /// Generates clean tabular CSV data with UTF-8 BOM for Excel compatibility.
-  String generateCsvString(List<WeighmentReportItem> records) {
+  String generateCsvString(
+    List<WeighmentReportItem> records, {
+    String? weightUnit,
+  }) {
     final buffer = StringBuffer();
     // Prepend UTF-8 Byte Order Mark (BOM) for Excel
     buffer.write('\uFEFF');
@@ -48,7 +51,7 @@ class CsvGenerator {
 
     for (final item in records) {
       final dateTimeStr = dateTimeFormat.format(item.createdAt);
-      final unit = item.weightUnit;
+      final unit = weightUnit ?? item.weightUnit;
       final isTon =
           unit.toLowerCase() == 'ton' || unit.toLowerCase() == 'tonne';
       final decimals = isTon ? 3 : 0;
@@ -88,8 +91,13 @@ class CsvGenerator {
   }
 
   /// Generates encoded bytes for the CSV content.
-  Uint8List generateCsvBytes(List<WeighmentReportItem> records) {
-    return Uint8List.fromList(utf8.encode(generateCsvString(records)));
+  Uint8List generateCsvBytes(
+    List<WeighmentReportItem> records, {
+    String? weightUnit,
+  }) {
+    return Uint8List.fromList(
+      utf8.encode(generateCsvString(records, weightUnit: weightUnit)),
+    );
   }
 
   String _escape(String value) {

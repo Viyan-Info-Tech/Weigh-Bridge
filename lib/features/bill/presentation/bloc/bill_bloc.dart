@@ -21,6 +21,18 @@ class BillBloc extends Bloc<BillEvent, BillState> {
 
   MaterialItemRepository get materialRepository => _materialRepository;
 
+  Future<Customer?> findCustomerByCode(String code) async {
+    final customer = await _customerRepository.getCustomerByCode(code.trim());
+    if (customer == null || !customer.isActive) return null;
+    return customer;
+  }
+
+  Future<MaterialItem?> findMaterialByCode(String code) async {
+    final material = await _materialRepository.getMaterialByCode(code.trim());
+    if (material == null || !material.isActive) return null;
+    return material;
+  }
+
   final SaveBillUseCase _saveBillUseCase;
   final LoadRecentBillsUseCase _loadRecentBillsUseCase;
   final GenerateBillNumberUseCase _generateBillNumberUseCase;
@@ -63,6 +75,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     on<CaptureLiveWeight>(_onCaptureLiveWeight);
     on<LiveScaleWeightUpdated>(_onLiveScaleWeightUpdated);
     on<WeightTypeSelected>(_onWeightTypeSelected);
+    on<LoadBillForContinue>(_onLoadBillForContinue);
   }
 
   Future<void> _onLoadBillScreen(
@@ -160,6 +173,10 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       return;
     }
     final displayValue = double.tryParse(event.value) ?? 0;
+    if (!displayValue.isFinite || displayValue < 0) {
+      emit(state.copyWith(weightValidationError: 'Gross weight is invalid'));
+      return;
+    }
     final kgValue = _toKg(displayValue);
     emit(
       state.copyWith(
@@ -177,6 +194,10 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       return;
     }
     final displayValue = double.tryParse(event.value) ?? 0;
+    if (!displayValue.isFinite || displayValue < 0) {
+      emit(state.copyWith(weightValidationError: 'Tare weight is invalid'));
+      return;
+    }
     final kgValue = _toKg(displayValue);
     emit(
       state.copyWith(
@@ -200,11 +221,6 @@ class BillBloc extends Bloc<BillEvent, BillState> {
   }
 
   void _onWeightUnitChanged(WeightUnitChanged event, Emitter<BillState> emit) {
-    // Historical bill unit is immutable
-    if (state.isEditing) {
-      return;
-    }
-
     final oldUnit = _normalizeUnit(state.weightUnit);
     final newUnit = _normalizeUnit(event.value);
     if (oldUnit == newUnit) return;
@@ -257,7 +273,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     double netWeightKg = 0;
     String? weightError;
 
-    if (gw > 0 && tw > 0) {
+    if (gw.isFinite && tw.isFinite && gw > 0 && tw > 0) {
       if (tw > gw) {
         weightError = 'Tare weight cannot be greater than gross weight';
         netWeightKg = 0;
@@ -277,6 +293,26 @@ class BillBloc extends Bloc<BillEvent, BillState> {
 
   void _onCaptureLiveWeight(CaptureLiveWeight event, Emitter<BillState> emit) {
     final liveKg = state.liveScaleWeightKg;
+    if (!liveKg.isFinite || liveKg <= 0) {
+      emit(
+        state.copyWith(
+          status: BillScreenStatus.error,
+          errorMessage: 'No valid live scale weight is available.',
+        ),
+      );
+      return;
+    }
+    if (!state.isScaleStable || state.isScaleMotion || state.isScaleOverload) {
+      emit(
+        state.copyWith(
+          status: BillScreenStatus.error,
+          errorMessage: state.isScaleOverload
+              ? 'Scale overload. Weight was not captured.'
+              : 'Scale weight is not stable. Weight was not captured.',
+        ),
+      );
+      return;
+    }
     final isTon = state.weightUnit.toLowerCase() == 'ton';
     final weightStr = isTon
         ? (liveKg / 1000).toStringAsFixed(3)
@@ -290,6 +326,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
           grossWeightText: weightStr,
           grossCapturedAt: now,
           editingFirstWeightType: state.editingFirstWeightType ?? 'GROSS',
+          status: BillScreenStatus.loaded,
           clearError: true,
         ),
       );
@@ -300,6 +337,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
           tareWeightText: weightStr,
           tareCapturedAt: now,
           editingFirstWeightType: state.editingFirstWeightType ?? 'TARE',
+          status: BillScreenStatus.loaded,
           clearError: true,
         ),
       );
@@ -311,6 +349,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     LiveScaleWeightUpdated event,
     Emitter<BillState> emit,
   ) {
+    if (!event.weightKg.isFinite || event.weightKg < 0) return;
     emit(
       state.copyWith(
         liveScaleWeightKg: event.weightKg,
@@ -325,27 +364,29 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     WeightTypeSelected event,
     Emitter<BillState> emit,
   ) {
-    double live = state.liveScaleWeightKg;
-    if (event.type.toLowerCase() == 'gross' && (live == 10200.0 || live == 0)) {
-      live = 25500.0;
-    } else if (event.type.toLowerCase() == 'tare' &&
-        (live == 25500.0 || live == 0)) {
-      live = 10200.0;
-    }
-
-    emit(
-      state.copyWith(selectedWeightType: event.type, liveScaleWeightKg: live),
-    );
+    emit(state.copyWith(selectedWeightType: event.type));
   }
 
   String? _validate() {
+    if (state.weightValidationError != null) {
+      return state.weightValidationError;
+    }
     if (state.selectedCustomer == null) return 'Please select a customer';
     if (state.vehicleNumber.trim().isEmpty) {
       return 'Please enter a vehicle number';
     }
+    final vehicleNumber = state.vehicleNumber.trim().toUpperCase();
+    if (vehicleNumber.length != 10 ||
+        !RegExp(r'^[A-Z0-9]{10}$').hasMatch(vehicleNumber)) {
+      return 'Truck number must be exactly 10 characters.';
+    }
     if (state.selectedMaterial == null) return 'Please select a material';
-    if (state.grossWeightKg <= 0) return 'Please enter the gross weight';
-    if (state.tareWeightKg <= 0) return 'Please enter the tare weight';
+    if (!state.grossWeightKg.isFinite || state.grossWeightKg <= 0) {
+      return 'Please enter a valid gross weight';
+    }
+    if (!state.tareWeightKg.isFinite || state.tareWeightKg <= 0) {
+      return 'Please enter a valid tare weight';
+    }
     if (state.tareWeightKg > state.grossWeightKg) {
       return 'Tare weight cannot be greater than gross weight';
     }
@@ -644,6 +685,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
 
       final newId = await _customerRepository.createCustomer(
         name: event.name,
+        customerCode: 'Q${DateTime.now().microsecondsSinceEpoch}',
         contactPerson: event.contactPerson,
       );
       if (emit.isDone) return;
@@ -691,6 +733,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     }
     final newId = await _customerRepository.createCustomer(
       name: name,
+      customerCode: 'Q${DateTime.now().microsecondsSinceEpoch}',
       contactPerson: contactPerson,
     );
     final refreshed = await _customerRepository.getAllActiveCustomers();
@@ -802,5 +845,70 @@ class BillBloc extends Bloc<BillEvent, BillState> {
         clearError: true,
       ),
     );
+  }
+
+  /// Loads a pending bill (one weight captured) into the form for completing
+  /// the second weighment. The form will be pre-populated so the operator
+  /// can capture the missing weight and save.
+  Future<void> _onLoadBillForContinue(
+    LoadBillForContinue event,
+    Emitter<BillState> emit,
+  ) async {
+    try {
+      final bill = state.recentBills
+          .where((b) => b.id == event.billId)
+          .firstOrNull;
+      if (bill == null) return;
+
+      final customer = state.customers
+          .where((c) => c.id == bill.customerId)
+          .firstOrNull;
+      final material = state.materials
+          .where((m) => m.id == bill.materialId)
+          .firstOrNull;
+
+      // Determine which weight was already captured and which is needed next.
+      final firstType = bill.firstWeightType.toUpperCase();
+      final double grossKg = firstType == 'GROSS' ? bill.firstWeightKg : 0;
+      final double tareKg = firstType == 'TARE' ? bill.firstWeightKg : 0;
+      // The next weight type to capture is the opposite of the first.
+      final nextType = firstType == 'GROSS' ? 'Tare' : 'Gross';
+
+      final displayUnit = _normalizeUnit(state.weightUnit);
+      final isTon = displayUnit == 'ton';
+      String fmtWeight(double kg) {
+        final val = isTon ? kg / 1000 : kg;
+        return isTon ? val.toStringAsFixed(3) : val.toStringAsFixed(0);
+      }
+
+      emit(
+        state.copyWith(
+          selectedCustomer: customer,
+          vehicleNumber: bill.vehicleNumber,
+          selectedMaterial: material,
+          paymentMode: bill.paymentMode,
+          grossWeightKg: grossKg,
+          grossWeightText: grossKg > 0 ? fmtWeight(grossKg) : '',
+          tareWeightKg: tareKg,
+          tareWeightText: tareKg > 0 ? fmtWeight(tareKg) : '',
+          netWeightKg: 0,
+          amount: bill.amount,
+          vehicleCharge: bill.vehicleCharge,
+          remarksText: bill.remarks ?? '',
+          weightUnit: displayUnit,
+          currentBillNumber: bill.billNumber,
+          editingBillId: bill.id,
+          editingFirstWeightType: firstType,
+          editingFirstWeightKg: bill.firstWeightKg,
+          editingBillCreatedAt: bill.createdAt,
+          selectedWeightType: nextType,
+          clearError: true,
+          clearWeightError: true,
+        ),
+      );
+    } catch (e) {
+      if (emit.isDone) return;
+      emit(state.copyWith(errorMessage: 'Failed to load bill: $e'));
+    }
   }
 }

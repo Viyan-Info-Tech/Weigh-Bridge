@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 class Customers extends Table {
   IntColumn get id => integer().autoIncrement()();
+  TextColumn get customerCode => text().nullable().unique()();
   TextColumn get name => text().withLength(min: 1, max: 100)();
   TextColumn get contactPerson =>
       text().withLength(min: 0, max: 100).nullable()();

@@ -5,8 +5,10 @@ abstract class CustomerRepository {
   Future<List<Customer>> getAllActiveCustomers();
   Future<List<Customer>> getCustomersByStatus({required bool isActive});
   Future<Customer?> getCustomerById(int id);
+  Future<Customer?> getCustomerByCode(String code);
   Future<int> createCustomer({
     required String name,
+    String? customerCode,
     String? contactPerson,
     String? mobile,
     String? email,
@@ -18,6 +20,7 @@ abstract class CustomerRepository {
   Future<bool> updateCustomer({
     required int id,
     required String name,
+    String? customerCode,
     String? contactPerson,
     String? mobile,
     String? email,

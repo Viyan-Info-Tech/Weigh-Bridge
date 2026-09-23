@@ -8,10 +8,10 @@ import 'package:weighbridge/core/database/app_database.dart';
 import '../../support/test_database.dart';
 
 void main() {
-  test('schema version is 17', () {
+  test('schema version is 18', () {
     final db = createInMemoryDatabase();
     addTearDown(db.close);
-    expect(db.schemaVersion, 17);
+    expect(db.schemaVersion, 18);
   });
 
   test('onCreate creates all application tables', () async {
@@ -56,7 +56,7 @@ void main() {
   test('database user_version is set to the schema version', () async {
     await withDatabase((db) async {
       final rows = await db.customSelect('PRAGMA user_version').get();
-      expect(rows.single.data['user_version'], 17);
+      expect(rows.single.data['user_version'], 18);
     });
   });
 
@@ -349,7 +349,7 @@ CREATE TABLE app_settings (
       expect(materials.single.code, '1'); // backfilled from the row id
 
       final version = await db.customSelect('PRAGMA user_version').get();
-      expect(version.single.data['user_version'], 17);
+      expect(version.single.data['user_version'], 18);
     });
   });
 }

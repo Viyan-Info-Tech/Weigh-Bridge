@@ -28,15 +28,10 @@ class CustomerDetailsDialog extends StatelessWidget {
         children: [
           _buildSection('Customer Information'),
           const SizedBox(height: 12),
+          _buildInfoRow('Customer Code', customer.customerCode),
           _buildInfoRow('Customer Name', customer.name),
           _buildStatusRow(customer.isActive),
-          _buildInfoRow('Contact Person', customer.contactPerson),
           _buildInfoRow('Phone', customer.mobile),
-          _buildInfoRow('Email', customer.email),
-          _buildInfoRow('GST Number', customer.gstNumber),
-          _buildInfoRow('City', customer.city),
-          _buildInfoRow('State', customer.state),
-          _buildInfoRow('Address', customer.address),
           _buildInfoRow(
             'Created Date',
             DateFormat('dd MMM yyyy').format(customer.createdAt),

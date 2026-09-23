@@ -7,6 +7,7 @@ class CreateCustomerUseCase {
 
   Future<int> call({
     required String name,
+    String? customerCode,
     String? contactPerson,
     String? mobile,
     String? email,
@@ -15,6 +16,13 @@ class CreateCustomerUseCase {
     String? city,
     String? state,
   }) async {
+    if (customerCode != null &&
+        customerCode.isNotEmpty &&
+        await _repository.getCustomerByCode(customerCode) != null) {
+      throw Exception(
+        'Customer code "$customerCode" already exists. Please enter a different customer code.',
+      );
+    }
     final existingCustomers = await _repository.searchCustomers(name);
     final exactMatch = existingCustomers.where(
       (c) => c.name.toLowerCase() == name.toLowerCase(),
@@ -25,6 +33,7 @@ class CreateCustomerUseCase {
 
     return await _repository.createCustomer(
       name: name,
+      customerCode: customerCode,
       contactPerson: contactPerson,
       mobile: mobile,
       email: email,

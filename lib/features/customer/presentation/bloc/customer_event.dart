@@ -28,6 +28,7 @@ class LoadCustomerDetail extends CustomerEvent {
 
 class CreateCustomerRequested extends CustomerEvent {
   final String name;
+  final String customerCode;
   final String? contactPerson;
   final String? mobile;
   final String? email;
@@ -38,6 +39,7 @@ class CreateCustomerRequested extends CustomerEvent {
 
   const CreateCustomerRequested({
     required this.name,
+    this.customerCode = '',
     this.contactPerson,
     this.mobile,
     this.email,
@@ -50,6 +52,7 @@ class CreateCustomerRequested extends CustomerEvent {
   @override
   List<Object?> get props => [
     name,
+    customerCode,
     contactPerson,
     mobile,
     email,
@@ -63,6 +66,7 @@ class CreateCustomerRequested extends CustomerEvent {
 class UpdateCustomerRequested extends CustomerEvent {
   final int id;
   final String name;
+  final String customerCode;
   final String? contactPerson;
   final String? mobile;
   final String? email;
@@ -74,6 +78,7 @@ class UpdateCustomerRequested extends CustomerEvent {
   const UpdateCustomerRequested({
     required this.id,
     required this.name,
+    this.customerCode = '',
     this.contactPerson,
     this.mobile,
     this.email,
@@ -87,6 +92,7 @@ class UpdateCustomerRequested extends CustomerEvent {
   List<Object?> get props => [
     id,
     name,
+    customerCode,
     contactPerson,
     mobile,
     email,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 /// Industrial Weighbridge Scale Display Banner
 /// Matches the high-contrast dual-camera + central LED weight indicator design:
@@ -67,8 +68,10 @@ class _WeightDisplayState extends State<WeightDisplay> {
     final isKg = widget.weightUnit.toLowerCase() == 'kg';
     final double displayVal = isKg ? displayWeightKg : displayWeightKg / 1000;
     final String weightString = isKg
-        ? (displayVal > 0 ? displayVal.toStringAsFixed(0) : '0')
-        : (displayVal > 0 ? displayVal.toStringAsFixed(3) : '0.000');
+        ? (displayVal > 0 ? NumberFormat('#,##0').format(displayVal) : '0')
+        : (displayVal > 0
+              ? NumberFormat('#,##0.000').format(displayVal)
+              : '0.000');
 
     final unitLabel = isKg ? 'Kg' : 'Ton';
 
@@ -87,55 +90,55 @@ class _WeightDisplayState extends State<WeightDisplay> {
         ],
       ),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // 1. Left CCTV Camera 01
-          Expanded(
-            flex: 23,
-            child: _buildCameraFeed(
-              cameraLabel: 'CAM 01',
-              assetPath: 'assets/images/cam_view_1.jpg',
-              fallbackAsset: 'assets/images/modern_truck_scale.jpg',
-            ),
-          ),
-
-          const SizedBox(width: 8),
-
-          // 2. Center Obsidian Digital Weight Readout
-          Expanded(
-            flex: 48,
-            child: _buildCenterDigitalConsole(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth < 600) {
+            return _buildCenterDigitalConsole(
               weightString: weightString,
               unitLabel: unitLabel,
               modeLabel: modeLabel,
-            ),
-          ),
+            );
+          }
 
-          const SizedBox(width: 8),
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 1. Left CCTV Camera 01
+              Expanded(
+                flex: 25,
+                child: _buildCameraFeed(
+                  cameraLabel: 'CAM 01',
+                  assetPath: 'assets/images/cam_view_1.jpg',
+                  fallbackAsset: 'assets/images/modern_truck_scale.jpg',
+                ),
+              ),
 
-          // 3. Right CCTV Camera 02
-          Expanded(
-            flex: 23,
-            child: _buildCameraFeed(
-              cameraLabel: 'CAM 02',
-              assetPath: 'assets/images/cam_view_2.jpg',
-              fallbackAsset: 'assets/images/weighbridge_truck.jpg',
-            ),
-          ),
+              const SizedBox(width: 8),
 
-          const SizedBox(width: 6),
+              // 2. Center Obsidian Digital Weight Readout
+              Expanded(
+                flex: 50,
+                child: _buildCenterDigitalConsole(
+                  weightString: weightString,
+                  unitLabel: unitLabel,
+                  modeLabel: modeLabel,
+                ),
+              ),
 
-          // 4. Far Right Status Telemetry Panel
-          SizedBox(
-            width: 106,
-            child: _buildStatusIndicators(
-              isStable: widget.isStable,
-              isMotion: widget.isMotion,
-              isOverload: widget.isOverload,
-            ),
-          ),
-        ],
+              const SizedBox(width: 8),
+
+              // 3. Right CCTV Camera 02
+              Expanded(
+                flex: 25,
+                child: _buildCameraFeed(
+                  cameraLabel: 'CAM 02',
+                  assetPath: 'assets/images/cam_view_2.jpg',
+                  fallbackAsset: 'assets/images/weighbridge_truck.jpg',
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -352,77 +355,6 @@ class _WeightDisplayState extends State<WeightDisplay> {
           ],
         ),
       ),
-    );
-  }
-
-  /// Far-right vertical telemetry panel with STABLE, MOTION, OVERLOAD indicators
-  Widget _buildStatusIndicators({
-    required bool isStable,
-    required bool isMotion,
-    required bool isOverload,
-  }) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildStatusItem(
-          label: 'STABLE',
-          isActive: isStable,
-          activeColor: const Color(0xFF00E676),
-        ),
-        const SizedBox(height: 12),
-        _buildStatusItem(
-          label: 'MOTION',
-          isActive: isMotion,
-          activeColor: const Color(0xFFF59E0B),
-        ),
-        const SizedBox(height: 12),
-        _buildStatusItem(
-          label: 'OVERLOAD',
-          isActive: isOverload,
-          activeColor: const Color(0xFFEF4444),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatusItem({
-    required String label,
-    required bool isActive,
-    required Color activeColor,
-  }) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(
-            color: isActive ? activeColor : const Color(0xFFCBD5E1),
-            shape: BoxShape.circle,
-            boxShadow: isActive
-                ? [
-                    BoxShadow(
-                      color: activeColor.withValues(alpha: 0.7),
-                      blurRadius: 6,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                : null,
-          ),
-        ),
-        const SizedBox(width: 7),
-        Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            fontSize: 10,
-            fontWeight: FontWeight.w800,
-            color: isActive ? const Color(0xFF0F172A) : const Color(0xFF94A3B8),
-            letterSpacing: 0.6,
-          ),
-        ),
-      ],
     );
   }
 }

@@ -21,6 +21,7 @@ class ReportPdfGenerator {
     String customerLabel = 'All Customers',
     String vehicleLabel = 'All Vehicles',
     String materialLabel = 'All Materials',
+    String weightUnit = 'kg',
   }) async {
     final pdf = pw.Document();
 
@@ -210,18 +211,19 @@ class ReportPdfGenerator {
               ],
               data: records.map((r) {
                 final isTon =
-                    r.weightUnit.toLowerCase() == 'ton' ||
-                    r.weightUnit.toLowerCase() == 'tonne';
+                    weightUnit.toLowerCase() == 'ton' ||
+                    weightUnit.toLowerCase() == 'tonne';
                 final decimals = isTon ? 3 : 0;
+                final unitLabel = isTon ? 'ton' : 'kg';
 
                 final grossStr = r.grossWeightKg != null
-                    ? '${(isTon ? r.grossWeightKg! / 1000 : r.grossWeightKg!).toStringAsFixed(decimals)} ${r.weightUnit}'
+                    ? '${(isTon ? r.grossWeightKg! / 1000 : r.grossWeightKg!).toStringAsFixed(decimals)} $unitLabel'
                     : '-';
                 final tareStr = r.tareWeightKg != null
-                    ? '${(isTon ? r.tareWeightKg! / 1000 : r.tareWeightKg!).toStringAsFixed(decimals)} ${r.weightUnit}'
+                    ? '${(isTon ? r.tareWeightKg! / 1000 : r.tareWeightKg!).toStringAsFixed(decimals)} $unitLabel'
                     : '-';
                 final netStr = r.netWeightKg != null
-                    ? '${(isTon ? r.netWeightKg! / 1000 : r.netWeightKg!).toStringAsFixed(decimals)} ${r.weightUnit}'
+                    ? '${(isTon ? r.netWeightKg! / 1000 : r.netWeightKg!).toStringAsFixed(decimals)} $unitLabel'
                     : '-';
                 final dateStr =
                     '${dateFormat.format(r.createdAt)} ${timeFormat.format(r.createdAt)}';
@@ -307,13 +309,16 @@ class ReportPdfGenerator {
                   _pdfSummaryCol('Total Bills', '${summary.totalBills}'),
                   _pdfSummaryCol(
                     'Total Gross',
-                    '${summary.totalGrossTons} ton',
+                    '${(weightUnit == 'ton' ? summary.totalGrossWeightKg / 1000 : summary.totalGrossWeightKg).toStringAsFixed(weightUnit == 'ton' ? 3 : 0)} $weightUnit',
                   ),
                   _pdfSummaryCol(
                     'Total Tare',
-                    '${(summary.totalTareWeightKg / 1000).toStringAsFixed(3)} ton',
+                    '${(weightUnit == 'ton' ? summary.totalTareWeightKg / 1000 : summary.totalTareWeightKg).toStringAsFixed(weightUnit == 'ton' ? 3 : 0)} $weightUnit',
                   ),
-                  _pdfSummaryCol('Total Net', '${summary.totalNetTons} ton'),
+                  _pdfSummaryCol(
+                    'Total Net',
+                    '${(weightUnit == 'ton' ? summary.totalNetWeightKg / 1000 : summary.totalNetWeightKg).toStringAsFixed(weightUnit == 'ton' ? 3 : 0)} $weightUnit',
+                  ),
                   _pdfSummaryCol(
                     'Total Revenue',
                     'Rs. ${summary.totalRevenue.toStringAsFixed(0)}',

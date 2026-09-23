@@ -21,6 +21,7 @@ class PrintReportDialog extends StatefulWidget {
   final String customerLabel;
   final String vehicleLabel;
   final String materialLabel;
+  final String weightUnit;
 
   const PrintReportDialog({
     super.key,
@@ -30,6 +31,7 @@ class PrintReportDialog extends StatefulWidget {
     this.customerLabel = 'All Customers',
     this.vehicleLabel = 'All Vehicles',
     this.materialLabel = 'All Materials',
+    this.weightUnit = 'kg',
   });
 
   static Future<void> show({
@@ -40,6 +42,7 @@ class PrintReportDialog extends StatefulWidget {
     String customerLabel = 'All Customers',
     String vehicleLabel = 'All Vehicles',
     String materialLabel = 'All Materials',
+    String weightUnit = 'kg',
   }) {
     return showDialog<void>(
       context: context,
@@ -50,6 +53,7 @@ class PrintReportDialog extends StatefulWidget {
         customerLabel: customerLabel,
         vehicleLabel: vehicleLabel,
         materialLabel: materialLabel,
+        weightUnit: weightUnit,
       ),
     );
   }
@@ -97,6 +101,7 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
         customerLabel: widget.customerLabel,
         vehicleLabel: widget.vehicleLabel,
         materialLabel: widget.materialLabel,
+        weightUnit: widget.weightUnit,
       );
 
       bool printed = false;
@@ -185,6 +190,7 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
         customerLabel: widget.customerLabel,
         vehicleLabel: widget.vehicleLabel,
         materialLabel: widget.materialLabel,
+        weightUnit: widget.weightUnit,
       );
 
       final dateFormatted = DateFormat(
@@ -525,21 +531,21 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
                                     _cell(
                                       _formatWeight(
                                         r.grossWeightKg,
-                                        r.weightUnit,
+                                        widget.weightUnit,
                                       ),
                                       align: TextAlign.right,
                                     ),
                                     _cell(
                                       _formatWeight(
                                         r.tareWeightKg,
-                                        r.weightUnit,
+                                        widget.weightUnit,
                                       ),
                                       align: TextAlign.right,
                                     ),
                                     _cell(
                                       _formatWeight(
                                         r.netWeightKg,
-                                        r.weightUnit,
+                                        widget.weightUnit,
                                       ),
                                       align: TextAlign.right,
                                       bold: true,
@@ -582,15 +588,24 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
                                 ),
                                 _summaryItem(
                                   'Total Gross',
-                                  '${widget.summary.totalGrossTons} ton',
+                                  _formatWeight(
+                                    widget.summary.totalGrossWeightKg,
+                                    widget.weightUnit,
+                                  ),
                                 ),
                                 _summaryItem(
                                   'Total Tare',
-                                  '${(widget.summary.totalTareWeightKg / 1000).toStringAsFixed(3)} ton',
+                                  _formatWeight(
+                                    widget.summary.totalTareWeightKg,
+                                    widget.weightUnit,
+                                  ),
                                 ),
                                 _summaryItem(
                                   'Total Net',
-                                  '${widget.summary.totalNetTons} ton',
+                                  _formatWeight(
+                                    widget.summary.totalNetWeightKg,
+                                    widget.weightUnit,
+                                  ),
                                 ),
                                 _summaryItem(
                                   'Total Revenue',

@@ -11,12 +11,14 @@ class WeighmentDetailsDialog extends StatelessWidget {
   final WeighmentReportItem record;
   final List<Customer> customers;
   final List<MaterialItem> materials;
+  final String? weightUnit;
 
   const WeighmentDetailsDialog({
     super.key,
     required this.record,
     this.customers = const [],
     this.materials = const [],
+    this.weightUnit,
   });
 
   static Future<void> show({
@@ -24,6 +26,7 @@ class WeighmentDetailsDialog extends StatelessWidget {
     required WeighmentReportItem record,
     List<Customer> customers = const [],
     List<MaterialItem> materials = const [],
+    String? weightUnit,
   }) {
     return showDialog<void>(
       context: context,
@@ -31,6 +34,7 @@ class WeighmentDetailsDialog extends StatelessWidget {
         record: record,
         customers: customers,
         materials: materials,
+        weightUnit: weightUnit,
       ),
     );
   }
@@ -51,6 +55,7 @@ class WeighmentDetailsDialog extends StatelessWidget {
       netWeightKg: record.netWeightKg,
       vehicleCharge: record.vehicleCharge,
       amount: record.amount,
+      weightUnit: weightUnit ?? record.weightUnit,
       remarks: record.remarks,
       firstWeightType: record.firstWeightType,
       secondWeightType: record.secondWeightType,
@@ -196,7 +201,7 @@ class WeighmentDetailsDialog extends StatelessWidget {
             // Weights Section
             Builder(
               builder: (context) {
-                final unit = record.weightUnit;
+                final unit = weightUnit ?? record.weightUnit;
                 final isTon =
                     unit.toLowerCase() == 'ton' ||
                     unit.toLowerCase() == 'tonne';

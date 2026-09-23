@@ -14,6 +14,7 @@ class CustomerLocalDataSource {
         .map(
           (r) => domain.Customer(
             id: r.id,
+            customerCode: r.customerCode ?? '',
             name: r.name,
             contactPerson: r.contactPerson,
             mobile: r.mobile,
@@ -36,6 +37,7 @@ class CustomerLocalDataSource {
         .map(
           (r) => domain.Customer(
             id: r.id,
+            customerCode: r.customerCode ?? '',
             name: r.name,
             contactPerson: r.contactPerson,
             mobile: r.mobile,
@@ -62,6 +64,7 @@ class CustomerLocalDataSource {
         .map(
           (r) => domain.Customer(
             id: r.id,
+            customerCode: r.customerCode ?? '',
             name: r.name,
             contactPerson: r.contactPerson,
             mobile: r.mobile,
@@ -83,6 +86,7 @@ class CustomerLocalDataSource {
     if (record == null) return null;
     return domain.Customer(
       id: record.id,
+      customerCode: record.customerCode ?? '',
       name: record.name,
       contactPerson: record.contactPerson,
       mobile: record.mobile,
@@ -97,8 +101,23 @@ class CustomerLocalDataSource {
     );
   }
 
+  Future<domain.Customer?> getCustomerByCode(String code) async {
+    final record = await _database.customerDao.getCustomerByCode(code);
+    if (record == null) return null;
+    return domain.Customer(
+      id: record.id,
+      customerCode: record.customerCode ?? '',
+      name: record.name,
+      mobile: record.mobile,
+      isActive: record.isActive,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
+    );
+  }
+
   Future<int> createCustomer({
     required String name,
+    String? customerCode,
     String? contactPerson,
     String? mobile,
     String? email,
@@ -110,6 +129,7 @@ class CustomerLocalDataSource {
     return await _database.customerDao.insertCustomer(
       CustomersCompanion.insert(
         name: name,
+        customerCode: Value(customerCode?.toUpperCase()),
         contactPerson: Value(contactPerson),
         mobile: Value(mobile),
         email: Value(email),
@@ -124,6 +144,7 @@ class CustomerLocalDataSource {
   Future<bool> updateCustomer({
     required int id,
     required String name,
+    String? customerCode,
     String? contactPerson,
     String? mobile,
     String? email,
@@ -136,6 +157,7 @@ class CustomerLocalDataSource {
       CustomersCompanion(
         id: Value(id),
         name: Value(name),
+        customerCode: Value(customerCode?.toUpperCase()),
         contactPerson: Value(contactPerson),
         mobile: Value(mobile),
         email: Value(email),
@@ -161,6 +183,7 @@ class CustomerLocalDataSource {
         .map(
           (r) => domain.Customer(
             id: r.id,
+            customerCode: r.customerCode ?? '',
             name: r.name,
             contactPerson: r.contactPerson,
             mobile: r.mobile,

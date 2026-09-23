@@ -992,3 +992,4 @@ class _HoverableRowState extends State<_HoverableRow> {
     );
   }
 }
+

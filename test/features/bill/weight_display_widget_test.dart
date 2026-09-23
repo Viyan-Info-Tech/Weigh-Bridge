@@ -34,11 +34,11 @@ void main() {
       await tester.pumpWidget(buildTestWidget());
       await tester.pumpAndSettle();
 
-      // Branding and telemetry are always visible
+      // Branding and camera feeds are visible, status telemetry removed
       expect(find.text('WEIGHT'), findsOneWidget);
-      expect(find.text('STABLE'), findsOneWidget);
-      expect(find.text('MOTION'), findsOneWidget);
-      expect(find.text('OVERLOAD'), findsOneWidget);
+      expect(find.text('STABLE'), findsNothing);
+      expect(find.text('MOTION'), findsNothing);
+      expect(find.text('OVERLOAD'), findsNothing);
       expect(find.text('CAM 01'), findsOneWidget);
       expect(find.text('CAM 02'), findsOneWidget);
 

@@ -51,7 +51,10 @@ class ExportReportUseCase {
        _fileSaveService = fileSaveService,
        _csvGenerator = csvGenerator ?? const CsvGenerator();
 
-  Future<ExportReportResult> call(ReportFilter filter) async {
+  Future<ExportReportResult> call(
+    ReportFilter filter, {
+    String? weightUnit,
+  }) async {
     try {
       // 1. Fetch matching records according to current report filters
       final records = await _reportRepository.getReportRecords(filter);
@@ -62,7 +65,10 @@ class ExportReportUseCase {
       }
 
       // 3. Generate Excel-compatible UTF-8 BOM CSV content and suggested filename
-      final bytes = _csvGenerator.generateCsvBytes(records);
+      final bytes = _csvGenerator.generateCsvBytes(
+        records,
+        weightUnit: weightUnit,
+      );
       final suggestedFileName = _csvGenerator.generateSuggestedFileName(filter);
 
       // 4. Open native Save File dialog

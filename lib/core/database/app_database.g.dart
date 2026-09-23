@@ -482,6 +482,18 @@ class $CustomersTable extends Customers
       'PRIMARY KEY AUTOINCREMENT',
     ),
   );
+  static const VerificationMeta _customerCodeMeta = const VerificationMeta(
+    'customerCode',
+  );
+  @override
+  late final GeneratedColumn<String> customerCode = GeneratedColumn<String>(
+    'customer_code',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
   static const VerificationMeta _nameMeta = const VerificationMeta('name');
   @override
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
@@ -634,6 +646,7 @@ class $CustomersTable extends Customers
   @override
   List<GeneratedColumn> get $columns => [
     id,
+    customerCode,
     name,
     contactPerson,
     mobile,
@@ -660,6 +673,15 @@ class $CustomersTable extends Customers
     final data = instance.toColumns(true);
     if (data.containsKey('id')) {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('customer_code')) {
+      context.handle(
+        _customerCodeMeta,
+        customerCode.isAcceptableOrUnknown(
+          data['customer_code']!,
+          _customerCodeMeta,
+        ),
+      );
     }
     if (data.containsKey('name')) {
       context.handle(
@@ -745,6 +767,10 @@ class $CustomersTable extends Customers
         DriftSqlType.int,
         data['${effectivePrefix}id'],
       )!,
+      customerCode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}customer_code'],
+      ),
       name: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}name'],
@@ -800,6 +826,7 @@ class $CustomersTable extends Customers
 
 class Customer extends DataClass implements Insertable<Customer> {
   final int id;
+  final String? customerCode;
   final String name;
   final String? contactPerson;
   final String? mobile;
@@ -813,6 +840,7 @@ class Customer extends DataClass implements Insertable<Customer> {
   final DateTime updatedAt;
   const Customer({
     required this.id,
+    this.customerCode,
     required this.name,
     this.contactPerson,
     this.mobile,
@@ -829,6 +857,9 @@ class Customer extends DataClass implements Insertable<Customer> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
+    if (!nullToAbsent || customerCode != null) {
+      map['customer_code'] = Variable<String>(customerCode);
+    }
     map['name'] = Variable<String>(name);
     if (!nullToAbsent || contactPerson != null) {
       map['contact_person'] = Variable<String>(contactPerson);
@@ -860,6 +891,9 @@ class Customer extends DataClass implements Insertable<Customer> {
   CustomersCompanion toCompanion(bool nullToAbsent) {
     return CustomersCompanion(
       id: Value(id),
+      customerCode: customerCode == null && nullToAbsent
+          ? const Value.absent()
+          : Value(customerCode),
       name: Value(name),
       contactPerson: contactPerson == null && nullToAbsent
           ? const Value.absent()
@@ -893,6 +927,7 @@ class Customer extends DataClass implements Insertable<Customer> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return Customer(
       id: serializer.fromJson<int>(json['id']),
+      customerCode: serializer.fromJson<String?>(json['customerCode']),
       name: serializer.fromJson<String>(json['name']),
       contactPerson: serializer.fromJson<String?>(json['contactPerson']),
       mobile: serializer.fromJson<String?>(json['mobile']),
@@ -911,6 +946,7 @@ class Customer extends DataClass implements Insertable<Customer> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
+      'customerCode': serializer.toJson<String?>(customerCode),
       'name': serializer.toJson<String>(name),
       'contactPerson': serializer.toJson<String?>(contactPerson),
       'mobile': serializer.toJson<String?>(mobile),
@@ -927,6 +963,7 @@ class Customer extends DataClass implements Insertable<Customer> {
 
   Customer copyWith({
     int? id,
+    Value<String?> customerCode = const Value.absent(),
     String? name,
     Value<String?> contactPerson = const Value.absent(),
     Value<String?> mobile = const Value.absent(),
@@ -940,6 +977,7 @@ class Customer extends DataClass implements Insertable<Customer> {
     DateTime? updatedAt,
   }) => Customer(
     id: id ?? this.id,
+    customerCode: customerCode.present ? customerCode.value : this.customerCode,
     name: name ?? this.name,
     contactPerson: contactPerson.present
         ? contactPerson.value
@@ -957,6 +995,9 @@ class Customer extends DataClass implements Insertable<Customer> {
   Customer copyWithCompanion(CustomersCompanion data) {
     return Customer(
       id: data.id.present ? data.id.value : this.id,
+      customerCode: data.customerCode.present
+          ? data.customerCode.value
+          : this.customerCode,
       name: data.name.present ? data.name.value : this.name,
       contactPerson: data.contactPerson.present
           ? data.contactPerson.value
@@ -977,6 +1018,7 @@ class Customer extends DataClass implements Insertable<Customer> {
   String toString() {
     return (StringBuffer('Customer(')
           ..write('id: $id, ')
+          ..write('customerCode: $customerCode, ')
           ..write('name: $name, ')
           ..write('contactPerson: $contactPerson, ')
           ..write('mobile: $mobile, ')
@@ -995,6 +1037,7 @@ class Customer extends DataClass implements Insertable<Customer> {
   @override
   int get hashCode => Object.hash(
     id,
+    customerCode,
     name,
     contactPerson,
     mobile,
@@ -1012,6 +1055,7 @@ class Customer extends DataClass implements Insertable<Customer> {
       identical(this, other) ||
       (other is Customer &&
           other.id == this.id &&
+          other.customerCode == this.customerCode &&
           other.name == this.name &&
           other.contactPerson == this.contactPerson &&
           other.mobile == this.mobile &&
@@ -1027,6 +1071,7 @@ class Customer extends DataClass implements Insertable<Customer> {
 
 class CustomersCompanion extends UpdateCompanion<Customer> {
   final Value<int> id;
+  final Value<String?> customerCode;
   final Value<String> name;
   final Value<String?> contactPerson;
   final Value<String?> mobile;
@@ -1040,6 +1085,7 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
   final Value<DateTime> updatedAt;
   const CustomersCompanion({
     this.id = const Value.absent(),
+    this.customerCode = const Value.absent(),
     this.name = const Value.absent(),
     this.contactPerson = const Value.absent(),
     this.mobile = const Value.absent(),
@@ -1054,6 +1100,7 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
   });
   CustomersCompanion.insert({
     this.id = const Value.absent(),
+    this.customerCode = const Value.absent(),
     required String name,
     this.contactPerson = const Value.absent(),
     this.mobile = const Value.absent(),
@@ -1068,6 +1115,7 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
   }) : name = Value(name);
   static Insertable<Customer> custom({
     Expression<int>? id,
+    Expression<String>? customerCode,
     Expression<String>? name,
     Expression<String>? contactPerson,
     Expression<String>? mobile,
@@ -1082,6 +1130,7 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (customerCode != null) 'customer_code': customerCode,
       if (name != null) 'name': name,
       if (contactPerson != null) 'contact_person': contactPerson,
       if (mobile != null) 'mobile': mobile,
@@ -1098,6 +1147,7 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
 
   CustomersCompanion copyWith({
     Value<int>? id,
+    Value<String?>? customerCode,
     Value<String>? name,
     Value<String?>? contactPerson,
     Value<String?>? mobile,
@@ -1112,6 +1162,7 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
   }) {
     return CustomersCompanion(
       id: id ?? this.id,
+      customerCode: customerCode ?? this.customerCode,
       name: name ?? this.name,
       contactPerson: contactPerson ?? this.contactPerson,
       mobile: mobile ?? this.mobile,
@@ -1131,6 +1182,9 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<int>(id.value);
+    }
+    if (customerCode.present) {
+      map['customer_code'] = Variable<String>(customerCode.value);
     }
     if (name.present) {
       map['name'] = Variable<String>(name.value);
@@ -1172,6 +1226,7 @@ class CustomersCompanion extends UpdateCompanion<Customer> {
   String toString() {
     return (StringBuffer('CustomersCompanion(')
           ..write('id: $id, ')
+          ..write('customerCode: $customerCode, ')
           ..write('name: $name, ')
           ..write('contactPerson: $contactPerson, ')
           ..write('mobile: $mobile, ')
@@ -4518,6 +4573,7 @@ typedef $$UsersTableProcessedTableManager =
 typedef $$CustomersTableCreateCompanionBuilder =
     CustomersCompanion Function({
       Value<int> id,
+      Value<String?> customerCode,
       required String name,
       Value<String?> contactPerson,
       Value<String?> mobile,
@@ -4533,6 +4589,7 @@ typedef $$CustomersTableCreateCompanionBuilder =
 typedef $$CustomersTableUpdateCompanionBuilder =
     CustomersCompanion Function({
       Value<int> id,
+      Value<String?> customerCode,
       Value<String> name,
       Value<String?> contactPerson,
       Value<String?> mobile,
@@ -4580,6 +4637,11 @@ class $$CustomersTableFilterComposer
   });
   ColumnFilters<int> get id => $composableBuilder(
     column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get customerCode => $composableBuilder(
+    column: $table.customerCode,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4678,6 +4740,11 @@ class $$CustomersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get customerCode => $composableBuilder(
+    column: $table.customerCode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get name => $composableBuilder(
     column: $table.name,
     builder: (column) => ColumnOrderings(column),
@@ -4745,6 +4812,11 @@ class $$CustomersTableAnnotationComposer
   });
   GeneratedColumn<int> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get customerCode => $composableBuilder(
+    column: $table.customerCode,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get name =>
       $composableBuilder(column: $table.name, builder: (column) => column);
@@ -4836,6 +4908,7 @@ class $$CustomersTableTableManager
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<String?> customerCode = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<String?> contactPerson = const Value.absent(),
                 Value<String?> mobile = const Value.absent(),
@@ -4849,6 +4922,7 @@ class $$CustomersTableTableManager
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => CustomersCompanion(
                 id: id,
+                customerCode: customerCode,
                 name: name,
                 contactPerson: contactPerson,
                 mobile: mobile,
@@ -4864,6 +4938,7 @@ class $$CustomersTableTableManager
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
+                Value<String?> customerCode = const Value.absent(),
                 required String name,
                 Value<String?> contactPerson = const Value.absent(),
                 Value<String?> mobile = const Value.absent(),
@@ -4877,6 +4952,7 @@ class $$CustomersTableTableManager
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => CustomersCompanion.insert(
                 id: id,
+                customerCode: customerCode,
                 name: name,
                 contactPerson: contactPerson,
                 mobile: mobile,

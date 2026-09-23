@@ -15,7 +15,9 @@ class RecentBillsPanel extends StatefulWidget {
   final DateTime? billsEndDate;
   final List<Customer> customers;
   final List<domain.MaterialItem> materials;
+  final String weightUnit;
   final ValueChanged<Weighment>? onBillSelected;
+  final ValueChanged<Weighment>? onContinueBill;
   final ValueChanged<DateTime>? onDateChanged;
   final void Function(DateTime? startDate, DateTime? endDate)?
   onDateRangeChanged;
@@ -30,7 +32,9 @@ class RecentBillsPanel extends StatefulWidget {
     this.billsEndDate,
     required this.customers,
     this.materials = const [],
+    this.weightUnit = 'kg',
     this.onBillSelected,
+    this.onContinueBill,
     this.onDateChanged,
     this.onDateRangeChanged,
     this.searchFocusNode,
@@ -44,7 +48,6 @@ class RecentBillsPanel extends StatefulWidget {
 class _RecentBillsPanelState extends State<RecentBillsPanel> {
   final _searchController = TextEditingController();
   String _searchQuery = '';
-  String _filterType = 'ALL'; // ALL, COMPLETED, PENDING
   String _dateFilterLabel = 'Today';
 
   @override
@@ -166,17 +169,17 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
           customerName.contains(query) ||
           billNo.contains(query);
 
-      if (!matchesSearch) return false;
-
-      if (_filterType == 'COMPLETED') {
-        return bill.isCompleted;
-      }
-      return true;
+      return matchesSearch;
     }).toList();
 
-    final totalNetWeightTon =
-        displayBills.fold<double>(0, (sum, b) => sum + (b.netWeightKg ?? 0)) /
-        1000;
+    final totalNetWeightKg = displayBills.fold<double>(
+      0,
+      (sum, b) => sum + (b.netWeightKg ?? 0),
+    );
+    final isTon = widget.weightUnit.toLowerCase() == 'ton';
+    final netWeightDisplay = isTon
+        ? '${(totalNetWeightKg / 1000).toStringAsFixed(1)} ton'
+        : '${NumberFormat('#,##0').format(totalNetWeightKg)} kg';
     final totalRevenue = displayBills.fold<double>(
       0,
       (sum, b) => sum + b.amount,
@@ -296,6 +299,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                         ),
                         const SizedBox(width: 8),
                         Container(
+                          constraints: const BoxConstraints(maxWidth: 85),
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
                             vertical: 5,
@@ -317,13 +321,17 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                                 ),
                               ),
                               const SizedBox(width: 6),
-                              Text(
-                                countLabel,
-                                style: const TextStyle(
-                                  fontFamily: 'PlusJakartaSans',
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF334155),
+                              Flexible(
+                                child: Text(
+                                  countLabel,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontFamily: 'PlusJakartaSans',
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF334155),
+                                  ),
                                 ),
                               ),
                             ],
@@ -333,51 +341,74 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                     ),
                     const SizedBox(height: 16),
 
-                    // 2. Summary KPI Metric Row
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildMetricTile(
+                    // Keep compact panel metrics in a vertical stack.
+                    if (isCompact)
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          _buildMetricTile(
                             'Total Bills',
                             '${displayBills.length}',
                             const Color(0xFF0D3B82),
                             Icons.format_list_numbered_rounded,
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _buildMetricTile(
-                            'Net Tonnage',
-                            '${totalNetWeightTon.toStringAsFixed(1)} T',
+                          const SizedBox(height: 8),
+                          _buildMetricTile(
+                            'Net Weight',
+                            netWeightDisplay,
                             const Color(0xFF0284C7),
                             Icons.scale_rounded,
                           ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: _buildMetricTile(
+                          const SizedBox(height: 8),
+                          _buildMetricTile(
                             'Total Revenue',
-                            '₹${totalRevenue.toStringAsFixed(0)}',
+                            'â‚¹${totalRevenue.toStringAsFixed(0)}',
                             const Color(0xFF16A34A),
                             Icons.currency_rupee_rounded,
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      )
+                    else
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildMetricTile(
+                              'Total Bills',
+                              '${displayBills.length}',
+                              const Color(0xFF0D3B82),
+                              Icons.format_list_numbered_rounded,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _buildMetricTile(
+                              'Net Tonnage',
+                              netWeightDisplay,
+                              const Color(0xFF0284C7),
+                              Icons.scale_rounded,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: _buildMetricTile(
+                              'Total Revenue',
+                              '₹${totalRevenue.toStringAsFixed(0)}',
+                              const Color(0xFF16A34A),
+                              Icons.currency_rupee_rounded,
+                            ),
+                          ),
+                        ],
+                      ),
                     const SizedBox(height: 16),
 
                     // 3. Search & Filter Bar (Adaptive Layout)
+                    // 3. Search & Filter Bar
                     if (isCompact) ...[
                       SizedBox(height: 38, child: _buildSearchTextField()),
                       const SizedBox(height: 8),
-                      Row(
-                        children: [
-                          _buildDateFilterButton(),
-                          const Spacer(),
-                          _buildFilterChip('ALL', 'All'),
-                          const SizedBox(width: 4),
-                          _buildFilterChip('COMPLETED', 'Done'),
-                        ],
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: _buildDateFilterButton(),
                       ),
                     ] else
                       Row(
@@ -390,10 +421,6 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                           ),
                           const SizedBox(width: 8),
                           _buildDateFilterButton(),
-                          const SizedBox(width: 8),
-                          _buildFilterChip('ALL', 'All'),
-                          const SizedBox(width: 4),
-                          _buildFilterChip('COMPLETED', 'Done'),
                         ],
                       ),
                   ],
@@ -414,7 +441,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                             const SizedBox(height: 12),
                         itemBuilder: (context, index) {
                           final bill = filteredBills[index];
-                          return _buildBillCard(bill);
+                          return _buildBillCard(bill, isCompact: isCompact);
                         },
                       ))
               else
@@ -428,7 +455,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                               const SizedBox(height: 12),
                           itemBuilder: (context, index) {
                             final bill = filteredBills[index];
-                            return _buildBillCard(bill);
+                            return _buildBillCard(bill, isCompact: isCompact);
                           },
                         ),
                 ),
@@ -523,45 +550,22 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
               ),
               if (hasActiveFilter) ...[
                 const SizedBox(width: 6),
-                Text(
-                  _dateFilterLabel,
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 95),
+                  child: Text(
+                    _dateFilterLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ],
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildFilterChip(String type, String label) {
-    final isSelected = _filterType == type;
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _filterType = type;
-        });
-      },
-      borderRadius: BorderRadius.circular(6),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF0D3B82) : const Color(0xFFF1F5F9),
-          borderRadius: BorderRadius.circular(6),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            fontSize: 11,
-            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
-            color: isSelected ? Colors.white : const Color(0xFF64748B),
           ),
         ),
       ),
@@ -621,30 +625,26 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
     );
   }
 
-  Widget _buildBillCard(Weighment bill) {
+  Widget _buildBillCard(Weighment bill, {required bool isCompact}) {
     final vehicleNo = bill.vehicleNumber;
     final customerName = _getCustomerName(bill.customerId);
     final materialName = _getMaterialName(bill.materialId);
-    final isCompleted = bill.isCompleted;
     final timeStr = DateFormat('hh:mm a').format(bill.createdAt);
     final dateStr = DateFormat('dd MMM').format(bill.createdAt);
     final timestampLabel = _isSameDay(bill.createdAt, DateTime.now())
         ? timeStr
         : '$dateStr, $timeStr';
 
-    final String statusBadgeText;
-    final Color statusBadgeBg;
-    final Color statusBadgeColor;
-
-    statusBadgeText = 'COMPLETED';
-    statusBadgeBg = const Color(0xFFDCFCE7);
-    statusBadgeColor = const Color(0xFF16A34A);
+    // --- Status badge ---
+    const statusBadgeText = 'COMPLETED';
+    const statusBadgeBg = Color(0xFFDCFCE7);
+    const statusBadgeColor = Color(0xFF16A34A);
 
     final String grossDisplay;
     final String tareDisplay;
     final String netDisplay;
 
-    final unit = bill.weightUnit;
+    final unit = widget.weightUnit;
     final isTon = unit.toLowerCase() == 'ton' || unit.toLowerCase() == 'tonne';
     final decimals = isTon ? 3 : 0;
     double? toDisplay(double? kg) {
@@ -652,13 +652,13 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
       return isTon ? kg / 1000 : kg;
     }
 
-    grossDisplay = bill.grossWeightKg != null && isCompleted
+    grossDisplay = bill.grossWeightKg != null
         ? '${toDisplay(bill.grossWeightKg)!.toStringAsFixed(decimals)} $unit'
         : '—';
-    tareDisplay = bill.tareWeightKg != null && isCompleted
+    tareDisplay = bill.tareWeightKg != null
         ? '${toDisplay(bill.tareWeightKg)!.toStringAsFixed(decimals)} $unit'
         : '—';
-    netDisplay = bill.netWeightKg != null && isCompleted
+    netDisplay = bill.netWeightKg != null
         ? '${toDisplay(bill.netWeightKg)!.toStringAsFixed(decimals)} $unit'
         : '—';
 
@@ -675,49 +675,32 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
           ),
         ],
       ),
-      padding: const EdgeInsets.all(14),
+      padding: EdgeInsets.all(isCompact ? 10 : 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Row 1: Bill Number, Status Badge & Timestamp
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF0D3B82).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  bill.billNumber,
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF0D3B82),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: statusBadgeBg,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
+          // Compact cards wrap ticket metadata onto two short rows.
+          if (isCompact) ...[
+            Wrap(
+              spacing: 6,
+              runSpacing: 5,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                _buildTicketBadge(bill.billNumber),
+                _buildStatusBadge(
                   statusBadgeText,
-                  style: TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: statusBadgeColor,
-                  ),
+                  statusBadgeBg,
+                  statusBadgeColor,
                 ),
-              ),
-              const Spacer(),
-              Text(
+              ],
+            ),
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
                 timestampLabel,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   fontFamily: 'PlusJakartaSans',
                   fontSize: 11,
@@ -725,79 +708,168 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-            ],
-          ),
+            ),
+          ] else
+            // Row 1: Bill Number, Status Badge & Timestamp
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0D3B82).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    bill.billNumber,
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0D3B82),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: statusBadgeBg,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    statusBadgeText,
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: statusBadgeColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    timestampLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.right,
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 11,
+                      color: Color(0xFF94A3B8),
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           const SizedBox(height: 10),
 
-          // Row 2: Vehicle Plate & Customer & Material
-          Row(
-            children: [
-              // Styled Vehicle Plate
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFFBEB),
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: const Color(0xFFFDE68A)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.local_shipping_outlined,
-                      size: 14,
-                      color: Color(0xFFB45309),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      vehicleNo,
-                      style: const TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF92400E),
-                        letterSpacing: 0.5,
+          // Compact widths put the customer name on its own line.
+          if (isCompact) ...[
+            Row(
+              children: [
+                Expanded(child: _buildVehiclePlate(vehicleNo)),
+                if (materialName.isNotEmpty) ...[
+                  const SizedBox(width: 6),
+                  Flexible(child: _buildMaterialBadge(materialName)),
+                ],
+              ],
+            ),
+            const SizedBox(height: 5),
+            Text(
+              customerName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+          ] else
+            // Row 2: Vehicle Plate & Customer & Material
+            Row(
+              children: [
+                // Styled Vehicle Plate
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFFBEB),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: const Color(0xFFFDE68A)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.local_shipping_outlined,
+                        size: 14,
+                        color: Color(0xFFB45309),
                       ),
+                      const SizedBox(width: 4),
+                      Text(
+                        vehicleNo,
+                        style: const TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF92400E),
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    customerName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1E293B),
                     ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  customerName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1E293B),
                   ),
                 ),
-              ),
-              const SizedBox(width: 6),
-              Container(
-                constraints: const BoxConstraints(maxWidth: 120),
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  materialName,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF475569),
+                const SizedBox(width: 6),
+                Container(
+                  constraints: const BoxConstraints(maxWidth: 120),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    materialName,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF475569),
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
           const SizedBox(height: 10),
 
           // Row 3: Weight Values Breakdown Strip
@@ -824,46 +896,82 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
           ),
           const SizedBox(height: 10),
 
-          // Row 4: Total Amount, Payment Badge, Slip Action
-          Row(
-            children: [
-              Text(
-                '₹${NumberFormat('#,##0.00').format(bill.amount)}',
-                style: const TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF16A34A),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE0E7FF),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  bill.paymentMode.toUpperCase(),
+          // Row 4: Total Amount, Payment Badge, Slip/Continue Actions
+          if (isCompact)
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text(
+                  'â‚¹${NumberFormat('#,##0.00').format(bill.amount)}',
                   style: const TextStyle(
                     fontFamily: 'PlusJakartaSans',
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF4338CA),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF16A34A),
                   ),
                 ),
-              ),
-              const Spacer(),
-              IconButton(
-                key: Key('print_slip_button_${bill.billNumber}'),
-                icon: const Icon(Icons.print_outlined, size: 18),
-                color: const Color(0xFF0D3B82),
-                tooltip: 'View & Print Slip',
-                visualDensity: VisualDensity.compact,
-                onPressed: () => _showBillSlipDialog(bill),
-              ),
-            ],
-          ),
+                _buildPaymentBadge(bill.paymentMode),
+                IconButton(
+                  key: Key('print_slip_button_${bill.billNumber}'),
+                  icon: const Icon(Icons.print_outlined, size: 18),
+                  color: const Color(0xFF0D3B82),
+                  tooltip: 'View & Print Slip',
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints.tightFor(
+                    width: 32,
+                    height: 32,
+                  ),
+                  padding: EdgeInsets.zero,
+                  onPressed: () => _showBillSlipDialog(bill),
+                ),
+              ],
+            )
+          else
+            Row(
+              children: [
+                Text(
+                  '₹${NumberFormat('#,##0.00').format(bill.amount)}',
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF16A34A),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFE0E7FF),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: Text(
+                    bill.paymentMode.toUpperCase(),
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF4338CA),
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                // Print slip button (always shown)
+                IconButton(
+                  key: Key('print_slip_button_${bill.billNumber}'),
+                  icon: const Icon(Icons.print_outlined, size: 18),
+                  color: const Color(0xFF0D3B82),
+                  tooltip: 'View & Print Slip',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => _showBillSlipDialog(bill),
+                ),
+              ],
+            ),
         ],
       ),
     );
@@ -879,12 +987,17 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 10,
-              color: Color(0xFF64748B),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              label,
+              maxLines: 1,
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 10,
+                color: Color(0xFF64748B),
+              ),
             ),
           ),
           const SizedBox(height: 2),
@@ -915,6 +1028,115 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
     );
   }
 
+  Widget _buildTicketBadge(String billNumber) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+    decoration: BoxDecoration(
+      color: const Color(0xFF0D3B82).withValues(alpha: 0.1),
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: Text(
+      billNumber,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(
+        fontFamily: 'PlusJakartaSans',
+        fontSize: 13,
+        fontWeight: FontWeight.w800,
+        color: Color(0xFF0D3B82),
+      ),
+    ),
+  );
+
+  Widget _buildStatusBadge(String text, Color background, Color foreground) =>
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        decoration: BoxDecoration(
+          color: background,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(
+          text,
+          style: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+            color: foreground,
+          ),
+        ),
+      );
+
+  Widget _buildVehiclePlate(String vehicleNo) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFFFBEB),
+      borderRadius: BorderRadius.circular(4),
+      border: Border.all(color: const Color(0xFFFDE68A)),
+    ),
+    child: Row(
+      children: [
+        const Icon(
+          Icons.local_shipping_outlined,
+          size: 14,
+          color: Color(0xFFB45309),
+        ),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            vehicleNo,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF92400E),
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+
+  Widget _buildMaterialBadge(String materialName) => Container(
+    constraints: const BoxConstraints(maxWidth: 120),
+    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+    decoration: BoxDecoration(
+      color: const Color(0xFFF1F5F9),
+      borderRadius: BorderRadius.circular(4),
+    ),
+    child: Text(
+      materialName,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(
+        fontFamily: 'PlusJakartaSans',
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFF475569),
+      ),
+    ),
+  );
+
+  Widget _buildPaymentBadge(String paymentMode) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+    decoration: BoxDecoration(
+      color: const Color(0xFFE0E7FF),
+      borderRadius: BorderRadius.circular(4),
+    ),
+    child: Text(
+      paymentMode.toUpperCase(),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: const TextStyle(
+        fontFamily: 'PlusJakartaSans',
+        fontSize: 10,
+        fontWeight: FontWeight.w700,
+        color: Color(0xFF4338CA),
+      ),
+    ),
+  );
+
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
@@ -938,8 +1160,6 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
             Text(
               _searchQuery.isNotEmpty
                   ? 'No matching billings'
-                  : _filterType == 'COMPLETED'
-                  ? 'No Completed Billings'
                   : _isViewingToday
                   ? 'No billings today'
                   : 'No billings on this date',
@@ -954,8 +1174,6 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
             Text(
               _searchQuery.isNotEmpty
                   ? 'Try searching with a different keyword'
-                  : _filterType == 'COMPLETED'
-                  ? 'No completed weighments yet.'
                   : _isViewingToday
                   ? "Today's weighment tickets will appear here as they are saved."
                   : 'Choose another date or open Report for historical bills.',

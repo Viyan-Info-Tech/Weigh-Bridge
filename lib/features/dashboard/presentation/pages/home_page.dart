@@ -12,6 +12,7 @@ import '../../../customer/presentation/pages/customer_list_page.dart';
 import '../../../material/presentation/pages/material_list_page.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
 import '../../../report/presentation/pages/report_page.dart';
+import '../../../auth/presentation/widgets/truck_logo.dart';
 import 'about_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -22,8 +23,7 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  // Index 3: Weighment (BillPage) as the primary home screen
-  int _selectedIndex = 3;
+  int _selectedIndex = 0;
 
   late final List<Widget> _pages;
   late Timer _clockTimer;
@@ -33,12 +33,12 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _pages = [
-      const SettingsPage(), // 0: Configuration
-      const CustomerListPage(), // 1: Customer Master
-      const MaterialListPage(), // 2: Material Master
-      const BillPage(), // 3: Weighment
-      const ReportPage(), // 4: Reports
-      const AboutPage(), // 5: About
+      const BillPage(),
+      const CustomerListPage(),
+      const MaterialListPage(),
+      const ReportPage(),
+      const SettingsPage(),
+      const AboutPage(),
     ];
 
     _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -194,32 +194,7 @@ class _HomePageState extends State<HomePage> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Blue square with white 'V'
-        Container(
-          width: 38,
-          height: 38,
-          decoration: BoxDecoration(
-            color: const Color(0xFF0D53FC),
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0xFF0D53FC).withValues(alpha: 0.3),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          alignment: Alignment.center,
-          child: const Text(
-            'V',
-            style: TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-            ),
-          ),
-        ),
+        const ViyanWeighbridgeLogo(size: 38),
         const SizedBox(width: 12),
         Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -276,30 +251,30 @@ class _HomePageState extends State<HomePage> {
       ),
       child: Row(
         children: [
-          _buildNavTab(
-            index: 0,
-            icon: Icons.settings_rounded,
-            label: 'Configuration',
-          ),
+          _buildNavTab(index: 0, icon: Icons.scale_rounded, label: 'Weighment'),
           _buildNavDivider(),
           _buildNavTab(
             index: 1,
             icon: Icons.people_alt_rounded,
-            label: 'Customer Master',
+            label: 'Customers',
           ),
           _buildNavDivider(),
           _buildNavTab(
             index: 2,
-            icon: Icons.featured_play_list_rounded,
-            label: 'Material Master',
+            icon: Icons.inventory_2_rounded,
+            label: 'Materials',
           ),
           _buildNavDivider(),
-          _buildNavTab(index: 3, icon: Icons.scale_rounded, label: 'Bill'),
+          _buildNavTab(
+            index: 3,
+            icon: Icons.bar_chart_rounded,
+            label: 'Reports',
+          ),
           _buildNavDivider(),
           _buildNavTab(
             index: 4,
-            icon: Icons.bar_chart_rounded,
-            label: 'Reports',
+            icon: Icons.settings_rounded,
+            label: 'Settings',
           ),
           _buildNavDivider(),
           _buildExitButton(context),
@@ -342,7 +317,13 @@ class _HomePageState extends State<HomePage> {
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(icon, size: 22, color: const Color(0xFF0D53FC)),
+                Icon(
+                  icon,
+                  size: 22,
+                  color: isSelected
+                      ? const Color(0xFF0D53FC)
+                      : const Color(0xFF475569),
+                ),
                 const SizedBox(height: 4),
                 Row(
                   mainAxisSize: MainAxisSize.min,
@@ -362,6 +343,7 @@ class _HomePageState extends State<HomePage> {
                           color: isSelected
                               ? const Color(0xFF0D53FC)
                               : const Color(0xFF1E293B),
+                          letterSpacing: 0.2,
                         ),
                       ),
                     ),
@@ -408,6 +390,7 @@ class _HomePageState extends State<HomePage> {
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFFDC2626),
+                    letterSpacing: 0.2,
                   ),
                 ),
               ],
@@ -555,48 +538,6 @@ class _HomePageState extends State<HomePage> {
                   const SizedBox(width: 6),
                   const Text(
                     'Printer: Ready',
-                    style: TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF1E293B),
-                    ),
-                  ),
-
-                  const SizedBox(width: 20),
-                  _buildStatusDivider(),
-                  const SizedBox(width: 20),
-
-                  // Weighbridge: COM3 (Connected)
-                  const Icon(
-                    Icons.link_rounded,
-                    size: 16,
-                    color: Color(0xFF1E293B),
-                  ),
-                  const SizedBox(width: 6),
-                  const Text(
-                    'Weighbridge: COM3 (Connected)',
-                    style: TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF1E293B),
-                    ),
-                  ),
-
-                  const SizedBox(width: 20),
-                  _buildStatusDivider(),
-                  const SizedBox(width: 20),
-
-                  // Weight: Stable
-                  const Icon(
-                    Icons.show_chart_rounded,
-                    size: 16,
-                    color: Color(0xFF1E293B),
-                  ),
-                  const SizedBox(width: 6),
-                  const Text(
-                    'Weight: Stable',
                     style: TextStyle(
                       fontFamily: 'PlusJakartaSans',
                       fontSize: 11.5,

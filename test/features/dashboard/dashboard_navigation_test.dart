@@ -280,15 +280,15 @@ void main() {
   ) async {
     await pumpHomePage(tester);
 
-    await tester.tap(find.text('Configuration'));
+    await tester.tap(find.text('Settings'));
     await pumpFrames(tester);
-    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('Settings'), findsWidgets);
 
-    await tester.tap(find.text('Customer Master'));
+    await tester.tap(find.text('Customers'));
     await pumpFrames(tester);
     expect(find.text('Customers'), findsWidgets);
 
-    await tester.tap(find.text('Material Master'));
+    await tester.tap(find.text('Materials'));
     await pumpFrames(tester);
     expect(find.text('Materials'), findsWidgets);
 
@@ -296,7 +296,7 @@ void main() {
     await pumpFrames(tester);
     expect(find.text('REPORTS'), findsOneWidget);
 
-    await tester.tap(find.text('Bill'));
+    await tester.tap(find.text('Weighment'));
     await pumpFrames(tester);
     expect(find.text('WEIGHT'), findsOneWidget);
   });

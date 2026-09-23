@@ -110,6 +110,7 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
     try {
       await _createCustomerUseCase(
         name: event.name,
+        customerCode: event.customerCode,
         contactPerson: event.contactPerson,
         mobile: event.mobile,
         email: event.email,
@@ -129,7 +130,7 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
       emit(
         state.copyWith(
           status: CustomerStatus.error,
-          errorMessage: e.toString(),
+          errorMessage: e.toString().replaceFirst('Exception: ', ''),
         ),
       );
     }
@@ -144,6 +145,7 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
       await _updateCustomerUseCase(
         id: event.id,
         name: event.name,
+        customerCode: event.customerCode,
         contactPerson: event.contactPerson,
         mobile: event.mobile,
         email: event.email,
@@ -163,7 +165,7 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
       emit(
         state.copyWith(
           status: CustomerStatus.error,
-          errorMessage: e.toString(),
+          errorMessage: e.toString().replaceFirst('Exception: ', ''),
         ),
       );
     }

@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../material/domain/repositories/material_item_repository.dart';
 import '../../../customer/domain/repositories/customer_repository.dart';
+import '../../../settings/domain/repositories/settings_repository.dart';
 import '../../domain/entities/report_filter.dart';
 import '../../domain/repositories/report_repository.dart';
 import '../../domain/usecases/export_report_usecase.dart';
@@ -13,16 +14,19 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
   final CustomerRepository _customerRepository;
   final MaterialItemRepository _materialRepository;
   final ExportReportUseCase _exportReportUseCase;
+  final SettingsRepository? _settingsRepository;
 
   ReportBloc({
     required ReportRepository reportRepository,
     required CustomerRepository customerRepository,
     required MaterialItemRepository materialRepository,
     required ExportReportUseCase exportReportUseCase,
+    SettingsRepository? settingsRepository,
   }) : _reportRepository = reportRepository,
        _customerRepository = customerRepository,
        _materialRepository = materialRepository,
        _exportReportUseCase = exportReportUseCase,
+       _settingsRepository = settingsRepository,
        super(const ReportState()) {
     on<LoadReportInitial>(_onLoadReportInitial);
     on<ReportFilterPresetChanged>(_onFilterPresetChanged);
@@ -50,6 +54,7 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
 
       final records = await _reportRepository.getReportRecords(state.filter);
       final summary = _reportRepository.calculateSummary(records);
+      final settings = await _settingsRepository?.getSettings();
 
       emit(
         state.copyWith(
@@ -58,6 +63,7 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
           materials: materials,
           records: records,
           summary: summary,
+          weightUnit: _normalizeUnit(settings?.weightUnit ?? state.weightUnit),
         ),
       );
     } catch (e) {
@@ -196,11 +202,13 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     try {
       final records = await _reportRepository.getReportRecords(filter);
       final summary = _reportRepository.calculateSummary(records);
+      final settings = await _settingsRepository?.getSettings();
       emit(
         state.copyWith(
           status: ReportStatus.loaded,
           records: records,
           summary: summary,
+          weightUnit: _normalizeUnit(settings?.weightUnit ?? state.weightUnit),
         ),
       );
     } catch (e) {
@@ -218,7 +226,10 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     Emitter<ReportState> emit,
   ) async {
     emit(state.copyWith(isExporting: true, clearExportResult: true));
-    final result = await _exportReportUseCase(state.filter);
+    final result = await _exportReportUseCase(
+      state.filter,
+      weightUnit: state.weightUnit,
+    );
     emit(state.copyWith(isExporting: false, exportResult: result));
   }
 
@@ -227,5 +238,12 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     Emitter<ReportState> emit,
   ) {
     emit(state.copyWith(clearExportResult: true));
+  }
+
+  String _normalizeUnit(String unit) {
+    final normalized = unit.trim().toLowerCase();
+    return normalized == 'ton' || normalized == 'tonne' || normalized == 't'
+        ? 'ton'
+        : 'kg';
   }
 }

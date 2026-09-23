@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart' hide Material;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:weighbridge/app/app.dart' show showAppSnackBar;
 
 import '../../../customer/domain/entities/customer.dart';
 import '../../../settings/domain/entities/billing_settings.dart';
@@ -186,10 +187,12 @@ class WeighmentSlipDialog extends StatelessWidget {
                         const SizedBox(height: 6),
                         Builder(
                           builder: (context) {
-                            final unit = bill.weightUnit;
                             final isTon =
-                                unit.toLowerCase() == 'ton' ||
-                                unit.toLowerCase() == 'tonne';
+                                activeSettings.weightUnit.toLowerCase() ==
+                                    'ton' ||
+                                activeSettings.weightUnit.toLowerCase() ==
+                                    'tonne';
+                            final unit = isTon ? 'ton' : 'kg';
                             final decimals = isTon ? 3 : 0;
                             double? toDisplay(double? kg) {
                               if (kg == null) return null;
@@ -608,12 +611,9 @@ class WeighmentSlipDialog extends StatelessWidget {
           child: ElevatedButton(
             onPressed: () {
               Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Print job sent for ${bill.billNumber}'),
-                  backgroundColor: const Color(0xFF16A34A),
-                  behavior: SnackBarBehavior.floating,
-                ),
+              showAppSnackBar(
+                'Print job sent for ${bill.billNumber}',
+                backgroundColor: const Color(0xFF16A34A),
               );
             },
             style: ElevatedButton.styleFrom(
