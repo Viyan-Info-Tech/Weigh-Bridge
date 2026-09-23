@@ -94,6 +94,7 @@ class FormDialogTextField extends StatelessWidget {
   final List<TextInputFormatter>? inputFormatters;
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
+  final ValueChanged<String>? onChanged;
 
   const FormDialogTextField({
     super.key,
@@ -108,6 +109,7 @@ class FormDialogTextField extends StatelessWidget {
     this.inputFormatters,
     this.keyboardType,
     this.validator,
+    this.onChanged,
   });
 
   @override
@@ -168,6 +170,7 @@ class FormDialogTextField extends StatelessWidget {
                     ]
                   : null),
           validator: validator,
+          onChanged: onChanged,
           style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13),
           decoration: InputDecoration(
             hintText: hintText,

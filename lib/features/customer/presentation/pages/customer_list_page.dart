@@ -23,6 +23,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
 
   int? _editingCustomerId;
   bool _saving = false;
+  String? _codeErrorText;
 
   bool get _isEditing => _editingCustomerId != null;
 
@@ -47,6 +48,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
       _codeController.text = customer.customerCode;
       _nameController.text = customer.name;
       _phoneController.text = customer.mobile ?? '';
+      _codeErrorText = null;
     });
   }
 
@@ -56,16 +58,40 @@ class _CustomerListPageState extends State<CustomerListPage> {
       _codeController.clear();
       _nameController.clear();
       _phoneController.clear();
+      _codeErrorText = null;
       _formKey.currentState?.reset();
     });
   }
 
-  void _saveCustomer() {
+  Future<void> _saveCustomer() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _saving = true);
     final code = _codeController.text.trim().toUpperCase();
     final name = _nameController.text.trim();
     final phone = _phoneController.text.trim();
+
+    setState(() => _saving = true);
+    try {
+      final existing = await context.read<CustomerBloc>().findCustomerByCode(
+        code,
+      );
+      if (!mounted) return;
+      if (existing != null && existing.id != _editingCustomerId) {
+        setState(() {
+          _saving = false;
+          _codeErrorText =
+              'Customer code "$code" already exists. Please enter a different code.';
+        });
+        _formKey.currentState?.validate();
+        return;
+      }
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _saving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not check customer code: $error')),
+      );
+      return;
+    }
 
     if (_isEditing) {
       context.read<CustomerBloc>().add(
@@ -153,9 +179,19 @@ class _CustomerListPageState extends State<CustomerListPage> {
           );
         } else if (state.status == CustomerStatus.error) {
           setState(() => _saving = false);
+          final error = state.errorMessage ?? '';
+          if (error.toLowerCase().contains('customer code "') &&
+              error.toLowerCase().contains('already exists')) {
+            setState(() {
+              _codeErrorText =
+                  'Customer code "${_codeController.text.trim()}" already exists. Please enter a different code.';
+            });
+            _formKey.currentState?.validate();
+            return;
+          }
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(state.errorMessage ?? 'Could not save customer'),
+              content: Text(error.isEmpty ? 'Could not save customer' : error),
               backgroundColor: const Color(0xFFDC2626),
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
@@ -279,10 +315,17 @@ class _CustomerListPageState extends State<CustomerListPage> {
                 FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9-]')),
               ],
               validator: (v) {
+                if (_codeErrorText != null) return _codeErrorText;
                 final s = v?.trim() ?? '';
                 if (s.isEmpty) return 'Customer code is required';
                 if (s.length > 30) return 'Max 30 characters';
                 return null;
+              },
+              onChanged: (_) {
+                if (_codeErrorText != null) {
+                  setState(() => _codeErrorText = null);
+                  _formKey.currentState?.validate();
+                }
               },
               style: const TextStyle(
                 fontFamily: 'PlusJakartaSans',

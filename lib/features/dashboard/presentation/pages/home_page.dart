@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../../auth/presentation/bloc/auth_bloc.dart';
@@ -13,6 +14,7 @@ import '../../../material/presentation/pages/material_list_page.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
 import '../../../report/presentation/pages/report_page.dart';
 import '../../../auth/presentation/widgets/truck_logo.dart';
+import '../../../../core/presentation/widgets/admin_password_dialog.dart';
 import 'about_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -299,7 +301,7 @@ class _HomePageState extends State<HomePage> {
       child: Material(
         color: isSelected ? const Color(0xFFEFF6FF) : Colors.transparent,
         child: InkWell(
-          onTap: () => setState(() => _selectedIndex = index),
+          onTap: () => _selectNavTab(index),
           hoverColor: const Color(0xFFF8FAFC),
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
@@ -356,6 +358,17 @@ class _HomePageState extends State<HomePage> {
         ),
       ),
     );
+  }
+
+  Future<void> _selectNavTab(int index) async {
+    if (index == _selectedIndex) return;
+
+    if (index != 0) {
+      final authenticated = await showAdminPasswordDialog(context);
+      if (!authenticated || !mounted) return;
+    }
+
+    setState(() => _selectedIndex = index);
   }
 
   Widget _buildExitButton(BuildContext context) {
@@ -441,9 +454,14 @@ class _HomePageState extends State<HomePage> {
             ),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(dialogContext);
-              context.read<AuthBloc>().add(const LogoutRequested());
+              final authBloc = context.read<AuthBloc>();
+              authBloc.add(const LogoutRequested());
+              await authBloc.stream.firstWhere(
+                (state) => state.status == AuthStatus.unauthenticated,
+              );
+              if (context.mounted) context.go('/login');
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFDC2626),

@@ -126,12 +126,26 @@ class CustomerLocalDataSource {
     String? city,
     String? state,
   }) async {
+    final normalizedName = name.trim();
+    final normalizedCode = customerCode?.trim() ?? '';
+    final normalizedPhone = mobile?.trim() ?? '';
+    if (normalizedCode.isEmpty) {
+      throw Exception('Please enter customer code');
+    }
+    if (normalizedName.isEmpty) {
+      throw Exception('Please enter customer name');
+    }
+    if (normalizedPhone.isNotEmpty &&
+        !RegExp(r'^\d{10}$').hasMatch(normalizedPhone)) {
+      throw Exception('Phone number must be exactly 10 digits');
+    }
+
     return await _database.customerDao.insertCustomer(
       CustomersCompanion.insert(
-        name: name,
-        customerCode: Value(customerCode?.toUpperCase()),
+        name: normalizedName,
+        customerCode: Value(normalizedCode.toUpperCase()),
         contactPerson: Value(contactPerson),
-        mobile: Value(mobile),
+        mobile: Value(normalizedPhone.isEmpty ? null : normalizedPhone),
         email: Value(email),
         address: Value(address),
         gstNumber: Value(gstNumber),
@@ -153,13 +167,27 @@ class CustomerLocalDataSource {
     String? city,
     String? state,
   }) async {
+    final normalizedName = name.trim();
+    final normalizedCode = customerCode?.trim() ?? '';
+    final normalizedPhone = mobile?.trim() ?? '';
+    if (normalizedCode.isEmpty) {
+      throw Exception('Please enter customer code');
+    }
+    if (normalizedName.isEmpty) {
+      throw Exception('Please enter customer name');
+    }
+    if (normalizedPhone.isNotEmpty &&
+        !RegExp(r'^\d{10}$').hasMatch(normalizedPhone)) {
+      throw Exception('Phone number must be exactly 10 digits');
+    }
+
     return await _database.customerDao.updateCustomer(
       CustomersCompanion(
         id: Value(id),
-        name: Value(name),
-        customerCode: Value(customerCode?.toUpperCase()),
+        name: Value(normalizedName),
+        customerCode: Value(normalizedCode.toUpperCase()),
         contactPerson: Value(contactPerson),
-        mobile: Value(mobile),
+        mobile: Value(normalizedPhone.isEmpty ? null : normalizedPhone),
         email: Value(email),
         address: Value(address),
         gstNumber: Value(gstNumber),

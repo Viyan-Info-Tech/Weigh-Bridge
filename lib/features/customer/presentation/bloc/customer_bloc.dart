@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../domain/entities/customer.dart';
 import '../../domain/usecases/load_customers.dart';
 import '../../domain/usecases/create_customer.dart';
 import '../../domain/usecases/update_customer.dart';
@@ -44,6 +45,9 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
     on<SearchCustomers>(_onSearchCustomers);
     on<FilterCustomersByStatus>(_onFilterByStatus);
   }
+
+  Future<Customer?> findCustomerByCode(String code) =>
+      _customerRepository.getCustomerByCode(code.trim().toUpperCase());
 
   Future<void> _onLoadCustomers(
     LoadCustomers event,

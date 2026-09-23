@@ -31,6 +31,7 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
 
   bool get isEditing => widget.materialId != null;
   bool _isLoading = false;
+  String? _codeErrorText;
 
   @override
   void initState() {
@@ -63,8 +64,19 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
         }
         if (state.status == app_material.AppMaterialStatus.error) {
           setState(() => _isLoading = false);
+          final error = state.errorMessage ?? '';
+          if (error.toLowerCase().contains(
+            'material with this code already exists',
+          )) {
+            setState(() {
+              _codeErrorText =
+                  'Material code "${_codeController.text.trim()}" already exists. Please use another code.';
+            });
+            _formKey.currentState?.validate();
+            return;
+          }
           showAppSnackBar(
-            state.errorMessage ?? 'An error occurred',
+            error.isEmpty ? 'An error occurred' : error,
             backgroundColor: Colors.red.shade700,
           );
         }
@@ -91,10 +103,17 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
                   isRequired: true,
                   hintText: 'e.g. 1, 2, 3',
                   validator: (value) {
+                    if (_codeErrorText != null) return _codeErrorText;
                     if (value == null || value.trim().isEmpty) {
                       return 'Material code is required';
                     }
                     return null;
+                  },
+                  onChanged: (_) {
+                    if (_codeErrorText != null) {
+                      setState(() => _codeErrorText = null);
+                      _formKey.currentState?.validate();
+                    }
                   },
                 ),
                 const SizedBox(height: 16),
@@ -130,7 +149,7 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
     _nameController.text = material.name;
   }
 
-  void _saveMaterial() {
+  Future<void> _saveMaterial() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
@@ -139,6 +158,30 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
 
     final code = _codeController.text.trim();
     final name = _nameController.text.trim();
+
+    try {
+      final existing = await context.read<MaterialBloc>().findMaterialByCode(
+        code,
+      );
+      if (!mounted) return;
+      if (existing != null && existing.id != widget.materialId) {
+        setState(() {
+          _isLoading = false;
+          _codeErrorText =
+              'Material code "$code" already exists. Please use another code.';
+        });
+        _formKey.currentState?.validate();
+        return;
+      }
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
+      showAppSnackBar(
+        'Could not check material code: $error',
+        backgroundColor: Colors.red.shade700,
+      );
+      return;
+    }
 
     if (isEditing) {
       context.read<MaterialBloc>().add(

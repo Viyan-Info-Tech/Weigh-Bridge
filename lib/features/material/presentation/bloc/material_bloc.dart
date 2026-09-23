@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../domain/entities/material_item.dart';
 import '../../domain/usecases/load_materials.dart';
 import '../../domain/usecases/create_material.dart';
 import '../../domain/usecases/delete_material.dart';
@@ -33,6 +34,9 @@ class MaterialBloc extends Bloc<MaterialEvent, MaterialState> {
     on<SearchMaterials>(_onSearchMaterials);
     on<FilterMaterialsByStatus>(_onFilterByStatus);
   }
+
+  Future<MaterialItem?> findMaterialByCode(String code) =>
+      _materialRepository.getMaterialByCode(code.trim());
 
   Future<void> _onLoadMaterials(
     LoadMaterials event,

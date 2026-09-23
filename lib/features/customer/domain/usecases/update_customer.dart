@@ -17,20 +17,34 @@ class UpdateCustomerUseCase {
     String? city,
     String? state,
   }) async {
-    final existing = customerCode == null || customerCode.isEmpty
+    final normalizedName = name.trim();
+    final normalizedCode = customerCode?.trim() ?? '';
+    final normalizedPhone = mobile?.trim() ?? '';
+    if (normalizedCode.isEmpty) {
+      throw Exception('Please enter customer code');
+    }
+    if (normalizedName.isEmpty) {
+      throw Exception('Please enter customer name');
+    }
+    if (normalizedPhone.isNotEmpty &&
+        !RegExp(r'^\d{10}$').hasMatch(normalizedPhone)) {
+      throw Exception('Phone number must be exactly 10 digits');
+    }
+
+    final existing = normalizedCode.isEmpty
         ? null
-        : await _repository.getCustomerByCode(customerCode);
+        : await _repository.getCustomerByCode(normalizedCode);
     if (existing != null && existing.id != id) {
       throw Exception(
-        'Customer code "$customerCode" already exists. Please enter a different customer code.',
+        'Customer code "$normalizedCode" already exists. Please enter a different customer code.',
       );
     }
     return await _repository.updateCustomer(
       id: id,
-      name: name,
-      customerCode: customerCode,
+      name: normalizedName,
+      customerCode: normalizedCode.toUpperCase(),
       contactPerson: contactPerson,
-      mobile: mobile,
+      mobile: normalizedPhone.isEmpty ? null : normalizedPhone,
       email: email,
       address: address,
       gstNumber: gstNumber,

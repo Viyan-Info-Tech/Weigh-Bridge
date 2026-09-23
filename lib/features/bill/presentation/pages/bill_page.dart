@@ -699,8 +699,8 @@ class _BillPageState extends State<BillPage> {
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.03),
-            blurRadius: 8,
+            color: const Color(0xFF0F172A).withValues(alpha: 0.04),
+            blurRadius: 10,
             offset: const Offset(0, 2),
           ),
         ],
@@ -708,54 +708,59 @@ class _BillPageState extends State<BillPage> {
       child: Wrap(
         spacing: 8,
         runSpacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          // Save the completed ticket. F1 is reserved for weight capture.
-          _buildPrimaryActionButton(
+          // 1. Save completed ticket (Primary Action)
+          _buildUnifiedActionButton(
             icon: Icons.save_rounded,
             label: 'SAVE',
             shortcut: null,
-            color: const Color(0xFF16A34A),
+            style: _ActionButtonStyle.primary,
             isLoading: isSaving,
             onTap: isDisabled ? null : () => _saveTicket(context, state),
           ),
-          // Escape: CANCEL — red filled button
-          _buildPrimaryActionButton(
+          // 2. Escape: CANCEL (Danger Action)
+          _buildUnifiedActionButton(
             icon: Icons.cancel_rounded,
             label: 'CANCEL',
             shortcut: 'ESC',
-            color: const Color(0xFFDC2626),
+            style: _ActionButtonStyle.danger,
             onTap: isSaving ? null : () => _onCancelPressed(context, state),
           ),
-          // F4: RE-PRINT
-          _buildActionButton(
+          // 3. F4: RE-PRINT
+          _buildUnifiedActionButton(
             icon: Icons.print_rounded,
-            iconColor: const Color(0xFF334155),
             label: 'RE-PRINT',
             shortcut: 'F4',
+            accentColor: const Color(0xFF334155),
+            accentBgColor: const Color(0xFFF1F5F9),
             onTap: () => _onReprintPressed(context, state),
           ),
-          // F2: MANUAL TARE
-          _buildActionButton(
+          // 4. F2: MANUAL TARE
+          _buildUnifiedActionButton(
             icon: Icons.edit_note_rounded,
-            iconColor: const Color(0xFF0284C7),
             label: 'MANUAL TARE',
             shortcut: 'F2',
+            accentColor: const Color(0xFF0284C7),
+            accentBgColor: const Color(0xFFE0F2FE),
             onTap: isSaving ? null : () => _showManualTareDialog(state),
           ),
-          // F3: AUTO TARE
-          _buildActionButton(
+          // 5. F3: AUTO TARE
+          _buildUnifiedActionButton(
             icon: Icons.refresh_rounded,
-            iconColor: const Color(0xFF0891B2),
             label: 'AUTO TARE',
             shortcut: 'F3',
+            accentColor: const Color(0xFF0891B2),
+            accentBgColor: const Color(0xFFE0F7FA),
             onTap: isSaving ? null : () => _captureAutoTare(state),
           ),
-          // F9: EXIT current ticket flow
-          _buildActionButton(
+          // 6. F9: EXIT current ticket flow
+          _buildUnifiedActionButton(
             icon: Icons.exit_to_app_rounded,
-            iconColor: const Color(0xFF475569),
             label: 'EXIT',
             shortcut: 'F9',
+            accentColor: const Color(0xFF475569),
+            accentBgColor: const Color(0xFFF1F5F9),
             onTap: () => _onExitPressed(context, state),
           ),
         ],
@@ -763,184 +768,204 @@ class _BillPageState extends State<BillPage> {
     );
   }
 
-  /// Filled colour block button for SAVE and CANCEL — matches the reference design.
-  Widget _buildPrimaryActionButton({
+  Widget _buildUnifiedActionButton({
     required IconData icon,
     required String label,
     String? shortcut,
-    required Color color,
+    _ActionButtonStyle style = _ActionButtonStyle.neutral,
+    Color? accentColor,
+    Color? accentBgColor,
     required VoidCallback? onTap,
     bool isLoading = false,
   }) {
     final isEnabled = onTap != null;
-    return Material(
-      color: isEnabled ? color : const Color(0xFFE2E8F0),
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 9),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (isLoading)
-                  const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                else
-                  Icon(
-                    icon,
-                    size: 16,
-                    color: isEnabled ? Colors.white : const Color(0xFF94A3B8),
-                  ),
-                const SizedBox(width: 6),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w800,
-                        color: isEnabled
-                            ? Colors.white
-                            : const Color(0xFF94A3B8),
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                    if (shortcut != null)
-                      Text(
-                        shortcut,
-                        style: TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 9,
-                          fontWeight: FontWeight.w700,
-                          color: isEnabled
-                              ? Colors.white.withValues(alpha: 0.80)
-                              : const Color(0xFF94A3B8),
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildActionButton({
-    required IconData icon,
-    required Color iconColor,
-    required String label,
-    required String shortcut,
-    required VoidCallback? onTap,
-    bool isLoading = false,
-  }) {
-    final isEnabled = onTap != null;
+    final BoxDecoration decoration;
+    final Color textColor;
+    final Color iconColor;
+    final Color iconBoxBg;
+    final Color keycapBg;
+    final Color keycapBorder;
+    final Color keycapText;
+
+    switch (style) {
+      case _ActionButtonStyle.primary:
+        decoration = BoxDecoration(
+          gradient: isEnabled
+              ? const LinearGradient(
+                  colors: [Color(0xFF15803D), Color(0xFF16A34A)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: isEnabled ? null : const Color(0xFFCBD5E1),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: isEnabled
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF16A34A).withValues(alpha: 0.28),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        );
+        textColor = isEnabled ? Colors.white : const Color(0xFF64748B);
+        iconColor = isEnabled ? Colors.white : const Color(0xFF64748B);
+        iconBoxBg = isEnabled
+            ? Colors.white.withValues(alpha: 0.20)
+            : Colors.transparent;
+        keycapBg = Colors.white.withValues(alpha: 0.20);
+        keycapBorder = Colors.white.withValues(alpha: 0.35);
+        keycapText = Colors.white;
+        break;
+
+      case _ActionButtonStyle.danger:
+        decoration = BoxDecoration(
+          gradient: isEnabled
+              ? const LinearGradient(
+                  colors: [Color(0xFFB91C1C), Color(0xFFDC2626)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                )
+              : null,
+          color: isEnabled ? null : const Color(0xFFCBD5E1),
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: isEnabled
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFFDC2626).withValues(alpha: 0.25),
+                    blurRadius: 6,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        );
+        textColor = isEnabled ? Colors.white : const Color(0xFF64748B);
+        iconColor = isEnabled ? Colors.white : const Color(0xFF64748B);
+        iconBoxBg = isEnabled
+            ? Colors.white.withValues(alpha: 0.20)
+            : Colors.transparent;
+        keycapBg = Colors.white.withValues(alpha: 0.22);
+        keycapBorder = Colors.white.withValues(alpha: 0.35);
+        keycapText = Colors.white;
+        break;
+
+      case _ActionButtonStyle.neutral:
+        final accent = accentColor ?? const Color(0xFF334155);
+        final bg = accentBgColor ?? const Color(0xFFF1F5F9);
+        decoration = BoxDecoration(
+          color: isEnabled ? Colors.white : const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isEnabled ? const Color(0xFFE2E8F0) : const Color(0xFFE2E8F0),
+            width: 1.2,
+          ),
+          boxShadow: isEnabled
+              ? [
+                  BoxShadow(
+                    color: const Color(0xFF0F172A).withValues(alpha: 0.03),
+                    blurRadius: 4,
+                    offset: const Offset(0, 1.5),
+                  ),
+                ]
+              : null,
+        );
+        textColor = isEnabled ? const Color(0xFF0F172A) : const Color(0xFF94A3B8);
+        iconColor = isEnabled ? accent : const Color(0xFF94A3B8);
+        iconBoxBg = isEnabled ? bg : const Color(0xFFF1F5F9);
+        keycapBg = isEnabled ? bg : const Color(0xFFF1F5F9);
+        keycapBorder = isEnabled ? accent.withValues(alpha: 0.25) : const Color(0xFFCBD5E1);
+        keycapText = isEnabled ? accent : const Color(0xFF94A3B8);
+        break;
+    }
 
     return Material(
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: isEnabled
-                  ? iconColor.withValues(alpha: 0.40)
-                  : const Color(0xFFE2E8F0),
-              width: 1.2,
-            ),
-            boxShadow: isEnabled
-                ? [
-                    BoxShadow(
-                      color: iconColor.withValues(alpha: 0.06),
-                      blurRadius: 6,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.02),
-                      blurRadius: 2,
-                      offset: const Offset(0, 1),
-                    ),
-                  ],
-          ),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (isLoading)
-                  SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: iconColor,
-                    ),
-                  )
-                else
+        borderRadius: BorderRadius.circular(8),
+        hoverColor: style == _ActionButtonStyle.neutral
+            ? const Color(0xFFF8FAFC)
+            : Colors.white.withValues(alpha: 0.12),
+        child: Ink(
+          decoration: decoration,
+          child: Container(
+            height: 38,
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  // Icon badge container
                   Container(
-                    padding: const EdgeInsets.all(4.5),
+                    width: 24,
+                    height: 24,
                     decoration: BoxDecoration(
-                      color: isEnabled
-                          ? iconColor.withValues(alpha: 0.10)
-                          : const Color(0xFFF1F5F9),
+                      color: iconBoxBg,
                       borderRadius: BorderRadius.circular(5),
                     ),
-                    child: Icon(
-                      icon,
-                      size: 16,
-                      color: isEnabled ? iconColor : const Color(0xFF94A3B8),
+                    child: Center(
+                      child: isLoading
+                          ? SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: iconColor,
+                              ),
+                            )
+                          : Icon(
+                              icon,
+                              size: 15,
+                              color: iconColor,
+                            ),
                     ),
                   ),
-                const SizedBox(width: 6),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label,
-                      style: TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 11.5,
-                        fontWeight: FontWeight.w800,
-                        color: isEnabled
-                            ? const Color(0xFF0F172A)
-                            : const Color(0xFF94A3B8),
-                        letterSpacing: 0.3,
-                      ),
+                  const SizedBox(width: 7),
+
+                  // Button text
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w800,
+                      color: textColor,
+                      letterSpacing: 0.35,
                     ),
-                    Text(
-                      shortcut,
-                      style: TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 9,
-                        fontWeight: FontWeight.w700,
-                        color: isEnabled ? iconColor : const Color(0xFF94A3B8),
+                  ),
+
+                  // Shortcut keycap badge
+                  if (shortcut != null) ...[
+                    const SizedBox(width: 7),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: keycapBg,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: keycapBorder, width: 1),
+                      ),
+                      child: Text(
+                        shortcut,
+                        style: TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 9.5,
+                          fontWeight: FontWeight.w700,
+                          color: keycapText,
+                          letterSpacing: 0.3,
+                        ),
                       ),
                     ),
                   ],
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -1051,4 +1076,10 @@ class _ManualTareDialogState extends State<_ManualTareDialog> {
       FilledButton(onPressed: _confirm, child: const Text('Confirm')),
     ],
   );
+}
+
+enum _ActionButtonStyle {
+  primary,
+  danger,
+  neutral,
 }
