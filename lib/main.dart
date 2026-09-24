@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'app/di/injection.dart';
+import 'core/database/app_database.dart';
 import 'core/licensing/license_gate.dart';
 
 void main() async {
@@ -12,6 +13,7 @@ void main() async {
   runApp(
     MultiRepositoryProvider(
       providers: [
+        RepositoryProvider<AppDatabase>.value(value: injection.database),
         RepositoryProvider.value(value: injection.billRepository),
         RepositoryProvider.value(value: injection.customerRepository),
         RepositoryProvider.value(value: injection.materialRepository),

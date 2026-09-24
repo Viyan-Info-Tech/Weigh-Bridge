@@ -8,7 +8,6 @@ import 'package:printing/printing.dart';
 
 import '../../../settings/presentation/bloc/settings_bloc.dart';
 import '../../../settings/presentation/bloc/settings_state.dart';
-import '../../data/services/file_picker_save_service.dart';
 import '../../domain/entities/report_filter.dart';
 import '../../domain/entities/report_summary.dart';
 import '../../domain/entities/weighment_report_item.dart';
@@ -22,6 +21,7 @@ class PrintReportDialog extends StatefulWidget {
   final String vehicleLabel;
   final String materialLabel;
   final String weightUnit;
+  final ScaffoldMessengerState scaffoldMessenger;
 
   const PrintReportDialog({
     super.key,
@@ -32,6 +32,7 @@ class PrintReportDialog extends StatefulWidget {
     this.vehicleLabel = 'All Vehicles',
     this.materialLabel = 'All Materials',
     this.weightUnit = 'kg',
+    required this.scaffoldMessenger,
   });
 
   static Future<void> show({
@@ -44,9 +45,10 @@ class PrintReportDialog extends StatefulWidget {
     String materialLabel = 'All Materials',
     String weightUnit = 'kg',
   }) {
+    final scaffoldMessenger = ScaffoldMessenger.of(context);
     return showDialog<void>(
       context: context,
-      builder: (dialogContext) => PrintReportDialog(
+      builder: (_) => PrintReportDialog(
         records: records,
         summary: summary,
         filter: filter,
@@ -54,6 +56,7 @@ class PrintReportDialog extends StatefulWidget {
         vehicleLabel: vehicleLabel,
         materialLabel: materialLabel,
         weightUnit: weightUnit,
+        scaffoldMessenger: scaffoldMessenger,
       ),
     );
   }
@@ -64,7 +67,6 @@ class PrintReportDialog extends StatefulWidget {
 
 class _PrintReportDialogState extends State<PrintReportDialog> {
   bool _isPrinting = false;
-  bool _isExportingPdf = false;
 
   String _formatWeight(double? weightKg, String unit) {
     if (weightKg == null) return '—';
@@ -76,7 +78,7 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
 
   Future<void> _handlePrint(SettingsState settingsState) async {
     if (widget.records.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      widget.scaffoldMessenger.showSnackBar(
         SnackBar(
           content: const Text('No records available to print'),
           behavior: SnackBarBehavior.floating,
@@ -133,7 +135,7 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
       }
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      widget.scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Row(
             children: [
@@ -149,7 +151,7 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
+      widget.scaffoldMessenger.showSnackBar(
         SnackBar(
           content: Text('Failed to generate print document: $e'),
           behavior: SnackBarBehavior.floating,
@@ -159,91 +161,6 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
     } finally {
       if (mounted) {
         setState(() => _isPrinting = false);
-      }
-    }
-  }
-
-  Future<void> _handleSavePdf(SettingsState settingsState) async {
-    if (widget.records.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('No records available to export'),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      );
-      return;
-    }
-
-    setState(() => _isExportingPdf = true);
-    try {
-      final pdfGenerator = const ReportPdfGenerator();
-      final settings = settingsState.settings;
-      final pdfBytes = await pdfGenerator.generateReportPdf(
-        records: widget.records,
-        summary: widget.summary,
-        filter: widget.filter,
-        companyName: settings?.businessName,
-        address: settings?.address,
-        phone: settings?.phoneNumber,
-        gstin: settings?.gstin,
-        customerLabel: widget.customerLabel,
-        vehicleLabel: widget.vehicleLabel,
-        materialLabel: widget.materialLabel,
-        weightUnit: widget.weightUnit,
-      );
-
-      final dateFormatted = DateFormat(
-        'yyyy-MM-dd',
-      ).format(widget.filter.effectiveStartDate);
-      final suggestedName = 'weighment_report_$dateFormatted.pdf';
-      final saveService = FilePickerSaveService();
-      final savedPath = await saveService.saveFile(
-        suggestedFileName: suggestedName,
-        bytes: pdfBytes,
-        mimeType: 'application/pdf',
-      );
-
-      if (!mounted) return;
-      if (savedPath != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(
-                  Icons.check_circle_rounded,
-                  color: Colors.white,
-                  size: 18,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Report saved as PDF to: $savedPath',
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: const Color(0xFF16A34A),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to save PDF: $e'),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isExportingPdf = false);
       }
     }
   }
@@ -625,7 +542,7 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
                 ),
                 const SizedBox(height: 16),
 
-                // Bottom Action Buttons: Close | Save PDF | Print Report
+                // Bottom Action Buttons: Close | Print Report
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -643,38 +560,6 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
                         ),
                       ),
                       child: const Text('Close'),
-                    ),
-                    const SizedBox(width: 12),
-                    OutlinedButton.icon(
-                      onPressed: _isExportingPdf
-                          ? null
-                          : () => _handleSavePdf(settingsState),
-                      icon: _isExportingPdf
-                          ? const SizedBox(
-                              width: 14,
-                              height: 14,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Color(0xFF0F52BA),
-                              ),
-                            )
-                          : const Icon(
-                              Icons.picture_as_pdf_rounded,
-                              size: 16,
-                              color: Color(0xFFDC2626),
-                            ),
-                      label: const Text('Save PDF'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF1E293B),
-                        side: const BorderSide(color: Color(0xFFCBD5E1)),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 12,
-                        ),
-                      ),
                     ),
                     const SizedBox(width: 12),
                     ElevatedButton.icon(

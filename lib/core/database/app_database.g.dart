@@ -4315,6 +4315,623 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   }
 }
 
+class $ChargeVehicleTypesTable extends ChargeVehicleTypes
+    with TableInfo<$ChargeVehicleTypesTable, ChargeVehicleType> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ChargeVehicleTypesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _isActiveMeta = const VerificationMeta(
+    'isActive',
+  );
+  @override
+  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
+    'is_active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, name, isActive];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'charge_vehicle_types';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ChargeVehicleType> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('is_active')) {
+      context.handle(
+        _isActiveMeta,
+        isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ChargeVehicleType map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ChargeVehicleType(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      isActive: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_active'],
+      )!,
+    );
+  }
+
+  @override
+  $ChargeVehicleTypesTable createAlias(String alias) {
+    return $ChargeVehicleTypesTable(attachedDatabase, alias);
+  }
+}
+
+class ChargeVehicleType extends DataClass
+    implements Insertable<ChargeVehicleType> {
+  final int id;
+  final String name;
+  final bool isActive;
+  const ChargeVehicleType({
+    required this.id,
+    required this.name,
+    required this.isActive,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['is_active'] = Variable<bool>(isActive);
+    return map;
+  }
+
+  ChargeVehicleTypesCompanion toCompanion(bool nullToAbsent) {
+    return ChargeVehicleTypesCompanion(
+      id: Value(id),
+      name: Value(name),
+      isActive: Value(isActive),
+    );
+  }
+
+  factory ChargeVehicleType.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ChargeVehicleType(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      isActive: serializer.fromJson<bool>(json['isActive']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'isActive': serializer.toJson<bool>(isActive),
+    };
+  }
+
+  ChargeVehicleType copyWith({int? id, String? name, bool? isActive}) =>
+      ChargeVehicleType(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        isActive: isActive ?? this.isActive,
+      );
+  ChargeVehicleType copyWithCompanion(ChargeVehicleTypesCompanion data) {
+    return ChargeVehicleType(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      isActive: data.isActive.present ? data.isActive.value : this.isActive,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ChargeVehicleType(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('isActive: $isActive')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, isActive);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ChargeVehicleType &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.isActive == this.isActive);
+}
+
+class ChargeVehicleTypesCompanion extends UpdateCompanion<ChargeVehicleType> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<bool> isActive;
+  const ChargeVehicleTypesCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.isActive = const Value.absent(),
+  });
+  ChargeVehicleTypesCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    this.isActive = const Value.absent(),
+  }) : name = Value(name);
+  static Insertable<ChargeVehicleType> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<bool>? isActive,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (isActive != null) 'is_active': isActive,
+    });
+  }
+
+  ChargeVehicleTypesCompanion copyWith({
+    Value<int>? id,
+    Value<String>? name,
+    Value<bool>? isActive,
+  }) {
+    return ChargeVehicleTypesCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      isActive: isActive ?? this.isActive,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (isActive.present) {
+      map['is_active'] = Variable<bool>(isActive.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ChargeVehicleTypesCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('isActive: $isActive')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $WeighmentRatesTable extends WeighmentRates
+    with TableInfo<$WeighmentRatesTable, WeighmentRate> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $WeighmentRatesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _vehicleTypeIdMeta = const VerificationMeta(
+    'vehicleTypeId',
+  );
+  @override
+  late final GeneratedColumn<int> vehicleTypeId = GeneratedColumn<int>(
+    'vehicle_type_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES charge_vehicle_types (id)',
+    ),
+  );
+  static const VerificationMeta _rateTypeMeta = const VerificationMeta(
+    'rateType',
+  );
+  @override
+  late final GeneratedColumn<String> rateType = GeneratedColumn<String>(
+    'rate_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _weightLimitMeta = const VerificationMeta(
+    'weightLimit',
+  );
+  @override
+  late final GeneratedColumn<double> weightLimit = GeneratedColumn<double>(
+    'weight_limit',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
+  @override
+  late final GeneratedColumn<double> amount = GeneratedColumn<double>(
+    'amount',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    vehicleTypeId,
+    rateType,
+    weightLimit,
+    amount,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'weighment_rates';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<WeighmentRate> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('vehicle_type_id')) {
+      context.handle(
+        _vehicleTypeIdMeta,
+        vehicleTypeId.isAcceptableOrUnknown(
+          data['vehicle_type_id']!,
+          _vehicleTypeIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_vehicleTypeIdMeta);
+    }
+    if (data.containsKey('rate_type')) {
+      context.handle(
+        _rateTypeMeta,
+        rateType.isAcceptableOrUnknown(data['rate_type']!, _rateTypeMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_rateTypeMeta);
+    }
+    if (data.containsKey('weight_limit')) {
+      context.handle(
+        _weightLimitMeta,
+        weightLimit.isAcceptableOrUnknown(
+          data['weight_limit']!,
+          _weightLimitMeta,
+        ),
+      );
+    }
+    if (data.containsKey('amount')) {
+      context.handle(
+        _amountMeta,
+        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_amountMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  WeighmentRate map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return WeighmentRate(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      vehicleTypeId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}vehicle_type_id'],
+      )!,
+      rateType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}rate_type'],
+      )!,
+      weightLimit: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}weight_limit'],
+      ),
+      amount: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}amount'],
+      )!,
+    );
+  }
+
+  @override
+  $WeighmentRatesTable createAlias(String alias) {
+    return $WeighmentRatesTable(attachedDatabase, alias);
+  }
+}
+
+class WeighmentRate extends DataClass implements Insertable<WeighmentRate> {
+  final int id;
+  final int vehicleTypeId;
+  final String rateType;
+  final double? weightLimit;
+  final double amount;
+  const WeighmentRate({
+    required this.id,
+    required this.vehicleTypeId,
+    required this.rateType,
+    this.weightLimit,
+    required this.amount,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['vehicle_type_id'] = Variable<int>(vehicleTypeId);
+    map['rate_type'] = Variable<String>(rateType);
+    if (!nullToAbsent || weightLimit != null) {
+      map['weight_limit'] = Variable<double>(weightLimit);
+    }
+    map['amount'] = Variable<double>(amount);
+    return map;
+  }
+
+  WeighmentRatesCompanion toCompanion(bool nullToAbsent) {
+    return WeighmentRatesCompanion(
+      id: Value(id),
+      vehicleTypeId: Value(vehicleTypeId),
+      rateType: Value(rateType),
+      weightLimit: weightLimit == null && nullToAbsent
+          ? const Value.absent()
+          : Value(weightLimit),
+      amount: Value(amount),
+    );
+  }
+
+  factory WeighmentRate.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return WeighmentRate(
+      id: serializer.fromJson<int>(json['id']),
+      vehicleTypeId: serializer.fromJson<int>(json['vehicleTypeId']),
+      rateType: serializer.fromJson<String>(json['rateType']),
+      weightLimit: serializer.fromJson<double?>(json['weightLimit']),
+      amount: serializer.fromJson<double>(json['amount']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'vehicleTypeId': serializer.toJson<int>(vehicleTypeId),
+      'rateType': serializer.toJson<String>(rateType),
+      'weightLimit': serializer.toJson<double?>(weightLimit),
+      'amount': serializer.toJson<double>(amount),
+    };
+  }
+
+  WeighmentRate copyWith({
+    int? id,
+    int? vehicleTypeId,
+    String? rateType,
+    Value<double?> weightLimit = const Value.absent(),
+    double? amount,
+  }) => WeighmentRate(
+    id: id ?? this.id,
+    vehicleTypeId: vehicleTypeId ?? this.vehicleTypeId,
+    rateType: rateType ?? this.rateType,
+    weightLimit: weightLimit.present ? weightLimit.value : this.weightLimit,
+    amount: amount ?? this.amount,
+  );
+  WeighmentRate copyWithCompanion(WeighmentRatesCompanion data) {
+    return WeighmentRate(
+      id: data.id.present ? data.id.value : this.id,
+      vehicleTypeId: data.vehicleTypeId.present
+          ? data.vehicleTypeId.value
+          : this.vehicleTypeId,
+      rateType: data.rateType.present ? data.rateType.value : this.rateType,
+      weightLimit: data.weightLimit.present
+          ? data.weightLimit.value
+          : this.weightLimit,
+      amount: data.amount.present ? data.amount.value : this.amount,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WeighmentRate(')
+          ..write('id: $id, ')
+          ..write('vehicleTypeId: $vehicleTypeId, ')
+          ..write('rateType: $rateType, ')
+          ..write('weightLimit: $weightLimit, ')
+          ..write('amount: $amount')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, vehicleTypeId, rateType, weightLimit, amount);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is WeighmentRate &&
+          other.id == this.id &&
+          other.vehicleTypeId == this.vehicleTypeId &&
+          other.rateType == this.rateType &&
+          other.weightLimit == this.weightLimit &&
+          other.amount == this.amount);
+}
+
+class WeighmentRatesCompanion extends UpdateCompanion<WeighmentRate> {
+  final Value<int> id;
+  final Value<int> vehicleTypeId;
+  final Value<String> rateType;
+  final Value<double?> weightLimit;
+  final Value<double> amount;
+  const WeighmentRatesCompanion({
+    this.id = const Value.absent(),
+    this.vehicleTypeId = const Value.absent(),
+    this.rateType = const Value.absent(),
+    this.weightLimit = const Value.absent(),
+    this.amount = const Value.absent(),
+  });
+  WeighmentRatesCompanion.insert({
+    this.id = const Value.absent(),
+    required int vehicleTypeId,
+    required String rateType,
+    this.weightLimit = const Value.absent(),
+    required double amount,
+  }) : vehicleTypeId = Value(vehicleTypeId),
+       rateType = Value(rateType),
+       amount = Value(amount);
+  static Insertable<WeighmentRate> custom({
+    Expression<int>? id,
+    Expression<int>? vehicleTypeId,
+    Expression<String>? rateType,
+    Expression<double>? weightLimit,
+    Expression<double>? amount,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (vehicleTypeId != null) 'vehicle_type_id': vehicleTypeId,
+      if (rateType != null) 'rate_type': rateType,
+      if (weightLimit != null) 'weight_limit': weightLimit,
+      if (amount != null) 'amount': amount,
+    });
+  }
+
+  WeighmentRatesCompanion copyWith({
+    Value<int>? id,
+    Value<int>? vehicleTypeId,
+    Value<String>? rateType,
+    Value<double?>? weightLimit,
+    Value<double>? amount,
+  }) {
+    return WeighmentRatesCompanion(
+      id: id ?? this.id,
+      vehicleTypeId: vehicleTypeId ?? this.vehicleTypeId,
+      rateType: rateType ?? this.rateType,
+      weightLimit: weightLimit ?? this.weightLimit,
+      amount: amount ?? this.amount,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (vehicleTypeId.present) {
+      map['vehicle_type_id'] = Variable<int>(vehicleTypeId.value);
+    }
+    if (rateType.present) {
+      map['rate_type'] = Variable<String>(rateType.value);
+    }
+    if (weightLimit.present) {
+      map['weight_limit'] = Variable<double>(weightLimit.value);
+    }
+    if (amount.present) {
+      map['amount'] = Variable<double>(amount.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('WeighmentRatesCompanion(')
+          ..write('id: $id, ')
+          ..write('vehicleTypeId: $vehicleTypeId, ')
+          ..write('rateType: $rateType, ')
+          ..write('weightLimit: $weightLimit, ')
+          ..write('amount: $amount')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4323,6 +4940,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $MaterialsTable materials = $MaterialsTable(this);
   late final $WeighmentsTable weighments = $WeighmentsTable(this);
   late final $AppSettingsTable appSettings = $AppSettingsTable(this);
+  late final $ChargeVehicleTypesTable chargeVehicleTypes =
+      $ChargeVehicleTypesTable(this);
+  late final $WeighmentRatesTable weighmentRates = $WeighmentRatesTable(this);
   late final UserDao userDao = UserDao(this as AppDatabase);
   late final CustomerDao customerDao = CustomerDao(this as AppDatabase);
   late final MaterialDao materialDao = MaterialDao(this as AppDatabase);
@@ -4340,6 +4960,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     materials,
     weighments,
     appSettings,
+    chargeVehicleTypes,
+    weighmentRates,
   ];
 }
 
@@ -6693,6 +7315,604 @@ typedef $$AppSettingsTableProcessedTableManager =
       AppSetting,
       PrefetchHooks Function()
     >;
+typedef $$ChargeVehicleTypesTableCreateCompanionBuilder =
+    ChargeVehicleTypesCompanion Function({
+      Value<int> id,
+      required String name,
+      Value<bool> isActive,
+    });
+typedef $$ChargeVehicleTypesTableUpdateCompanionBuilder =
+    ChargeVehicleTypesCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      Value<bool> isActive,
+    });
+
+final class $$ChargeVehicleTypesTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $ChargeVehicleTypesTable,
+          ChargeVehicleType
+        > {
+  $$ChargeVehicleTypesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static MultiTypedResultKey<$WeighmentRatesTable, List<WeighmentRate>>
+  _weighmentRatesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.weighmentRates,
+    aliasName: 'charge_vehicle_types__id__weighment_rates__vehicle_type_id',
+  );
+
+  $$WeighmentRatesTableProcessedTableManager get weighmentRatesRefs {
+    final manager = $$WeighmentRatesTableTableManager(
+      $_db,
+      $_db.weighmentRates,
+    ).filter((f) => f.vehicleTypeId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_weighmentRatesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$ChargeVehicleTypesTableFilterComposer
+    extends Composer<_$AppDatabase, $ChargeVehicleTypesTable> {
+  $$ChargeVehicleTypesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> weighmentRatesRefs(
+    Expression<bool> Function($$WeighmentRatesTableFilterComposer f) f,
+  ) {
+    final $$WeighmentRatesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.weighmentRates,
+      getReferencedColumn: (t) => t.vehicleTypeId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WeighmentRatesTableFilterComposer(
+            $db: $db,
+            $table: $db.weighmentRates,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$ChargeVehicleTypesTableOrderingComposer
+    extends Composer<_$AppDatabase, $ChargeVehicleTypesTable> {
+  $$ChargeVehicleTypesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ChargeVehicleTypesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ChargeVehicleTypesTable> {
+  $$ChargeVehicleTypesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<bool> get isActive =>
+      $composableBuilder(column: $table.isActive, builder: (column) => column);
+
+  Expression<T> weighmentRatesRefs<T extends Object>(
+    Expression<T> Function($$WeighmentRatesTableAnnotationComposer a) f,
+  ) {
+    final $$WeighmentRatesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.weighmentRates,
+      getReferencedColumn: (t) => t.vehicleTypeId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$WeighmentRatesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.weighmentRates,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$ChargeVehicleTypesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ChargeVehicleTypesTable,
+          ChargeVehicleType,
+          $$ChargeVehicleTypesTableFilterComposer,
+          $$ChargeVehicleTypesTableOrderingComposer,
+          $$ChargeVehicleTypesTableAnnotationComposer,
+          $$ChargeVehicleTypesTableCreateCompanionBuilder,
+          $$ChargeVehicleTypesTableUpdateCompanionBuilder,
+          (ChargeVehicleType, $$ChargeVehicleTypesTableReferences),
+          ChargeVehicleType,
+          PrefetchHooks Function({bool weighmentRatesRefs})
+        > {
+  $$ChargeVehicleTypesTableTableManager(
+    _$AppDatabase db,
+    $ChargeVehicleTypesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ChargeVehicleTypesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ChargeVehicleTypesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ChargeVehicleTypesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+              }) => ChargeVehicleTypesCompanion(
+                id: id,
+                name: name,
+                isActive: isActive,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String name,
+                Value<bool> isActive = const Value.absent(),
+              }) => ChargeVehicleTypesCompanion.insert(
+                id: id,
+                name: name,
+                isActive: isActive,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$ChargeVehicleTypesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({weighmentRatesRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (weighmentRatesRefs) db.weighmentRates,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (weighmentRatesRefs)
+                    await $_getPrefetchedData<
+                      ChargeVehicleType,
+                      $ChargeVehicleTypesTable,
+                      WeighmentRate
+                    >(
+                      currentTable: table,
+                      referencedTable: $$ChargeVehicleTypesTableReferences
+                          ._weighmentRatesRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$ChargeVehicleTypesTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).weighmentRatesRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where(
+                            (e) => e.vehicleTypeId == item.id,
+                          ),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ChargeVehicleTypesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ChargeVehicleTypesTable,
+      ChargeVehicleType,
+      $$ChargeVehicleTypesTableFilterComposer,
+      $$ChargeVehicleTypesTableOrderingComposer,
+      $$ChargeVehicleTypesTableAnnotationComposer,
+      $$ChargeVehicleTypesTableCreateCompanionBuilder,
+      $$ChargeVehicleTypesTableUpdateCompanionBuilder,
+      (ChargeVehicleType, $$ChargeVehicleTypesTableReferences),
+      ChargeVehicleType,
+      PrefetchHooks Function({bool weighmentRatesRefs})
+    >;
+typedef $$WeighmentRatesTableCreateCompanionBuilder =
+    WeighmentRatesCompanion Function({
+      Value<int> id,
+      required int vehicleTypeId,
+      required String rateType,
+      Value<double?> weightLimit,
+      required double amount,
+    });
+typedef $$WeighmentRatesTableUpdateCompanionBuilder =
+    WeighmentRatesCompanion Function({
+      Value<int> id,
+      Value<int> vehicleTypeId,
+      Value<String> rateType,
+      Value<double?> weightLimit,
+      Value<double> amount,
+    });
+
+final class $$WeighmentRatesTableReferences
+    extends BaseReferences<_$AppDatabase, $WeighmentRatesTable, WeighmentRate> {
+  $$WeighmentRatesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $ChargeVehicleTypesTable _vehicleTypeIdTable(_$AppDatabase db) =>
+      db.chargeVehicleTypes.createAlias(
+        'weighment_rates__vehicle_type_id__charge_vehicle_types__id',
+      );
+
+  $$ChargeVehicleTypesTableProcessedTableManager get vehicleTypeId {
+    final $_column = $_itemColumn<int>('vehicle_type_id')!;
+
+    final manager = $$ChargeVehicleTypesTableTableManager(
+      $_db,
+      $_db.chargeVehicleTypes,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_vehicleTypeIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$WeighmentRatesTableFilterComposer
+    extends Composer<_$AppDatabase, $WeighmentRatesTable> {
+  $$WeighmentRatesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get rateType => $composableBuilder(
+    column: $table.rateType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get weightLimit => $composableBuilder(
+    column: $table.weightLimit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ChargeVehicleTypesTableFilterComposer get vehicleTypeId {
+    final $$ChargeVehicleTypesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.vehicleTypeId,
+      referencedTable: $db.chargeVehicleTypes,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChargeVehicleTypesTableFilterComposer(
+            $db: $db,
+            $table: $db.chargeVehicleTypes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$WeighmentRatesTableOrderingComposer
+    extends Composer<_$AppDatabase, $WeighmentRatesTable> {
+  $$WeighmentRatesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rateType => $composableBuilder(
+    column: $table.rateType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get weightLimit => $composableBuilder(
+    column: $table.weightLimit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get amount => $composableBuilder(
+    column: $table.amount,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ChargeVehicleTypesTableOrderingComposer get vehicleTypeId {
+    final $$ChargeVehicleTypesTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.vehicleTypeId,
+      referencedTable: $db.chargeVehicleTypes,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ChargeVehicleTypesTableOrderingComposer(
+            $db: $db,
+            $table: $db.chargeVehicleTypes,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$WeighmentRatesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WeighmentRatesTable> {
+  $$WeighmentRatesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get rateType =>
+      $composableBuilder(column: $table.rateType, builder: (column) => column);
+
+  GeneratedColumn<double> get weightLimit => $composableBuilder(
+    column: $table.weightLimit,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get amount =>
+      $composableBuilder(column: $table.amount, builder: (column) => column);
+
+  $$ChargeVehicleTypesTableAnnotationComposer get vehicleTypeId {
+    final $$ChargeVehicleTypesTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.vehicleTypeId,
+          referencedTable: $db.chargeVehicleTypes,
+          getReferencedColumn: (t) => t.id,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$ChargeVehicleTypesTableAnnotationComposer(
+                $db: $db,
+                $table: $db.chargeVehicleTypes,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
+}
+
+class $$WeighmentRatesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $WeighmentRatesTable,
+          WeighmentRate,
+          $$WeighmentRatesTableFilterComposer,
+          $$WeighmentRatesTableOrderingComposer,
+          $$WeighmentRatesTableAnnotationComposer,
+          $$WeighmentRatesTableCreateCompanionBuilder,
+          $$WeighmentRatesTableUpdateCompanionBuilder,
+          (WeighmentRate, $$WeighmentRatesTableReferences),
+          WeighmentRate,
+          PrefetchHooks Function({bool vehicleTypeId})
+        > {
+  $$WeighmentRatesTableTableManager(
+    _$AppDatabase db,
+    $WeighmentRatesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$WeighmentRatesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$WeighmentRatesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$WeighmentRatesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> vehicleTypeId = const Value.absent(),
+                Value<String> rateType = const Value.absent(),
+                Value<double?> weightLimit = const Value.absent(),
+                Value<double> amount = const Value.absent(),
+              }) => WeighmentRatesCompanion(
+                id: id,
+                vehicleTypeId: vehicleTypeId,
+                rateType: rateType,
+                weightLimit: weightLimit,
+                amount: amount,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int vehicleTypeId,
+                required String rateType,
+                Value<double?> weightLimit = const Value.absent(),
+                required double amount,
+              }) => WeighmentRatesCompanion.insert(
+                id: id,
+                vehicleTypeId: vehicleTypeId,
+                rateType: rateType,
+                weightLimit: weightLimit,
+                amount: amount,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$WeighmentRatesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({vehicleTypeId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (vehicleTypeId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.vehicleTypeId,
+                                referencedTable: $$WeighmentRatesTableReferences
+                                    ._vehicleTypeIdTable(db),
+                                referencedColumn:
+                                    $$WeighmentRatesTableReferences
+                                        ._vehicleTypeIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$WeighmentRatesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $WeighmentRatesTable,
+      WeighmentRate,
+      $$WeighmentRatesTableFilterComposer,
+      $$WeighmentRatesTableOrderingComposer,
+      $$WeighmentRatesTableAnnotationComposer,
+      $$WeighmentRatesTableCreateCompanionBuilder,
+      $$WeighmentRatesTableUpdateCompanionBuilder,
+      (WeighmentRate, $$WeighmentRatesTableReferences),
+      WeighmentRate,
+      PrefetchHooks Function({bool vehicleTypeId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -6707,4 +7927,8 @@ class $AppDatabaseManager {
       $$WeighmentsTableTableManager(_db, _db.weighments);
   $$AppSettingsTableTableManager get appSettings =>
       $$AppSettingsTableTableManager(_db, _db.appSettings);
+  $$ChargeVehicleTypesTableTableManager get chargeVehicleTypes =>
+      $$ChargeVehicleTypesTableTableManager(_db, _db.chargeVehicleTypes);
+  $$WeighmentRatesTableTableManager get weighmentRates =>
+      $$WeighmentRatesTableTableManager(_db, _db.weighmentRates);
 }

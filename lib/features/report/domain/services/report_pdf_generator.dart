@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -23,7 +24,17 @@ class ReportPdfGenerator {
     String materialLabel = 'All Materials',
     String weightUnit = 'kg',
   }) async {
-    final pdf = pw.Document();
+    final regularFontData = await rootBundle.load(
+      'fonts/PlusJakartaSans-Regular.ttf',
+    );
+    final boldFontData = await rootBundle.load(
+      'fonts/PlusJakartaSans-ExtraBold.ttf',
+    );
+    final pdfTheme = pw.ThemeData.withFont(
+      base: pw.Font.ttf(regularFontData),
+      bold: pw.Font.ttf(boldFontData),
+    );
+    final pdf = pw.Document(theme: pdfTheme);
 
     final dateFormat = DateFormat('dd/MM/yyyy');
     final timeFormat = DateFormat('hh:mm a');

@@ -95,9 +95,18 @@ class WeighmentSlipDialog extends StatelessWidget {
             ? (resolvedGrossKg - resolvedTareKg).abs()
             : null);
 
-    const hasGross = true;
-    const hasTare = true;
-    const hasNet = true;
+    final hasGross =
+        isCompleted ||
+        activeSettings.showGrossWeight ||
+        (resolvedGrossKg != null && resolvedGrossKg > 0);
+    final hasTare =
+        isCompleted ||
+        activeSettings.showTareWeight ||
+        (resolvedTareKg != null && resolvedTareKg > 0);
+    final hasNet =
+        isCompleted ||
+        activeSettings.showNetWeight ||
+        (resolvedNetKg != null && resolvedNetKg > 0);
     final hasWeights = hasGross || hasTare || hasNet;
 
     // Check financial rows: completed weighments always show Amount explicitly

@@ -15,11 +15,21 @@ import 'tables/customers_table.dart';
 import 'tables/materials_table.dart';
 import 'tables/weighments_table.dart';
 import 'tables/app_settings_table.dart';
+import 'tables/charge_vehicle_types_table.dart';
+import 'tables/weighment_rates_table.dart';
 
 part 'app_database.g.dart';
 
 @DriftDatabase(
-  tables: [Users, Customers, Materials, Weighments, AppSettings],
+  tables: [
+    Users,
+    Customers,
+    Materials,
+    Weighments,
+    AppSettings,
+    ChargeVehicleTypes,
+    WeighmentRates,
+  ],
   daos: [UserDao, CustomerDao, MaterialDao, BillDao, AppSettingsDao],
 )
 class AppDatabase extends _$AppDatabase {
@@ -28,12 +38,13 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 18;
+  int get schemaVersion => 19;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
+      await _seedWeighmentRates();
     },
     onUpgrade: (m, from, to) async {
       if (from < 5) {
@@ -607,8 +618,99 @@ class AppDatabase extends _$AppDatabase {
           'CREATE UNIQUE INDEX IF NOT EXISTS customers_customer_code_unique ON customers (customer_code)',
         );
       }
+
+      if (from < 19) {
+        await m.createTable(chargeVehicleTypes);
+        await m.createTable(weighmentRates);
+        await _seedWeighmentRates();
+      }
     },
   );
+
+  Future<void> _seedWeighmentRates() async {
+    const data = <(String, List<(String, double?, double)>)>[
+      (
+        'Lorry & Mini Lorry - 6 Wheelers',
+        [
+          ('EMPTY', null, 90),
+          ('LOAD', null, 110),
+          ('ABOVE_20', 20, 130),
+          ('ABOVE_30', 30, 150),
+        ],
+      ),
+      (
+        'Tarus',
+        [
+          ('EMPTY', null, 110),
+          ('LOAD', null, 130),
+          ('ABOVE_20', 20, 150),
+          ('ABOVE_30', 30, 170),
+          ('ABOVE_40', 40, 190),
+          ('ABOVE_50', 50, 210),
+          ('ABOVE_60', 60, 230),
+        ],
+      ),
+      (
+        'Tarus Above 10 Wheelers',
+        [
+          ('EMPTY', null, 120),
+          ('LOAD', null, 140),
+          ('ABOVE_20', 20, 160),
+          ('ABOVE_30', 30, 180),
+          ('ABOVE_40', 40, 200),
+          ('ABOVE_50', 50, 220),
+          ('ABOVE_60', 60, 240),
+        ],
+      ),
+      (
+        'Trailers',
+        [
+          ('EMPTY', null, 130),
+          ('LOAD', null, 150),
+          ('ABOVE_20', 20, 170),
+          ('ABOVE_30', 30, 190),
+          ('ABOVE_40', 40, 220),
+          ('ABOVE_50', 50, 240),
+          ('ABOVE_60', 60, 260),
+        ],
+      ),
+      (
+        'Multi Axel Trailer',
+        [
+          ('EMPTY', null, 180),
+          ('LOAD', null, 260),
+          ('ABOVE_20', 20, 280),
+          ('ABOVE_30', 30, 300),
+          ('ABOVE_40', 40, 320),
+          ('ABOVE_50', 50, 340),
+          ('ABOVE_60', 60, 360),
+        ],
+      ),
+      (
+        'Van / Mini Van / Bullock Carts / 3&4 Wheelers / Tri-cycle',
+        [('EMPTY', null, 80), ('LOAD', null, 90)],
+      ),
+    ];
+
+    for (final (name, rates) in data) {
+      final vehicleTypeId = await into(chargeVehicleTypes).insert(
+        ChargeVehicleTypesCompanion.insert(name: name),
+      );
+      await batch((batch) {
+        batch.insertAll(
+          weighmentRates,
+          rates.map(
+            (rate) => WeighmentRatesCompanion.insert(
+              vehicleTypeId: vehicleTypeId,
+              rateType: rate.$1,
+              weightLimit: Value(rate.$2),
+              amount: rate.$3,
+            ),
+          ),
+        );
+      });
+    }
+  }
 }
 
 LazyDatabase _openConnection() {

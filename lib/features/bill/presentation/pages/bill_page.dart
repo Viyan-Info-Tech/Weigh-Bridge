@@ -15,15 +15,16 @@ import '../widgets/recent_bills_panel.dart';
 import '../widgets/weighment_slip_dialog.dart';
 import '../../../settings/presentation/bloc/settings_bloc.dart';
 import '../../../settings/presentation/bloc/settings_state.dart';
+import '../../../../core/presentation/widgets/confirm_action_dialog.dart';
 
 class BillPage extends StatefulWidget {
   const BillPage({super.key});
 
   @override
-  State<BillPage> createState() => _BillPageState();
+  State<BillPage> createState() => BillPageState();
 }
 
-class _BillPageState extends State<BillPage> {
+class BillPageState extends State<BillPage> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late final FocusNode _keyboardFocusNode;
 
@@ -185,18 +186,6 @@ class _BillPageState extends State<BillPage> {
   }
 
   void _focusTareWeightInput() {
-    final state = context.read<BillBloc>().state;
-    final tareEditable =
-        !state.isEditing ||
-        (state.hasBothWeights
-            ? state.editingFirstWeightType == 'TARE'
-            : state.tareWeightKg <= 0);
-    if (!tareEditable) {
-      _showKeyboardMessage(
-        'The tare weight cannot be changed for this ticket.',
-      );
-      return;
-    }
     _tareWeightFocusNode.requestFocus();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted || !_tareWeightFocusNode.hasFocus) return;
@@ -206,6 +195,8 @@ class _BillPageState extends State<BillPage> {
       );
     });
   }
+
+  void focusTareWeightInput() => _focusTareWeightInput();
 
   void _captureAutoTare(BillState state) {
     if (!state.liveScaleWeightKg.isFinite || state.liveScaleWeightKg <= 0) {
@@ -275,6 +266,11 @@ class _BillPageState extends State<BillPage> {
         state.vehicleNumber.isNotEmpty ||
         _vehicleNumberController.text.isNotEmpty ||
         state.selectedMaterial != null ||
+        state.grossWeightKg > 0 ||
+        state.tareWeightKg > 0 ||
+        state.vehicleCharge > 0 ||
+        state.amount > 0 ||
+        state.remarksText.isNotEmpty ||
         _grossWeightController.text.isNotEmpty ||
         _tareWeightController.text.isNotEmpty ||
         _remarksController.text.isNotEmpty ||
@@ -427,8 +423,6 @@ class _BillPageState extends State<BillPage> {
                 control: true,
               ): () =>
                   _saveTicket(context, state),
-              const SingleActivator(LogicalKeyboardKey.f2): () =>
-                  _focusTareWeightInput(),
               const SingleActivator(LogicalKeyboardKey.escape): () =>
                   _onCancelPressed(context, state),
               const SingleActivator(LogicalKeyboardKey.f4): () =>
@@ -990,38 +984,47 @@ class _BillPageState extends State<BillPage> {
     );
   }
 
-  void _onCancelPressed(BuildContext context, BillState state) {
+  Future<void> _onCancelPressed(BuildContext context, BillState state) async {
+    if (_hasUnsavedData(state)) {
+      final shouldCancel = await ConfirmActionDialog.show(
+        context: context,
+        title: 'Cancel Weighment?',
+        message: 'All entered information will be cleared.',
+        warningNote: 'Unsaved vehicle weights and form entries will be permanently lost.',
+        cancelLabel: 'Keep Editing',
+        confirmLabel: 'Cancel Weighment',
+        confirmIcon: Icons.delete_outline_rounded,
+        icon: Icons.delete_sweep_outlined,
+        isDanger: true,
+      );
+      if (shouldCancel != true || !context.mounted) return;
+    }
+
     context.read<BillBloc>().add(const ClearBillRequested());
     _syncControllersAfterReset();
   }
 
-  void _onExitPressed(BuildContext context, BillState state) {
+  Future<void> _onExitPressed(BuildContext context, BillState state) async {
     if (!_hasUnsavedData(state)) {
       context.read<BillBloc>().add(const ClearBillRequested());
       _syncControllersAfterReset();
       return;
     }
-    showDialog<void>(
+    final shouldExit = await ConfirmActionDialog.show(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Exit current weighment?'),
-        content: const Text('Unsaved ticket details will be cleared.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Continue Ticket'),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              context.read<BillBloc>().add(const ClearBillRequested());
-              _syncControllersAfterReset();
-            },
-            child: const Text('Exit Ticket'),
-          ),
-        ],
-      ),
+      title: 'Exit current weighment?',
+      message: 'Unsaved ticket details will be cleared.',
+      warningNote: 'Active weighment ticket in progress will be reset.',
+      cancelLabel: 'Continue Ticket',
+      confirmLabel: 'Exit Ticket',
+      confirmIcon: Icons.logout_rounded,
+      icon: Icons.warning_amber_rounded,
+      isDanger: true,
     );
+    if (shouldExit == true && context.mounted) {
+      context.read<BillBloc>().add(const ClearBillRequested());
+      _syncControllersAfterReset();
+    }
   }
 }
 

@@ -17,6 +17,7 @@ import '../widgets/receipt_content_card.dart';
 import '../widgets/receipt_preview_card.dart';
 import '../widgets/settings_app_bar.dart';
 import '../widgets/weight_unit_card.dart';
+import '../widgets/weighment_rate_settings_card.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -621,6 +622,8 @@ class _SettingsPageState extends State<SettingsPage> {
                             onChanged: (_) => setState(() {}),
                             nextBillPreview: _currentBillPreview,
                           ),
+                          const SizedBox(height: 16),
+                          WeighmentRateSettingsCard(isEditing: _isEditing),
                           const SizedBox(height: 16),
                           BusinessInformationCard(
                             businessNameController: _businessNameController,

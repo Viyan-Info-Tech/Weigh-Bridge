@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/database/app_database.dart' show AppDatabase;
 import '../../../../core/utils/text_formatters.dart';
 import '../../../customer/domain/entities/customer.dart';
 import '../../../material/domain/entities/material_item.dart' as domain;
-import 'bill_form_charges_stepper.dart';
 import 'bill_form_field_shell.dart';
 import 'bill_form_row.dart';
 import 'bill_form_type_selector.dart';
 import 'bill_form_weight_row.dart';
+import 'weighment_charge_dialog.dart';
 
 /// Industrial 2-Column Weighment Ticket Form
 /// Designed with premium tactile instrument aesthetics:
@@ -220,18 +222,6 @@ class _BillFormState extends State<BillForm> {
     super.dispose();
   }
 
-  void _stepCharge(double delta) {
-    final current =
-        double.tryParse(widget.vehicleChargeController?.text ?? '') ??
-        widget.vehicleCharge;
-    final updated = (current + delta).clamp(0.0, 999999.0);
-    final strVal = updated % 1 == 0
-        ? updated.toStringAsFixed(0)
-        : updated.toStringAsFixed(2);
-    widget.vehicleChargeController?.text = strVal;
-    widget.onVehicleChargeChanged(strVal);
-  }
-
   @override
   Widget build(BuildContext context) {
     final hasBothWeights = widget.grossWeightKg > 0 && widget.tareWeightKg > 0;
@@ -240,11 +230,7 @@ class _BillFormState extends State<BillForm> {
         (hasBothWeights
             ? widget.editingFirstWeightType == 'GROSS'
             : widget.grossWeightKg <= 0);
-    final isTareEnabled =
-        !widget.isEditing ||
-        (hasBothWeights
-            ? widget.editingFirstWeightType == 'TARE'
-            : widget.tareWeightKg <= 0);
+    const isTareEnabled = true;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
@@ -621,7 +607,7 @@ class _BillFormState extends State<BillForm> {
           if (!mounted) return;
           if (customer != null) {
             widget.onCustomerChanged(customer);
-            widget.vehicleChargeFocusNode?.requestFocus();
+            await _showChargeSelection();
           } else {
             _customerCodeController.clear();
             ScaffoldMessenger.of(context).showSnackBar(
@@ -655,36 +641,47 @@ class _BillFormState extends State<BillForm> {
   Widget _buildChargesField() {
     return BillFormFieldShell(
       prefixText: '₹',
-      suffix: BillFormChargesStepper(
-        onChanged: widget.onVehicleChargeChanged,
-        onIncrement: () => _stepCharge(50.0),
-        onDecrement: () => _stepCharge(-50.0),
+      suffix: const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 10),
+        child: Icon(Icons.arrow_drop_down, color: Color(0xFF64748B)),
       ),
       child: TextField(
         controller: widget.vehicleChargeController,
         focusNode: widget.vehicleChargeFocusNode,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        onChanged: widget.onVehicleChargeChanged,
-        onSubmitted: (_) => widget.remarksFocusNode?.requestFocus(),
+        readOnly: true,
+        onTap: _showChargeSelection,
         style: const TextStyle(
           fontFamily: 'PlusJakartaSans',
           fontSize: 13,
           fontWeight: FontWeight.w700,
           color: Color(0xFF0F172A),
         ),
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           border: InputBorder.none,
           isDense: true,
-          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-          hintText: '0.00',
-          hintStyle: TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            color: Color(0xFF94A3B8),
-            fontSize: 13,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 10,
           ),
+          hintText: widget.vehicleCharge > 0 ? null : '0.00',
         ),
       ),
     );
+  }
+
+  Future<void> _showChargeSelection() async {
+    final database = context.read<AppDatabase>();
+    final amount = await showDialog<double>(
+      context: context,
+      builder: (_) => WeighmentChargeDialog(database: database),
+    );
+    if (amount == null) return;
+    final value = amount.toStringAsFixed(2);
+    widget.vehicleChargeController?.text = value;
+    widget.onVehicleChargeChanged(value);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) widget.remarksFocusNode?.requestFocus();
+    });
   }
 
   /// 6. CONTAINER NO

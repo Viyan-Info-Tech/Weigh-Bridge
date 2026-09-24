@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -26,6 +27,9 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
+  final FocusNode _appShortcutsFocusNode =
+      FocusNode(debugLabel: 'applicationNavigationShortcuts');
+  final GlobalKey<BillPageState> _billPageKey = GlobalKey<BillPageState>();
 
   late final List<Widget> _pages;
   late Timer _clockTimer;
@@ -35,7 +39,7 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _pages = [
-      const BillPage(),
+      BillPage(key: _billPageKey),
       const CustomerListPage(),
       const MaterialListPage(),
       const ReportPage(),
@@ -55,28 +59,41 @@ class _HomePageState extends State<HomePage> {
   @override
   void dispose() {
     _clockTimer.cancel();
+    _appShortcutsFocusNode.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // 1. Top Application Header
-            _buildAppHeader(context),
+    return Focus(
+      focusNode: _appShortcutsFocusNode,
+      child: CallbackShortcuts(
+        bindings: <ShortcutActivator, VoidCallback>{
+          const SingleActivator(LogicalKeyboardKey.f2): () {
+            if (_selectedIndex == 0) {
+              _billPageKey.currentState?.focusTareWeightInput();
+            }
+          },
+        },
+        child: Scaffold(
+          backgroundColor: const Color(0xFFF1F5F9),
+          body: SafeArea(
+            child: Column(
+              children: [
+                // 1. Top Application Header
+                _buildAppHeader(context),
 
-            // 2. Horizontal Navigation Tabs Bar
-            _buildTopNavigationBar(context),
+                // 2. Horizontal Navigation Tabs Bar
+                _buildTopNavigationBar(context),
 
-            // 3. Main Active Content Screen
-            Expanded(child: _pages[_selectedIndex]),
+                // 3. Main Active Content Screen
+                Expanded(child: _pages[_selectedIndex]),
 
-            // 4. Bottom Industrial Status Bar
-            _buildAppStatusBar(context),
-          ],
+                // 4. Bottom Industrial Status Bar
+                _buildAppStatusBar(context),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -369,6 +386,11 @@ class _HomePageState extends State<HomePage> {
     }
 
     setState(() => _selectedIndex = index);
+    if (index == 0) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _appShortcutsFocusNode.requestFocus();
+      });
+    }
   }
 
   Widget _buildExitButton(BuildContext context) {
