@@ -46,9 +46,8 @@ class Weighment extends Equatable {
                : (grossWeightKg ?? 0)),
        explicitNetWeightKg = netWeightKg;
 
-  /// A weighment is completed once both weights have been captured.
-  bool get isCompleted =>
-      firstWeightKg > 0 && secondWeightKg != null && secondWeightKg! > 0;
+  /// Every saved weighment is a completed bill once either weight is captured.
+  bool get isCompleted => grossWeightKg != null || tareWeightKg != null;
 
   /// Business Logic for Gross Weight:
   /// If firstWeightType == GROSS -> firstWeight (if > 0)

@@ -17,7 +17,6 @@ class RecentBillsPanel extends StatefulWidget {
   final List<domain.MaterialItem> materials;
   final String weightUnit;
   final ValueChanged<Weighment>? onBillSelected;
-  final ValueChanged<Weighment>? onContinueBill;
   final ValueChanged<DateTime>? onDateChanged;
   final void Function(DateTime? startDate, DateTime? endDate)?
   onDateRangeChanged;
@@ -34,7 +33,6 @@ class RecentBillsPanel extends StatefulWidget {
     this.materials = const [],
     this.weightUnit = 'kg',
     this.onBillSelected,
-    this.onContinueBill,
     this.onDateChanged,
     this.onDateRangeChanged,
     this.searchFocusNode,
@@ -156,7 +154,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
       }
     }).toList();
 
-    // Filter bills based on search query and status filter
+    // Filter bills based on the search query.
     final filteredBills = displayBills.where((bill) {
       final vehicleNo = bill.vehicleNumber.toLowerCase();
       final customerName = _getCustomerName(bill.customerId).toLowerCase();
@@ -896,7 +894,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
           ),
           const SizedBox(height: 10),
 
-          // Row 4: Total Amount, Payment Badge, Slip/Continue Actions
+          // Row 4: Total Amount, Payment Badge, and receipt action
           if (isCompact)
             Wrap(
               spacing: 6,

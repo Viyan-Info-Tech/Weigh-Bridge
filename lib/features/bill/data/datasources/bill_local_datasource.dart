@@ -25,6 +25,8 @@ class BillLocalDataSource {
         amount: Value(weighment.amount),
         remarks: Value(weighment.remarks),
         weightUnit: Value(weighment.weightUnit),
+        createdAt: Value(weighment.createdAt),
+        updatedAt: Value(weighment.updatedAt),
       ),
     );
   }

@@ -234,10 +234,17 @@ class _BillFormState extends State<BillForm> {
 
   @override
   Widget build(BuildContext context) {
+    final hasBothWeights = widget.grossWeightKg > 0 && widget.tareWeightKg > 0;
     final isGrossEnabled =
-        !widget.isEditing || widget.editingFirstWeightType == 'GROSS';
+        !widget.isEditing ||
+        (hasBothWeights
+            ? widget.editingFirstWeightType == 'GROSS'
+            : widget.grossWeightKg <= 0);
     final isTareEnabled =
-        !widget.isEditing || widget.editingFirstWeightType == 'TARE';
+        !widget.isEditing ||
+        (hasBothWeights
+            ? widget.editingFirstWeightType == 'TARE'
+            : widget.tareWeightKg <= 0);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
@@ -895,11 +902,15 @@ class _BillFormState extends State<BillForm> {
   /// 6. NETT WEIGHT Display
   Widget _buildNettWeightDisplay() {
     final isKg = widget.weightUnit.toLowerCase() == 'kg';
-    final String netDisplay = isKg
-        ? (widget.netWeightKg > 0 ? widget.netWeightKg.toStringAsFixed(0) : '0')
+    final hasCompleteWeight =
+        widget.grossWeightKg > 0 && widget.tareWeightKg > 0;
+    final String netDisplay = !hasCompleteWeight || widget.netWeightKg <= 0
+        ? '--'
+        : isKg
+        ? widget.netWeightKg.toStringAsFixed(0)
         : (widget.netWeightKg > 0
               ? (widget.netWeightKg / 1000).toStringAsFixed(3)
-              : '0.000');
+              : '--');
 
     return Container(
       height: 38,

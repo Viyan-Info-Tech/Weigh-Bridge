@@ -102,7 +102,7 @@ class BillState extends Equatable {
   });
 
   bool get isEditing => editingBillId != null;
-  bool get isCompleted => grossWeightKg > 0 && tareWeightKg > 0;
+  bool get hasBothWeights => grossWeightKg > 0 && tareWeightKg > 0;
   bool get isKg => weightUnit.trim().toLowerCase() == 'kg';
 
   DateTime get effectiveBillsDate {

@@ -75,7 +75,6 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     on<CaptureLiveWeight>(_onCaptureLiveWeight);
     on<LiveScaleWeightUpdated>(_onLiveScaleWeightUpdated);
     on<WeightTypeSelected>(_onWeightTypeSelected);
-    on<LoadBillForContinue>(_onLoadBillForContinue);
   }
 
   Future<void> _onLoadBillScreen(
@@ -381,13 +380,12 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       return 'Truck number must be exactly 10 characters.';
     }
     if (state.selectedMaterial == null) return 'Please select a material';
-    if (!state.grossWeightKg.isFinite || state.grossWeightKg <= 0) {
-      return 'Please enter a valid gross weight';
+    final hasGross = state.grossWeightKg.isFinite && state.grossWeightKg > 0;
+    final hasTare = state.tareWeightKg.isFinite && state.tareWeightKg > 0;
+    if (!hasGross && !hasTare) {
+      return 'Capture a gross or tare weight before saving';
     }
-    if (!state.tareWeightKg.isFinite || state.tareWeightKg <= 0) {
-      return 'Please enter a valid tare weight';
-    }
-    if (state.tareWeightKg > state.grossWeightKg) {
+    if (hasGross && hasTare && state.tareWeightKg > state.grossWeightKg) {
       return 'Tare weight cannot be greater than gross weight';
     }
 
@@ -501,11 +499,21 @@ class BillBloc extends Bloc<BillEvent, BillState> {
         secondWeightType = state.tareWeightKg > 0 ? 'TARE' : null;
       }
     } else {
-      // New bill with both weights captured (gross first, tare second)
-      firstWeightKg = state.grossWeightKg;
-      firstWeightType = 'GROSS';
-      secondWeightKg = state.tareWeightKg;
-      secondWeightType = 'TARE';
+      // Persist the first captured weight and leave the second absent until
+      // the truck returns for its other weighing.
+      firstWeightType =
+          state.editingFirstWeightType?.toUpperCase() ??
+          (state.grossWeightKg > 0 ? 'GROSS' : 'TARE');
+      firstWeightKg = firstWeightType == 'GROSS'
+          ? state.grossWeightKg
+          : state.tareWeightKg;
+      final secondWeight = firstWeightType == 'GROSS'
+          ? state.tareWeightKg
+          : state.grossWeightKg;
+      secondWeightKg = secondWeight > 0 ? secondWeight : null;
+      secondWeightType = secondWeightKg == null
+          ? null
+          : (firstWeightType == 'GROSS' ? 'TARE' : 'GROSS');
     }
 
     final netWeight = (state.grossWeightKg > 0 && state.tareWeightKg > 0)
@@ -847,68 +855,4 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     );
   }
 
-  /// Loads a pending bill (one weight captured) into the form for completing
-  /// the second weighment. The form will be pre-populated so the operator
-  /// can capture the missing weight and save.
-  Future<void> _onLoadBillForContinue(
-    LoadBillForContinue event,
-    Emitter<BillState> emit,
-  ) async {
-    try {
-      final bill = state.recentBills
-          .where((b) => b.id == event.billId)
-          .firstOrNull;
-      if (bill == null) return;
-
-      final customer = state.customers
-          .where((c) => c.id == bill.customerId)
-          .firstOrNull;
-      final material = state.materials
-          .where((m) => m.id == bill.materialId)
-          .firstOrNull;
-
-      // Determine which weight was already captured and which is needed next.
-      final firstType = bill.firstWeightType.toUpperCase();
-      final double grossKg = firstType == 'GROSS' ? bill.firstWeightKg : 0;
-      final double tareKg = firstType == 'TARE' ? bill.firstWeightKg : 0;
-      // The next weight type to capture is the opposite of the first.
-      final nextType = firstType == 'GROSS' ? 'Tare' : 'Gross';
-
-      final displayUnit = _normalizeUnit(state.weightUnit);
-      final isTon = displayUnit == 'ton';
-      String fmtWeight(double kg) {
-        final val = isTon ? kg / 1000 : kg;
-        return isTon ? val.toStringAsFixed(3) : val.toStringAsFixed(0);
-      }
-
-      emit(
-        state.copyWith(
-          selectedCustomer: customer,
-          vehicleNumber: bill.vehicleNumber,
-          selectedMaterial: material,
-          paymentMode: bill.paymentMode,
-          grossWeightKg: grossKg,
-          grossWeightText: grossKg > 0 ? fmtWeight(grossKg) : '',
-          tareWeightKg: tareKg,
-          tareWeightText: tareKg > 0 ? fmtWeight(tareKg) : '',
-          netWeightKg: 0,
-          amount: bill.amount,
-          vehicleCharge: bill.vehicleCharge,
-          remarksText: bill.remarks ?? '',
-          weightUnit: displayUnit,
-          currentBillNumber: bill.billNumber,
-          editingBillId: bill.id,
-          editingFirstWeightType: firstType,
-          editingFirstWeightKg: bill.firstWeightKg,
-          editingBillCreatedAt: bill.createdAt,
-          selectedWeightType: nextType,
-          clearError: true,
-          clearWeightError: true,
-        ),
-      );
-    } catch (e) {
-      if (emit.isDone) return;
-      emit(state.copyWith(errorMessage: 'Failed to load bill: $e'));
-    }
-  }
 }

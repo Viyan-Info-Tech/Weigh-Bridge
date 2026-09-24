@@ -197,13 +197,3 @@ class WeightTypeSelected extends BillEvent {
   @override
   List<Object?> get props => [type];
 }
-
-/// Loads a pending (single-weight) bill into the form so the operator
-/// can capture the second weight and complete the weighment.
-class LoadBillForContinue extends BillEvent {
-  final int billId;
-  const LoadBillForContinue(this.billId);
-
-  @override
-  List<Object?> get props => [billId];
-}

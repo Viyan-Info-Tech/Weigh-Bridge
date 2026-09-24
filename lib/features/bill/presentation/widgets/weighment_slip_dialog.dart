@@ -95,15 +95,9 @@ class WeighmentSlipDialog extends StatelessWidget {
             ? (resolvedGrossKg - resolvedTareKg).abs()
             : null);
 
-    final hasGross =
-        activeSettings.showGrossWeight ||
-        (resolvedGrossKg != null && resolvedGrossKg > 0);
-    final hasTare =
-        activeSettings.showTareWeight ||
-        (resolvedTareKg != null && resolvedTareKg > 0);
-    final hasNet =
-        activeSettings.showNetWeight ||
-        (resolvedNetKg != null && resolvedNetKg > 0);
+    const hasGross = true;
+    const hasTare = true;
+    const hasNet = true;
     final hasWeights = hasGross || hasTare || hasNet;
 
     // Check financial rows: completed weighments always show Amount explicitly
@@ -205,12 +199,16 @@ class WeighmentSlipDialog extends StatelessWidget {
                                 if (hasGross)
                                   _buildWeightRow(
                                     'Gross Weight',
-                                    '${toDisplay(resolvedGrossKg)?.toStringAsFixed(decimals) ?? '—'} $unit',
+                                    resolvedGrossKg == null
+                                        ? '--'
+                                        : '${toDisplay(resolvedGrossKg)!.toStringAsFixed(decimals)} $unit',
                                   ),
                                 if (hasTare)
                                   _buildWeightRow(
                                     'Tare Weight',
-                                    '${toDisplay(resolvedTareKg)?.toStringAsFixed(decimals) ?? '—'} $unit',
+                                    resolvedTareKg == null
+                                        ? '--'
+                                        : '${toDisplay(resolvedTareKg)!.toStringAsFixed(decimals)} $unit',
                                   ),
                                 if (hasGross || hasTare)
                                   const SizedBox(height: 4),
@@ -219,9 +217,13 @@ class WeighmentSlipDialog extends StatelessWidget {
                                   const SizedBox(height: 4),
                                   _buildWeightRow(
                                     'Net Weight',
-                                    '${toDisplay(resolvedNetKg)?.toStringAsFixed(decimals) ?? '—'} $unit',
+                                    resolvedNetKg == null
+                                        ? '--'
+                                        : '${toDisplay(resolvedNetKg)!.toStringAsFixed(decimals)} $unit',
                                   ),
                                 ],
+                                const SizedBox(height: 5),
+                                _buildWeightRow('Status', 'COMPLETED'),
                               ],
                             );
                           },
@@ -490,7 +492,7 @@ class WeighmentSlipDialog extends StatelessWidget {
   }
 
   Widget _buildWeightRow(String label, String value) {
-    final isDash = value == '—';
+    final isDash = value == '--';
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1.5),
       child: Row(

@@ -161,11 +161,15 @@ class _BillPageState extends State<BillPage> {
       _vehicleFocusNode.requestFocus();
       return;
     }
+    final requiredType = state.hasBothWeights
+        ? state.editingFirstWeightType?.toUpperCase()
+        : (state.editingFirstWeightType?.toUpperCase() == 'GROSS'
+              ? 'TARE'
+              : 'GROSS');
     if (state.isEditing &&
-        state.selectedWeightType.toUpperCase() !=
-            state.editingFirstWeightType?.toUpperCase()) {
+        state.selectedWeightType.toUpperCase() != requiredType) {
       _showKeyboardMessage(
-        'Only the original ${state.editingFirstWeightType?.toLowerCase()} weight can be changed.',
+        'Capture the missing ${requiredType?.toLowerCase()} weight to continue this ticket.',
       );
       return;
     }
@@ -182,7 +186,12 @@ class _BillPageState extends State<BillPage> {
 
   void _focusTareWeightInput() {
     final state = context.read<BillBloc>().state;
-    if (state.isEditing && state.editingFirstWeightType != 'TARE') {
+    final tareEditable =
+        !state.isEditing ||
+        (state.hasBothWeights
+            ? state.editingFirstWeightType == 'TARE'
+            : state.tareWeightKg <= 0);
+    if (!tareEditable) {
       _showKeyboardMessage(
         'The tare weight cannot be changed for this ticket.',
       );
@@ -211,7 +220,12 @@ class _BillPageState extends State<BillPage> {
       );
       return;
     }
-    if (state.isEditing && state.editingFirstWeightType == 'TARE') {
+    final tareEditable =
+        !state.isEditing ||
+        (state.hasBothWeights
+            ? state.editingFirstWeightType == 'TARE'
+            : state.tareWeightKg <= 0);
+    if (!tareEditable) {
       _showKeyboardMessage('The original tare weight cannot be changed.');
       return;
     }
@@ -243,7 +257,7 @@ class _BillPageState extends State<BillPage> {
         state.status == BillScreenStatus.saving ||
         state.status == BillScreenStatus.printing;
     if (!isSaving && !state.hasWeightError) {
-      context.read<BillBloc>().add(const SaveBillRequested());
+      context.read<BillBloc>().add(const SaveAndPrintBillRequested());
     }
   }
 
