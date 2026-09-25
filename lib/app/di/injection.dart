@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/database/app_database.dart';
 import '../../core/security/password_hasher.dart';
 import '../../core/security/session_manager.dart';
+import '../../core/security/admin_password_service.dart';
 import '../../features/auth/data/datasources/auth_local_datasource.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/usecases/get_current_user.dart';
@@ -59,6 +60,7 @@ class Injection {
   final BillRepository billRepository;
   final CustomerRepository customerRepository;
   final MaterialItemRepository materialRepository;
+  final AdminPasswordService adminPasswordService;
 
   Injection({
     required this.database,
@@ -72,6 +74,7 @@ class Injection {
     required this.billRepository,
     required this.customerRepository,
     required this.materialRepository,
+    required this.adminPasswordService,
   });
 
   static Future<Injection> init() async {
@@ -80,6 +83,11 @@ class Injection {
 
     // Auth
     final passwordHasher = PasswordHasher();
+    final adminPasswordService = AdminPasswordService(
+      database: database,
+      passwordHasher: passwordHasher,
+    );
+    await adminPasswordService.initialize();
     final sessionManager = SessionManager(prefs);
     final authLocalDataSource = AuthLocalDataSource(database);
 
@@ -211,6 +219,7 @@ class Injection {
       billRepository: billRepository,
       customerRepository: customerRepository,
       materialRepository: materialItemRepository,
+      adminPasswordService: adminPasswordService,
     );
   }
 

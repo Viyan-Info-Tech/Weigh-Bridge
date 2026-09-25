@@ -18,6 +18,7 @@ import '../widgets/receipt_preview_card.dart';
 import '../widgets/settings_app_bar.dart';
 import '../widgets/weight_unit_card.dart';
 import '../widgets/weighment_rate_settings_card.dart';
+import '../widgets/change_admin_password_dialog.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -180,7 +181,7 @@ class _SettingsPageState extends State<SettingsPage> {
   void _populateFromSettings(BillingSettings settings) {
     _savedSettings = settings;
     _weightUnit = settings.weightUnit;
-    _billPrefixController.text = settings.billPrefix;
+    _billPrefixController.text = settings.billPrefix.toUpperCase();
     _billStartingNumberController.text = settings.billStartingNumber.toString();
     _billNumberDigitsController.text = settings.billNumberDigits.toString();
     _businessNameController.text = settings.businessName;
@@ -352,13 +353,20 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   String get _currentBillPreview {
-    final prefix = _billPrefixController.text.trim().isEmpty
-        ? 'WB'
-        : _billPrefixController.text.trim();
-    final startNum =
-        int.tryParse(_billStartingNumberController.text.trim()) ?? 1;
-    final digits =
-        int.tryParse(_billNumberDigitsController.text.trim()) ?? 5;
+    final prefix = _billPrefixController.text.trim().toUpperCase();
+    final startText = _billStartingNumberController.text.trim();
+    final startNum = int.tryParse(startText);
+    final digits = int.tryParse(_billNumberDigitsController.text.trim());
+    if (!RegExp(r'^[A-Z]{1,5}$').hasMatch(prefix) ||
+        startNum == null ||
+        startNum < 1 ||
+        startText.length > 9 ||
+        digits == null ||
+        digits < 1 ||
+        digits > 9 ||
+        startText.length > digits) {
+      return '--';
+    }
     return '$prefix-${startNum.toString().padLeft(digits, '0')}';
   }
 
@@ -606,6 +614,58 @@ class _SettingsPageState extends State<SettingsPage> {
                       final formColumn = Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
+                          Card(
+                            child: Padding(
+                              padding: const EdgeInsets.all(18),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.admin_panel_settings_outlined,
+                                    color: Color(0xFF0284C7),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Administrator Password',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        SizedBox(height: 3),
+                                        Text(
+                                          'Protects Customers, Materials, Reports and Settings',
+                                          style: TextStyle(fontSize: 12),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  OutlinedButton(
+                                    onPressed: () async {
+                                      final messenger =
+                                          ScaffoldMessenger.of(context);
+                                      final changed =
+                                          await showChangeAdminPasswordDialog(
+                                            context,
+                                          );
+                                      if (changed && mounted) {
+                                        messenger.showSnackBar(const SnackBar(
+                                          content: Text(
+                                            'Administrator password changed.',
+                                          ),
+                                        ));
+                                      }
+                                    },
+                                    child: const Text('Change Password'),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
                           WeightUnitCard(
                             weightUnit: _weightUnit,
                             isEditing: _isEditing,

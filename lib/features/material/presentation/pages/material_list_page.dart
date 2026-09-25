@@ -456,7 +456,7 @@ class _MaterialListPageState extends State<MaterialListPage> {
           return _buildEmptyState();
         }
 
-        const minTableWidth = 620.0;
+        const minTableWidth = 540.0;
 
         return Column(
           children: [
@@ -498,30 +498,32 @@ class _MaterialListPageState extends State<MaterialListPage> {
     );
   }
 
-  static const double _actionColumnWidth = 110.0;
+  static const double _actionColumnWidth = 100.0;
+  static const double _codeColumnWidth = 85.0;
+  static const double _statusColumnWidth = 115.0;
 
   Widget _buildHeaderRow() {
     return Container(
-      height: 40,
+      height: 42,
       decoration: const BoxDecoration(
         color: Color(0xFFF8FAFC),
         border: Border(
           top: BorderSide(color: Color(0xFFE2E8F0)),
-          bottom: BorderSide(color: Color(0xFFE2E8F0)),
+          bottom: BorderSide(color: Color(0xFFE2E8F0), width: 1.2),
         ),
       ),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20),
       child: Row(
         children: [
-          Expanded(flex: 24, child: _buildHeaderText('CODE')),
-          Expanded(flex: 42, child: _buildHeaderText('MATERIAL NAME')),
-          Expanded(flex: 28, child: _buildHeaderText('STATUS')),
+          SizedBox(width: _codeColumnWidth, child: _buildHeaderText('CODE')),
+          Expanded(child: _buildHeaderText('MATERIAL NAME')),
+          SizedBox(width: _statusColumnWidth, child: _buildHeaderText('STATUS')),
           SizedBox(
             width: _actionColumnWidth,
             child: Align(
               alignment: Alignment.centerRight,
               child: Padding(
-                padding: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.only(right: 6),
                 child: _buildHeaderText('ACTIONS'),
               ),
             ),
@@ -547,49 +549,60 @@ class _MaterialListPageState extends State<MaterialListPage> {
 
   Widget _buildDataRow(MaterialItem material) {
     return _HoverableRow(
+      onDoubleTap: () =>
+          MaterialDetailsDialog.show(context, material: material),
       child: Row(
         children: [
-          // Code
-          Expanded(
-            flex: 24,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
-              ),
-              child: Text(
-                material.code,
-                style: const TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF334155),
+          // Code Badge
+          SizedBox(
+            width: _codeColumnWidth,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F5F9),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
                 ),
-                overflow: TextOverflow.ellipsis,
+                child: Text(
+                  material.code,
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF334155),
+                    letterSpacing: 0.3,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
           ),
 
           // Material Name
           Expanded(
-            flex: 42,
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(6),
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFEA580C).withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(6),
+                    color: const Color(0xFFFFF7ED),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: const Color(0xFFEA580C).withValues(alpha: 0.2),
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.layers_rounded,
-                    size: 14,
-                    color: Color(0xFFEA580C),
+                  child: const Center(
+                    child: Icon(
+                      Icons.layers_rounded,
+                      size: 16,
+                      color: Color(0xFFEA580C),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     material.name,
@@ -606,9 +619,9 @@ class _MaterialListPageState extends State<MaterialListPage> {
             ),
           ),
 
-          // Status
-          Expanded(
-            flex: 28,
+          // Status Badge
+          SizedBox(
+            width: _statusColumnWidth,
             child: Align(
               alignment: Alignment.centerLeft,
               child: _buildStatusBadge(material.isActive),
@@ -621,7 +634,7 @@ class _MaterialListPageState extends State<MaterialListPage> {
             child: Align(
               alignment: Alignment.centerRight,
               child: Padding(
-                padding: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.only(right: 2),
                 child: ActionMenu(
                   isActive: material.isActive,
                   onView: () =>
@@ -643,34 +656,37 @@ class _MaterialListPageState extends State<MaterialListPage> {
 
   Widget _buildStatusBadge(bool isActive) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2.5),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
       decoration: BoxDecoration(
-        color: isActive ? const Color(0xFFDCFCE7) : const Color(0xFFFEE2E2),
+        color: isActive ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isActive ? const Color(0xFFBBF7D0) : const Color(0xFFE2E8F0),
+        ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 5,
-            height: 5,
+            width: 6,
+            height: 6,
             decoration: BoxDecoration(
               color: isActive
                   ? const Color(0xFF16A34A)
-                  : const Color(0xFFDC2626),
+                  : const Color(0xFF94A3B8),
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: 4),
+          const SizedBox(width: 5),
           Text(
             isActive ? 'Active' : 'Inactive',
             style: TextStyle(
               fontFamily: 'PlusJakartaSans',
-              fontSize: 10.5,
+              fontSize: 11,
               fontWeight: FontWeight.w700,
               color: isActive
                   ? const Color(0xFF15803D)
-                  : const Color(0xFFB91C1C),
+                  : const Color(0xFF64748B),
             ),
           ),
         ],
@@ -963,8 +979,9 @@ class _MaterialListPageState extends State<MaterialListPage> {
 
 class _HoverableRow extends StatefulWidget {
   final Widget child;
+  final VoidCallback? onDoubleTap;
 
-  const _HoverableRow({required this.child});
+  const _HoverableRow({required this.child, this.onDoubleTap});
 
   @override
   State<_HoverableRow> createState() => _HoverableRowState();
@@ -978,16 +995,19 @@ class _HoverableRowState extends State<_HoverableRow> {
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        decoration: BoxDecoration(
-          color: _isHovered ? const Color(0xFFF8FAFC) : Colors.white,
-          border: const Border(
-            bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1),
+      child: GestureDetector(
+        onDoubleTap: widget.onDoubleTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 140),
+          decoration: BoxDecoration(
+            color: _isHovered ? const Color(0xFFF8FAFC) : Colors.white,
+            border: const Border(
+              bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1),
+            ),
           ),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          child: widget.child,
         ),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: widget.child,
       ),
     );
   }

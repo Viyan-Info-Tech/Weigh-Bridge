@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-const _adminPassword = '123';
+import '../../security/admin_password_service.dart';
 
 Future<bool> showAdminPasswordDialog(BuildContext context) async {
   final result = await showDialog<bool>(
@@ -24,6 +25,7 @@ class _AdminPasswordDialogState extends State<_AdminPasswordDialog> {
   final _focusNode = FocusNode();
   String? _error;
   bool _obscureText = true;
+  bool _isVerifying = false;
 
   @override
   void dispose() {
@@ -32,12 +34,29 @@ class _AdminPasswordDialogState extends State<_AdminPasswordDialog> {
     super.dispose();
   }
 
-  void _unlock() {
-    if (_controller.text == _adminPassword) {
+  Future<void> _unlock() async {
+    if (_isVerifying) return;
+    setState(() => _isVerifying = true);
+    bool valid;
+    try {
+      valid = await context
+          .read<AdminPasswordService>()
+          .verify(_controller.text);
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isVerifying = false;
+        _error = 'Could not verify the administrator password.';
+      });
+      return;
+    }
+    if (!mounted) return;
+    if (valid) {
       Navigator.of(context).pop(true);
       return;
     }
     setState(() {
+      _isVerifying = false;
       _error = 'Incorrect password. Please try again.';
       _controller.selection = TextSelection(
         baseOffset: 0,
@@ -315,7 +334,7 @@ class _AdminPasswordDialogState extends State<_AdminPasswordDialog> {
                     Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        onTap: _unlock,
+                        onTap: _isVerifying ? null : _unlock,
                         borderRadius: BorderRadius.circular(8),
                         child: Ink(
                           decoration: BoxDecoration(
@@ -341,7 +360,7 @@ class _AdminPasswordDialogState extends State<_AdminPasswordDialog> {
                             alignment: Alignment.center,
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
-                              children: const [
+                              children: [
                                 Icon(
                                   Icons.lock_open_rounded,
                                   size: 15,
@@ -349,7 +368,7 @@ class _AdminPasswordDialogState extends State<_AdminPasswordDialog> {
                                 ),
                                 SizedBox(width: 6),
                                 Text(
-                                  'Unlock',
+                                  _isVerifying ? 'Checking...' : 'Unlock',
                                   style: TextStyle(
                                     fontFamily: 'PlusJakartaSans',
                                     fontSize: 12.5,

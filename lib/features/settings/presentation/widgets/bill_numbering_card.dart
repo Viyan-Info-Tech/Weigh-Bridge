@@ -40,28 +40,50 @@ class BillNumberingCard extends StatelessWidget {
                 label: 'Prefix',
                 hint: 'WB',
                 controller: prefixController,
-                maxLength: 6,
+                maxLength: 5,
                 textCapitalization: TextCapitalization.characters,
                 inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9]')),
+                  FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z]')),
+                  TextInputFormatter.withFunction((oldValue, newValue) {
+                    final upper = newValue.text.toUpperCase();
+                    return newValue.copyWith(
+                      text: upper,
+                      selection: newValue.selection,
+                      composing: TextRange.empty,
+                    );
+                  }),
                 ],
                 onChanged: onChanged,
                 isEditing: isEditing,
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Required' : null,
+                validator: (value) {
+                  final prefix = value?.trim() ?? '';
+                  if (prefix.isEmpty) return 'Prefix is required';
+                  if (!RegExp(r'^[A-Z]{1,5}$').hasMatch(prefix)) {
+                    return 'Use 1–5 uppercase letters';
+                  }
+                  return null;
+                },
               ),
               SettingsFormTextField(
                 label: 'Starting Number',
                 hint: '1',
                 controller: startingNumberController,
                 keyboardType: TextInputType.number,
+                maxLength: 9,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 onChanged: onChanged,
                 isEditing: isEditing,
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) return 'Required';
+                  if (!RegExp(r'^[0-9]{1,9}$').hasMatch(v)) {
+                    return 'Enter up to 9 digits';
+                  }
                   final n = int.tryParse(v);
                   if (n == null || n < 1) return 'Must be >= 1';
+                  final digits = int.tryParse(numberDigitsController.text);
+                  if (digits != null && v.length > digits) {
+                    return 'Starting number cannot exceed the selected number of digits.';
+                  }
                   return null;
                 },
               ),
@@ -70,13 +92,22 @@ class BillNumberingCard extends StatelessWidget {
                 hint: '5',
                 controller: numberDigitsController,
                 keyboardType: TextInputType.number,
+                maxLength: 1,
                 inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                 onChanged: onChanged,
                 isEditing: isEditing,
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) return 'Required';
+                  if (!RegExp(r'^[1-9]$').hasMatch(v)) {
+                    return 'Enter a number from 1 to 9';
+                  }
                   final n = int.tryParse(v);
-                  if (n == null || n < 3 || n > 10) return 'Between 3-10';
+                  if (n == null) return 'Enter a number from 1 to 9';
+                  final startingNumber = startingNumberController.text.trim();
+                  if (startingNumber.isNotEmpty &&
+                      startingNumber.length > n) {
+                    return 'Starting number cannot exceed the selected number of digits.';
+                  }
                   return null;
                 },
               ),

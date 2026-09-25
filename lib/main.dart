@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'app/di/injection.dart';
 import 'core/database/app_database.dart';
 import 'core/licensing/license_gate.dart';
+import 'core/security/admin_password_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,6 +15,9 @@ void main() async {
     MultiRepositoryProvider(
       providers: [
         RepositoryProvider<AppDatabase>.value(value: injection.database),
+        RepositoryProvider<AdminPasswordService>.value(
+          value: injection.adminPasswordService,
+        ),
         RepositoryProvider.value(value: injection.billRepository),
         RepositoryProvider.value(value: injection.customerRepository),
         RepositoryProvider.value(value: injection.materialRepository),

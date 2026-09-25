@@ -51,6 +51,16 @@ class AppSettingsDao extends DatabaseAccessor<AppDatabase>
     required int digits,
     int? startingNumber,
   }) async {
+    final start = startingNumber ?? 1;
+    if (!RegExp(r'^[A-Z]{1,5}$').hasMatch(prefix) ||
+        digits < 1 ||
+        digits > 9 ||
+        start < 1 ||
+        start.toString().length > digits) {
+      throw ArgumentError('Invalid bill number settings.');
+    }
+
+    final maximumNumber = int.parse(List.filled(digits, '9').join());
     final startPos = prefix.length + 2;
     final pattern = '$prefix-%';
 
@@ -60,10 +70,12 @@ class AppSettingsDao extends DatabaseAccessor<AppDatabase>
     ).getSingleOrNull();
 
     final maxNum = maxBill?.data['max_num'] as int?;
-    final start = (startingNumber != null && startingNumber > 0)
-        ? startingNumber
-        : 1;
     final nextNumber = (maxNum == null || maxNum < start) ? start : maxNum + 1;
+    if (nextNumber > maximumNumber) {
+      throw StateError(
+        'The $digits-digit bill number sequence for $prefix is exhausted.',
+      );
+    }
     return '$prefix-${nextNumber.toString().padLeft(digits, '0')}';
   }
 }

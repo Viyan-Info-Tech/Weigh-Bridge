@@ -8,10 +8,10 @@ import 'package:weighbridge/core/database/app_database.dart';
 import '../../support/test_database.dart';
 
 void main() {
-  test('schema version is 20', () {
+  test('schema version is 21', () {
     final db = createInMemoryDatabase();
     addTearDown(db.close);
-    expect(db.schemaVersion, 20);
+    expect(db.schemaVersion, 21);
   });
 
   test('onCreate creates all application tables', () async {
@@ -22,6 +22,7 @@ void main() {
         'materials',
         'weighments',
         'app_settings',
+        'admin_credentials',
       ];
       for (final table in tables) {
         final exists = await db

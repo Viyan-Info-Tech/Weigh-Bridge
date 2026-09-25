@@ -30,7 +30,13 @@ part 'app_database.g.dart';
     ChargeVehicleTypes,
     WeighmentRates,
   ],
-  daos: [UserDao, CustomerDao, MaterialDao, BillDao, AppSettingsDao],
+  daos: [
+    UserDao,
+    CustomerDao,
+    MaterialDao,
+    BillDao,
+    AppSettingsDao,
+  ],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
@@ -38,12 +44,13 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 20;
+  int get schemaVersion => 21;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
+      await _createAdminCredentialsTable();
       await customStatement(
         'CREATE UNIQUE INDEX materials_name_unique ON materials (lower(trim(name)))',
       );
@@ -655,7 +662,36 @@ class AppDatabase extends _$AppDatabase {
           'CREATE UNIQUE INDEX customers_name_unique ON customers (lower(trim(name)))',
         );
       }
+
+      if (from < 21) {
+        await _createAdminCredentialsTable();
+      }
     },
+  );
+
+  Future<void> _createAdminCredentialsTable() => customStatement('''
+    CREATE TABLE IF NOT EXISTS admin_credentials (
+      id INTEGER NOT NULL PRIMARY KEY CHECK (id = 1),
+      password_hash TEXT NOT NULL,
+      updated_at INTEGER NOT NULL
+    )
+  ''');
+
+  Future<String?> getAdminPasswordHash() async {
+    final row = await customSelect(
+      'SELECT password_hash FROM admin_credentials WHERE id = 1',
+    ).getSingleOrNull();
+    return row?.read<String>('password_hash');
+  }
+
+  Future<void> saveAdminPasswordHash(String hash) => customStatement(
+    'INSERT INTO admin_credentials (id, password_hash, updated_at) '
+    'VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET '
+    'password_hash = excluded.password_hash, updated_at = excluded.updated_at',
+    [
+      Variable.withString(hash),
+      Variable.withInt(DateTime.now().millisecondsSinceEpoch),
+    ],
   );
 
   Future<void> _seedWeighmentRates() async {
