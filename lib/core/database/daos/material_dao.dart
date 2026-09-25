@@ -30,20 +30,43 @@ class MaterialDao extends DatabaseAccessor<AppDatabase>
   }
 
   Future<Material?> getMaterialByCode(String code) async {
-    final query = select(materials)..where((m) => m.code.equals(code));
+    final query = select(materials)
+      ..where((m) => m.code.equals(code.trim()));
     return query.getSingleOrNull();
   }
 
   Future<Material?> getMaterialByName(String name) async {
-    final query = select(materials)..where((m) => m.name.equals(name));
-    return query.getSingleOrNull();
+    final result = await customSelect(
+      'SELECT id FROM materials WHERE lower(trim(name)) = lower(trim(?)) LIMIT 1',
+      variables: [Variable.withString(name)],
+    ).getSingleOrNull();
+    return result == null ? null : getMaterialById(result.read<int>('id'));
   }
 
   Future<int> insertMaterial(MaterialsCompanion entry) async {
+    final code = entry.code.value.trim();
+    final name = entry.name.value.trim();
+    if (await getMaterialByCode(code) != null) {
+      throw Exception('Material code "$code" already exists.');
+    }
+    if (await getMaterialByName(name) != null) {
+      throw Exception('Material name "$name" already exists.');
+    }
     return into(materials).insert(entry);
   }
 
   Future<bool> updateMaterial(MaterialsCompanion entry) async {
+    final id = entry.id.value;
+    final code = entry.code.value.trim();
+    final name = entry.name.value.trim();
+    final duplicateCode = await getMaterialByCode(code);
+    if (duplicateCode != null && duplicateCode.id != id) {
+      throw Exception('Material code "$code" already exists.');
+    }
+    final duplicateName = await getMaterialByName(name);
+    if (duplicateName != null && duplicateName.id != id) {
+      throw Exception('Material name "$name" already exists.');
+    }
     return update(materials).replace(entry);
   }
 

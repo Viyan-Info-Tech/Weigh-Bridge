@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
 class ReportHeader extends StatelessWidget {
-  const ReportHeader({super.key, required this.onRefresh});
-
-  final VoidCallback onRefresh;
+  const ReportHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -33,12 +31,6 @@ class ReportHeader extends StatelessWidget {
               ),
             ),
           ],
-        ),
-        IconButton(
-          tooltip: 'Refresh',
-          icon: const Icon(
-              Icons.refresh_rounded, color: Color(0xFF475569)),
-          onPressed: onRefresh,
         ),
       ],
     );

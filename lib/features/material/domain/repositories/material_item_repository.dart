@@ -5,6 +5,7 @@ abstract class MaterialItemRepository {
   Future<List<MaterialItem>> getMaterialsByStatus({required bool isActive});
   Future<MaterialItem?> getMaterialById(int id);
   Future<MaterialItem?> getMaterialByCode(String code);
+  Future<MaterialItem?> getMaterialByName(String name);
   Future<int> createMaterial({required String code, required String name});
   Future<bool> updateMaterial({
     required int id,

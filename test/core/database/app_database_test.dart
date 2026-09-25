@@ -8,10 +8,10 @@ import 'package:weighbridge/core/database/app_database.dart';
 import '../../support/test_database.dart';
 
 void main() {
-  test('schema version is 18', () {
+  test('schema version is 20', () {
     final db = createInMemoryDatabase();
     addTearDown(db.close);
-    expect(db.schemaVersion, 18);
+    expect(db.schemaVersion, 20);
   });
 
   test('onCreate creates all application tables', () async {

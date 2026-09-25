@@ -32,6 +32,11 @@ class MaterialItemLocalDataSource {
     return record != null ? _toEntity(record) : null;
   }
 
+  Future<MaterialItem?> getMaterialByName(String name) async {
+    final record = await _database.materialDao.getMaterialByName(name);
+    return record != null ? _toEntity(record) : null;
+  }
+
   Future<int> insertMaterial({
     required String code,
     required String name,

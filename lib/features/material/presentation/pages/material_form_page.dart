@@ -32,6 +32,7 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
   bool get isEditing => widget.materialId != null;
   bool _isLoading = false;
   String? _codeErrorText;
+  String? _nameErrorText;
 
   @override
   void initState() {
@@ -124,10 +125,17 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
                   isRequired: true,
                   hintText: 'e.g. Sand, Gravel, Cement',
                   validator: (value) {
+                    if (_nameErrorText != null) return _nameErrorText;
                     if (value == null || value.trim().isEmpty) {
                       return 'Material name is required';
                     }
                     return null;
+                  },
+                  onChanged: (_) {
+                    if (_nameErrorText != null) {
+                      setState(() => _nameErrorText = null);
+                      _formKey.currentState?.validate();
+                    }
                   },
                 ),
                 const SizedBox(height: 24),
@@ -169,6 +177,18 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
           _isLoading = false;
           _codeErrorText =
               'Material code "$code" already exists. Please use another code.';
+        });
+        _formKey.currentState?.validate();
+        return;
+      }
+      final duplicateName = await context
+          .read<MaterialBloc>()
+          .findMaterialByName(name);
+      if (!mounted) return;
+      if (duplicateName != null && duplicateName.id != widget.materialId) {
+        setState(() {
+          _isLoading = false;
+          _nameErrorText = 'Material name "$name" is already registered.';
         });
         _formKey.currentState?.validate();
         return;

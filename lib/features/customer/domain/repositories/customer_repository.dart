@@ -6,6 +6,7 @@ abstract class CustomerRepository {
   Future<List<Customer>> getCustomersByStatus({required bool isActive});
   Future<Customer?> getCustomerById(int id);
   Future<Customer?> getCustomerByCode(String code);
+  Future<Customer?> getCustomerByName(String name);
   Future<int> createCustomer({
     required String name,
     String? customerCode,

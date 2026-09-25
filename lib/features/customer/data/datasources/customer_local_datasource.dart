@@ -115,6 +115,19 @@ class CustomerLocalDataSource {
     );
   }
 
+  Future<domain.Customer?> getCustomerByName(String name) async {
+    final record = await _database.customerDao.getCustomerByName(name);
+    if (record == null) return null;
+    return domain.Customer(
+      id: record.id,
+      customerCode: record.customerCode ?? '',
+      name: record.name,
+      isActive: record.isActive,
+      createdAt: record.createdAt,
+      updatedAt: record.updatedAt,
+    );
+  }
+
   Future<int> createCustomer({
     required String name,
     String? customerCode,

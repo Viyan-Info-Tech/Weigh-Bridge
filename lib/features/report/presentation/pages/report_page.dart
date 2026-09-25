@@ -28,6 +28,8 @@ class ReportPage extends StatefulWidget {
 
 class _ReportPageState extends State<ReportPage> {
   final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _vehicleNumberController =
+      TextEditingController();
   final DateFormat _datePickerFormat = DateFormat('dd/MM/yyyy');
   final ScrollController _hScrollController = ScrollController();
   StreamSubscription<SettingsState>? _settingsSubscription;
@@ -56,6 +58,7 @@ class _ReportPageState extends State<ReportPage> {
   void dispose() {
     _settingsSubscription?.cancel();
     _searchController.dispose();
+    _vehicleNumberController.dispose();
     _hScrollController.dispose();
     super.dispose();
   }
@@ -223,16 +226,21 @@ class _ReportPageState extends State<ReportPage> {
                   hScrollController: _hScrollController,
                   state: state,
                 );
+                if (_vehicleNumberController.text !=
+                    state.filter.vehicleNumber) {
+                  _vehicleNumberController.value = TextEditingValue(
+                    text: state.filter.vehicleNumber,
+                    selection: TextSelection.collapsed(
+                      offset: state.filter.vehicleNumber.length,
+                    ),
+                  );
+                }
 
                 if (viewport.maxHeight >= 560) {
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      ReportHeader(
-                        onRefresh: () {
-                          context.read<ReportBloc>().add(const RefreshReport());
-                        },
-                      ),
+                      const ReportHeader(),
                       const SizedBox(height: 16),
                       ReportSummaryBar(
                         summary: state.summary,
@@ -242,6 +250,7 @@ class _ReportPageState extends State<ReportPage> {
                       ReportFilterBar(
                         filter: state.filter,
                         state: state,
+                        vehicleNumberController: _vehicleNumberController,
                         datePickerFormat: _datePickerFormat,
                         selectCustomDate: _selectCustomDate,
                       ),
@@ -265,11 +274,7 @@ class _ReportPageState extends State<ReportPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      ReportHeader(
-                        onRefresh: () {
-                          context.read<ReportBloc>().add(const RefreshReport());
-                        },
-                      ),
+                      const ReportHeader(),
                       const SizedBox(height: 16),
                       ReportSummaryBar(
                         summary: state.summary,
@@ -279,6 +284,7 @@ class _ReportPageState extends State<ReportPage> {
                       ReportFilterBar(
                         filter: state.filter,
                         state: state,
+                        vehicleNumberController: _vehicleNumberController,
                         datePickerFormat: _datePickerFormat,
                         selectCustomDate: _selectCustomDate,
                       ),

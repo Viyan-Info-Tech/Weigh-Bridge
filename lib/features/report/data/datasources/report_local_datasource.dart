@@ -40,7 +40,11 @@ class ReportLocalDataSource {
     // Vehicle number filter
     final vehicleQuery = filter.vehicleNumber.trim();
     if (vehicleQuery.isNotEmpty) {
-      query.where(_database.weighments.vehicleNumber.like('%$vehicleQuery%'));
+      query.where(
+        _database.weighments.vehicleNumber.lower().like(
+          '%${vehicleQuery.toLowerCase()}%',
+        ),
+      );
     }
 
     // Material filter

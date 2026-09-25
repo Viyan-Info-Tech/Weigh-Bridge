@@ -38,12 +38,18 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 19;
+  int get schemaVersion => 20;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
+      await customStatement(
+        'CREATE UNIQUE INDEX materials_name_unique ON materials (lower(trim(name)))',
+      );
+      await customStatement(
+        'CREATE UNIQUE INDEX customers_name_unique ON customers (lower(trim(name)))',
+      );
       await _seedWeighmentRates();
     },
     onUpgrade: (m, from, to) async {
@@ -623,6 +629,31 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(chargeVehicleTypes);
         await m.createTable(weighmentRates);
         await _seedWeighmentRates();
+      }
+
+      if (from < 20) {
+        // Preserve legacy rows and their bill references while making their
+        // previously duplicated names distinct before enforcing uniqueness.
+        await customStatement('''
+          UPDATE materials
+          SET name = substr(name, 1, 80) || ' (duplicate ' || id || ')'
+          WHERE id NOT IN (
+            SELECT MIN(id) FROM materials GROUP BY lower(trim(name))
+          )
+        ''');
+        await customStatement('''
+          UPDATE customers
+          SET name = substr(name, 1, 80) || ' (duplicate ' || id || ')'
+          WHERE id NOT IN (
+            SELECT MIN(id) FROM customers GROUP BY lower(trim(name))
+          )
+        ''');
+        await customStatement(
+          'CREATE UNIQUE INDEX materials_name_unique ON materials (lower(trim(name)))',
+        );
+        await customStatement(
+          'CREATE UNIQUE INDEX customers_name_unique ON customers (lower(trim(name)))',
+        );
       }
     },
   );

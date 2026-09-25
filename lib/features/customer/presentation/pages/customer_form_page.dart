@@ -30,6 +30,7 @@ class _CustomerFormDialogState extends State<CustomerFormDialog> {
   bool _isLoading = false;
   bool _populated = false;
   String? _codeErrorText;
+  String? _nameErrorText;
 
   bool get isEditing => widget.customerId != null;
 
@@ -125,7 +126,13 @@ class _CustomerFormDialogState extends State<CustomerFormDialog> {
               isRequired: true,
               validator: (value) => value == null || value.trim().isEmpty
                   ? 'Customer name is required'
-                  : null,
+                  : _nameErrorText,
+              onChanged: (_) {
+                if (_nameErrorText != null) {
+                  setState(() => _nameErrorText = null);
+                  _formKey.currentState?.validate();
+                }
+              },
             ),
             const SizedBox(height: 16),
             FormDialogTextField(
@@ -172,6 +179,18 @@ class _CustomerFormDialogState extends State<CustomerFormDialog> {
           _isLoading = false;
           _codeErrorText =
               'Customer code "$customerCode" already exists. Please enter a different code.';
+        });
+        _formKey.currentState?.validate();
+        return;
+      }
+      final duplicateName = await context
+          .read<CustomerBloc>()
+          .findCustomerByName(name);
+      if (!mounted) return;
+      if (duplicateName != null && duplicateName.id != widget.customerId) {
+        setState(() {
+          _isLoading = false;
+          _nameErrorText = 'Customer name "$name" is already registered.';
         });
         _formKey.currentState?.validate();
         return;

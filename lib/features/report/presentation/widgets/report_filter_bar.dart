@@ -8,16 +8,18 @@ import '../bloc/report_event.dart';
 import '../bloc/report_state.dart';
 
 class ReportFilterBar extends StatelessWidget {
-  ReportFilterBar({
+  const ReportFilterBar({
     super.key,
     required this.filter,
     required this.state,
+    required this.vehicleNumberController,
     required this.datePickerFormat,
     required this.selectCustomDate,
   });
 
   final ReportFilter filter;
   final ReportState state;
+  final TextEditingController vehicleNumberController;
   final DateFormat datePickerFormat;
   final Future<void> Function({
     required BuildContext context,
@@ -25,8 +27,6 @@ class ReportFilterBar extends StatelessWidget {
     required ReportFilter filter,
   })
   selectCustomDate;
-
-  final TextEditingController _vehicleNumberController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -205,7 +205,8 @@ class ReportFilterBar extends StatelessWidget {
                         ),
                       ),
                       TextField(
-                        controller: _vehicleNumberController,
+                        controller: vehicleNumberController,
+                        textInputAction: TextInputAction.search,
                         textCapitalization: TextCapitalization.characters,
                         style: const TextStyle(
                           fontFamily: 'PlusJakartaSans',
@@ -228,6 +229,9 @@ class ReportFilterBar extends StatelessWidget {
                         ),
                         onChanged: (val) {
                           bloc.add(ReportVehicleFilterChanged(val));
+                        },
+                        onSubmitted: (_) {
+                          bloc.add(const ApplyReportFilters());
                         },
                       ),
                     ],
@@ -323,7 +327,7 @@ class ReportFilterBar extends StatelessWidget {
                 children: [
                   OutlinedButton(
                     onPressed: () {
-                      _vehicleNumberController.clear();
+                      vehicleNumberController.clear();
                       bloc.add(const ResetReportFilters());
                     },
                     style: OutlinedButton.styleFrom(

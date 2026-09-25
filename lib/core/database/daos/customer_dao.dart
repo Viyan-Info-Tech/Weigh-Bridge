@@ -36,15 +36,37 @@ class CustomerDao extends DatabaseAccessor<AppDatabase>
   }
 
   Future<Customer?> getCustomerByName(String name) async {
-    final query = select(customers)..where((c) => c.name.equals(name));
-    return query.getSingleOrNull();
+    final result = await customSelect(
+      'SELECT id FROM customers WHERE lower(trim(name)) = lower(trim(?)) LIMIT 1',
+      variables: [Variable.withString(name)],
+    ).getSingleOrNull();
+    return result == null ? null : getCustomerById(result.read<int>('id'));
   }
 
   Future<int> insertCustomer(CustomersCompanion entry) async {
+    final code = entry.customerCode.value?.trim().toUpperCase() ?? '';
+    final name = entry.name.value.trim();
+    if (code.isNotEmpty && await getCustomerByCode(code) != null) {
+      throw Exception('Customer code "$code" already exists.');
+    }
+    if (await getCustomerByName(name) != null) {
+      throw Exception('Customer name "$name" already exists.');
+    }
     return into(customers).insert(entry);
   }
 
   Future<bool> updateCustomer(CustomersCompanion entry) async {
+    final id = entry.id.value;
+    final code = entry.customerCode.value?.trim().toUpperCase() ?? '';
+    final name = entry.name.value.trim();
+    final duplicateCode = code.isEmpty ? null : await getCustomerByCode(code);
+    if (duplicateCode != null && duplicateCode.id != id) {
+      throw Exception('Customer code "$code" already exists.');
+    }
+    final duplicateName = await getCustomerByName(name);
+    if (duplicateName != null && duplicateName.id != id) {
+      throw Exception('Customer name "$name" already exists.');
+    }
     return update(customers).replace(entry);
   }
 

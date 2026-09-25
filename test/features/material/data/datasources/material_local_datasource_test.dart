@@ -194,17 +194,13 @@ void main() {
     });
 
     group('duplicate codes', () {
-      test(
-        'duplicate material names are allowed with distinct codes',
-        () async {
-          final id1 = await source.insertMaterial(code: '1', name: 'Cement');
-          final id2 = await source.insertMaterial(code: '2', name: 'Cement');
-          expect(id1, isNot(id2));
-
-          final all = await source.getAllMaterials();
-          expect(all.length, 2);
-        },
-      );
+      test('duplicate material names are rejected', () async {
+        await source.insertMaterial(code: '1', name: 'Cement');
+        expect(
+          () => source.insertMaterial(code: '2', name: 'cement'),
+          throwsA(isA<Exception>()),
+        );
+      });
 
       test('duplicate material codes are rejected', () async {
         await source.insertMaterial(code: '1', name: 'Cement');

@@ -33,6 +33,10 @@ class CustomerRepositoryImpl implements CustomerRepository {
       _dataSource.getCustomerByCode(code);
 
   @override
+  Future<Customer?> getCustomerByName(String name) =>
+      _dataSource.getCustomerByName(name);
+
+  @override
   Future<int> createCustomer({
     required String name,
     String? customerCode,

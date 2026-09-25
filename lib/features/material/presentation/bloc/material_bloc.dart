@@ -38,6 +38,9 @@ class MaterialBloc extends Bloc<MaterialEvent, MaterialState> {
   Future<MaterialItem?> findMaterialByCode(String code) =>
       _materialRepository.getMaterialByCode(code.trim());
 
+  Future<MaterialItem?> findMaterialByName(String name) =>
+      _materialRepository.getMaterialByName(name.trim());
+
   Future<void> _onLoadMaterials(
     LoadMaterials event,
     Emitter<MaterialState> emit,

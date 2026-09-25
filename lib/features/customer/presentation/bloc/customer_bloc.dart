@@ -49,6 +49,9 @@ class CustomerBloc extends Bloc<CustomerEvent, CustomerState> {
   Future<Customer?> findCustomerByCode(String code) =>
       _customerRepository.getCustomerByCode(code.trim().toUpperCase());
 
+  Future<Customer?> findCustomerByName(String name) =>
+      _customerRepository.getCustomerByName(name.trim());
+
   Future<void> _onLoadCustomers(
     LoadCustomers event,
     Emitter<CustomerState> emit,

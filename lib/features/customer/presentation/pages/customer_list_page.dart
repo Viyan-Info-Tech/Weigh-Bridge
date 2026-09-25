@@ -24,6 +24,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
   int? _editingCustomerId;
   bool _saving = false;
   String? _codeErrorText;
+  String? _nameErrorText;
 
   bool get _isEditing => _editingCustomerId != null;
 
@@ -49,6 +50,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
       _nameController.text = customer.name;
       _phoneController.text = customer.mobile ?? '';
       _codeErrorText = null;
+      _nameErrorText = null;
     });
   }
 
@@ -80,6 +82,18 @@ class _CustomerListPageState extends State<CustomerListPage> {
           _saving = false;
           _codeErrorText =
               'Customer code "$code" already exists. Please enter a different code.';
+        });
+        _formKey.currentState?.validate();
+        return;
+      }
+      final duplicateName = await context
+          .read<CustomerBloc>()
+          .findCustomerByName(name);
+      if (!mounted) return;
+      if (duplicateName != null && duplicateName.id != _editingCustomerId) {
+        setState(() {
+          _saving = false;
+          _nameErrorText = 'Customer name "$name" is already registered.';
         });
         _formKey.currentState?.validate();
         return;
@@ -345,7 +359,13 @@ class _CustomerListPageState extends State<CustomerListPage> {
               validator: (v) {
                 final s = v?.trim() ?? '';
                 if (s.isEmpty) return 'Customer name is required';
-                return null;
+                return _nameErrorText;
+              },
+              onChanged: (_) {
+                if (_nameErrorText != null) {
+                  setState(() => _nameErrorText = null);
+                  _formKey.currentState?.validate();
+                }
               },
               style: const TextStyle(
                 fontFamily: 'PlusJakartaSans',

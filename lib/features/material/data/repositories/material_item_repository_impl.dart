@@ -26,6 +26,10 @@ class MaterialItemRepositoryImpl implements MaterialItemRepository {
       _localDataSource.getMaterialByCode(code);
 
   @override
+  Future<MaterialItem?> getMaterialByName(String name) =>
+      _localDataSource.getMaterialByName(name);
+
+  @override
   Future<int> createMaterial({required String code, required String name}) =>
       _localDataSource.insertMaterial(code: code, name: name);
 
