@@ -348,7 +348,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     LiveScaleWeightUpdated event,
     Emitter<BillState> emit,
   ) {
-    if (!event.weightKg.isFinite || event.weightKg < 0) return;
+    if (!event.weightKg.isFinite) return;
     emit(
       state.copyWith(
         liveScaleWeightKg: event.weightKg,
@@ -622,6 +622,8 @@ class BillBloc extends Bloc<BillEvent, BillState> {
         currentBillNumber: nextBillNumber,
         clearError: true,
         clearWeightError: true,
+        clearGrossCapturedAt: true,
+        clearTareCapturedAt: true,
         weightUnit: weightUnit ?? state.weightUnit,
       ),
     );

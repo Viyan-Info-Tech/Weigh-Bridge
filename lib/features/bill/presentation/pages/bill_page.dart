@@ -15,6 +15,8 @@ import '../widgets/recent_bills_panel.dart';
 import '../widgets/weighment_slip_dialog.dart';
 import '../../../settings/presentation/bloc/settings_bloc.dart';
 import '../../../settings/presentation/bloc/settings_state.dart';
+import '../../../../core/hardware/scale/domain/scale_service.dart';
+import '../../../../core/hardware/scale/domain/scale_status.dart';
 import '../../../../core/presentation/widgets/confirm_action_dialog.dart';
 
 class BillPage extends StatefulWidget {
@@ -49,6 +51,8 @@ class BillPageState extends State<BillPage> {
   late final FocusNode _searchFocusNode;
   bool _didRequestInitialFocus = false;
   StreamSubscription<SettingsState>? _settingsSubscription;
+  StreamSubscription<ScaleReading>? _scaleReadingSubscription;
+  StreamSubscription<ScaleStatus>? _scaleStatusSubscription;
 
   @override
   void initState() {
@@ -90,6 +94,40 @@ class BillPageState extends State<BillPage> {
         } catch (_) {
           // Standalone page previews may not provide application settings.
         }
+        try {
+          final scaleService = context.read<ScaleService>();
+          final currentStatus = scaleService.currentStatus;
+          if (currentStatus.currentWeightKg != null) {
+            context.read<BillBloc>().add(LiveScaleWeightUpdated(
+              weightKg: currentStatus.currentWeightKg!,
+              isStable: currentStatus.stable,
+              isMotion: currentStatus.isMotion,
+              isOverload: currentStatus.isOverload,
+            ));
+          }
+          _scaleReadingSubscription = scaleService.weightStream.listen((reading) {
+            if (!mounted) return;
+            context.read<BillBloc>().add(LiveScaleWeightUpdated(
+              weightKg: reading.weightKg,
+              isStable: reading.stable,
+              isMotion: reading.isMotion,
+              isOverload: reading.isOverload,
+            ));
+          });
+          _scaleStatusSubscription = scaleService.statusStream.listen((status) {
+            if (!mounted || status.isConnected) return;
+            // Port dropped: clear the live reading so stale weights are never
+            // captured or shown as current.
+            if (status.isTransitioning) return;
+            context.read<BillBloc>().add(LiveScaleWeightUpdated(
+              weightKg: 0,
+              isStable: false,
+              isMotion: true,
+            ));
+          });
+        } catch (_) {
+          // Scale not provided in standalone page previews.
+        }
       }
     });
   }
@@ -97,6 +135,8 @@ class BillPageState extends State<BillPage> {
   @override
   void dispose() {
     _settingsSubscription?.cancel();
+    _scaleReadingSubscription?.cancel();
+    _scaleStatusSubscription?.cancel();
     _keyboardFocusNode.dispose();
     _grossWeightController.dispose();
     _tareWeightController.dispose();

@@ -18,7 +18,8 @@ import '../widgets/receipt_preview_card.dart';
 import '../widgets/settings_app_bar.dart';
 import '../widgets/weight_unit_card.dart';
 import '../widgets/weighment_rate_settings_card.dart';
-import '../widgets/change_admin_password_dialog.dart';
+import '../widgets/weighing_scale_settings_card.dart';
+import '../widgets/admin_password_card.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -614,57 +615,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       final formColumn = Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(18),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.admin_panel_settings_outlined,
-                                    color: Color(0xFF0284C7),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  const Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          'Administrator Password',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                        SizedBox(height: 3),
-                                        Text(
-                                          'Protects Customers, Materials, Reports and Settings',
-                                          style: TextStyle(fontSize: 12),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  OutlinedButton(
-                                    onPressed: () async {
-                                      final messenger =
-                                          ScaffoldMessenger.of(context);
-                                      final changed =
-                                          await showChangeAdminPasswordDialog(
-                                            context,
-                                          );
-                                      if (changed && mounted) {
-                                        messenger.showSnackBar(const SnackBar(
-                                          content: Text(
-                                            'Administrator password changed.',
-                                          ),
-                                        ));
-                                      }
-                                    },
-                                    child: const Text('Change Password'),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
+                          const AdminPasswordCard(),
                           const SizedBox(height: 16),
                           WeightUnitCard(
                             weightUnit: _weightUnit,
@@ -684,6 +635,8 @@ class _SettingsPageState extends State<SettingsPage> {
                           ),
                           const SizedBox(height: 16),
                           WeighmentRateSettingsCard(isEditing: _isEditing),
+                          const SizedBox(height: 16),
+                          WeighingScaleSettingsCard(isEditing: _isEditing),
                           const SizedBox(height: 16),
                           BusinessInformationCard(
                             businessNameController: _businessNameController,

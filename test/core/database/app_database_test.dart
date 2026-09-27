@@ -11,7 +11,7 @@ void main() {
   test('schema version is 21', () {
     final db = createInMemoryDatabase();
     addTearDown(db.close);
-    expect(db.schemaVersion, 21);
+    expect(db.schemaVersion, 22);
   });
 
   test('onCreate creates all application tables', () async {

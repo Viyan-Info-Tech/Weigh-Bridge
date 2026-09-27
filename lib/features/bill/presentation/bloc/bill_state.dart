@@ -160,6 +160,8 @@ class BillState extends Equatable {
     String? selectedWeightType,
     DateTime? grossCapturedAt,
     DateTime? tareCapturedAt,
+    bool clearGrossCapturedAt = false,
+    bool clearTareCapturedAt = false,
     Weighment? printReceiptBill,
     Customer? printReceiptCustomer,
     String? printReceiptMaterialName,
@@ -216,8 +218,12 @@ class BillState extends Equatable {
       isScaleMotion: isScaleMotion ?? this.isScaleMotion,
       isScaleOverload: isScaleOverload ?? this.isScaleOverload,
       selectedWeightType: selectedWeightType ?? this.selectedWeightType,
-      grossCapturedAt: grossCapturedAt ?? this.grossCapturedAt,
-      tareCapturedAt: tareCapturedAt ?? this.tareCapturedAt,
+      grossCapturedAt: clearGrossCapturedAt
+          ? null
+          : (grossCapturedAt ?? this.grossCapturedAt),
+      tareCapturedAt: clearTareCapturedAt
+          ? null
+          : (tareCapturedAt ?? this.tareCapturedAt),
       printReceiptBill: clearPrintReceipt
           ? null
           : (printReceiptBill ?? this.printReceiptBill),

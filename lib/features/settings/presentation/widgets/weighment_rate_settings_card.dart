@@ -24,8 +24,8 @@ class WeighmentRateSettingsCard extends StatefulWidget {
 }
 
 class _WeighmentRateSettingsCardState extends State<WeighmentRateSettingsCard> {
-  late final AppDatabase _database;
-  late final Future<List<ChargeVehicleType>> _vehicleTypesFuture;
+  AppDatabase? _database;
+  Future<List<ChargeVehicleType>>? _vehicleTypesFuture;
   Future<List<WeighmentRate>>? _ratesFuture;
   final Map<int, TextEditingController> _amountControllers = {};
   int? _vehicleTypeId;
@@ -34,10 +34,16 @@ class _WeighmentRateSettingsCardState extends State<WeighmentRateSettingsCard> {
   @override
   void initState() {
     super.initState();
-    _database = context.read<AppDatabase>();
-    _vehicleTypesFuture = (_database.select(_database.chargeVehicleTypes)
-          ..where((type) => type.isActive.equals(true)))
-        .get();
+    try {
+      final db = context.read<AppDatabase>();
+      _database = db;
+      _vehicleTypesFuture = (db.select(db.chargeVehicleTypes)
+            ..where((type) => type.isActive.equals(true)))
+          .get();
+    } catch (_) {
+      _database = null;
+      _vehicleTypesFuture = null;
+    }
   }
 
   @override
@@ -49,11 +55,12 @@ class _WeighmentRateSettingsCardState extends State<WeighmentRateSettingsCard> {
   }
 
   void _selectVehicleType(int? id) {
+    final db = _database;
     setState(() {
       _vehicleTypeId = id;
-      _ratesFuture = id == null
+      _ratesFuture = (id == null || db == null)
           ? null
-          : (_database.select(_database.weighmentRates)
+          : (db.select(db.weighmentRates)
                 ..where((rate) => rate.vehicleTypeId.equals(id)))
               .get();
     });
@@ -109,12 +116,14 @@ class _WeighmentRateSettingsCardState extends State<WeighmentRateSettingsCard> {
       amounts[rate.id] = amount;
     }
 
+    final db = _database;
+    if (db == null) return;
     setState(() => _saving = true);
     try {
-      await _database.batch((batch) {
+      await db.batch((batch) {
         for (final rate in rates) {
           batch.update(
-            _database.weighmentRates,
+            db.weighmentRates,
             WeighmentRatesCompanion(amount: Value(amounts[rate.id]!)),
             where: (row) => row.id.equals(rate.id),
           );
@@ -152,22 +161,8 @@ class _WeighmentRateSettingsCardState extends State<WeighmentRateSettingsCard> {
       title: 'Weighment Charge Rates',
       subtitle:
           'Configure charges and weight slab rates for each vehicle category',
-      child: FutureBuilder<List<ChargeVehicleType>>(
-        future: _vehicleTypesFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0D3B82)),
-                  strokeWidth: 2.5,
-                ),
-              ),
-            );
-          }
-          if (snapshot.hasError || (snapshot.data?.isEmpty ?? true)) {
-            return Container(
+      child: _vehicleTypesFuture == null
+          ? Container(
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
@@ -183,25 +178,79 @@ class _WeighmentRateSettingsCardState extends State<WeighmentRateSettingsCard> {
                     color: Color(0xFFDC2626),
                   ),
                   SizedBox(width: 10),
-                  Text(
-                    'No weighment rate sheet is available.',
-                    style: TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 12.5,
-                      color: Color(0xFFB91C1C),
-                      fontWeight: FontWeight.w500,
+                  Expanded(
+                    child: Text(
+                      'No weighment rate sheet is available.',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 12.5,
+                        color: Color(0xFFB91C1C),
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                   ),
                 ],
               ),
-            );
-          }
+            )
+          : FutureBuilder<List<ChargeVehicleType>>(
+              future: _vehicleTypesFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF0D3B82)),
+                        strokeWidth: 2.5,
+                      ),
+                    ),
+                  );
+                }
+                if (snapshot.hasError || (snapshot.data?.isEmpty ?? true)) {
+                  return Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFEF2F2),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFFECDD3)),
+                    ),
+                    child: const Row(
+                      children: [
+                        Icon(
+                          Icons.error_outline_rounded,
+                          size: 18,
+                          color: Color(0xFFDC2626),
+                        ),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'No weighment rate sheet is available.',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: 'PlusJakartaSans',
+                              fontSize: 12.5,
+                              color: Color(0xFFB91C1C),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
 
-          final vehicleTypes = snapshot.data!;
-          _vehicleTypeId ??= vehicleTypes.first.id;
-          _ratesFuture ??= (_database.select(_database.weighmentRates)
-                ..where((rate) => rate.vehicleTypeId.equals(_vehicleTypeId!)))
-              .get();
+                final vehicleTypes = snapshot.data!;
+                _vehicleTypeId ??= vehicleTypes.first.id;
+                final db = _database;
+                if (db != null) {
+                  _ratesFuture ??= (db.select(db.weighmentRates)
+                        ..where((rate) => rate.vehicleTypeId.equals(_vehicleTypeId!)))
+                      .get();
+                }
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

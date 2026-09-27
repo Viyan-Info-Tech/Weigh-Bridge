@@ -2,19 +2,27 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 ; Non-commercial use only.
 
+#define MyAppName "Viyan Weigh Bridge"
+#define MyAppVersion "1.0.2"
+#define MyAppPublisher "Viyaninfo"
+#define MyAppURL "https://www.Viyaninfo.com/"
+#define MyAppExeName "weighbridge.exe"
+#define DoubleAmp(Value) StringChange(Value, "&", "&&")
+#define EscapeConstArgument(Value) StringChange(StringChange(StringChange(Value, "%", "%25"), ",", "%2c"), "}", "%7d")
+
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{5D695784-92B4-445B-AA0A-C0B94A4B952C}
-AppName=weigh bridge
-AppVersion=1.0.3
-;AppVerName={cm:NameAndVersion,weigh bridge,1.0.3}
-AppPublisher=Viyan  Info
-AppPublisherURL=https://www.viyaninfo.com/
-AppSupportURL=https://www.viyaninfo.com/
-AppUpdatesURL=https://www.viyaninfo.com/
-DefaultDirName={autopf}\weigh bridge
-UninstallDisplayIcon={app}\weighbridge.exe
+AppId={{7E07298D-D690-4B3D-8B2F-04CB195D3B27}
+AppName={#MyAppName}
+AppVersion={#MyAppVersion}
+;AppVerName={cm:NameAndVersion,{#EscapeConstArgument(MyAppName)},{#EscapeConstArgument(MyAppVersion)}}
+AppPublisher={#MyAppPublisher}
+AppPublisherURL={#MyAppURL}
+AppSupportURL={#MyAppURL}
+AppUpdatesURL={#MyAppURL}
+DefaultDirName={autopf}\{#MyAppName}
+UninstallDisplayIcon={app}\{#MyAppExeName}
 ; "ArchitecturesAllowed=x64compatible" specifies that Setup cannot run on anything but x64 and Windows 11 on Arm.
 ArchitecturesAllowed=x64compatible
 ; "ArchitecturesInstallIn64BitMode=x64compatible" requests that the install be done in "64-bit mode" on x64 or Windows 11 on Arm.
@@ -26,8 +34,7 @@ DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only).
 ;PrivilegesRequired=lowest
 OutputDir=G:\Flutter\Weigh-Bridge\installer_output
-OutputBaseFilename=Weigh Bridge
-SetupIconFile=G:\Flutter\Weigh-Bridge\assets\images\viyan_logo.ico
+OutputBaseFilename=Viyan Weighbridge
 SolidCompression=yes
 WizardStyle=modern dynamic
 
@@ -38,11 +45,14 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\weighbridge.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\dartjni.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\flutter_libserialport_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\flutter_windows.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\native_assets.json"; DestDir: "{app}"; Flags: ignoreversion
 Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\pdfium.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\printing_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\serialport.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\sqlite3.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\sqlite3_flutter_libs_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\url_launcher_windows_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
@@ -51,9 +61,9 @@ Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\data\*"; DestD
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files.
 
 [Icons]
-Name: "{autoprograms}\weigh bridge"; Filename: "{app}\weighbridge.exe"
-Name: "{autodesktop}\weigh bridge"; Filename: "{app}\weighbridge.exe"; Tasks: desktopicon
+Name: "{autoprograms}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\weighbridge.exe"; Description: "{cm:LaunchProgram,weigh bridge}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#DoubleAmp(MyAppName)}}"; Flags: nowait postinstall skipifsilent
 

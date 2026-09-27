@@ -24,8 +24,8 @@ class BillFormWeightRow extends StatelessWidget {
   final bool enabled;
   final bool isCaptured;
   final FocusNode? focusNode;
-  final DateTime date;
-  final TimeOfDay time;
+  final DateTime? date;
+  final TimeOfDay? time;
   final ValueChanged<DateTime> onSelectDate;
   final ValueChanged<TimeOfDay> onSelectTime;
   final ValueChanged<String> onWeightChanged;
@@ -44,11 +44,10 @@ class BillFormWeightRow extends StatelessWidget {
       displayWeight = isKg ? '0' : '0.000';
     }
 
-    final dateStr = DateFormat('dd/MM/yyyy').format(date);
-    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
-    final minute = time.minute.toString().padLeft(2, '0');
-    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
-    final timeStr = '$hour:$minute $period';
+    final dateStr = date != null
+        ? DateFormat('dd/MM/yyyy').format(date!)
+        : '--/--/----';
+    final timeStr = time != null ? _formatTime(time!) : '--:-- --';
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -77,12 +76,14 @@ class BillFormWeightRow extends StatelessWidget {
                 context: context,
                 icon: Icons.calendar_month_outlined,
                 value: dateStr,
-                tooltip: 'Captured Date: $dateStr (Click to change)',
+                tooltip: date != null
+                    ? 'Captured Date: $dateStr (Click to change)'
+                    : 'Not captured yet (Click to set)',
                 isCaptured: isCaptured,
                 onTap: () async {
                   final picked = await showDatePicker(
                     context: context,
-                    initialDate: date,
+                    initialDate: date ?? DateTime.now(),
                     firstDate: DateTime(2020),
                     lastDate: DateTime(2035),
                   );
@@ -100,12 +101,14 @@ class BillFormWeightRow extends StatelessWidget {
                 context: context,
                 icon: Icons.access_time_rounded,
                 value: timeStr,
-                tooltip: 'Captured Time: $timeStr (Click to change)',
+                tooltip: time != null
+                    ? 'Captured Time: $timeStr (Click to change)'
+                    : 'Not captured yet (Click to set)',
                 isCaptured: isCaptured,
                 onTap: () async {
                   final picked = await showTimePicker(
                     context: context,
-                    initialTime: time,
+                    initialTime: time ?? TimeOfDay.now(),
                   );
                   if (picked != null) onSelectTime(picked);
                 },
@@ -115,6 +118,13 @@ class BillFormWeightRow extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  static String _formatTime(TimeOfDay value) {
+    final hour = value.hourOfPeriod == 0 ? 12 : value.hourOfPeriod;
+    final minute = value.minute.toString().padLeft(2, '0');
+    final period = value.period == DayPeriod.am ? 'AM' : 'PM';
+    return '$hour:$minute $period';
   }
 
   Widget _buildDateTimePickerChip({

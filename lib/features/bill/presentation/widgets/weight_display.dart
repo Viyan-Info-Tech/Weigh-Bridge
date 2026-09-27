@@ -68,8 +68,8 @@ class _WeightDisplayState extends State<WeightDisplay> {
     final isKg = widget.weightUnit.toLowerCase() == 'kg';
     final double displayVal = isKg ? displayWeightKg : displayWeightKg / 1000;
     final String weightString = isKg
-        ? (displayVal > 0 ? NumberFormat('#,##0').format(displayVal) : '0')
-        : (displayVal > 0
+        ? (displayVal != 0 ? NumberFormat('#,##0').format(displayVal) : '0')
+        : (displayVal != 0
               ? NumberFormat('#,##0.000').format(displayVal)
               : '0.000');
 

@@ -1,7 +1,15 @@
+import 'dart:async';
+
 import '../../core/licensing/license_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/database/app_database.dart';
+import '../../core/database/daos/scale_settings_dao.dart';
+import '../../core/hardware/scale/data/fake_scale_service.dart';
+import '../../core/hardware/scale/data/flutter_libserialport_transport.dart';
+import '../../core/hardware/scale/data/scale_config_adapter.dart';
+import '../../core/hardware/scale/data/scale_service_impl.dart';
+import '../../core/hardware/scale/domain/scale_service.dart';
 import '../../core/security/password_hasher.dart';
 import '../../core/security/session_manager.dart';
 import '../../core/security/admin_password_service.dart';
@@ -55,12 +63,13 @@ class Injection {
   final CustomerBloc customerBloc;
   final MaterialBloc materialBloc;
   final SettingsBloc settingsBloc;
-  final ReportBloc reportBloc;
+final ReportBloc reportBloc;
   final LicenseService licenseService;
   final BillRepository billRepository;
   final CustomerRepository customerRepository;
   final MaterialItemRepository materialRepository;
   final AdminPasswordService adminPasswordService;
+  final ScaleService scaleService;
 
   Injection({
     required this.database,
@@ -75,6 +84,7 @@ class Injection {
     required this.customerRepository,
     required this.materialRepository,
     required this.adminPasswordService,
+    required this.scaleService,
   });
 
   static Future<Injection> init() async {
@@ -202,8 +212,29 @@ class Injection {
       settingsRepository: settingsRepository,
     );
 
-    // License
+// License
     final licenseService = LicenseServiceImpl();
+
+    // Weigh scale
+    final scaleSettingsDao = ScaleSettingsDao(database);
+    final scaleSettings = await scaleSettingsDao.getSettings();
+    final scaleConfig = ScaleConfigAdapter.fromRow(scaleSettings);
+
+    // Build with: flutter run --dart-define=USE_FAKE_SCALE=true
+    const useFakeScale = bool.fromEnvironment('USE_FAKE_SCALE');
+    final ScaleService scaleService;
+    if (useFakeScale) {
+      scaleService = FakeScaleService(config: scaleConfig);
+      unawaited(scaleService.start());
+    } else {
+      scaleService = ScaleServiceImpl(
+        transportFactory: FlutterLibSerialPortTransport.new,
+        config: scaleConfig,
+      );
+      if (scaleConfig.enabled) {
+        unawaited(scaleService.start());
+      }
+    }
 
     await _seedInitialData(authLocalDataSource, passwordHasher);
 
@@ -220,6 +251,7 @@ class Injection {
       customerRepository: customerRepository,
       materialRepository: materialItemRepository,
       adminPasswordService: adminPasswordService,
+      scaleService: scaleService,
     );
   }
 

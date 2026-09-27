@@ -4932,6 +4932,540 @@ class WeighmentRatesCompanion extends UpdateCompanion<WeighmentRate> {
   }
 }
 
+class $ScaleSettingsTable extends ScaleSettings
+    with TableInfo<$ScaleSettingsTable, ScaleSetting> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ScaleSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _portMeta = const VerificationMeta('port');
+  @override
+  late final GeneratedColumn<String> port = GeneratedColumn<String>(
+    'port',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('COM3'),
+  );
+  static const VerificationMeta _baudRateMeta = const VerificationMeta(
+    'baudRate',
+  );
+  @override
+  late final GeneratedColumn<int> baudRate = GeneratedColumn<int>(
+    'baud_rate',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(9600),
+  );
+  static const VerificationMeta _dataBitsMeta = const VerificationMeta(
+    'dataBits',
+  );
+  @override
+  late final GeneratedColumn<int> dataBits = GeneratedColumn<int>(
+    'data_bits',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(8),
+  );
+  static const VerificationMeta _parityMeta = const VerificationMeta('parity');
+  @override
+  late final GeneratedColumn<int> parity = GeneratedColumn<int>(
+    'parity',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _stopBitsMeta = const VerificationMeta(
+    'stopBits',
+  );
+  @override
+  late final GeneratedColumn<int> stopBits = GeneratedColumn<int>(
+    'stop_bits',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(1),
+  );
+  static const VerificationMeta _protocolMeta = const VerificationMeta(
+    'protocol',
+  );
+  @override
+  late final GeneratedColumn<String> protocol = GeneratedColumn<String>(
+    'protocol',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('unconfigured'),
+  );
+  static const VerificationMeta _enabledMeta = const VerificationMeta(
+    'enabled',
+  );
+  @override
+  late final GeneratedColumn<bool> enabled = GeneratedColumn<bool>(
+    'enabled',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("enabled" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    port,
+    baudRate,
+    dataBits,
+    parity,
+    stopBits,
+    protocol,
+    enabled,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'scale_settings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<ScaleSetting> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('port')) {
+      context.handle(
+        _portMeta,
+        port.isAcceptableOrUnknown(data['port']!, _portMeta),
+      );
+    }
+    if (data.containsKey('baud_rate')) {
+      context.handle(
+        _baudRateMeta,
+        baudRate.isAcceptableOrUnknown(data['baud_rate']!, _baudRateMeta),
+      );
+    }
+    if (data.containsKey('data_bits')) {
+      context.handle(
+        _dataBitsMeta,
+        dataBits.isAcceptableOrUnknown(data['data_bits']!, _dataBitsMeta),
+      );
+    }
+    if (data.containsKey('parity')) {
+      context.handle(
+        _parityMeta,
+        parity.isAcceptableOrUnknown(data['parity']!, _parityMeta),
+      );
+    }
+    if (data.containsKey('stop_bits')) {
+      context.handle(
+        _stopBitsMeta,
+        stopBits.isAcceptableOrUnknown(data['stop_bits']!, _stopBitsMeta),
+      );
+    }
+    if (data.containsKey('protocol')) {
+      context.handle(
+        _protocolMeta,
+        protocol.isAcceptableOrUnknown(data['protocol']!, _protocolMeta),
+      );
+    }
+    if (data.containsKey('enabled')) {
+      context.handle(
+        _enabledMeta,
+        enabled.isAcceptableOrUnknown(data['enabled']!, _enabledMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ScaleSetting map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ScaleSetting(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      port: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}port'],
+      )!,
+      baudRate: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}baud_rate'],
+      )!,
+      dataBits: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}data_bits'],
+      )!,
+      parity: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}parity'],
+      )!,
+      stopBits: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}stop_bits'],
+      )!,
+      protocol: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}protocol'],
+      )!,
+      enabled: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}enabled'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $ScaleSettingsTable createAlias(String alias) {
+    return $ScaleSettingsTable(attachedDatabase, alias);
+  }
+}
+
+class ScaleSetting extends DataClass implements Insertable<ScaleSetting> {
+  final int id;
+  final String port;
+  final int baudRate;
+  final int dataBits;
+  final int parity;
+  final int stopBits;
+  final String protocol;
+  final bool enabled;
+  final DateTime updatedAt;
+  const ScaleSetting({
+    required this.id,
+    required this.port,
+    required this.baudRate,
+    required this.dataBits,
+    required this.parity,
+    required this.stopBits,
+    required this.protocol,
+    required this.enabled,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['port'] = Variable<String>(port);
+    map['baud_rate'] = Variable<int>(baudRate);
+    map['data_bits'] = Variable<int>(dataBits);
+    map['parity'] = Variable<int>(parity);
+    map['stop_bits'] = Variable<int>(stopBits);
+    map['protocol'] = Variable<String>(protocol);
+    map['enabled'] = Variable<bool>(enabled);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  ScaleSettingsCompanion toCompanion(bool nullToAbsent) {
+    return ScaleSettingsCompanion(
+      id: Value(id),
+      port: Value(port),
+      baudRate: Value(baudRate),
+      dataBits: Value(dataBits),
+      parity: Value(parity),
+      stopBits: Value(stopBits),
+      protocol: Value(protocol),
+      enabled: Value(enabled),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory ScaleSetting.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ScaleSetting(
+      id: serializer.fromJson<int>(json['id']),
+      port: serializer.fromJson<String>(json['port']),
+      baudRate: serializer.fromJson<int>(json['baudRate']),
+      dataBits: serializer.fromJson<int>(json['dataBits']),
+      parity: serializer.fromJson<int>(json['parity']),
+      stopBits: serializer.fromJson<int>(json['stopBits']),
+      protocol: serializer.fromJson<String>(json['protocol']),
+      enabled: serializer.fromJson<bool>(json['enabled']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'port': serializer.toJson<String>(port),
+      'baudRate': serializer.toJson<int>(baudRate),
+      'dataBits': serializer.toJson<int>(dataBits),
+      'parity': serializer.toJson<int>(parity),
+      'stopBits': serializer.toJson<int>(stopBits),
+      'protocol': serializer.toJson<String>(protocol),
+      'enabled': serializer.toJson<bool>(enabled),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  ScaleSetting copyWith({
+    int? id,
+    String? port,
+    int? baudRate,
+    int? dataBits,
+    int? parity,
+    int? stopBits,
+    String? protocol,
+    bool? enabled,
+    DateTime? updatedAt,
+  }) => ScaleSetting(
+    id: id ?? this.id,
+    port: port ?? this.port,
+    baudRate: baudRate ?? this.baudRate,
+    dataBits: dataBits ?? this.dataBits,
+    parity: parity ?? this.parity,
+    stopBits: stopBits ?? this.stopBits,
+    protocol: protocol ?? this.protocol,
+    enabled: enabled ?? this.enabled,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  ScaleSetting copyWithCompanion(ScaleSettingsCompanion data) {
+    return ScaleSetting(
+      id: data.id.present ? data.id.value : this.id,
+      port: data.port.present ? data.port.value : this.port,
+      baudRate: data.baudRate.present ? data.baudRate.value : this.baudRate,
+      dataBits: data.dataBits.present ? data.dataBits.value : this.dataBits,
+      parity: data.parity.present ? data.parity.value : this.parity,
+      stopBits: data.stopBits.present ? data.stopBits.value : this.stopBits,
+      protocol: data.protocol.present ? data.protocol.value : this.protocol,
+      enabled: data.enabled.present ? data.enabled.value : this.enabled,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ScaleSetting(')
+          ..write('id: $id, ')
+          ..write('port: $port, ')
+          ..write('baudRate: $baudRate, ')
+          ..write('dataBits: $dataBits, ')
+          ..write('parity: $parity, ')
+          ..write('stopBits: $stopBits, ')
+          ..write('protocol: $protocol, ')
+          ..write('enabled: $enabled, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    port,
+    baudRate,
+    dataBits,
+    parity,
+    stopBits,
+    protocol,
+    enabled,
+    updatedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ScaleSetting &&
+          other.id == this.id &&
+          other.port == this.port &&
+          other.baudRate == this.baudRate &&
+          other.dataBits == this.dataBits &&
+          other.parity == this.parity &&
+          other.stopBits == this.stopBits &&
+          other.protocol == this.protocol &&
+          other.enabled == this.enabled &&
+          other.updatedAt == this.updatedAt);
+}
+
+class ScaleSettingsCompanion extends UpdateCompanion<ScaleSetting> {
+  final Value<int> id;
+  final Value<String> port;
+  final Value<int> baudRate;
+  final Value<int> dataBits;
+  final Value<int> parity;
+  final Value<int> stopBits;
+  final Value<String> protocol;
+  final Value<bool> enabled;
+  final Value<DateTime> updatedAt;
+  const ScaleSettingsCompanion({
+    this.id = const Value.absent(),
+    this.port = const Value.absent(),
+    this.baudRate = const Value.absent(),
+    this.dataBits = const Value.absent(),
+    this.parity = const Value.absent(),
+    this.stopBits = const Value.absent(),
+    this.protocol = const Value.absent(),
+    this.enabled = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  ScaleSettingsCompanion.insert({
+    this.id = const Value.absent(),
+    this.port = const Value.absent(),
+    this.baudRate = const Value.absent(),
+    this.dataBits = const Value.absent(),
+    this.parity = const Value.absent(),
+    this.stopBits = const Value.absent(),
+    this.protocol = const Value.absent(),
+    this.enabled = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  static Insertable<ScaleSetting> custom({
+    Expression<int>? id,
+    Expression<String>? port,
+    Expression<int>? baudRate,
+    Expression<int>? dataBits,
+    Expression<int>? parity,
+    Expression<int>? stopBits,
+    Expression<String>? protocol,
+    Expression<bool>? enabled,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (port != null) 'port': port,
+      if (baudRate != null) 'baud_rate': baudRate,
+      if (dataBits != null) 'data_bits': dataBits,
+      if (parity != null) 'parity': parity,
+      if (stopBits != null) 'stop_bits': stopBits,
+      if (protocol != null) 'protocol': protocol,
+      if (enabled != null) 'enabled': enabled,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  ScaleSettingsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? port,
+    Value<int>? baudRate,
+    Value<int>? dataBits,
+    Value<int>? parity,
+    Value<int>? stopBits,
+    Value<String>? protocol,
+    Value<bool>? enabled,
+    Value<DateTime>? updatedAt,
+  }) {
+    return ScaleSettingsCompanion(
+      id: id ?? this.id,
+      port: port ?? this.port,
+      baudRate: baudRate ?? this.baudRate,
+      dataBits: dataBits ?? this.dataBits,
+      parity: parity ?? this.parity,
+      stopBits: stopBits ?? this.stopBits,
+      protocol: protocol ?? this.protocol,
+      enabled: enabled ?? this.enabled,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (port.present) {
+      map['port'] = Variable<String>(port.value);
+    }
+    if (baudRate.present) {
+      map['baud_rate'] = Variable<int>(baudRate.value);
+    }
+    if (dataBits.present) {
+      map['data_bits'] = Variable<int>(dataBits.value);
+    }
+    if (parity.present) {
+      map['parity'] = Variable<int>(parity.value);
+    }
+    if (stopBits.present) {
+      map['stop_bits'] = Variable<int>(stopBits.value);
+    }
+    if (protocol.present) {
+      map['protocol'] = Variable<String>(protocol.value);
+    }
+    if (enabled.present) {
+      map['enabled'] = Variable<bool>(enabled.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ScaleSettingsCompanion(')
+          ..write('id: $id, ')
+          ..write('port: $port, ')
+          ..write('baudRate: $baudRate, ')
+          ..write('dataBits: $dataBits, ')
+          ..write('parity: $parity, ')
+          ..write('stopBits: $stopBits, ')
+          ..write('protocol: $protocol, ')
+          ..write('enabled: $enabled, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -4943,11 +5477,15 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $ChargeVehicleTypesTable chargeVehicleTypes =
       $ChargeVehicleTypesTable(this);
   late final $WeighmentRatesTable weighmentRates = $WeighmentRatesTable(this);
+  late final $ScaleSettingsTable scaleSettings = $ScaleSettingsTable(this);
   late final UserDao userDao = UserDao(this as AppDatabase);
   late final CustomerDao customerDao = CustomerDao(this as AppDatabase);
   late final MaterialDao materialDao = MaterialDao(this as AppDatabase);
   late final BillDao billDao = BillDao(this as AppDatabase);
   late final AppSettingsDao appSettingsDao = AppSettingsDao(
+    this as AppDatabase,
+  );
+  late final ScaleSettingsDao scaleSettingsDao = ScaleSettingsDao(
     this as AppDatabase,
   );
   @override
@@ -4962,6 +5500,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     appSettings,
     chargeVehicleTypes,
     weighmentRates,
+    scaleSettings,
   ];
 }
 
@@ -7913,6 +8452,276 @@ typedef $$WeighmentRatesTableProcessedTableManager =
       WeighmentRate,
       PrefetchHooks Function({bool vehicleTypeId})
     >;
+typedef $$ScaleSettingsTableCreateCompanionBuilder =
+    ScaleSettingsCompanion Function({
+      Value<int> id,
+      Value<String> port,
+      Value<int> baudRate,
+      Value<int> dataBits,
+      Value<int> parity,
+      Value<int> stopBits,
+      Value<String> protocol,
+      Value<bool> enabled,
+      Value<DateTime> updatedAt,
+    });
+typedef $$ScaleSettingsTableUpdateCompanionBuilder =
+    ScaleSettingsCompanion Function({
+      Value<int> id,
+      Value<String> port,
+      Value<int> baudRate,
+      Value<int> dataBits,
+      Value<int> parity,
+      Value<int> stopBits,
+      Value<String> protocol,
+      Value<bool> enabled,
+      Value<DateTime> updatedAt,
+    });
+
+class $$ScaleSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $ScaleSettingsTable> {
+  $$ScaleSettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get port => $composableBuilder(
+    column: $table.port,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get baudRate => $composableBuilder(
+    column: $table.baudRate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get dataBits => $composableBuilder(
+    column: $table.dataBits,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get parity => $composableBuilder(
+    column: $table.parity,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get stopBits => $composableBuilder(
+    column: $table.stopBits,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get protocol => $composableBuilder(
+    column: $table.protocol,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$ScaleSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ScaleSettingsTable> {
+  $$ScaleSettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get port => $composableBuilder(
+    column: $table.port,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get baudRate => $composableBuilder(
+    column: $table.baudRate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get dataBits => $composableBuilder(
+    column: $table.dataBits,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get parity => $composableBuilder(
+    column: $table.parity,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get stopBits => $composableBuilder(
+    column: $table.stopBits,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get protocol => $composableBuilder(
+    column: $table.protocol,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get enabled => $composableBuilder(
+    column: $table.enabled,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$ScaleSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ScaleSettingsTable> {
+  $$ScaleSettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get port =>
+      $composableBuilder(column: $table.port, builder: (column) => column);
+
+  GeneratedColumn<int> get baudRate =>
+      $composableBuilder(column: $table.baudRate, builder: (column) => column);
+
+  GeneratedColumn<int> get dataBits =>
+      $composableBuilder(column: $table.dataBits, builder: (column) => column);
+
+  GeneratedColumn<int> get parity =>
+      $composableBuilder(column: $table.parity, builder: (column) => column);
+
+  GeneratedColumn<int> get stopBits =>
+      $composableBuilder(column: $table.stopBits, builder: (column) => column);
+
+  GeneratedColumn<String> get protocol =>
+      $composableBuilder(column: $table.protocol, builder: (column) => column);
+
+  GeneratedColumn<bool> get enabled =>
+      $composableBuilder(column: $table.enabled, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$ScaleSettingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $ScaleSettingsTable,
+          ScaleSetting,
+          $$ScaleSettingsTableFilterComposer,
+          $$ScaleSettingsTableOrderingComposer,
+          $$ScaleSettingsTableAnnotationComposer,
+          $$ScaleSettingsTableCreateCompanionBuilder,
+          $$ScaleSettingsTableUpdateCompanionBuilder,
+          (
+            ScaleSetting,
+            BaseReferences<_$AppDatabase, $ScaleSettingsTable, ScaleSetting>,
+          ),
+          ScaleSetting,
+          PrefetchHooks Function()
+        > {
+  $$ScaleSettingsTableTableManager(_$AppDatabase db, $ScaleSettingsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ScaleSettingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ScaleSettingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ScaleSettingsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> port = const Value.absent(),
+                Value<int> baudRate = const Value.absent(),
+                Value<int> dataBits = const Value.absent(),
+                Value<int> parity = const Value.absent(),
+                Value<int> stopBits = const Value.absent(),
+                Value<String> protocol = const Value.absent(),
+                Value<bool> enabled = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => ScaleSettingsCompanion(
+                id: id,
+                port: port,
+                baudRate: baudRate,
+                dataBits: dataBits,
+                parity: parity,
+                stopBits: stopBits,
+                protocol: protocol,
+                enabled: enabled,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> port = const Value.absent(),
+                Value<int> baudRate = const Value.absent(),
+                Value<int> dataBits = const Value.absent(),
+                Value<int> parity = const Value.absent(),
+                Value<int> stopBits = const Value.absent(),
+                Value<String> protocol = const Value.absent(),
+                Value<bool> enabled = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => ScaleSettingsCompanion.insert(
+                id: id,
+                port: port,
+                baudRate: baudRate,
+                dataBits: dataBits,
+                parity: parity,
+                stopBits: stopBits,
+                protocol: protocol,
+                enabled: enabled,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$ScaleSettingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $ScaleSettingsTable,
+      ScaleSetting,
+      $$ScaleSettingsTableFilterComposer,
+      $$ScaleSettingsTableOrderingComposer,
+      $$ScaleSettingsTableAnnotationComposer,
+      $$ScaleSettingsTableCreateCompanionBuilder,
+      $$ScaleSettingsTableUpdateCompanionBuilder,
+      (
+        ScaleSetting,
+        BaseReferences<_$AppDatabase, $ScaleSettingsTable, ScaleSetting>,
+      ),
+      ScaleSetting,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -7931,4 +8740,6 @@ class $AppDatabaseManager {
       $$ChargeVehicleTypesTableTableManager(_db, _db.chargeVehicleTypes);
   $$WeighmentRatesTableTableManager get weighmentRates =>
       $$WeighmentRatesTableTableManager(_db, _db.weighmentRates);
+  $$ScaleSettingsTableTableManager get scaleSettings =>
+      $$ScaleSettingsTableTableManager(_db, _db.scaleSettings);
 }

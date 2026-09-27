@@ -142,10 +142,10 @@ class _BillFormState extends State<BillForm> {
   late final TextEditingController _customerCodeController;
 
   String? _selectedType;
-  DateTime _grossDate = DateTime.now();
-  TimeOfDay _grossTime = TimeOfDay.now();
-  DateTime _tareDate = DateTime.now();
-  TimeOfDay _tareTime = TimeOfDay.now();
+  DateTime? _grossDate;
+  TimeOfDay? _grossTime;
+  DateTime? _tareDate;
+  TimeOfDay? _tareTime;
 
   @override
   void initState() {
@@ -202,15 +202,23 @@ class _BillFormState extends State<BillForm> {
       _selectedType = widget.selectedType;
     }
 
-    if (widget.grossCapturedAt != oldWidget.grossCapturedAt &&
-        widget.grossCapturedAt != null) {
-      _grossDate = widget.grossCapturedAt!;
-      _grossTime = TimeOfDay.fromDateTime(widget.grossCapturedAt!);
+    if (widget.grossCapturedAt != oldWidget.grossCapturedAt) {
+      if (widget.grossCapturedAt != null) {
+        _grossDate = widget.grossCapturedAt!;
+        _grossTime = TimeOfDay.fromDateTime(widget.grossCapturedAt!);
+      } else {
+        _grossDate = null;
+        _grossTime = null;
+      }
     }
-    if (widget.tareCapturedAt != oldWidget.tareCapturedAt &&
-        widget.tareCapturedAt != null) {
-      _tareDate = widget.tareCapturedAt!;
-      _tareTime = TimeOfDay.fromDateTime(widget.tareCapturedAt!);
+    if (widget.tareCapturedAt != oldWidget.tareCapturedAt) {
+      if (widget.tareCapturedAt != null) {
+        _tareDate = widget.tareCapturedAt!;
+        _tareTime = TimeOfDay.fromDateTime(widget.tareCapturedAt!);
+      } else {
+        _tareDate = null;
+        _tareTime = null;
+      }
     }
   }
 

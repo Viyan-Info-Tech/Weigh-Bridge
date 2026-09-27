@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'app/di/injection.dart';
 import 'core/database/app_database.dart';
+import 'core/hardware/scale/domain/scale_service.dart';
 import 'core/licensing/license_gate.dart';
 import 'core/security/admin_password_service.dart';
 
@@ -21,6 +22,7 @@ void main() async {
         RepositoryProvider.value(value: injection.billRepository),
         RepositoryProvider.value(value: injection.customerRepository),
         RepositoryProvider.value(value: injection.materialRepository),
+        RepositoryProvider<ScaleService>.value(value: injection.scaleService),
       ],
       child: MultiBlocProvider(
         providers: [

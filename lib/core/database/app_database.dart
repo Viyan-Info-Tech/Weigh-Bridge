@@ -10,6 +10,7 @@ import 'daos/customer_dao.dart';
 import 'daos/material_dao.dart';
 import 'daos/bill_dao.dart';
 import 'daos/app_settings_dao.dart';
+import 'daos/scale_settings_dao.dart';
 import 'tables/users_table.dart';
 import 'tables/customers_table.dart';
 import 'tables/materials_table.dart';
@@ -17,6 +18,7 @@ import 'tables/weighments_table.dart';
 import 'tables/app_settings_table.dart';
 import 'tables/charge_vehicle_types_table.dart';
 import 'tables/weighment_rates_table.dart';
+import 'tables/scale_settings_table.dart';
 
 part 'app_database.g.dart';
 
@@ -29,6 +31,7 @@ part 'app_database.g.dart';
     AppSettings,
     ChargeVehicleTypes,
     WeighmentRates,
+    ScaleSettings,
   ],
   daos: [
     UserDao,
@@ -36,6 +39,7 @@ part 'app_database.g.dart';
     MaterialDao,
     BillDao,
     AppSettingsDao,
+    ScaleSettingsDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -44,7 +48,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 21;
+  int get schemaVersion => 22;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -666,6 +670,12 @@ class AppDatabase extends _$AppDatabase {
       if (from < 21) {
         await _createAdminCredentialsTable();
       }
+
+      if (from < 22) {
+        // Weigh scale serial connection settings. A single default row is
+        // created lazily by ScaleSettingsDao.getSettings() on first use.
+        await m.createTable(scaleSettings);
+      }
     },
   );
 
@@ -689,8 +699,8 @@ class AppDatabase extends _$AppDatabase {
     'VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET '
     'password_hash = excluded.password_hash, updated_at = excluded.updated_at',
     [
-      Variable.withString(hash),
-      Variable.withInt(DateTime.now().millisecondsSinceEpoch),
+      hash,
+      DateTime.now().millisecondsSinceEpoch,
     ],
   );
 

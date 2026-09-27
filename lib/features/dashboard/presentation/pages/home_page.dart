@@ -87,7 +87,12 @@ class _HomePageState extends State<HomePage> {
                 _buildTopNavigationBar(context),
 
                 // 3. Main Active Content Screen
-                Expanded(child: _pages[_selectedIndex]),
+                Expanded(
+                  child: IndexedStack(
+                    index: _selectedIndex,
+                    children: _pages,
+                  ),
+                ),
 
                 // 4. Bottom Industrial Status Bar
                 _buildAppStatusBar(context),
