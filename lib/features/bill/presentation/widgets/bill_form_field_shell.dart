@@ -19,7 +19,7 @@ class BillFormFieldShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 38,
+      height: 46,
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(6),
@@ -31,8 +31,8 @@ class BillFormFieldShell extends StatelessWidget {
         children: [
           if (prefixIcon != null || prefixText != null)
             Container(
-              width: 36,
-              height: 38,
+              width: 44,
+              height: 46,
               decoration: const BoxDecoration(
                 color: Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.horizontal(
@@ -46,12 +46,12 @@ class BillFormFieldShell extends StatelessWidget {
               alignment: Alignment.center,
               child: prefixIcon != null
                   ? Icon(prefixIcon,
-                      size: 17, color: const Color(0xFF475569))
+                      size: 20, color: const Color(0xFF475569))
                   : Text(
                       prefixText!,
                       style: const TextStyle(
                         fontFamily: 'PlusJakartaSans',
-                        fontSize: 14,
+                        fontSize: 16,
                         fontWeight: FontWeight.w800,
                         color: Color(0xFF475569),
                       ),
@@ -78,21 +78,21 @@ class BillFormSearchButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(right: 4),
+      padding: const EdgeInsets.only(right: 6),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(5),
         child: Container(
-          padding: const EdgeInsets.all(5),
+          padding: const EdgeInsets.all(7),
           decoration: BoxDecoration(
             color: const Color(0xFFEFF6FF),
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(5),
             border: Border.all(
                 color: const Color(0xFFBFDBFE), width: 0.8),
           ),
           child: const Icon(
             Icons.search_rounded,
-            size: 16,
+            size: 18,
             color: Color(0xFF2563EB),
           ),
         ),

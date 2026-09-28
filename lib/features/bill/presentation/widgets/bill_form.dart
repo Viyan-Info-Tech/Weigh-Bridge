@@ -241,7 +241,7 @@ class _BillFormState extends State<BillForm> {
     const isTareEnabled = true;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
@@ -262,9 +262,9 @@ class _BillFormState extends State<BillForm> {
             children: [
               if (narrow) ...[
                 _buildLeftColumn(isGrossEnabled, isTareEnabled),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
                 const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                const SizedBox(height: 14),
+                const SizedBox(height: 16),
                 _buildRightColumn(isGrossEnabled, isTareEnabled),
               ] else
                 Row(
@@ -273,13 +273,13 @@ class _BillFormState extends State<BillForm> {
                     Expanded(
                       child: _buildLeftColumn(isGrossEnabled, isTareEnabled),
                     ),
-                    const SizedBox(width: 18),
+                    const SizedBox(width: 20),
                     Container(
                       width: 1,
-                      height: 320,
+                      height: 450,
                       color: const Color(0xFFF1F5F9),
                     ),
-                    const SizedBox(width: 18),
+                    const SizedBox(width: 20),
                     Expanded(
                       child: _buildRightColumn(isGrossEnabled, isTareEnabled),
                     ),
@@ -330,7 +330,7 @@ class _BillFormState extends State<BillForm> {
 
   /// Left Column Field Rows
   Widget _buildLeftColumn(bool isGrossEnabled, bool isTareEnabled) {
-    const labelWidth = 135.0;
+    const labelWidth = 148.0;
 
     return Column(
       children: [
@@ -339,37 +339,37 @@ class _BillFormState extends State<BillForm> {
           labelWidth: labelWidth,
           child: _buildTruckNoField(),
         ),
-        const SizedBox(height: 9),
+        const SizedBox(height: 11),
         BillFormRow(
           label: 'TYPE',
           labelWidth: labelWidth,
           child: _buildTypeSelector(),
         ),
-        const SizedBox(height: 9),
+        const SizedBox(height: 11),
         BillFormRow(
           label: 'MATERIAL CODE',
           labelWidth: labelWidth,
           child: _buildMaterialCodeField(),
         ),
-        const SizedBox(height: 9),
+        const SizedBox(height: 11),
         BillFormRow(
           label: 'CUSTOMER CODE',
           labelWidth: labelWidth,
           child: _buildCustomerCodeField(),
         ),
-        const SizedBox(height: 9),
+        const SizedBox(height: 11),
         BillFormRow(
           label: 'CHARGES (₹)',
           labelWidth: labelWidth,
           child: _buildChargesField(),
         ),
-        const SizedBox(height: 9),
+        const SizedBox(height: 11),
         BillFormRow(
           label: 'CONTAINER NO',
           labelWidth: labelWidth,
           child: _buildContainerNoField(),
         ),
-        const SizedBox(height: 9),
+        const SizedBox(height: 11),
         BillFormRow(
           label: 'MOBILE NO',
           labelWidth: labelWidth,
@@ -381,7 +381,7 @@ class _BillFormState extends State<BillForm> {
 
   /// Right Column Field Rows
   Widget _buildRightColumn(bool isGrossEnabled, bool isTareEnabled) {
-    const labelWidth = 135.0;
+    const labelWidth = 148.0;
 
     return Column(
       children: [
@@ -390,19 +390,19 @@ class _BillFormState extends State<BillForm> {
           labelWidth: labelWidth,
           child: _buildSerialNoDisplay(),
         ),
-        const SizedBox(height: 9),
+        const SizedBox(height: 11),
         BillFormRow(
           label: 'MATERIAL NAME',
           labelWidth: labelWidth,
           child: _buildMaterialNameField(),
         ),
-        const SizedBox(height: 9),
+        const SizedBox(height: 11),
         BillFormRow(
           label: 'CUSTOMER NAME',
           labelWidth: labelWidth,
           child: _buildCustomerNameField(),
         ),
-        const SizedBox(height: 9),
+        const SizedBox(height: 11),
         BillFormRow(
           label: 'GROSS WEIGHT',
           labelWidth: labelWidth,
@@ -421,7 +421,7 @@ class _BillFormState extends State<BillForm> {
             onWeightChanged: widget.onGrossWeightChanged,
           ),
         ),
-        const SizedBox(height: 9),
+        const SizedBox(height: 11),
         BillFormRow(
           label: 'TARE WEIGHT',
           labelWidth: labelWidth,
@@ -440,7 +440,7 @@ class _BillFormState extends State<BillForm> {
             onWeightChanged: widget.onTareWeightChanged,
           ),
         ),
-        const SizedBox(height: 9),
+        const SizedBox(height: 11),
         BillFormRow(
           label: 'NETT WEIGHT',
           labelWidth: labelWidth,
@@ -468,19 +468,19 @@ class _BillFormState extends State<BillForm> {
         textCapitalization: TextCapitalization.characters,
         style: const TextStyle(
           fontFamily: 'PlusJakartaSans',
-          fontSize: 13,
+          fontSize: 15,
           fontWeight: FontWeight.w700,
           color: Color(0xFF0F172A),
         ),
         decoration: const InputDecoration(
           border: InputBorder.none,
           isDense: true,
-          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           hintText: 'Enter Vehicle Number',
           hintStyle: TextStyle(
             fontFamily: 'PlusJakartaSans',
             color: Color(0xFF94A3B8),
-            fontSize: 13,
+            fontSize: 15,
             fontWeight: FontWeight.w400,
           ),
         ),
@@ -522,12 +522,12 @@ class _BillFormState extends State<BillForm> {
               widget.onTypeChanged?.call(type);
             },
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 5),
           const Text(
             'F1 captures live weight into the selected type',
             style: TextStyle(
               fontFamily: 'PlusJakartaSans',
-              fontSize: 10,
+              fontSize: 11.5,
               color: Color(0xFF64748B),
             ),
           ),
@@ -551,19 +551,19 @@ class _BillFormState extends State<BillForm> {
         onSubmitted: _onMaterialCodeSubmitted,
         style: const TextStyle(
           fontFamily: 'PlusJakartaSans',
-          fontSize: 13,
+          fontSize: 15,
           fontWeight: FontWeight.w600,
           color: Color(0xFF0F172A),
         ),
         decoration: const InputDecoration(
           border: InputBorder.none,
           isDense: true,
-          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           hintText: 'Select Material Code',
           hintStyle: TextStyle(
             fontFamily: 'PlusJakartaSans',
             color: Color(0xFF94A3B8),
-            fontSize: 13,
+            fontSize: 15,
             fontWeight: FontWeight.w400,
           ),
         ),
@@ -625,19 +625,19 @@ class _BillFormState extends State<BillForm> {
         },
         style: const TextStyle(
           fontFamily: 'PlusJakartaSans',
-          fontSize: 13,
+          fontSize: 15,
           fontWeight: FontWeight.w600,
           color: Color(0xFF0F172A),
         ),
         decoration: const InputDecoration(
           border: InputBorder.none,
           isDense: true,
-          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           hintText: 'Type Customer Code',
           hintStyle: TextStyle(
             fontFamily: 'PlusJakartaSans',
             color: Color(0xFF94A3B8),
-            fontSize: 13,
+            fontSize: 15,
             fontWeight: FontWeight.w400,
           ),
         ),
@@ -651,7 +651,7 @@ class _BillFormState extends State<BillForm> {
       prefixText: '₹',
       suffix: const Padding(
         padding: EdgeInsets.symmetric(horizontal: 10),
-        child: Icon(Icons.arrow_drop_down, color: Color(0xFF64748B)),
+        child: Icon(Icons.arrow_drop_down, size: 22, color: Color(0xFF64748B)),
       ),
       child: TextField(
         controller: widget.vehicleChargeController,
@@ -660,7 +660,7 @@ class _BillFormState extends State<BillForm> {
         onTap: _showChargeSelection,
         style: const TextStyle(
           fontFamily: 'PlusJakartaSans',
-          fontSize: 13,
+          fontSize: 15.5,
           fontWeight: FontWeight.w700,
           color: Color(0xFF0F172A),
         ),
@@ -668,8 +668,8 @@ class _BillFormState extends State<BillForm> {
           border: InputBorder.none,
           isDense: true,
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 10,
-            vertical: 10,
+            horizontal: 12,
+            vertical: 12,
           ),
           hintText: widget.vehicleCharge > 0 ? null : '0.00',
         ),
@@ -703,19 +703,19 @@ class _BillFormState extends State<BillForm> {
         onSubmitted: (_) => widget.mobileFocusNode?.requestFocus(),
         style: const TextStyle(
           fontFamily: 'PlusJakartaSans',
-          fontSize: 13,
+          fontSize: 15,
           fontWeight: FontWeight.w600,
           color: Color(0xFF0F172A),
         ),
         decoration: const InputDecoration(
           border: InputBorder.none,
           isDense: true,
-          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           hintText: 'Container / Trailer No',
           hintStyle: TextStyle(
             fontFamily: 'PlusJakartaSans',
             color: Color(0xFF94A3B8),
-            fontSize: 13,
+            fontSize: 15,
             fontWeight: FontWeight.w400,
           ),
         ),
@@ -738,19 +738,19 @@ class _BillFormState extends State<BillForm> {
         onSubmitted: (_) => widget.materialFocusNode?.requestFocus(),
         style: const TextStyle(
           fontFamily: 'PlusJakartaSans',
-          fontSize: 13,
+          fontSize: 15,
           fontWeight: FontWeight.w600,
           color: Color(0xFF0F172A),
         ),
         decoration: const InputDecoration(
           border: InputBorder.none,
           isDense: true,
-          contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           hintText: 'Mobile / Phone No',
           hintStyle: TextStyle(
             fontFamily: 'PlusJakartaSans',
             color: Color(0xFF94A3B8),
-            fontSize: 13,
+            fontSize: 15,
             fontWeight: FontWeight.w400,
           ),
         ),
@@ -766,12 +766,12 @@ class _BillFormState extends State<BillForm> {
       prefixText: '#',
       backgroundColor: const Color(0xFFF8FAFC),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
         child: Text(
           widget.billNumber,
           style: const TextStyle(
             fontFamily: 'PlusJakartaSans',
-            fontSize: 13.5,
+            fontSize: 15.5,
             fontWeight: FontWeight.w800,
             color: Color(0xFF0F172A),
             letterSpacing: 0.5,
@@ -791,12 +791,12 @@ class _BillFormState extends State<BillForm> {
           focusNode: widget.materialFocusNode,
           isExpanded: true,
           hint: const Padding(
-            padding: EdgeInsets.only(left: 10),
+            padding: EdgeInsets.only(left: 12),
             child: Text(
               'Select Material Name',
               style: TextStyle(
                 fontFamily: 'PlusJakartaSans',
-                fontSize: 13,
+                fontSize: 15,
                 color: Color(0xFF94A3B8),
                 fontWeight: FontWeight.w400,
               ),
@@ -806,7 +806,7 @@ class _BillFormState extends State<BillForm> {
             padding: EdgeInsets.only(right: 8),
             child: Icon(
               Icons.keyboard_arrow_down_rounded,
-              size: 18,
+              size: 22,
               color: Color(0xFF64748B),
             ),
           ),
@@ -814,12 +814,12 @@ class _BillFormState extends State<BillForm> {
             return DropdownMenuItem<domain.MaterialItem>(
               value: m,
               child: Padding(
-                padding: const EdgeInsets.only(left: 10),
+                padding: const EdgeInsets.only(left: 12),
                 child: Text(
                   m.name,
                   style: const TextStyle(
                     fontFamily: 'PlusJakartaSans',
-                    fontSize: 13,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF0F172A),
                   ),
@@ -858,12 +858,12 @@ class _BillFormState extends State<BillForm> {
           focusNode: widget.customerFocusNode,
           isExpanded: true,
           hint: const Padding(
-            padding: EdgeInsets.only(left: 10),
+            padding: EdgeInsets.only(left: 12),
             child: Text(
               'Select Customer Name',
               style: TextStyle(
                 fontFamily: 'PlusJakartaSans',
-                fontSize: 13,
+                fontSize: 15,
                 color: Color(0xFF94A3B8),
                 fontWeight: FontWeight.w400,
               ),
@@ -873,7 +873,7 @@ class _BillFormState extends State<BillForm> {
             padding: EdgeInsets.only(right: 8),
             child: Icon(
               Icons.keyboard_arrow_down_rounded,
-              size: 18,
+              size: 22,
               color: Color(0xFF64748B),
             ),
           ),
@@ -881,12 +881,12 @@ class _BillFormState extends State<BillForm> {
             return DropdownMenuItem<int>(
               value: c.id,
               child: Padding(
-                padding: const EdgeInsets.only(left: 10),
+                padding: const EdgeInsets.only(left: 12),
                 child: Text(
                   c.name,
                   style: const TextStyle(
                     fontFamily: 'PlusJakartaSans',
-                    fontSize: 13,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF0F172A),
                   ),
@@ -918,7 +918,7 @@ class _BillFormState extends State<BillForm> {
               : '--');
 
     return Container(
-      height: 38,
+      height: 46,
       decoration: BoxDecoration(
         color: const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(6),
@@ -927,8 +927,8 @@ class _BillFormState extends State<BillForm> {
       child: Row(
         children: [
           Container(
-            width: 36,
-            height: 38,
+            width: 44,
+            height: 46,
             decoration: const BoxDecoration(
               color: Color(0xFFE2E8F0),
               borderRadius: BorderRadius.horizontal(left: Radius.circular(5)),
@@ -939,18 +939,18 @@ class _BillFormState extends State<BillForm> {
             alignment: Alignment.center,
             child: const Icon(
               Icons.scale_rounded,
-              size: 16.5,
+              size: 20,
               color: Color(0xFF475569),
             ),
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(
                 netDisplay,
                 style: const TextStyle(
                   fontFamily: 'PlusJakartaSans',
-                  fontSize: 13.5,
+                  fontSize: 16,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFF0F172A),
                 ),
@@ -958,8 +958,8 @@ class _BillFormState extends State<BillForm> {
             ),
           ),
           Container(
-            width: 48,
-            height: 38,
+            width: 54,
+            height: 46,
             alignment: Alignment.center,
             decoration: const BoxDecoration(
               color: Color(0xFFE2E8F0),
@@ -972,7 +972,7 @@ class _BillFormState extends State<BillForm> {
               isKg ? 'Kg' : 'Ton',
               style: const TextStyle(
                 fontFamily: 'PlusJakartaSans',
-                fontSize: 12,
+                fontSize: 13.5,
                 fontWeight: FontWeight.w800,
                 color: Color(0xFF334155),
               ),

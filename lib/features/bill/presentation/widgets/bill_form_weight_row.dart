@@ -64,7 +64,7 @@ class BillFormWeightRow extends StatelessWidget {
           onChanged: onWeightChanged,
         ),
 
-        const SizedBox(height: 6),
+        const SizedBox(height: 7),
 
         // 2. Down: Captured Date and Time Pickers
         Row(
@@ -160,7 +160,7 @@ class BillFormWeightRow extends StatelessWidget {
               ? const Color(0xFFDCFCE7).withValues(alpha: 0.5)
               : const Color(0xFFEFF6FF),
           child: Ink(
-            height: 30,
+            height: 34,
             decoration: BoxDecoration(
               color: bgColor,
               borderRadius: BorderRadius.circular(6),
@@ -171,7 +171,7 @@ class BillFormWeightRow extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(icon, size: 14, color: iconColor),
+                  Icon(icon, size: 16, color: iconColor),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
@@ -180,7 +180,7 @@ class BillFormWeightRow extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontFamily: 'PlusJakartaSans',
-                        fontSize: 11.5,
+                        fontSize: 13,
                         fontWeight: FontWeight.w700,
                         color: textColor,
                         letterSpacing: 0.2,
@@ -307,7 +307,7 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
             onTap: _editing ? null : _beginEditing,
             borderRadius: BorderRadius.circular(6),
             child: Container(
-              height: 38,
+              height: 46,
               decoration: BoxDecoration(
                 color: backgroundColor,
                 borderRadius: BorderRadius.circular(6),
@@ -319,8 +319,8 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
               child: Row(
                 children: [
                   Container(
-                    width: 36,
-                    height: 38,
+                    width: 44,
+                    height: 46,
                     decoration: BoxDecoration(
                       color: _editing
                           ? const Color(0xFFDBEAFE)
@@ -335,7 +335,7 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                     alignment: Alignment.center,
                     child: Icon(
                       _editing ? Icons.edit_rounded : Icons.scale_rounded,
-                      size: 16.5,
+                      size: 20,
                       color: _editing
                           ? const Color(0xFF2563EB)
                           : widget.isCaptured
@@ -370,7 +370,7 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                               ),
                               style: const TextStyle(
                                 fontFamily: 'PlusJakartaSans',
-                                fontSize: 13.5,
+                                fontSize: 16,
                                 fontWeight: FontWeight.w800,
                                 color: Color(0xFF0F172A),
                               ),
@@ -381,7 +381,7 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                                 widget.displayWeight,
                                 style: TextStyle(
                                   fontFamily: 'PlusJakartaSans',
-                                  fontSize: 13.5,
+                                  fontSize: 16,
                                   fontWeight: FontWeight.w800,
                                   color: widget.isCaptured
                                       ? const Color(0xFF15803D)
@@ -392,8 +392,8 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                     ),
                   ),
                   Container(
-                    width: 48,
-                    height: 38,
+                    width: 54,
+                    height: 46,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: widget.isCaptured
@@ -408,7 +408,7 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                       widget.unitLabel,
                       style: TextStyle(
                         fontFamily: 'PlusJakartaSans',
-                        fontSize: 12,
+                        fontSize: 13.5,
                         fontWeight: FontWeight.w800,
                         color: widget.isCaptured
                             ? const Color(0xFF166534)

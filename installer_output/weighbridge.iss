@@ -2,10 +2,10 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 ; Non-commercial use only.
 
-#define MyAppName "Viyan Weigh Bridge"
-#define MyAppVersion "1.0.2"
-#define MyAppPublisher "Viyaninfo"
-#define MyAppURL "https://www.Viyaninfo.com/"
+#define MyAppName "Viyan Weighbridge"
+#define MyAppVersion "1.0.3"
+#define MyAppPublisher "Viyan Info"
+#define MyAppURL "https://www.viyaninfo.com/"
 #define MyAppExeName "weighbridge.exe"
 #define DoubleAmp(Value) StringChange(Value, "&", "&&")
 #define EscapeConstArgument(Value) StringChange(StringChange(StringChange(Value, "%", "%25"), ",", "%2c"), "}", "%7d")
@@ -13,7 +13,7 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{7E07298D-D690-4B3D-8B2F-04CB195D3B27}
+AppId={{135C3F3C-0909-487A-8926-D5C73D51E1FA}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={cm:NameAndVersion,{#EscapeConstArgument(MyAppName)},{#EscapeConstArgument(MyAppVersion)}}
@@ -34,7 +34,7 @@ DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only).
 ;PrivilegesRequired=lowest
 OutputDir=G:\Flutter\Weigh-Bridge\installer_output
-OutputBaseFilename=Viyan Weighbridge
+OutputBaseFilename=Viyan Weigh Bridge
 SolidCompression=yes
 WizardStyle=modern dynamic
 
@@ -49,7 +49,6 @@ Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\{#MyAppExeName
 Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\dartjni.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\flutter_libserialport_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\flutter_windows.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\native_assets.json"; DestDir: "{app}"; Flags: ignoreversion
 Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\pdfium.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\printing_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\serialport.dll"; DestDir: "{app}"; Flags: ignoreversion
@@ -57,6 +56,7 @@ Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\sqlite3.dll"; 
 Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\sqlite3_flutter_libs_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\url_launcher_windows_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\weighbridge.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\data\*"; DestDir: "{app}\data"; Flags: ignoreversion recursesubdirs createallsubdirs
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files.
 

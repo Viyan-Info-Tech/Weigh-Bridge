@@ -56,7 +56,7 @@ class _TypeOption extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
-          height: 38,
+          height: 46,
           decoration: BoxDecoration(
             color: isSelected
                 ? const Color(0xFFEFF6FF)
@@ -69,13 +69,13 @@ class _TypeOption extends StatelessWidget {
               width: isSelected ? 1.5 : 1.0,
             ),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 15,
-                height: 15,
+                width: 18,
+                height: 18,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
@@ -88,8 +88,8 @@ class _TypeOption extends StatelessWidget {
                 child: isSelected
                     ? Center(
                         child: Container(
-                          width: 7,
-                          height: 7,
+                          width: 8.5,
+                          height: 8.5,
                           decoration: const BoxDecoration(
                             shape: BoxShape.circle,
                             color: Color(0xFF0D53FC),
@@ -103,7 +103,7 @@ class _TypeOption extends StatelessWidget {
                 label,
                 style: TextStyle(
                   fontFamily: 'PlusJakartaSans',
-                  fontSize: 12.5,
+                  fontSize: 14.5,
                   fontWeight: isSelected
                       ? FontWeight.w800
                       : FontWeight.w600,

@@ -239,7 +239,7 @@ class BillPageState extends State<BillPage> {
   void focusTareWeightInput() => _focusTareWeightInput();
 
   void _captureAutoTare(BillState state) {
-    if (!state.liveScaleWeightKg.isFinite || state.liveScaleWeightKg <= 0) {
+    if (!state.liveScaleWeightKg.isFinite || state.liveScaleWeightKg == 0) {
       _showKeyboardMessage('No valid live scale weight is available.');
       return;
     }

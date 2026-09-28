@@ -291,8 +291,8 @@ class BillBloc extends Bloc<BillEvent, BillState> {
   }
 
   void _onCaptureLiveWeight(CaptureLiveWeight event, Emitter<BillState> emit) {
-    final liveKg = state.liveScaleWeightKg;
-    if (!liveKg.isFinite || liveKg <= 0) {
+    final rawLiveKg = state.liveScaleWeightKg;
+    if (!rawLiveKg.isFinite || rawLiveKg == 0) {
       emit(
         state.copyWith(
           status: BillScreenStatus.error,
@@ -301,6 +301,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       );
       return;
     }
+    final liveKg = rawLiveKg.abs();
     if (!state.isScaleStable || state.isScaleMotion || state.isScaleOverload) {
       emit(
         state.copyWith(

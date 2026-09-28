@@ -15,7 +15,7 @@ class BillFormChargesStepper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 28,
+      width: 32,
       decoration: const BoxDecoration(
         border: Border(left: BorderSide(color: Color(0xFFE2E8F0))),
       ),
@@ -28,7 +28,7 @@ class BillFormChargesStepper extends StatelessWidget {
               child: const Center(
                 child: Icon(
                   Icons.keyboard_arrow_up_rounded,
-                  size: 16,
+                  size: 18,
                   color: Color(0xFF475569),
                 ),
               ),
@@ -41,7 +41,7 @@ class BillFormChargesStepper extends StatelessWidget {
               child: const Center(
                 child: Icon(
                   Icons.keyboard_arrow_down_rounded,
-                  size: 16,
+                  size: 18,
                   color: Color(0xFF475569),
                 ),
               ),
