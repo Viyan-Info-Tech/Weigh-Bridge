@@ -42,7 +42,32 @@ class WeighmentReportItem extends Equatable {
   /// Business Logic for Gross Weight:
   /// If firstWeightType == GROSS -> firstWeight (if > 0)
   /// If firstWeightType == TARE -> secondWeight (if available > 0, else null)
-  double? get grossWeightKg {
+  double? get grossWeightKg =>
+      deriveGrossWeight(firstWeightKg, firstWeightType, secondWeightKg);
+
+  /// Business Logic for Tare Weight:
+  /// If firstWeightType == TARE -> firstWeight (if > 0)
+  /// If firstWeightType == GROSS -> secondWeight (if available > 0, else null)
+  double? get tareWeightKg =>
+      deriveTareWeight(firstWeightKg, firstWeightType, secondWeightKg);
+
+  /// Net Weight is only calculated when both Gross and Tare weights exist:
+  /// netWeight = grossWeight - tareWeight
+  double? get netWeightKg => deriveNetWeight(grossWeightKg, tareWeightKg);
+
+  /// A weighment is completed once both weights have been captured.
+  bool get isCompleted =>
+      deriveIsCompleted(firstWeightKg, secondWeightKg);
+
+  /// Derives the captured gross weight from the raw stored columns.
+  ///
+  /// Exposed as a pure function so aggregate reporting can reuse the exact same
+  /// rule instead of restating it in SQL or duplicating it in Dart.
+  static double? deriveGrossWeight(
+    double firstWeightKg,
+    String firstWeightType,
+    double? secondWeightKg,
+  ) {
     final type = firstWeightType.toUpperCase();
     if (type == 'GROSS') {
       return firstWeightKg > 0 ? firstWeightKg : null;
@@ -54,10 +79,12 @@ class WeighmentReportItem extends Equatable {
     return firstWeightKg > 0 ? firstWeightKg : null;
   }
 
-  /// Business Logic for Tare Weight:
-  /// If firstWeightType == TARE -> firstWeight (if > 0)
-  /// If firstWeightType == GROSS -> secondWeight (if available > 0, else null)
-  double? get tareWeightKg {
+  /// Derives the captured tare weight from the raw stored columns.
+  static double? deriveTareWeight(
+    double firstWeightKg,
+    String firstWeightType,
+    double? secondWeightKg,
+  ) {
     final type = firstWeightType.toUpperCase();
     if (type == 'TARE') {
       return firstWeightKg > 0 ? firstWeightKg : null;
@@ -71,19 +98,16 @@ class WeighmentReportItem extends Equatable {
         : null;
   }
 
-  /// Net Weight is only calculated when both Gross and Tare weights exist:
-  /// netWeight = grossWeight - tareWeight
-  double? get netWeightKg {
-    final gross = grossWeightKg;
-    final tare = tareWeightKg;
+  /// Derives the net weight, which only exists once both weights are captured.
+  static double? deriveNetWeight(double? gross, double? tare) {
     if (gross != null && tare != null && gross > 0 && tare > 0) {
       return (gross - tare).abs();
     }
     return null;
   }
 
-  /// A weighment is completed once both weights have been captured.
-  bool get isCompleted =>
+  /// A weighment is complete once both weights have been captured.
+  static bool deriveIsCompleted(double firstWeightKg, double? secondWeightKg) =>
       firstWeightKg > 0 && secondWeightKg != null && secondWeightKg! > 0;
 
   @override

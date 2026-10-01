@@ -174,34 +174,37 @@ void main() {
       );
     }
 
-    test('peekNextBillNumber honours prefix, digits and starting number', () async {
-      expect(
-        await db.billDao.peekNextBillNumber(
-          prefix: 'WB',
-          digits: 5,
-          startingNumber: 1,
-        ),
-        'WB-00001',
-      );
-      await insert('WB-00001');
-      expect(
-        await db.billDao.peekNextBillNumber(
-          prefix: 'WB',
-          digits: 5,
-          startingNumber: 1,
-        ),
-        'WB-00002',
-      );
-      // A different prefix has its own sequence.
-      expect(
-        await db.billDao.peekNextBillNumber(
-          prefix: 'INV',
-          digits: 4,
-          startingNumber: 500,
-        ),
-        'INV-0500',
-      );
-    });
+    test(
+      'peekNextBillNumber honours prefix, digits and starting number',
+      () async {
+        expect(
+          await db.billDao.peekNextBillNumber(
+            prefix: 'WB',
+            digits: 5,
+            startingNumber: 1,
+          ),
+          'WB-00001',
+        );
+        await insert('WB-00001');
+        expect(
+          await db.billDao.peekNextBillNumber(
+            prefix: 'WB',
+            digits: 5,
+            startingNumber: 1,
+          ),
+          'WB-00002',
+        );
+        // A different prefix has its own sequence.
+        expect(
+          await db.billDao.peekNextBillNumber(
+            prefix: 'INV',
+            digits: 4,
+            startingNumber: 500,
+          ),
+          'INV-0500',
+        );
+      },
+    );
 
     test(
       'peekNextBillNumber rejects an exhausted or invalid sequence',
@@ -216,10 +219,7 @@ void main() {
           throwsStateError,
         );
         expect(
-          () => db.billDao.peekNextBillNumber(
-            prefix: 'wb',
-            digits: 5,
-          ),
+          () => db.billDao.peekNextBillNumber(prefix: 'wb', digits: 5),
           throwsArgumentError,
         );
       },

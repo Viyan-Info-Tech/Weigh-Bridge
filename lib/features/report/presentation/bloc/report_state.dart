@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../material/domain/entities/material_item.dart';
 import '../../../customer/domain/entities/customer.dart';
+import '../../../material/domain/entities/material_item.dart';
 import '../../domain/entities/report_filter.dart';
 import '../../domain/entities/report_summary.dart';
 import '../../domain/entities/weighment_report_item.dart';
@@ -11,6 +11,9 @@ enum ReportStatus { initial, loading, loaded, error }
 
 class ReportState extends Equatable {
   final ReportStatus status;
+
+  /// The records currently loaded, i.e. everything fetched so far. With paging
+  /// this grows by one page at a time rather than holding the whole table.
   final List<WeighmentReportItem> records;
   final ReportSummary summary;
   final ReportFilter filter;
@@ -20,6 +23,11 @@ class ReportState extends Equatable {
   final String weightUnit;
   final bool isExporting;
   final ExportReportResult? exportResult;
+
+  /// Total records matching [filter] across all pages.
+  final int totalRecords;
+  final int pageSize;
+  final bool isLoadingMore;
 
   const ReportState({
     this.status = ReportStatus.initial,
@@ -32,9 +40,15 @@ class ReportState extends Equatable {
     this.weightUnit = 'kg',
     this.isExporting = false,
     this.exportResult,
+    this.totalRecords = 0,
+    this.pageSize = ReportFilter.defaultPageSize,
+    this.isLoadingMore = false,
   });
 
   bool get isLoading => status == ReportStatus.loading;
+
+  /// Whether another page exists beyond the ones already loaded.
+  bool get hasMoreRecords => records.length < totalRecords;
 
   ReportState copyWith({
     ReportStatus? status,
@@ -49,6 +63,9 @@ class ReportState extends Equatable {
     bool? isExporting,
     ExportReportResult? exportResult,
     bool clearExportResult = false,
+    int? totalRecords,
+    int? pageSize,
+    bool? isLoadingMore,
   }) {
     return ReportState(
       status: status ?? this.status,
@@ -63,6 +80,9 @@ class ReportState extends Equatable {
       exportResult: clearExportResult
           ? null
           : (exportResult ?? this.exportResult),
+      totalRecords: totalRecords ?? this.totalRecords,
+      pageSize: pageSize ?? this.pageSize,
+      isLoadingMore: isLoadingMore ?? this.isLoadingMore,
     );
   }
 
@@ -78,5 +98,8 @@ class ReportState extends Equatable {
     weightUnit,
     isExporting,
     exportResult,
+    totalRecords,
+    pageSize,
+    isLoadingMore,
   ];
 }

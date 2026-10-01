@@ -54,10 +54,17 @@ class _FakeAutoTareRepository implements AutoTareRepository {
   Future<AutoTareEntry> saveAutoTare({
     required DateTime date,
     required double tareKg,
+    DateTime? savedAt,
   }) async {
     if (failWrites) throw Exception('disk full');
     _byDay[_day(date)] = tareKg;
-    return AutoTareEntry(tareDate: _day(date), tareKg: tareKg);
+    final now = savedAt ?? DateTime.now();
+    return AutoTareEntry(
+      tareDate: _day(date),
+      tareKg: tareKg,
+      createdAt: now,
+      updatedAt: now,
+    );
   }
 
   @override
@@ -873,31 +880,30 @@ void main() {
     expect(find.text('WB-00001'), findsWidgets);
   });
 
-  testWidgets(
-    'opens weighment slip dialog when clicking print icon in drawer',
-    (tester) async {
-      tester.view.physicalSize = const Size(1400, 900);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
+  testWidgets('opens weighment slip dialog when clicking print icon in drawer', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
 
-      await pumpBillPage(tester);
+    await pumpBillPage(tester);
 
-      // Open recent bills drawer
-      tester.state<ScaffoldState>(find.byType(Scaffold)).openEndDrawer();
-      await tester.pumpAndSettle();
+    // Open recent bills drawer
+    tester.state<ScaffoldState>(find.byType(Scaffold)).openEndDrawer();
+    await tester.pumpAndSettle();
 
-      // Tap print slip icon on recent bill card
-      await tester.tap(find.byKey(const Key('print_slip_button_WB-00001')));
-      await tester.pumpAndSettle();
+    // Tap print slip icon on recent bill card
+    await tester.tap(find.byKey(const Key('print_slip_button_WB-00001')));
+    await tester.pumpAndSettle();
 
-      // Verify dialog opened with bill details. The business name appears in the
-      // receipt header and again above the authorised signature, so match both.
-      expect(find.text('VIYAN WEIGHBRIDGE'), findsWidgets);
-      expect(find.text('WB-00001'), findsWidgets);
-      expect(find.text('Print Ticket'), findsOneWidget);
-    },
-  );
+    // Verify dialog opened with bill details. The business name appears in the
+    // receipt header and again above the authorised signature, so match both.
+    expect(find.text('VIYAN WEIGHBRIDGE'), findsWidgets);
+    expect(find.text('WB-00001'), findsWidgets);
+    expect(find.text('Print Ticket'), findsOneWidget);
+  });
 }

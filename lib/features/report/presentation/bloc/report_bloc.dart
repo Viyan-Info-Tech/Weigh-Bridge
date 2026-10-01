@@ -39,6 +39,7 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     on<ApplyReportFilters>(_onApplyReportFilters);
     on<ResetReportFilters>(_onResetReportFilters);
     on<RefreshReport>(_onRefreshReport);
+    on<LoadNextReportPage>(_onLoadNextPage);
     on<ExportReportCsv>(_onExportReportCsv);
     on<ClearExportResult>(_onClearExportResult);
   }
@@ -52,8 +53,16 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
       final customers = await _customerRepository.getAllCustomers();
       final materials = await _materialRepository.getAllMaterials();
 
-      final records = await _reportRepository.getReportRecords(state.filter);
-      final summary = _reportRepository.calculateSummary(records);
+      final records = await _reportRepository.getReportRecords(
+        state.filter,
+        limit: state.pageSize,
+      );
+      final totalRecords = await _reportRepository.countReportRecords(
+        state.filter,
+      );
+      final summary = await _reportRepository.summarizeReportRecords(
+        state.filter,
+      );
       final settings = await _settingsRepository?.getSettings();
 
       emit(
@@ -62,6 +71,7 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
           customers: customers,
           materials: materials,
           records: records,
+          totalRecords: totalRecords,
           summary: summary,
           weightUnit: _normalizeUnit(settings?.weightUnit ?? state.weightUnit),
         ),
@@ -200,13 +210,20 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
   ) async {
     emit(state.copyWith(status: ReportStatus.loading, clearError: true));
     try {
-      final records = await _reportRepository.getReportRecords(filter);
-      final summary = _reportRepository.calculateSummary(records);
+      // Only the first page is fetched here. A filter change replaces the
+      // result set, so the record count and totals are recomputed alongside it.
+      final records = await _reportRepository.getReportRecords(
+        filter,
+        limit: state.pageSize,
+      );
+      final totalRecords = await _reportRepository.countReportRecords(filter);
+      final summary = await _reportRepository.summarizeReportRecords(filter);
       final settings = await _settingsRepository?.getSettings();
       emit(
         state.copyWith(
           status: ReportStatus.loaded,
           records: records,
+          totalRecords: totalRecords,
           summary: summary,
           weightUnit: _normalizeUnit(settings?.weightUnit ?? state.weightUnit),
         ),
@@ -216,6 +233,39 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
         state.copyWith(
           status: ReportStatus.error,
           errorMessage: 'Failed to load report records: $e',
+        ),
+      );
+    }
+  }
+
+  /// Appends the next page to what is already on screen.
+  ///
+  /// The count and totals are untouched because they already describe the whole
+  /// filtered result, not just the rows loaded so far.
+  Future<void> _onLoadNextPage(
+    LoadNextReportPage event,
+    Emitter<ReportState> emit,
+  ) async {
+    if (state.isLoadingMore || !state.hasMoreRecords) return;
+
+    emit(state.copyWith(isLoadingMore: true));
+    try {
+      final nextPage = await _reportRepository.getReportRecords(
+        state.filter,
+        limit: state.pageSize,
+        offset: state.records.length,
+      );
+      emit(
+        state.copyWith(
+          records: [...state.records, ...nextPage],
+          isLoadingMore: false,
+        ),
+      );
+    } catch (e) {
+      emit(
+        state.copyWith(
+          isLoadingMore: false,
+          errorMessage: 'Failed to load more records: $e',
         ),
       );
     }

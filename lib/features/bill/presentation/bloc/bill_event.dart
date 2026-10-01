@@ -268,12 +268,13 @@ class LoadAutoTare extends BillEvent {
 class SaveAutoTare extends BillEvent {
   final double tareKg;
   final DateTime? date;
+  final DateTime? savedAt;
   final Completer<void>? completer;
 
-  const SaveAutoTare(this.tareKg, {this.date, this.completer});
+  const SaveAutoTare(this.tareKg, {this.date, this.savedAt, this.completer});
 
   @override
-  List<Object?> get props => [tareKg, date];
+  List<Object?> get props => [tareKg, date, savedAt];
 }
 
 class DeleteAutoTare extends BillEvent {

@@ -157,6 +157,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
           weightUnit: unit,
           autoTareKg: autoTare?.tareKg ?? 0,
           autoTareDate: autoTare?.tareDate,
+          autoTareSavedAt: autoTare?.savedAt,
           clearAutoTare: autoTare == null,
         ),
       );
@@ -605,7 +606,9 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
           editingFirstWeightType: state.editingFirstWeightType ?? 'GROSS',
           tareWeightKg: shouldApplyAutoTare ? autoTareKg : null,
           tareWeightText: shouldApplyAutoTare ? autoTareText : null,
-          tareCapturedAt: shouldApplyAutoTare ? now : null,
+          tareCapturedAt: shouldApplyAutoTare
+              ? (state.autoTareSavedAt ?? state.autoTareDate ?? now)
+              : null,
           status: BillScreenStatus.loaded,
           clearError: true,
         ),

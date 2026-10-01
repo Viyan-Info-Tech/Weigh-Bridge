@@ -62,6 +62,7 @@ class BillState extends Equatable {
   /// "Not Set"; it is never inherited from a previous day.
   final double autoTareKg;
   final DateTime? autoTareDate;
+  final DateTime? autoTareSavedAt;
 
   final Weighment? printReceiptBill;
   final Customer? printReceiptCustomer;
@@ -106,6 +107,7 @@ class BillState extends Equatable {
     this.tareCapturedAt,
     this.autoTareKg = 0,
     this.autoTareDate,
+    this.autoTareSavedAt,
     this.printReceiptBill,
     this.printReceiptCustomer,
     this.printReceiptMaterialName,
@@ -187,6 +189,7 @@ class BillState extends Equatable {
     bool clearTareCapturedAt = false,
     double? autoTareKg,
     DateTime? autoTareDate,
+    DateTime? autoTareSavedAt,
     bool clearAutoTare = false,
     Weighment? printReceiptBill,
     Customer? printReceiptCustomer,
@@ -253,6 +256,8 @@ class BillState extends Equatable {
           : (tareCapturedAt ?? this.tareCapturedAt),
       autoTareKg: clearAutoTare ? 0 : (autoTareKg ?? this.autoTareKg),
       autoTareDate: clearAutoTare ? null : (autoTareDate ?? this.autoTareDate),
+      autoTareSavedAt:
+          clearAutoTare ? null : (autoTareSavedAt ?? this.autoTareSavedAt),
       printReceiptBill: clearPrintReceipt
           ? null
           : (printReceiptBill ?? this.printReceiptBill),
@@ -307,6 +312,7 @@ class BillState extends Equatable {
     tareCapturedAt,
     autoTareKg,
     autoTareDate,
+    autoTareSavedAt,
     printReceiptBill,
     printReceiptCustomer,
     printReceiptMaterialName,

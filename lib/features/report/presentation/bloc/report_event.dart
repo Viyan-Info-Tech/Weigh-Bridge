@@ -89,6 +89,11 @@ class RefreshReport extends ReportEvent {
   const RefreshReport();
 }
 
+/// Appends the next page of records to the already loaded ones.
+class LoadNextReportPage extends ReportEvent {
+  const LoadNextReportPage();
+}
+
 class ExportReportCsv extends ReportEvent {
   const ExportReportCsv();
 }

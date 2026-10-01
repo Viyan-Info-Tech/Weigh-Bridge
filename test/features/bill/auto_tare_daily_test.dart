@@ -42,9 +42,16 @@ class FakeAutoTareRepository implements AutoTareRepository {
   Future<AutoTareEntry> saveAutoTare({
     required DateTime date,
     required double tareKg,
+    DateTime? savedAt,
   }) async {
     _byDay[day(date)] = tareKg;
-    return AutoTareEntry(tareDate: day(date), tareKg: tareKg);
+    final now = savedAt ?? DateTime.now();
+    return AutoTareEntry(
+      tareDate: day(date),
+      tareKg: tareKg,
+      createdAt: now,
+      updatedAt: now,
+    );
   }
 
   @override
@@ -62,6 +69,7 @@ class _ThrowingAutoTareRepository implements AutoTareRepository {
   Future<AutoTareEntry> saveAutoTare({
     required DateTime date,
     required double tareKg,
+    DateTime? savedAt,
   }) async {
     throw Exception('disk full');
   }

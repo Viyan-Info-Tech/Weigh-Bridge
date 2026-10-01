@@ -13,6 +13,12 @@ enum DateRangePreset {
 }
 
 class ReportFilter extends Equatable {
+  /// How many records the report table requests per page.
+  ///
+  /// Bounds how much data crosses from SQLite into Dart, so opening a report
+  /// over a large table costs the same as opening it over a small one.
+  static const int defaultPageSize = 200;
+
   final DateRangePreset datePreset;
   final DateTime? customStartDate;
   final DateTime? customEndDate;

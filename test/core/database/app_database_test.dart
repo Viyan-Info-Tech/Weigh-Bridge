@@ -3,15 +3,16 @@ import 'dart:io';
 import 'package:drift/drift.dart' hide isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:path/path.dart' as p;
 import 'package:weighbridge/core/database/app_database.dart';
 
 import '../../support/test_database.dart';
 
 void main() {
-  test('schema version is 23', () {
+  test('schema version is 24', () {
     final db = createInMemoryDatabase();
     addTearDown(db.close);
-    expect(db.schemaVersion, 23);
+    expect(db.schemaVersion, 24);
   });
 
   test('onCreate creates all application tables', () async {
@@ -54,10 +55,106 @@ void main() {
     });
   });
 
+  test('onCreate creates the weighments report query indexes', () async {
+    await withDatabase((db) async {
+      final rows = await db
+          .customSelect(
+            "SELECT name FROM sqlite_master WHERE type='index' "
+            "AND tbl_name='weighments'",
+          )
+          .get();
+      final names = rows.map((r) => r.read<String>('name')).toSet();
+      expect(
+        names,
+        containsAll(<String>[
+          'idx_weighments_created_at',
+          'idx_weighments_customer_created',
+          'idx_weighments_material_created',
+        ]),
+      );
+    });
+  });
+
+  test('upgrading from v23 adds the weighments report query indexes', () async {
+    // A file-backed database is required: the migration only replays on a
+    // fresh connection, and an already-open in-memory executor would be
+    // reused instead of reopened.
+    final dir = await Directory.systemTemp.createTemp('weighbridge_idx');
+    final file = File(p.join(dir.path, 'v23.sqlite'));
+
+    final first = AppDatabase.forTesting(NativeDatabase(file));
+    await first.customSelect('SELECT 1').get();
+
+    // Rewind to look like a v23 database, which had no report indexes.
+    await first.customStatement('DROP INDEX IF EXISTS idx_weighments_created_at');
+    await first.customStatement(
+      'DROP INDEX IF EXISTS idx_weighments_customer_created',
+    );
+    await first.customStatement(
+      'DROP INDEX IF EXISTS idx_weighments_material_created',
+    );
+    await first.customStatement('PRAGMA user_version = 23');
+    await first.close();
+
+    final migrated = AppDatabase.forTesting(NativeDatabase(file));
+    addTearDown(() async {
+      await migrated.close();
+      await dir.delete(recursive: true);
+    });
+    await migrated.customSelect('SELECT 1').get();
+
+    final rows = await migrated
+        .customSelect(
+          "SELECT name FROM sqlite_master WHERE type='index' "
+          "AND tbl_name='weighments'",
+        )
+        .get();
+    final names = rows.map((r) => r.read<String>('name')).toSet();
+    expect(
+      names,
+      containsAll(<String>[
+        'idx_weighments_created_at',
+        'idx_weighments_customer_created',
+        'idx_weighments_material_created',
+      ]),
+    );
+  });
+
+  test('weighments date range query uses the created_at index', () async {
+    await withDatabase((db) async {
+      final rows = await db
+          .customSelect(
+            'EXPLAIN QUERY PLAN SELECT id FROM weighments '
+            'WHERE created_at >= 1 AND created_at <= 2 '
+            'ORDER BY created_at DESC',
+          )
+          .get();
+      final detail = rows.map((r) => r.read<String>('detail')).join(' ');
+      expect(detail, contains('idx_weighments_created_at'));
+      // The index also supplies the ordering, so no temp b-tree sort.
+      expect(detail, isNot(contains('TEMP B-TREE')));
+    });
+  });
+
+  test('weighments customer-filtered query avoids a temp b-tree sort', () async {
+    await withDatabase((db) async {
+      final rows = await db
+          .customSelect(
+            'EXPLAIN QUERY PLAN SELECT id FROM weighments '
+            'WHERE customer_id = 1 AND created_at >= 1 AND created_at <= 2 '
+            'ORDER BY created_at DESC',
+          )
+          .get();
+      final detail = rows.map((r) => r.read<String>('detail')).join(' ');
+      expect(detail, contains('idx_weighments_customer_created'));
+      expect(detail, isNot(contains('TEMP B-TREE')));
+    });
+  });
+
   test('database user_version is set to the schema version', () async {
     await withDatabase((db) async {
       final rows = await db.customSelect('PRAGMA user_version').get();
-      expect(rows.single.data['user_version'], 18);
+      expect(rows.single.data['user_version'], db.schemaVersion);
     });
   });
 
@@ -350,7 +447,7 @@ CREATE TABLE app_settings (
       expect(materials.single.code, '1'); // backfilled from the row id
 
       final version = await db.customSelect('PRAGMA user_version').get();
-      expect(version.single.data['user_version'], 18);
+      expect(version.single.data['user_version'], db.schemaVersion);
     });
   });
 }

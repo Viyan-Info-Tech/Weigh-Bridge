@@ -14,6 +14,9 @@ class AutoTareEntry extends Equatable {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
+  /// The timestamp when this Auto Tare was saved or last updated.
+  DateTime get savedAt => updatedAt ?? createdAt ?? tareDate;
+
   @override
   List<Object?> get props => [tareDate, tareKg, createdAt, updatedAt];
 }

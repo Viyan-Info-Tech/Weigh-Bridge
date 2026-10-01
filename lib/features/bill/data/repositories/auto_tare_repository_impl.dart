@@ -15,8 +15,13 @@ class AutoTareRepositoryImpl implements AutoTareRepository {
   Future<AutoTareEntry> saveAutoTare({
     required DateTime date,
     required double tareKg,
+    DateTime? savedAt,
   }) {
-    return localDataSource.saveAutoTare(date: date, tareKg: tareKg);
+    return localDataSource.saveAutoTare(
+      date: date,
+      tareKg: tareKg,
+      savedAt: savedAt,
+    );
   }
 
   @override

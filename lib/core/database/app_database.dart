@@ -52,7 +52,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 23;
+  int get schemaVersion => 24;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -65,6 +65,7 @@ class AppDatabase extends _$AppDatabase {
       await customStatement(
         'CREATE UNIQUE INDEX customers_name_unique ON customers (lower(trim(name)))',
       );
+      await _createWeighmentQueryIndexes();
       await _seedWeighmentRates();
     },
     onUpgrade: (m, from, to) async {
@@ -685,8 +686,49 @@ class AppDatabase extends _$AppDatabase {
         // Date-based common (platform) tare captured each morning with F3.
         await m.createTable(autoTareSettings);
       }
+
+      if (from < 24) {
+        // Report and bill-list queries scan weighments by date range and sort
+        // by created_at, so the table needed indexes outside its unique
+        // constraints. This runs last because the earlier rebuild steps
+        // (from < 14/15/16) drop and recreate weighments, which discards any
+        // index created before them.
+        await _createWeighmentQueryIndexes();
+      }
     },
   );
+
+  /// Creates the weighments indexes used by the bill list and report queries.
+  ///
+  /// These are declared as raw statements rather than table annotations
+  /// because the composite column order depends on how the filters combine,
+  /// and because every upgrade step below 24 rebuilds the weighments table,
+  /// which silently drops drift-generated indexes.
+  ///
+  /// `created_at` is the primary report workload, so it leads on its own and
+  /// trails the customer and material composites; that ordering lets SQLite
+  /// satisfy both the range filter and the `ORDER BY created_at DESC` from the
+  /// index without a temp b-tree sort.
+  ///
+  /// No index is added for `vehicle_number` or `payment_mode`: the report
+  /// filters them with `LIKE '%..%'` and `lower(..) = ..`, neither of which
+  /// SQLite can satisfy from a b-tree index.
+  Future<void> _createWeighmentQueryIndexes() async {
+    await batch((batch) {
+      batch.customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_weighments_created_at '
+        'ON weighments(created_at DESC)',
+      );
+      batch.customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_weighments_customer_created '
+        'ON weighments(customer_id, created_at DESC)',
+      );
+      batch.customStatement(
+        'CREATE INDEX IF NOT EXISTS idx_weighments_material_created '
+        'ON weighments(material_id, created_at DESC)',
+      );
+    });
+  }
 
   Future<void> _createAdminCredentialsTable() => customStatement('''
     CREATE TABLE IF NOT EXISTS admin_credentials (

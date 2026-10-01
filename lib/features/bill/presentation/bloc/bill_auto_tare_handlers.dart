@@ -42,6 +42,7 @@ mixin BillAutoTareHandlers on Bloc<BillEvent, BillState> {
             : state.copyWith(
                 autoTareKg: entry.tareKg,
                 autoTareDate: entry.tareDate,
+                autoTareSavedAt: entry.savedAt,
                 clearError: true,
               ),
       );
@@ -64,17 +65,20 @@ mixin BillAutoTareHandlers on Bloc<BillEvent, BillState> {
     }
 
     final day = autoTareDayOnly(event.date ?? DateTime.now());
+    final saveTime = event.savedAt ?? DateTime.now();
     Object? failure;
     try {
       final entry = await SaveAutoTareForDate(repository)(
         date: day,
         tareKg: event.tareKg,
+        savedAt: saveTime,
       );
       if (emit.isDone) return;
       emit(
         state.copyWith(
           autoTareKg: entry.tareKg,
           autoTareDate: entry.tareDate,
+          autoTareSavedAt: entry.savedAt,
           clearError: true,
         ),
       );
@@ -131,11 +135,12 @@ mixin BillAutoTareHandlers on Bloc<BillEvent, BillState> {
   }
 
   /// F3 / AUTO TARE: copies the day's configured common tare into the bill
-  /// currently being edited and stamps the tare capture time.
+  /// currently being edited and stamps the tare with the Auto Tare's configured
+  /// date and time.
   ///
   /// The configured auto tare is never modified, so bills saved earlier keep
-  /// their own tare. The capture time is the moment the operator pressed F3,
-  /// which is unrelated to the date the auto tare itself was configured on.
+  /// their own tare and timestamp. The capture timestamp is the exact moment
+  /// the Auto Tare was saved or last updated.
   void handleApplyAutoTareToBill(
     ApplyAutoTareToBill event,
     Emitter<BillState> emit,
@@ -152,13 +157,15 @@ mixin BillAutoTareHandlers on Bloc<BillEvent, BillState> {
 
     final tareKg = state.autoTareKg;
     final isTon = state.weightUnit.toLowerCase() == 'ton';
+    final tareTimestamp =
+        state.autoTareSavedAt ?? state.autoTareDate ?? DateTime.now();
     emit(
       state.copyWith(
         tareWeightKg: tareKg,
         tareWeightText: isTon
             ? (tareKg / 1000).toStringAsFixed(3)
             : tareKg.toStringAsFixed(0),
-        tareCapturedAt: DateTime.now(),
+        tareCapturedAt: tareTimestamp,
         status: BillScreenStatus.loaded,
         clearError: true,
       ),

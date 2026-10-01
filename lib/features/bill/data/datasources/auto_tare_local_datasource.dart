@@ -20,13 +20,21 @@ class AutoTareLocalDataSource {
   Future<AutoTareEntry> saveAutoTare({
     required DateTime date,
     required double tareKg,
+    DateTime? savedAt,
   }) async {
+    final saveTime = savedAt ?? DateTime.now();
     await _database.autoTareSettingsDao.upsertForDate(
       date: date,
       tareKg: tareKg,
+      savedAt: saveTime,
     );
     return (await getAutoTare(date)) ??
-        AutoTareEntry(tareDate: date, tareKg: tareKg);
+        AutoTareEntry(
+          tareDate: date,
+          tareKg: tareKg,
+          createdAt: saveTime,
+          updatedAt: saveTime,
+        );
   }
 
   Future<void> deleteAutoTare(DateTime date) =>

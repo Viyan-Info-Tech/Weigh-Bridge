@@ -7,7 +7,15 @@ class SaveAutoTareForDate {
 
   SaveAutoTareForDate(this.repository);
 
-  Future<AutoTareEntry> call({required DateTime date, required double tareKg}) {
-    return repository.saveAutoTare(date: date, tareKg: tareKg);
+  Future<AutoTareEntry> call({
+    required DateTime date,
+    required double tareKg,
+    DateTime? savedAt,
+  }) {
+    return repository.saveAutoTare(
+      date: date,
+      tareKg: tareKg,
+      savedAt: savedAt,
+    );
   }
 }

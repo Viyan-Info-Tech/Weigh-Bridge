@@ -10,42 +10,25 @@ class ReportRepositoryImpl implements ReportRepository {
   ReportRepositoryImpl(this._localDataSource);
 
   @override
-  Future<List<WeighmentReportItem>> getReportRecords(ReportFilter filter) {
-    return _localDataSource.getReportRecords(filter);
+  Future<List<WeighmentReportItem>> getReportRecords(
+    ReportFilter filter, {
+    int? limit,
+    int offset = 0,
+  }) {
+    return _localDataSource.getReportRecords(
+      filter,
+      limit: limit,
+      offset: offset,
+    );
   }
 
   @override
-  ReportSummary calculateSummary(List<WeighmentReportItem> records) {
-    double totalGross = 0;
-    double totalTare = 0;
-    double totalNet = 0;
-    double totalRev = 0;
-    int completed = 0;
+  Future<int> countReportRecords(ReportFilter filter) {
+    return _localDataSource.countReportRecords(filter);
+  }
 
-    for (final item in records) {
-      if (item.grossWeightKg != null) {
-        totalGross += item.grossWeightKg!;
-      }
-      if (item.tareWeightKg != null) {
-        totalTare += item.tareWeightKg!;
-      }
-      if (item.netWeightKg != null) {
-        totalNet += item.netWeightKg!;
-      }
-      totalRev += item.amount;
-
-      if (item.isCompleted) {
-        completed++;
-      }
-    }
-
-    return ReportSummary(
-      totalBills: records.length,
-      totalGrossWeightKg: totalGross,
-      totalTareWeightKg: totalTare,
-      totalNetWeightKg: totalNet,
-      totalRevenue: totalRev,
-      completedCount: completed,
-    );
+  @override
+  Future<ReportSummary> summarizeReportRecords(ReportFilter filter) {
+    return _localDataSource.summarizeReportRecords(filter);
   }
 }

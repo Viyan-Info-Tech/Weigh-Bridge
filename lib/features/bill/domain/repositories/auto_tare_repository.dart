@@ -8,6 +8,7 @@ abstract class AutoTareRepository {
   Future<AutoTareEntry> saveAutoTare({
     required DateTime date,
     required double tareKg,
+    DateTime? savedAt,
   });
 
   /// Removes the auto tare for the day containing [date].

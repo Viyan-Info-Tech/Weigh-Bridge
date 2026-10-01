@@ -53,7 +53,9 @@ class BillFormWeightRow extends StatelessWidget {
     final dateStr = date != null
         ? DateFormat('dd/MM/yyyy').format(date!)
         : '--/--/----';
-    final timeStr = time != null ? _formatTime(time!) : '--:-- --';
+    final timeStr = date != null
+        ? DateFormat('hh:mm:ss a').format(date!)
+        : (time != null ? _formatTime(time!) : '--:--:--');
 
     return Column(
       mainAxisSize: MainAxisSize.min,

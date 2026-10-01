@@ -17,6 +17,7 @@ class AutoTareDialog extends StatefulWidget {
   const AutoTareDialog({
     super.key,
     required this.currentAutoTareKg,
+    this.currentAutoTareSavedAt,
     required this.liveScaleWeightKg,
     required this.isScaleStable,
     required this.isScaleMotion,
@@ -30,6 +31,9 @@ class AutoTareDialog extends StatefulWidget {
   /// Stored auto tare for the day being edited; null or 0 means "Not Set".
   final double currentAutoTareKg;
 
+  /// Stored timestamp when the current auto tare was saved/updated.
+  final DateTime? currentAutoTareSavedAt;
+
   final double liveScaleWeightKg;
   final bool isScaleStable;
   final bool isScaleMotion;
@@ -37,8 +41,8 @@ class AutoTareDialog extends StatefulWidget {
   final String weightUnit;
   final DateTime? date;
 
-  /// Persists the value for the day. Receives kilograms.
-  final Future<void> Function(double tareKg) onSave;
+  /// Persists the value for the day. Receives kilograms and the exact save timestamp.
+  final Future<void> Function(double tareKg, DateTime savedAt) onSave;
 
   /// Removes the day's value.
   final Future<void> Function() onDelete;
@@ -46,12 +50,13 @@ class AutoTareDialog extends StatefulWidget {
   static Future<void> show(
     BuildContext context, {
     required double currentAutoTareKg,
+    DateTime? currentAutoTareSavedAt,
     required double liveScaleWeightKg,
     required bool isScaleStable,
     required bool isScaleMotion,
     required bool isScaleOverload,
     required String weightUnit,
-    required Future<void> Function(double tareKg) onSave,
+    required Future<void> Function(double tareKg, DateTime savedAt) onSave,
     required Future<void> Function() onDelete,
     DateTime? date,
   }) {
@@ -61,6 +66,7 @@ class AutoTareDialog extends StatefulWidget {
       barrierColor: const Color(0xFF0F172A).withValues(alpha: 0.50),
       builder: (_) => AutoTareDialog(
         currentAutoTareKg: currentAutoTareKg,
+        currentAutoTareSavedAt: currentAutoTareSavedAt,
         liveScaleWeightKg: liveScaleWeightKg,
         isScaleStable: isScaleStable,
         isScaleMotion: isScaleMotion,
@@ -82,6 +88,7 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
   final _formKey = GlobalKey<FormState>();
   bool _isBusy = false;
   String? _errorMessage;
+  late final DateTime _dialogOpenedAt;
   late DateTime _currentTime;
   Timer? _timeTimer;
 
@@ -89,6 +96,13 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
 
   bool get _hasCurrent =>
       widget.currentAutoTareKg.isFinite && widget.currentAutoTareKg > 0;
+
+  DateTime get _effectiveDateTime {
+    if (_hasCurrent) {
+      return widget.currentAutoTareSavedAt ?? widget.date ?? _dialogOpenedAt;
+    }
+    return _currentTime;
+  }
 
   bool get _canUseLiveWeight =>
       widget.liveScaleWeightKg.isFinite &&
@@ -111,14 +125,17 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
     _controller = TextEditingController(
       text: initialKg == null ? '' : _formatKg(initialKg),
     );
+    _dialogOpenedAt = DateTime.now();
     _currentTime = DateTime.now();
-    _timeTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) {
-        setState(() {
-          _currentTime = DateTime.now();
-        });
-      }
-    });
+    if (!_hasCurrent) {
+      _timeTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) {
+          setState(() {
+            _currentTime = DateTime.now();
+          });
+        }
+      });
+    }
   }
 
   @override
@@ -140,13 +157,14 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
     final tareKg = _parseToKg()!;
+    final saveTime = DateTime.now();
     setState(() {
       _isBusy = true;
       _errorMessage = null;
     });
 
     try {
-      await widget.onSave(tareKg);
+      await widget.onSave(tareKg, saveTime);
       if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
@@ -179,7 +197,6 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final day = widget.date ?? DateTime.now();
     final unitLabel = _isTon ? 'Ton' : 'Kg';
     final isReplacing =
         _hasCurrent &&
@@ -330,9 +347,14 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
                         // 1. Current Auto Tare Banner / Status Card
                         _buildCurrentTareCard(unitLabel),
 
+                        const SizedBox(height: 14),
+
+                        // 2. DATE AND FIXED/SAVED TIME (Placed UP above Tare Weight as requested!)
+                        _buildDateTimeBadge(_effectiveDateTime),
+
                         const SizedBox(height: 16),
 
-                        // 2. Tare Weight Input Row Header
+                        // 3. Tare Weight Input Row Header
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -539,12 +561,7 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
                         // 4. Live Scale Sensor Status
                         _buildLiveReadingRow(),
 
-                        const SizedBox(height: 14),
-
-                        // 5. DATE AND CURRENT TIME ROW (Requested Feature!)
-                        _buildDateTimeBadge(day),
-
-                        // 6. Replacing Tare Notice Banner
+                        // 5. Replacing Tare Notice Banner
                         if (isReplacing) ...[
                           const SizedBox(height: 12),
                           Container(
@@ -857,7 +874,7 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
                     style: TextStyle(
                       fontFamily: 'PlusJakartaSans',
                       fontSize: 11,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                       color: Color(0xFF15803D),
                     ),
                   ),
@@ -1051,8 +1068,8 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
     );
   }
 
-  /// 5. Date & LIVE CURRENT TIME Display
-  Widget _buildDateTimeBadge(DateTime day) {
+  /// Date & Time Display Badge (Fixed saved timestamp when Auto Tare exists)
+  Widget _buildDateTimeBadge(DateTime dateTime) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -1072,7 +1089,7 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              DateFormat('EEEE, d MMMM yyyy').format(day),
+              DateFormat('EEEE, d MMMM yyyy').format(dateTime),
               style: const TextStyle(
                 fontFamily: 'PlusJakartaSans',
                 fontSize: 12,
@@ -1091,7 +1108,7 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
             margin: const EdgeInsets.symmetric(horizontal: 10),
           ),
 
-          // Clock Icon + Live Ticking Current Time
+          // Clock Icon + Time
           const Icon(
             Icons.access_time_filled_rounded,
             size: 14.5,
@@ -1099,7 +1116,7 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
           ),
           const SizedBox(width: 7),
           Text(
-            DateFormat('hh:mm:ss a').format(_currentTime),
+            DateFormat('hh:mm:ss a').format(dateTime),
             style: const TextStyle(
               fontFamily: 'PlusJakartaSans',
               fontSize: 12,

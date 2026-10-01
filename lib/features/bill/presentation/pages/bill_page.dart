@@ -374,13 +374,18 @@ class BillPageState extends State<BillPage> {
       await AutoTareDialog.show(
         context,
         currentAutoTareKg: bloc.state.autoTareKg,
+        currentAutoTareSavedAt: bloc.state.autoTareSavedAt,
         liveScaleWeightKg: bloc.state.liveScaleWeightKg,
         isScaleStable: bloc.state.isScaleStable,
         isScaleMotion: bloc.state.isScaleMotion,
         isScaleOverload: bloc.state.isScaleOverload,
         weightUnit: bloc.state.weightUnit,
-        onSave: (tareKg) => _runAutoTareWrite(
-          (completer) => SaveAutoTare(tareKg, completer: completer),
+        onSave: (tareKg, savedAt) => _runAutoTareWrite(
+          (completer) => SaveAutoTare(
+            tareKg,
+            savedAt: savedAt,
+            completer: completer,
+          ),
         ),
         onDelete: () => _runAutoTareWrite(
           (completer) => DeleteAutoTare(completer: completer),
@@ -713,7 +718,9 @@ class BillPageState extends State<BillPage> {
                                   AutoTareIndicator(
                                     autoTareKg: state.autoTareKg,
                                     weightUnit: state.weightUnit,
-                                    autoTareDate: state.autoTareDate,
+                                    autoTareDate:
+                                        state.autoTareSavedAt ??
+                                        state.autoTareDate,
                                     onTap: _openAutoTareDialog,
                                   ),
                                 ],
@@ -842,7 +849,7 @@ class BillPageState extends State<BillPage> {
           child: AutoTareIndicator(
             autoTareKg: state.autoTareKg,
             weightUnit: state.weightUnit,
-            autoTareDate: state.autoTareDate,
+            autoTareDate: state.autoTareSavedAt ?? state.autoTareDate,
             onTap: _openAutoTareDialog,
           ),
         ),
