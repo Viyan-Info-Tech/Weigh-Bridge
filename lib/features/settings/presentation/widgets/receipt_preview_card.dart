@@ -122,8 +122,8 @@ class ReceiptPreviewCard extends StatelessWidget {
                         isLoadingWeighment
                             ? 'Loading recent weighment data...'
                             : (latestWeighment == null
-                                ? 'No recent weighment data available'
-                                : 'Reflects template changes in real time'),
+                                  ? 'No recent weighment data available'
+                                  : 'Reflects template changes in real time'),
                         softWrap: true,
                         style: const TextStyle(
                           fontFamily: 'PlusJakartaSans',

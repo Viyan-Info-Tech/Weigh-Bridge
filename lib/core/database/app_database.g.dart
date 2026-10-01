@@ -5466,6 +5466,353 @@ class ScaleSettingsCompanion extends UpdateCompanion<ScaleSetting> {
   }
 }
 
+class $AutoTareSettingsTable extends AutoTareSettings
+    with TableInfo<$AutoTareSettingsTable, AutoTareSetting> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $AutoTareSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _tareDateMeta = const VerificationMeta(
+    'tareDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> tareDate = GeneratedColumn<DateTime>(
+    'tare_date',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _tareKgMeta = const VerificationMeta('tareKg');
+  @override
+  late final GeneratedColumn<double> tareKg = GeneratedColumn<double>(
+    'tare_kg',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    tareDate,
+    tareKg,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'auto_tare_settings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<AutoTareSetting> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('tare_date')) {
+      context.handle(
+        _tareDateMeta,
+        tareDate.isAcceptableOrUnknown(data['tare_date']!, _tareDateMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tareDateMeta);
+    }
+    if (data.containsKey('tare_kg')) {
+      context.handle(
+        _tareKgMeta,
+        tareKg.isAcceptableOrUnknown(data['tare_kg']!, _tareKgMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tareKgMeta);
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  AutoTareSetting map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return AutoTareSetting(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      tareDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}tare_date'],
+      )!,
+      tareKg: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}tare_kg'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $AutoTareSettingsTable createAlias(String alias) {
+    return $AutoTareSettingsTable(attachedDatabase, alias);
+  }
+}
+
+class AutoTareSetting extends DataClass implements Insertable<AutoTareSetting> {
+  final int id;
+  final DateTime tareDate;
+  final double tareKg;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const AutoTareSetting({
+    required this.id,
+    required this.tareDate,
+    required this.tareKg,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['tare_date'] = Variable<DateTime>(tareDate);
+    map['tare_kg'] = Variable<double>(tareKg);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  AutoTareSettingsCompanion toCompanion(bool nullToAbsent) {
+    return AutoTareSettingsCompanion(
+      id: Value(id),
+      tareDate: Value(tareDate),
+      tareKg: Value(tareKg),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory AutoTareSetting.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return AutoTareSetting(
+      id: serializer.fromJson<int>(json['id']),
+      tareDate: serializer.fromJson<DateTime>(json['tareDate']),
+      tareKg: serializer.fromJson<double>(json['tareKg']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'tareDate': serializer.toJson<DateTime>(tareDate),
+      'tareKg': serializer.toJson<double>(tareKg),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  AutoTareSetting copyWith({
+    int? id,
+    DateTime? tareDate,
+    double? tareKg,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => AutoTareSetting(
+    id: id ?? this.id,
+    tareDate: tareDate ?? this.tareDate,
+    tareKg: tareKg ?? this.tareKg,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  AutoTareSetting copyWithCompanion(AutoTareSettingsCompanion data) {
+    return AutoTareSetting(
+      id: data.id.present ? data.id.value : this.id,
+      tareDate: data.tareDate.present ? data.tareDate.value : this.tareDate,
+      tareKg: data.tareKg.present ? data.tareKg.value : this.tareKg,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AutoTareSetting(')
+          ..write('id: $id, ')
+          ..write('tareDate: $tareDate, ')
+          ..write('tareKg: $tareKg, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, tareDate, tareKg, createdAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is AutoTareSetting &&
+          other.id == this.id &&
+          other.tareDate == this.tareDate &&
+          other.tareKg == this.tareKg &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class AutoTareSettingsCompanion extends UpdateCompanion<AutoTareSetting> {
+  final Value<int> id;
+  final Value<DateTime> tareDate;
+  final Value<double> tareKg;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  const AutoTareSettingsCompanion({
+    this.id = const Value.absent(),
+    this.tareDate = const Value.absent(),
+    this.tareKg = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  AutoTareSettingsCompanion.insert({
+    this.id = const Value.absent(),
+    required DateTime tareDate,
+    required double tareKg,
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  }) : tareDate = Value(tareDate),
+       tareKg = Value(tareKg);
+  static Insertable<AutoTareSetting> custom({
+    Expression<int>? id,
+    Expression<DateTime>? tareDate,
+    Expression<double>? tareKg,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (tareDate != null) 'tare_date': tareDate,
+      if (tareKg != null) 'tare_kg': tareKg,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  AutoTareSettingsCompanion copyWith({
+    Value<int>? id,
+    Value<DateTime>? tareDate,
+    Value<double>? tareKg,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+  }) {
+    return AutoTareSettingsCompanion(
+      id: id ?? this.id,
+      tareDate: tareDate ?? this.tareDate,
+      tareKg: tareKg ?? this.tareKg,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (tareDate.present) {
+      map['tare_date'] = Variable<DateTime>(tareDate.value);
+    }
+    if (tareKg.present) {
+      map['tare_kg'] = Variable<double>(tareKg.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('AutoTareSettingsCompanion(')
+          ..write('id: $id, ')
+          ..write('tareDate: $tareDate, ')
+          ..write('tareKg: $tareKg, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -5478,6 +5825,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $ChargeVehicleTypesTable(this);
   late final $WeighmentRatesTable weighmentRates = $WeighmentRatesTable(this);
   late final $ScaleSettingsTable scaleSettings = $ScaleSettingsTable(this);
+  late final $AutoTareSettingsTable autoTareSettings = $AutoTareSettingsTable(
+    this,
+  );
   late final UserDao userDao = UserDao(this as AppDatabase);
   late final CustomerDao customerDao = CustomerDao(this as AppDatabase);
   late final MaterialDao materialDao = MaterialDao(this as AppDatabase);
@@ -5486,6 +5836,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     this as AppDatabase,
   );
   late final ScaleSettingsDao scaleSettingsDao = ScaleSettingsDao(
+    this as AppDatabase,
+  );
+  late final AutoTareSettingsDao autoTareSettingsDao = AutoTareSettingsDao(
     this as AppDatabase,
   );
   @override
@@ -5501,6 +5854,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     chargeVehicleTypes,
     weighmentRates,
     scaleSettings,
+    autoTareSettings,
   ];
 }
 
@@ -8722,6 +9076,206 @@ typedef $$ScaleSettingsTableProcessedTableManager =
       ScaleSetting,
       PrefetchHooks Function()
     >;
+typedef $$AutoTareSettingsTableCreateCompanionBuilder =
+    AutoTareSettingsCompanion Function({
+      Value<int> id,
+      required DateTime tareDate,
+      required double tareKg,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+    });
+typedef $$AutoTareSettingsTableUpdateCompanionBuilder =
+    AutoTareSettingsCompanion Function({
+      Value<int> id,
+      Value<DateTime> tareDate,
+      Value<double> tareKg,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+    });
+
+class $$AutoTareSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $AutoTareSettingsTable> {
+  $$AutoTareSettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get tareDate => $composableBuilder(
+    column: $table.tareDate,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get tareKg => $composableBuilder(
+    column: $table.tareKg,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$AutoTareSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $AutoTareSettingsTable> {
+  $$AutoTareSettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get tareDate => $composableBuilder(
+    column: $table.tareDate,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get tareKg => $composableBuilder(
+    column: $table.tareKg,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$AutoTareSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $AutoTareSettingsTable> {
+  $$AutoTareSettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get tareDate =>
+      $composableBuilder(column: $table.tareDate, builder: (column) => column);
+
+  GeneratedColumn<double> get tareKg =>
+      $composableBuilder(column: $table.tareKg, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$AutoTareSettingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $AutoTareSettingsTable,
+          AutoTareSetting,
+          $$AutoTareSettingsTableFilterComposer,
+          $$AutoTareSettingsTableOrderingComposer,
+          $$AutoTareSettingsTableAnnotationComposer,
+          $$AutoTareSettingsTableCreateCompanionBuilder,
+          $$AutoTareSettingsTableUpdateCompanionBuilder,
+          (
+            AutoTareSetting,
+            BaseReferences<
+              _$AppDatabase,
+              $AutoTareSettingsTable,
+              AutoTareSetting
+            >,
+          ),
+          AutoTareSetting,
+          PrefetchHooks Function()
+        > {
+  $$AutoTareSettingsTableTableManager(
+    _$AppDatabase db,
+    $AutoTareSettingsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$AutoTareSettingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$AutoTareSettingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$AutoTareSettingsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<DateTime> tareDate = const Value.absent(),
+                Value<double> tareKg = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => AutoTareSettingsCompanion(
+                id: id,
+                tareDate: tareDate,
+                tareKg: tareKg,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required DateTime tareDate,
+                required double tareKg,
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => AutoTareSettingsCompanion.insert(
+                id: id,
+                tareDate: tareDate,
+                tareKg: tareKg,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$AutoTareSettingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $AutoTareSettingsTable,
+      AutoTareSetting,
+      $$AutoTareSettingsTableFilterComposer,
+      $$AutoTareSettingsTableOrderingComposer,
+      $$AutoTareSettingsTableAnnotationComposer,
+      $$AutoTareSettingsTableCreateCompanionBuilder,
+      $$AutoTareSettingsTableUpdateCompanionBuilder,
+      (
+        AutoTareSetting,
+        BaseReferences<_$AppDatabase, $AutoTareSettingsTable, AutoTareSetting>,
+      ),
+      AutoTareSetting,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -8742,4 +9296,6 @@ class $AppDatabaseManager {
       $$WeighmentRatesTableTableManager(_db, _db.weighmentRates);
   $$ScaleSettingsTableTableManager get scaleSettings =>
       $$ScaleSettingsTableTableManager(_db, _db.scaleSettings);
+  $$AutoTareSettingsTableTableManager get autoTareSettings =>
+      $$AutoTareSettingsTableTableManager(_db, _db.autoTareSettings);
 }

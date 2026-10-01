@@ -82,6 +82,9 @@ void main() {
   setUp(() {
     mockLicenseService = MockLicenseService();
     mockAuthBloc = MockAuthBloc();
+    when(
+      () => mockLicenseService.getMachineHash(),
+    ).thenAnswer((_) async => 'a' * 64);
   });
 
   group('LicenseGate routing behavior', () {
@@ -121,6 +124,7 @@ void main() {
           ),
         ),
       );
+      await tester.pump();
       await tester.pump();
 
       expect(find.byKey(const Key('weighbridge_app')), findsOneWidget);
@@ -226,8 +230,9 @@ void main() {
         () => mockLicenseService.validate(),
       ).thenAnswer((_) async => licenseStatus);
 
-      late Stream<AuthState> authStream;
-      when(() => mockAuthBloc.stream).thenAnswer((_) => authStream);
+      final authController = StreamController<AuthState>.broadcast();
+      addTearDown(authController.close);
+      when(() => mockAuthBloc.stream).thenAnswer((_) => authController.stream);
 
       await tester.pumpWidget(
         MaterialApp(
@@ -238,11 +243,13 @@ void main() {
         ),
       );
       await tester.pump();
+      await tester.pump();
 
       expect(find.byType(LicenseActivationScreen), findsOneWidget);
 
       licenseStatus = LicenseStatus.valid;
-      authStream = Stream.value(AuthState(status: AuthStatus.authenticated));
+      authController.add(AuthState(status: AuthStatus.authenticated));
+      await tester.pump();
       await tester.pump();
 
       expect(find.byKey(const Key('weighbridge_app')), findsOneWidget);

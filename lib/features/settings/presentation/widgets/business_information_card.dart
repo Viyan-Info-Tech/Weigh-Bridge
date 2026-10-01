@@ -160,8 +160,10 @@ class BusinessInformationCard extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF64748B),
                   side: const BorderSide(color: Color(0xFFCBD5E1)),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 12,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),

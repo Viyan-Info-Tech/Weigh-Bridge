@@ -1,8 +1,10 @@
 import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 
 import '../../../customer/domain/entities/customer.dart';
 import '../../../material/domain/entities/material_item.dart';
+import '../../domain/entities/weighment.dart';
 
 abstract class BillEvent extends Equatable {
   const BillEvent();
@@ -196,4 +198,90 @@ class WeightTypeSelected extends BillEvent {
 
   @override
   List<Object?> get props => [type];
+}
+
+class GrossWeightCommitted extends BillEvent {
+  final String value;
+  final DateTime? capturedAt;
+  const GrossWeightCommitted(this.value, {this.capturedAt});
+
+  @override
+  List<Object?> get props => [value, capturedAt];
+}
+
+class TareWeightCommitted extends BillEvent {
+  final String value;
+  final DateTime? capturedAt;
+  const TareWeightCommitted(this.value, {this.capturedAt});
+
+  @override
+  List<Object?> get props => [value, capturedAt];
+}
+
+class GrossCapturedAtChanged extends BillEvent {
+  final DateTime? capturedAt;
+  const GrossCapturedAtChanged(this.capturedAt);
+
+  @override
+  List<Object?> get props => [capturedAt];
+}
+
+class TareCapturedAtChanged extends BillEvent {
+  final DateTime? capturedAt;
+  const TareCapturedAtChanged(this.capturedAt);
+
+  @override
+  List<Object?> get props => [capturedAt];
+}
+
+class LoadBillForEdit extends BillEvent {
+  final Weighment bill;
+  const LoadBillForEdit(this.bill);
+
+  @override
+  List<Object?> get props => [bill];
+}
+
+class MobileNumberChanged extends BillEvent {
+  final String value;
+  const MobileNumberChanged(this.value);
+
+  @override
+  List<Object?> get props => [value];
+}
+
+/// Loads the auto tare configured for [date] (defaults to today).
+class LoadAutoTare extends BillEvent {
+  final DateTime? date;
+  const LoadAutoTare({this.date});
+
+  @override
+  List<Object?> get props => [date];
+}
+
+/// Creates or replaces the day's auto tare. Bills already saved keep their
+/// own tare value, so this only affects subsequent weighments.
+///
+/// [completer] lets the caller await the write. It is completed in all cases,
+/// including when the resulting state is identical to the current one, which
+/// emits nothing on the state stream.
+class SaveAutoTare extends BillEvent {
+  final double tareKg;
+  final DateTime? date;
+  final Completer<void>? completer;
+
+  const SaveAutoTare(this.tareKg, {this.date, this.completer});
+
+  @override
+  List<Object?> get props => [tareKg, date];
+}
+
+class DeleteAutoTare extends BillEvent {
+  final DateTime? date;
+  final Completer<void>? completer;
+
+  const DeleteAutoTare({this.date, this.completer});
+
+  @override
+  List<Object?> get props => [date];
 }

@@ -1,11 +1,8 @@
-import 'dart:io' show File, Platform, Process;
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:printing/printing.dart';
 
+import '../../../../core/printing/print_service.dart';
 import '../../../settings/presentation/bloc/settings_bloc.dart';
 import '../../../settings/presentation/bloc/settings_state.dart';
 import '../../domain/entities/report_filter.dart';
@@ -22,6 +19,7 @@ class PrintReportDialog extends StatefulWidget {
   final String materialLabel;
   final String weightUnit;
   final ScaffoldMessengerState scaffoldMessenger;
+  final PrintService printService;
 
   const PrintReportDialog({
     super.key,
@@ -33,6 +31,7 @@ class PrintReportDialog extends StatefulWidget {
     this.materialLabel = 'All Materials',
     this.weightUnit = 'kg',
     required this.scaffoldMessenger,
+    this.printService = const PrintService(),
   });
 
   static Future<void> show({
@@ -106,33 +105,11 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
         weightUnit: widget.weightUnit,
       );
 
-      bool printed = false;
-      try {
-        // Open standard OS print preview & printer selection dialog
-        printed = await Printing.layoutPdf(
-          name:
-              'Weighment_Report_${DateFormat('yyyyMMdd').format(DateTime.now())}',
-          onLayout: (format) async => pdfBytes,
-        );
-      } catch (_) {
-        // Native printing channel might not be connected in current debug session
-      }
-
-      // Windows fallback if native platform channel is disconnected in hot-reload
-      if (!printed && !kIsWeb && Platform.isWindows) {
-        try {
-          final tempDir = await getTemporaryDirectory();
-          final tempFile = File(
-            '${tempDir.path}\\weighment_report_${DateTime.now().millisecondsSinceEpoch}.pdf',
-          );
-          await tempFile.writeAsBytes(pdfBytes);
-          await Process.run('rundll32', [
-            'url.dll,FileProtocolHandler',
-            tempFile.path,
-          ]);
-          printed = true;
-        } catch (_) {}
-      }
+      await widget.printService.printPdf(
+        pdfBytes,
+        jobName:
+            'Weighment_Report_${DateFormat('yyyyMMdd').format(DateTime.now())}',
+      );
 
       if (!mounted) return;
       widget.scaffoldMessenger.showSnackBar(

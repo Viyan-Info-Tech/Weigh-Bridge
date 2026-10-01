@@ -146,7 +146,9 @@ class AdminPasswordCard extends StatelessWidget {
                                 size: 18,
                               ),
                               SizedBox(width: 8),
-                              Text('Administrator password changed successfully.'),
+                              Text(
+                                'Administrator password changed successfully.',
+                              ),
                             ],
                           ),
                           backgroundColor: Color(0xFF16A34A),
@@ -239,17 +241,20 @@ class AdminPasswordCard extends StatelessWidget {
                 const _ProtectedItem(
                   icon: Icons.inventory_2_outlined,
                   title: 'Materials Catalog',
-                  subtitle: 'Altering materials, units, and base classifications',
+                  subtitle:
+                      'Altering materials, units, and base classifications',
                 ),
                 const _ProtectedItem(
                   icon: Icons.bar_chart_rounded,
                   title: 'Reports & Export',
-                  subtitle: 'Viewing financial metrics, weigh slips, and exports',
+                  subtitle:
+                      'Viewing financial metrics, weigh slips, and exports',
                 ),
                 const _ProtectedItem(
                   icon: Icons.tune_rounded,
                   title: 'Configuration & Rates',
-                  subtitle: 'Modifying rates, bill prefixes, and scale settings',
+                  subtitle:
+                      'Modifying rates, bill prefixes, and scale settings',
                 ),
               ];
 
@@ -384,11 +389,7 @@ class _ProtectedItem extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 6),
-          const Icon(
-            Icons.lock_rounded,
-            size: 14,
-            color: Color(0xFF94A3B8),
-          ),
+          const Icon(Icons.lock_rounded, size: 14, color: Color(0xFF94A3B8)),
         ],
       ),
     );

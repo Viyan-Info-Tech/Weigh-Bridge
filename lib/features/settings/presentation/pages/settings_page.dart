@@ -37,17 +37,24 @@ class _SettingsPageState extends State<SettingsPage> {
   final _billStartingNumberController = TextEditingController(text: '1');
   final _billNumberDigitsController = TextEditingController(text: '5');
 
-  final _businessNameController = TextEditingController(text: 'VIYAN WEIGHBRIDGE');
-  final _businessSubtitleController =
-      TextEditingController(text: 'Computer Weigh Bridge');
-  final _serviceTextController = TextEditingController(text: '24 HOURS SERVICE');
+  final _businessNameController = TextEditingController(
+    text: 'VIYAN WEIGHBRIDGE',
+  );
+  final _businessSubtitleController = TextEditingController(
+    text: 'Computer Weigh Bridge',
+  );
+  final _serviceTextController = TextEditingController(
+    text: '24 HOURS SERVICE',
+  );
   final _addressController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _gstinController = TextEditingController();
   final _logoPathController = TextEditingController();
 
-  final _receiptTitleController = TextEditingController(text: 'WEIGHMENT RECEIPT');
+  final _receiptTitleController = TextEditingController(
+    text: 'WEIGHMENT RECEIPT',
+  );
   final _footerNoteController = TextEditingController(
     text: 'Please check the weight before leaving the weighbridge.',
   );
@@ -257,16 +264,20 @@ class _SettingsPageState extends State<SettingsPage> {
               height: 1.4,
             ),
           ),
-          actionsPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          actionsPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 12,
+          ),
           actions: [
             OutlinedButton(
               onPressed: () => Navigator.of(context).pop(),
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFF64748B),
                 side: const BorderSide(color: Color(0xFFCBD5E1)),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -284,8 +295,10 @@ class _SettingsPageState extends State<SettingsPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFDC2626),
                 foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -387,8 +400,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
     final startNum =
         int.tryParse(_billStartingNumberController.text.trim()) ?? 1;
-    final digits =
-        int.tryParse(_billNumberDigitsController.text.trim()) ?? 5;
+    final digits = int.tryParse(_billNumberDigitsController.text.trim()) ?? 5;
 
     final updated = BillingSettings(
       weightUnit: _weightUnit,
@@ -450,8 +462,7 @@ class _SettingsPageState extends State<SettingsPage> {
   BillingSettings _buildCurrentSettingsSnapshot() {
     final startNum =
         int.tryParse(_billStartingNumberController.text.trim()) ?? 1;
-    final digits =
-        int.tryParse(_billNumberDigitsController.text.trim()) ?? 5;
+    final digits = int.tryParse(_billNumberDigitsController.text.trim()) ?? 5;
 
     return BillingSettings(
       weightUnit: _weightUnit,
@@ -605,8 +616,8 @@ class _SettingsPageState extends State<SettingsPage> {
                       final horizontalPadding = compact
                           ? 12.0
                           : width < 960
-                              ? 16.0
-                              : 24.0;
+                          ? 16.0
+                          : 24.0;
                       final verticalPadding = compact ? 12.0 : 16.0;
                       final useTwoColumns = _shouldUseTwoColumns(
                         width,
@@ -725,13 +736,15 @@ class _SettingsPageState extends State<SettingsPage> {
                                   child: ReceiptPreviewCard(
                                     settings: settings,
                                     billPreview: _currentBillPreview,
-                                    dateFormatted: DateFormat('dd/MM/yyyy')
-                                        .format(DateTime.now()),
-                                    timeFormatted: DateFormat('hh:mm:ss a')
-                                        .format(DateTime.now()),
-                                    timestamp:
-                                        DateFormat('dd/MM/yyyy HH:mm:ss')
-                                            .format(DateTime.now()),
+                                    dateFormatted: DateFormat(
+                                      'dd/MM/yyyy',
+                                    ).format(DateTime.now()),
+                                    timeFormatted: DateFormat(
+                                      'hh:mm:ss a',
+                                    ).format(DateTime.now()),
+                                    timestamp: DateFormat(
+                                      'dd/MM/yyyy HH:mm:ss',
+                                    ).format(DateTime.now()),
                                     weightUnit: _weightUnit,
                                     showSerialNumber: _showSerialNumber,
                                     showDate: _showDate,
@@ -774,12 +787,15 @@ class _SettingsPageState extends State<SettingsPage> {
                             ReceiptPreviewCard(
                               settings: settings,
                               billPreview: _currentBillPreview,
-                              dateFormatted:
-                                  DateFormat('dd/MM/yyyy').format(DateTime.now()),
-                              timeFormatted:
-                                  DateFormat('hh:mm:ss a').format(DateTime.now()),
-                              timestamp: DateFormat('dd/MM/yyyy HH:mm:ss')
-                                  .format(DateTime.now()),
+                              dateFormatted: DateFormat(
+                                'dd/MM/yyyy',
+                              ).format(DateTime.now()),
+                              timeFormatted: DateFormat(
+                                'hh:mm:ss a',
+                              ).format(DateTime.now()),
+                              timestamp: DateFormat(
+                                'dd/MM/yyyy HH:mm:ss',
+                              ).format(DateTime.now()),
                               weightUnit: _weightUnit,
                               showSerialNumber: _showSerialNumber,
                               showDate: _showDate,

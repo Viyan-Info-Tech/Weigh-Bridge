@@ -40,6 +40,7 @@ import 'package:weighbridge/features/settings/domain/entities/billing_settings.d
 import 'package:weighbridge/features/settings/domain/usecases/get_settings.dart';
 import 'package:weighbridge/features/settings/domain/usecases/update_settings.dart';
 import 'package:weighbridge/features/settings/presentation/bloc/settings_bloc.dart';
+import 'status_bar_test_support.dart';
 
 class MockLoginUseCase extends Mock implements LoginUseCase {}
 
@@ -230,16 +231,18 @@ void main() {
   });
 
   Widget createHomePageUnderTest() {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<AuthBloc>.value(value: authBloc),
-        BlocProvider<BillBloc>.value(value: billBloc),
-        BlocProvider<CustomerBloc>.value(value: customerBloc),
-        BlocProvider<MaterialBloc>.value(value: materialBloc),
-        BlocProvider<SettingsBloc>.value(value: settingsBloc),
-        BlocProvider<ReportBloc>.value(value: reportBloc),
-      ],
-      child: const MaterialApp(home: HomePage()),
+    return wrapWithStatusProviders(
+      MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthBloc>.value(value: authBloc),
+          BlocProvider<BillBloc>.value(value: billBloc),
+          BlocProvider<CustomerBloc>.value(value: customerBloc),
+          BlocProvider<MaterialBloc>.value(value: materialBloc),
+          BlocProvider<SettingsBloc>.value(value: settingsBloc),
+          BlocProvider<ReportBloc>.value(value: reportBloc),
+        ],
+        child: const MaterialApp(home: HomePage()),
+      ),
     );
   }
 

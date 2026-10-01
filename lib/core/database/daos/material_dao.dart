@@ -30,8 +30,7 @@ class MaterialDao extends DatabaseAccessor<AppDatabase>
   }
 
   Future<Material?> getMaterialByCode(String code) async {
-    final query = select(materials)
-      ..where((m) => m.code.equals(code.trim()));
+    final query = select(materials)..where((m) => m.code.equals(code.trim()));
     return query.getSingleOrNull();
   }
 

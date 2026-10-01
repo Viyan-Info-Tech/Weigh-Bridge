@@ -34,14 +34,14 @@ class ScaleConfigAdapter {
   }
 
   static int _parityToInt(ScaleParity parity) => switch (parity) {
-        ScaleParity.none => 0,
-        ScaleParity.odd => 1,
-        ScaleParity.even => 2,
-      };
+    ScaleParity.none => 0,
+    ScaleParity.odd => 1,
+    ScaleParity.even => 2,
+  };
 
   static ScaleParity _parityFromInt(int value) => switch (value) {
-        1 => ScaleParity.odd,
-        2 => ScaleParity.even,
-        _ => ScaleParity.none,
-      };
+    1 => ScaleParity.odd,
+    2 => ScaleParity.even,
+    _ => ScaleParity.none,
+  };
 }

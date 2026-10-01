@@ -8,13 +8,16 @@ import 'package:weighbridge/app/app.dart' show showAppSnackBar;
 import '../../../customer/domain/entities/customer.dart';
 import '../../../settings/domain/entities/billing_settings.dart';
 import '../../../settings/presentation/bloc/settings_bloc.dart';
+import '../../../../core/printing/print_service.dart';
 import '../../domain/entities/weighment.dart';
+import '../../domain/services/weighment_ticket_pdf_generator.dart';
 
-class WeighmentSlipDialog extends StatelessWidget {
+class WeighmentSlipDialog extends StatefulWidget {
   final Weighment bill;
   final Customer? customer;
   final String materialName;
   final BillingSettings? settings;
+  final PrintService printService;
 
   const WeighmentSlipDialog({
     super.key,
@@ -22,20 +25,77 @@ class WeighmentSlipDialog extends StatelessWidget {
     this.customer,
     required this.materialName,
     this.settings,
+    this.printService = const PrintService(),
   });
 
   @override
-  Widget build(BuildContext context) {
-    // Read from passed settings or fallback to SettingsBloc or defaults
+  State<WeighmentSlipDialog> createState() => _WeighmentSlipDialogState();
+}
+
+class _WeighmentSlipDialogState extends State<WeighmentSlipDialog> {
+  bool _isPrinting = false;
+
+  // Read from passed settings or fallback to SettingsBloc or defaults
+  BillingSettings _resolveActiveSettings() {
     BillingSettings? blocSettings;
     try {
       blocSettings = context.read<SettingsBloc>().state.settings;
     } catch (_) {
       blocSettings = null;
     }
+    return widget.settings ??
+        blocSettings ??
+        BillingSettings(updatedAt: DateTime.now());
+  }
 
-    final activeSettings =
-        settings ?? blocSettings ?? BillingSettings(updatedAt: DateTime.now());
+  Future<void> _handlePrint() async {
+    if (_isPrinting) return;
+    setState(() => _isPrinting = true);
+    try {
+      final pdfBytes = await const WeighmentTicketPdfGenerator()
+          .generateTicketPdf(
+            bill: widget.bill,
+            customer: widget.customer,
+            materialName: widget.materialName,
+            settings: _resolveActiveSettings(),
+          );
+      final printed = await widget.printService.printPdf(
+        pdfBytes,
+        jobName: 'Weighment_Ticket_${widget.bill.billNumber}',
+      );
+      if (!mounted) return;
+      if (printed) {
+        Navigator.of(context).pop();
+        showAppSnackBar(
+          'Print job sent for ${widget.bill.billNumber}',
+          backgroundColor: const Color(0xFF16A34A),
+        );
+      } else {
+        showAppSnackBar(
+          'Unable to print ticket for ${widget.bill.billNumber}',
+          backgroundColor: const Color(0xFFDC2626),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      showAppSnackBar(
+        'Failed to print ticket: $e',
+        backgroundColor: const Color(0xFFDC2626),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isPrinting = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bill = widget.bill;
+    final customer = widget.customer;
+    final materialName = widget.materialName;
+
+    final activeSettings = _resolveActiveSettings();
 
     final vehicleNo = bill.vehicleNumber.isEmpty ? '—' : bill.vehicleNumber;
     final customerName = customer?.name ?? '—';
@@ -232,7 +292,10 @@ class WeighmentSlipDialog extends StatelessWidget {
                                   ),
                                 ],
                                 const SizedBox(height: 5),
-                                _buildWeightRow('Status', 'COMPLETED'),
+                                _buildWeightRow(
+                                  'Status',
+                                  isCompleted ? 'COMPLETED' : 'INCOMPLETE',
+                                ),
                               ],
                             );
                           },
@@ -620,13 +683,7 @@ class WeighmentSlipDialog extends StatelessWidget {
         Expanded(
           flex: 2,
           child: ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              showAppSnackBar(
-                'Print job sent for ${bill.billNumber}',
-                backgroundColor: const Color(0xFF16A34A),
-              );
-            },
+            onPressed: _isPrinting ? null : _handlePrint,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF174A9C),
               foregroundColor: Colors.white,
@@ -636,21 +693,30 @@ class WeighmentSlipDialog extends StatelessWidget {
                 borderRadius: BorderRadius.circular(10),
               ),
             ),
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.print, size: 16),
-                SizedBox(width: 8),
-                Text(
-                  'Print Ticket',
-                  style: TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontWeight: FontWeight.w800,
-                    fontSize: 13,
+            child: _isPrinting
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.print, size: 16),
+                      SizedBox(width: 8),
+                      Text(
+                        'Print Ticket',
+                        style: TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontWeight: FontWeight.w800,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
           ),
         ),
       ],

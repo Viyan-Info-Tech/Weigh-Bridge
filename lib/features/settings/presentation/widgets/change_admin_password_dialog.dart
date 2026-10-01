@@ -172,7 +172,9 @@ class _ChangeAdminPasswordDialogState
                       ),
                       // Close button
                       InkWell(
-                        onTap: _saving ? null : () => Navigator.of(context).pop(false),
+                        onTap: _saving
+                            ? null
+                            : () => Navigator.of(context).pop(false),
                         borderRadius: BorderRadius.circular(6),
                         hoverColor: const Color(0xFFF1F5F9),
                         child: Container(
@@ -347,8 +349,9 @@ class _ChangeAdminPasswordDialogState
                               borderRadius: BorderRadius.circular(8),
                               boxShadow: [
                                 BoxShadow(
-                                  color: const Color(0xFF0D3B82)
-                                      .withValues(alpha: 0.28),
+                                  color: const Color(
+                                    0xFF0D3B82,
+                                  ).withValues(alpha: 0.28),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 ),
@@ -356,7 +359,9 @@ class _ChangeAdminPasswordDialogState
                             ),
                             child: Container(
                               height: 38,
-                              padding: const EdgeInsets.symmetric(horizontal: 18),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                              ),
                               alignment: Alignment.center,
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -369,8 +374,8 @@ class _ChangeAdminPasswordDialogState
                                         strokeWidth: 2,
                                         valueColor:
                                             AlwaysStoppedAnimation<Color>(
-                                          Colors.white,
-                                        ),
+                                              Colors.white,
+                                            ),
                                       ),
                                     )
                                   else ...[
@@ -488,9 +493,7 @@ class _ChangeAdminPasswordDialogState
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(
-                color: Color(0xFFDC2626),
-              ),
+              borderSide: const BorderSide(color: Color(0xFFDC2626)),
             ),
             focusedErrorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),

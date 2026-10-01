@@ -14,7 +14,7 @@ class AppRouter {
   final AuthBloc authBloc;
   final String initialLocation;
 
-  AppRouter(this.authBloc, {this.initialLocation = '/bill'});
+  AppRouter(this.authBloc, {this.initialLocation = '/login'});
 
   late final GoRouter router = GoRouter(
     initialLocation: initialLocation,
@@ -27,13 +27,16 @@ class AppRouter {
       final authState = authBloc.state;
       final isOnLogin = state.matchedLocation == '/login';
 
+      if (authState.status == AuthStatus.initial ||
+          authState.status == AuthStatus.checking) {
+        return null;
+      }
+
       if (authState.status == AuthStatus.authenticated) {
         return isOnLogin ? '/bill' : null;
       }
 
-      // Weighment opens directly without an operator login. The master pages
-      // apply their own administrator password gate from the navigation bar.
-      return null;
+      return isOnLogin ? null : '/login';
     },
     routes: [
       GoRoute(path: '/login', builder: (context, state) => const LoginPage()),

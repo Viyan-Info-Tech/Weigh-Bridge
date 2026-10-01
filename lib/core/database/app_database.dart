@@ -11,6 +11,7 @@ import 'daos/material_dao.dart';
 import 'daos/bill_dao.dart';
 import 'daos/app_settings_dao.dart';
 import 'daos/scale_settings_dao.dart';
+import 'daos/auto_tare_settings_dao.dart';
 import 'tables/users_table.dart';
 import 'tables/customers_table.dart';
 import 'tables/materials_table.dart';
@@ -19,6 +20,7 @@ import 'tables/app_settings_table.dart';
 import 'tables/charge_vehicle_types_table.dart';
 import 'tables/weighment_rates_table.dart';
 import 'tables/scale_settings_table.dart';
+import 'tables/auto_tare_settings_table.dart';
 
 part 'app_database.g.dart';
 
@@ -32,6 +34,7 @@ part 'app_database.g.dart';
     ChargeVehicleTypes,
     WeighmentRates,
     ScaleSettings,
+    AutoTareSettings,
   ],
   daos: [
     UserDao,
@@ -40,6 +43,7 @@ part 'app_database.g.dart';
     BillDao,
     AppSettingsDao,
     ScaleSettingsDao,
+    AutoTareSettingsDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -48,7 +52,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 22;
+  int get schemaVersion => 23;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -676,6 +680,11 @@ class AppDatabase extends _$AppDatabase {
         // created lazily by ScaleSettingsDao.getSettings() on first use.
         await m.createTable(scaleSettings);
       }
+
+      if (from < 23) {
+        // Date-based common (platform) tare captured each morning with F3.
+        await m.createTable(autoTareSettings);
+      }
     },
   );
 
@@ -694,14 +703,24 @@ class AppDatabase extends _$AppDatabase {
     return row?.read<String>('password_hash');
   }
 
+  /// Lightweight health probe used by the app status bar.
+  ///
+  /// Returns `true` when the connection answers a trivial query and
+  /// `false` when the database is missing or broken.
+  Future<bool> healthCheck() async {
+    try {
+      await customSelect('SELECT 1').get();
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<void> saveAdminPasswordHash(String hash) => customStatement(
     'INSERT INTO admin_credentials (id, password_hash, updated_at) '
     'VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET '
     'password_hash = excluded.password_hash, updated_at = excluded.updated_at',
-    [
-      hash,
-      DateTime.now().millisecondsSinceEpoch,
-    ],
+    [hash, DateTime.now().millisecondsSinceEpoch],
   );
 
   Future<void> _seedWeighmentRates() async {
@@ -770,9 +789,9 @@ class AppDatabase extends _$AppDatabase {
     ];
 
     for (final (name, rates) in data) {
-      final vehicleTypeId = await into(chargeVehicleTypes).insert(
-        ChargeVehicleTypesCompanion.insert(name: name),
-      );
+      final vehicleTypeId = await into(
+        chargeVehicleTypes,
+      ).insert(ChargeVehicleTypesCompanion.insert(name: name));
       await batch((batch) {
         batch.insertAll(
           weighmentRates,

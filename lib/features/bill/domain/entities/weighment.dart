@@ -46,7 +46,6 @@ class Weighment extends Equatable {
                : (grossWeightKg ?? 0)),
        explicitNetWeightKg = netWeightKg;
 
-  /// Every saved weighment is a completed bill once either weight is captured.
   bool get isCompleted => grossWeightKg != null || tareWeightKg != null;
 
   /// Business Logic for Gross Weight:
@@ -93,6 +92,26 @@ class Weighment extends Equatable {
       return (g - t).abs();
     }
     return null;
+  }
+
+  DateTime? get grossCapturedAt {
+    final type = firstWeightType.toUpperCase();
+    if (type == 'GROSS') {
+      return firstWeightKg > 0 ? createdAt : null;
+    } else if (type == 'TARE') {
+      return (secondWeightKg != null && secondWeightKg! > 0) ? updatedAt : null;
+    }
+    return firstWeightKg > 0 ? createdAt : null;
+  }
+
+  DateTime? get tareCapturedAt {
+    final type = firstWeightType.toUpperCase();
+    if (type == 'TARE') {
+      return firstWeightKg > 0 ? createdAt : null;
+    } else if (type == 'GROSS') {
+      return (secondWeightKg != null && secondWeightKg! > 0) ? updatedAt : null;
+    }
+    return (secondWeightKg != null && secondWeightKg! > 0) ? updatedAt : null;
   }
 
   @override

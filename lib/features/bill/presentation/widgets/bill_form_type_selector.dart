@@ -104,9 +104,7 @@ class _TypeOption extends StatelessWidget {
                 style: TextStyle(
                   fontFamily: 'PlusJakartaSans',
                   fontSize: 14.5,
-                  fontWeight: isSelected
-                      ? FontWeight.w800
-                      : FontWeight.w600,
+                  fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
                   color: isSelected
                       ? const Color(0xFF0D53FC)
                       : const Color(0xFF334155),

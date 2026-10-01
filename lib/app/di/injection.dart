@@ -21,6 +21,9 @@ import '../../features/auth/domain/usecases/login.dart';
 import '../../features/auth/domain/usecases/logout.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_event.dart';
+import '../../features/bill/data/datasources/auto_tare_local_datasource.dart';
+import '../../features/bill/data/repositories/auto_tare_repository_impl.dart';
+import '../../features/bill/domain/repositories/auto_tare_repository.dart';
 import '../../features/bill/data/datasources/bill_local_datasource.dart';
 import '../../features/bill/data/repositories/bill_repository_impl.dart';
 import '../../features/bill/domain/usecases/save_bill.dart';
@@ -63,9 +66,10 @@ class Injection {
   final CustomerBloc customerBloc;
   final MaterialBloc materialBloc;
   final SettingsBloc settingsBloc;
-final ReportBloc reportBloc;
+  final ReportBloc reportBloc;
   final LicenseService licenseService;
   final BillRepository billRepository;
+  final AutoTareRepository autoTareRepository;
   final CustomerRepository customerRepository;
   final MaterialItemRepository materialRepository;
   final AdminPasswordService adminPasswordService;
@@ -81,6 +85,7 @@ final ReportBloc reportBloc;
     required this.reportBloc,
     required this.licenseService,
     required this.billRepository,
+    required this.autoTareRepository,
     required this.customerRepository,
     required this.materialRepository,
     required this.adminPasswordService,
@@ -185,6 +190,9 @@ final ReportBloc reportBloc;
     final loadRecentBillsUseCase = LoadRecentBillsUseCase(billRepository);
     final generateBillNumberUseCase = GenerateBillNumberUseCase(billRepository);
 
+    final autoTareLocalDataSource = AutoTareLocalDataSource(database);
+    final autoTareRepository = AutoTareRepositoryImpl(autoTareLocalDataSource);
+
     final billBloc = BillBloc(
       customerRepository: customerRepository,
       materialRepository: materialItemRepository,
@@ -192,6 +200,7 @@ final ReportBloc reportBloc;
       loadRecentBillsUseCase: loadRecentBillsUseCase,
       generateBillNumberUseCase: generateBillNumberUseCase,
       settingsRepository: settingsRepository,
+      autoTareRepository: autoTareRepository,
     );
 
     // Report
@@ -212,7 +221,7 @@ final ReportBloc reportBloc;
       settingsRepository: settingsRepository,
     );
 
-// License
+    // License
     final licenseService = LicenseServiceImpl();
 
     // Weigh scale
@@ -248,6 +257,7 @@ final ReportBloc reportBloc;
       reportBloc: reportBloc,
       licenseService: licenseService,
       billRepository: billRepository,
+      autoTareRepository: autoTareRepository,
       customerRepository: customerRepository,
       materialRepository: materialItemRepository,
       adminPasswordService: adminPasswordService,

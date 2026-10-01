@@ -10,7 +10,8 @@ import '../domain/scale_status.dart';
 /// Activated with the `USE_FAKE_SCALE` build flag. Its [weightStream] and
 /// [statusStream] can be driven from test code.
 class FakeScaleService implements ScaleService {
-  FakeScaleService({ScaleConfig? config}) : _config = config ?? const ScaleConfig();
+  FakeScaleService({ScaleConfig? config})
+    : _config = config ?? const ScaleConfig();
 
   ScaleConfig _config;
   ScaleStatus _status = const ScaleStatus();
@@ -45,9 +46,7 @@ class FakeScaleService implements ScaleService {
   @override
   Future<void> connect({ScaleConfig? config}) async {
     if (config != null) _config = config;
-    _emit(const ScaleStatus(
-      state: ScaleConnectionState.connecting,
-    ));
+    _emit(const ScaleStatus(state: ScaleConnectionState.connecting));
     await Future<void>.delayed(const Duration(milliseconds: 150));
     _emit(const ScaleStatus(state: ScaleConnectionState.connected));
   }
@@ -87,21 +86,25 @@ class FakeScaleService implements ScaleService {
       receivedAt: receivedAt,
     );
     _weightController.add(reading);
-    _emit(ScaleStatus(
-      state: ScaleConnectionState.connected,
-      currentWeightKg: weightKg,
-      stable: stable,
-      isMotion: !stable,
-      lastReceivedAt: receivedAt,
-    ));
+    _emit(
+      ScaleStatus(
+        state: ScaleConnectionState.connected,
+        currentWeightKg: weightKg,
+        stable: stable,
+        isMotion: !stable,
+        lastReceivedAt: receivedAt,
+      ),
+    );
   }
 
   /// Test/manual hook: simulate the port dropping.
   void simulateDisconnect({String? reason}) {
-    _emit(ScaleStatus(
-      state: ScaleConnectionState.disconnected,
-      error: reason ?? 'Simulated disconnect',
-    ));
+    _emit(
+      ScaleStatus(
+        state: ScaleConnectionState.disconnected,
+        error: reason ?? 'Simulated disconnect',
+      ),
+    );
   }
 
   /// Test/manual hook: forward raw bytes to the diagnostics stream.

@@ -57,7 +57,9 @@ class ScaleStatus {
   }) {
     return ScaleStatus(
       state: state ?? this.state,
-      currentWeightKg: clearCurrentWeight ? null : (currentWeightKg ?? this.currentWeightKg),
+      currentWeightKg: clearCurrentWeight
+          ? null
+          : (currentWeightKg ?? this.currentWeightKg),
       stable: stable ?? this.stable,
       isMotion: isMotion ?? this.isMotion,
       isOverload: isOverload ?? this.isOverload,

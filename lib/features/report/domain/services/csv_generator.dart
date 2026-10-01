@@ -68,7 +68,11 @@ class CsvGenerator {
       final netStr = item.netWeightKg != null
           ? '${toDisplay(item.netWeightKg)!.toStringAsFixed(decimals)} $unit'
           : '';
-      final statusFormatted = 'Completed';
+      // Completion follows the weighbridge rule: a bill with at least one
+      // captured weight (gross or tare) is Completed; no weight is Incomplete.
+      final isCompleted =
+          item.grossWeightKg != null || item.tareWeightKg != null;
+      final statusFormatted = isCompleted ? 'Completed' : 'Incomplete';
 
       final line = [
         _escape(item.billNumber),

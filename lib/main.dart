@@ -5,7 +5,10 @@ import 'app/di/injection.dart';
 import 'core/database/app_database.dart';
 import 'core/hardware/scale/domain/scale_service.dart';
 import 'core/licensing/license_gate.dart';
+import 'core/licensing/license_service.dart';
+import 'core/printing/print_service.dart';
 import 'core/security/admin_password_service.dart';
+import 'core/status/app_status_cubit.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +26,10 @@ void main() async {
         RepositoryProvider.value(value: injection.customerRepository),
         RepositoryProvider.value(value: injection.materialRepository),
         RepositoryProvider<ScaleService>.value(value: injection.scaleService),
+        RepositoryProvider<PrintService>.value(value: const PrintService()),
+        RepositoryProvider<LicenseService>.value(
+          value: injection.licenseService,
+        ),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -32,6 +39,14 @@ void main() async {
           BlocProvider.value(value: injection.materialBloc),
           BlocProvider.value(value: injection.settingsBloc),
           BlocProvider.value(value: injection.reportBloc),
+          BlocProvider<AppStatusCubit>(
+            create: (context) => AppStatusCubit(
+              scaleService: context.read<ScaleService>(),
+              database: context.read<AppDatabase>(),
+              printService: context.read<PrintService>(),
+              licenseService: context.read<LicenseService>(),
+            ),
+          ),
         ],
         child: MaterialApp(
           title: 'Viyan Weighbridge',
@@ -44,7 +59,10 @@ void main() async {
             useMaterial3: true,
             inputDecorationTheme: const InputDecorationTheme(
               border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 12,
+              ),
             ),
           ),
           home: LicenseGate(

@@ -124,8 +124,7 @@ class ReportFilterBar extends StatelessWidget {
                   flex: 2,
                   child: _buildDateButton(
                     label: 'Date To',
-                    dateText:
-                        datePickerFormat.format(filter.effectiveEndDate),
+                    dateText: datePickerFormat.format(filter.effectiveEndDate),
                     onTap: () => selectCustomDate(
                       context: context,
                       isStartDate: false,
@@ -310,10 +309,11 @@ class ReportFilterBar extends StatelessWidget {
                           value: 'all',
                           child: Text('All Modes'),
                         ),
+                        DropdownMenuItem(value: 'cash', child: Text('Cash')),
                         DropdownMenuItem(
-                            value: 'cash', child: Text('Cash')),
-                        DropdownMenuItem(
-                            value: 'credit', child: Text('Credit')),
+                          value: 'credit',
+                          child: Text('Credit'),
+                        ),
                         DropdownMenuItem(value: 'upi', child: Text('UPI')),
                       ],
                     ),
@@ -355,8 +355,7 @@ class ReportFilterBar extends StatelessWidget {
                     onPressed: () {
                       bloc.add(const ApplyReportFilters());
                     },
-                    icon:
-                        const Icon(Icons.filter_alt_outlined, size: 16),
+                    icon: const Icon(Icons.filter_alt_outlined, size: 16),
                     label: const Text(
                       'Apply',
                       style: TextStyle(
@@ -426,8 +425,7 @@ class ReportFilterBar extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(6),
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(6),

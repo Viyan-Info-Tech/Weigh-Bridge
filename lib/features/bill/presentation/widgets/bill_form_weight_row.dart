@@ -10,12 +10,15 @@ class BillFormWeightRow extends StatelessWidget {
     required this.weightUnit,
     required this.enabled,
     required this.isCaptured,
+    this.hasError = false,
     this.focusNode,
     required this.date,
     required this.time,
     required this.onSelectDate,
     required this.onSelectTime,
     required this.onWeightChanged,
+    this.onWeightCommitted,
+    this.onSubmittedNext,
   });
 
   final TextEditingController controller;
@@ -23,12 +26,15 @@ class BillFormWeightRow extends StatelessWidget {
   final String weightUnit;
   final bool enabled;
   final bool isCaptured;
+  final bool hasError;
   final FocusNode? focusNode;
   final DateTime? date;
   final TimeOfDay? time;
   final ValueChanged<DateTime> onSelectDate;
   final ValueChanged<TimeOfDay> onSelectTime;
   final ValueChanged<String> onWeightChanged;
+  final ValueChanged<String>? onWeightCommitted;
+  final VoidCallback? onSubmittedNext;
 
   @override
   Widget build(BuildContext context) {
@@ -60,8 +66,11 @@ class BillFormWeightRow extends StatelessWidget {
           unitLabel: isKg ? 'Kg' : 'Ton',
           enabled: enabled,
           isCaptured: isCaptured,
+          hasError: hasError,
           focusNode: focusNode,
           onChanged: onWeightChanged,
+          onCommitted: onWeightCommitted,
+          onSubmittedNext: onSubmittedNext,
         ),
 
         const SizedBox(height: 7),
@@ -204,8 +213,11 @@ class _EditableWeightBox extends StatefulWidget {
     required this.unitLabel,
     required this.enabled,
     required this.isCaptured,
+    this.hasError = false,
     this.focusNode,
     required this.onChanged,
+    this.onCommitted,
+    this.onSubmittedNext,
   });
 
   final TextEditingController controller;
@@ -213,8 +225,11 @@ class _EditableWeightBox extends StatefulWidget {
   final String unitLabel;
   final bool enabled;
   final bool isCaptured;
+  final bool hasError;
   final FocusNode? focusNode;
   final ValueChanged<String> onChanged;
+  final ValueChanged<String>? onCommitted;
+  final VoidCallback? onSubmittedNext;
 
   @override
   State<_EditableWeightBox> createState() => _EditableWeightBoxState();
@@ -251,19 +266,26 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
   }
 
   void _handleFocusChange() {
-    if (_focusNode.hasFocus && widget.enabled && !_editing) {
-      setState(() => _editing = true);
-      _selectAllText();
+    if (_focusNode.hasFocus && widget.enabled) {
+      if (!_editing) {
+        if (widget.controller.text.isEmpty &&
+            widget.displayWeight != '0' &&
+            widget.displayWeight != '0.000') {
+          widget.controller.text = widget.displayWeight.replaceAll(',', '');
+        }
+        setState(() => _editing = true);
+        _selectAllText();
+      }
     } else if (!_focusNode.hasFocus) {
-      _finishEditing();
+      if (_editing) {
+        _commitAndFinishEditing();
+      }
     }
   }
 
   void _beginEditing() {
-    if (!widget.enabled || _editing) return;
-    setState(() => _editing = true);
+    if (!widget.enabled) return;
     _focusNode.requestFocus();
-    _selectAllText();
   }
 
   void _selectAllText() {
@@ -277,18 +299,23 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
     });
   }
 
-  void _finishEditing() {
+  void _commitAndFinishEditing() {
     if (_editing) setState(() => _editing = false);
+    widget.onCommitted?.call(widget.controller.text);
   }
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = _editing
+    final activeColor = widget.hasError
+        ? const Color(0xFFDC2626)
+        : _editing
         ? const Color(0xFF3B82F6)
         : widget.isCaptured
         ? const Color(0xFF86EFAC)
         : const Color(0xFFCBD5E1);
-    final backgroundColor = _editing
+    final backgroundColor = widget.hasError
+        ? const Color(0xFFFEF2F2)
+        : _editing
         ? const Color(0xFFEFF6FF)
         : widget.isCaptured
         ? const Color(0xFFF0FDF4)
@@ -313,7 +340,7 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
                   color: activeColor,
-                  width: _editing ? 1.5 : 1,
+                  width: (widget.hasError || _editing) ? 1.5 : 1,
                 ),
               ),
               child: Row(
@@ -322,7 +349,9 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                     width: 44,
                     height: 46,
                     decoration: BoxDecoration(
-                      color: _editing
+                      color: widget.hasError
+                          ? const Color(0xFFFEE2E2)
+                          : _editing
                           ? const Color(0xFFDBEAFE)
                           : widget.isCaptured
                           ? const Color(0xFFDCFCE7)
@@ -336,59 +365,61 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                     child: Icon(
                       _editing ? Icons.edit_rounded : Icons.scale_rounded,
                       size: 20,
-                      color: _editing
+                      color: widget.hasError
+                          ? const Color(0xFFDC2626)
+                          : _editing
                           ? const Color(0xFF2563EB)
                           : widget.isCaptured
                           ? const Color(0xFF16A34A)
-                          : const Color(0xFF475569),
+                          : const Color(0xFF64748B),
                     ),
                   ),
                   Expanded(
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: _editing
-                          ? TextField(
-                              controller: widget.controller,
-                              focusNode: _focusNode,
-                              enabled: widget.enabled,
-                              readOnly: !_editing,
-                              showCursor: _editing,
-                              keyboardType:
-                                  const TextInputType.numberWithOptions(
-                                    decimal: true,
-                                  ),
-                              inputFormatters: [
-                                FilteringTextInputFormatter.allow(
-                                  RegExp(r'^\d*\.?\d{0,3}$'),
-                                ),
-                              ],
-                              onChanged: widget.onChanged,
-                              decoration: const InputDecoration(
-                                border: InputBorder.none,
-                                isDense: true,
-                                contentPadding: EdgeInsets.zero,
-                              ),
-                              style: const TextStyle(
-                                fontFamily: 'PlusJakartaSans',
-                                fontSize: 16,
-                                fontWeight: FontWeight.w800,
-                                color: Color(0xFF0F172A),
-                              ),
-                            )
-                          : Align(
-                              alignment: Alignment.centerLeft,
-                              child: Text(
-                                widget.displayWeight,
-                                style: TextStyle(
-                                  fontFamily: 'PlusJakartaSans',
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w800,
-                                  color: widget.isCaptured
-                                      ? const Color(0xFF15803D)
-                                      : const Color(0xFF0F172A),
-                                ),
-                              ),
-                            ),
+                      child: TextField(
+                        controller: widget.controller,
+                        focusNode: _focusNode,
+                        enabled: widget.enabled,
+                        readOnly: !_editing,
+                        showCursor: _editing,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d*\.?\d{0,3}$'),
+                          ),
+                        ],
+                        textInputAction: TextInputAction.next,
+                        onChanged: widget.onChanged,
+                        onSubmitted: (value) {
+                          _commitAndFinishEditing();
+                          widget.onSubmittedNext?.call();
+                        },
+                        decoration: InputDecoration(
+                          hintText: widget.displayWeight,
+                          hintStyle: TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w800,
+                            color: widget.isCaptured
+                                ? const Color(0xFF15803D)
+                                : const Color(0xFF0F172A),
+                          ),
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                        style: TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                          color: widget.isCaptured
+                              ? const Color(0xFF15803D)
+                              : const Color(0xFF0F172A),
+                        ),
+                      ),
                     ),
                   ),
                   Container(

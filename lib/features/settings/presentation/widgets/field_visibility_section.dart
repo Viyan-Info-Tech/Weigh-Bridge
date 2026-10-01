@@ -75,16 +75,8 @@ class FieldVisibilitySection extends StatelessWidget {
                 showSerialNumber,
                 (v) => onToggle('serialNumber', v),
               ),
-              _buildToggleChip(
-                'Date',
-                showDate,
-                (v) => onToggle('date', v),
-              ),
-              _buildToggleChip(
-                'Time',
-                showTime,
-                (v) => onToggle('time', v),
-              ),
+              _buildToggleChip('Date', showDate, (v) => onToggle('date', v)),
+              _buildToggleChip('Time', showTime, (v) => onToggle('time', v)),
               _buildToggleChip(
                 'Vehicle Number',
                 showVehicleNumber,
@@ -160,9 +152,7 @@ class FieldVisibilitySection extends StatelessWidget {
       checkmarkColor: const Color(0xFF0D3B82),
       backgroundColor: Colors.white,
       side: BorderSide(
-        color: isSelected
-            ? const Color(0xFF0D3B82)
-            : const Color(0xFFCBD5E1),
+        color: isSelected ? const Color(0xFF0D3B82) : const Color(0xFFCBD5E1),
         width: isSelected ? 1.5 : 1.0,
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),

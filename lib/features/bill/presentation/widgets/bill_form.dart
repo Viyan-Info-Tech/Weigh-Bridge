@@ -7,6 +7,7 @@ import '../../../../core/utils/text_formatters.dart';
 import '../../../customer/domain/entities/customer.dart';
 import '../../../material/domain/entities/material_item.dart' as domain;
 import 'bill_form_field_shell.dart';
+import 'bill_form_readonly_fields.dart';
 import 'bill_form_row.dart';
 import 'bill_form_type_selector.dart';
 import 'bill_form_weight_row.dart';
@@ -68,13 +69,25 @@ class BillForm extends StatefulWidget {
   onMaterialCodeSubmitted;
   final ValueChanged<String> onGrossWeightChanged;
   final ValueChanged<String> onTareWeightChanged;
+  final ValueChanged<String>? onGrossWeightCommitted;
+  final ValueChanged<String>? onTareWeightCommitted;
+  final ValueChanged<DateTime?>? onGrossCapturedAtChanged;
+  final ValueChanged<DateTime?>? onTareCapturedAtChanged;
   final ValueChanged<String> onRemarksChanged;
   final ValueChanged<String> onPaymentModeChanged;
   final ValueChanged<String>? onWeightUnitChanged;
   final ValueChanged<String> onVehicleChargeChanged;
   final VoidCallback onResetVehicleCharge;
+  final ValueChanged<String>? onMobileNumberChanged;
   final Future<void> Function()? onAddCustomer;
   final Future<void> Function()? onAddMaterial;
+
+  final String? vehicleNumberError;
+  final String? materialError;
+  final String? customerError;
+  final String? chargesError;
+  final String? weightError;
+  final String? mobileError;
 
   const BillForm({
     super.key,
@@ -123,13 +136,24 @@ class BillForm extends StatefulWidget {
     this.onMaterialCodeSubmitted,
     required this.onGrossWeightChanged,
     required this.onTareWeightChanged,
+    this.onGrossWeightCommitted,
+    this.onTareWeightCommitted,
+    this.onGrossCapturedAtChanged,
+    this.onTareCapturedAtChanged,
     required this.onRemarksChanged,
     required this.onPaymentModeChanged,
     this.onWeightUnitChanged,
     required this.onVehicleChargeChanged,
     required this.onResetVehicleCharge,
+    this.onMobileNumberChanged,
     this.onAddCustomer,
     this.onAddMaterial,
+    this.vehicleNumberError,
+    this.materialError,
+    this.customerError,
+    this.chargesError,
+    this.weightError,
+    this.mobileError,
   });
 
   @override
@@ -140,12 +164,45 @@ class _BillFormState extends State<BillForm> {
   late final TextEditingController _mobileController;
   late final TextEditingController _materialCodeController;
   late final TextEditingController _customerCodeController;
+  final ScrollController _scrollController = ScrollController();
+
+  String? _localMaterialError;
+  String? _localCustomerError;
 
   String? _selectedType;
   DateTime? _grossDate;
   TimeOfDay? _grossTime;
   DateTime? _tareDate;
   TimeOfDay? _tareTime;
+
+  Widget _buildFieldError(String? error) {
+    if (error == null || error.isEmpty) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, left: 2),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.warning_amber_rounded,
+            size: 14,
+            color: Color(0xFFDC2626),
+          ),
+          const SizedBox(width: 5),
+          Expanded(
+            child: Text(
+              error,
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFFDC2626),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   void initState() {
@@ -181,6 +238,9 @@ class _BillFormState extends State<BillForm> {
     super.didUpdateWidget(oldWidget);
 
     if (widget.selectedMaterial != oldWidget.selectedMaterial) {
+      if (widget.selectedMaterial != null) {
+        _localMaterialError = null;
+      }
       _materialCodeController.text =
           widget.selectedMaterial != null &&
               widget.selectedMaterial!.code.isNotEmpty
@@ -189,6 +249,9 @@ class _BillFormState extends State<BillForm> {
     }
 
     if (widget.selectedCustomer != oldWidget.selectedCustomer) {
+      if (widget.selectedCustomer != null) {
+        _localCustomerError = null;
+      }
       _customerCodeController.text = widget.selectedCustomer != null
           ? widget.selectedCustomer!.customerCode
           : '';
@@ -227,6 +290,7 @@ class _BillFormState extends State<BillForm> {
     _mobileController.dispose();
     _materialCodeController.dispose();
     _customerCodeController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -256,42 +320,344 @@ class _BillFormState extends State<BillForm> {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final narrow = constraints.maxWidth < 760;
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (narrow) ...[
-                _buildLeftColumn(isGrossEnabled, isTareEnabled),
-                const SizedBox(height: 16),
-                const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                const SizedBox(height: 16),
-                _buildRightColumn(isGrossEnabled, isTareEnabled),
-              ] else
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: _buildLeftColumn(isGrossEnabled, isTareEnabled),
-                    ),
-                    const SizedBox(width: 20),
-                    Container(
-                      width: 1,
-                      height: 450,
-                      color: const Color(0xFFF1F5F9),
-                    ),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: _buildRightColumn(isGrossEnabled, isTareEnabled),
-                    ),
-                  ],
-                ),
+          final width = constraints.maxWidth;
+          final isSingleColumn = width < 760;
+          final fieldGap = constraints.maxHeight < 600 ? 7.0 : 11.0;
+          final labelWidth = isSingleColumn
+              ? 120.0
+              : (width < 950 ? 124.0 : 148.0);
 
-              if (widget.weightValidationError != null) ...[
-                const SizedBox(height: 12),
+          return Scrollbar(
+            controller: _scrollController,
+            thumbVisibility: width >= 900,
+            child: SingleChildScrollView(
+              controller: _scrollController,
+              child: isSingleColumn
+                  ? Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildLeftColumn(
+                          isGrossEnabled,
+                          isTareEnabled,
+                          labelWidth: labelWidth,
+                          fieldGap: fieldGap,
+                        ),
+                        const SizedBox(height: 16),
+                        const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                        const SizedBox(height: 16),
+                        _buildRightColumn(
+                          isGrossEnabled,
+                          isTareEnabled,
+                          labelWidth: labelWidth,
+                          fieldGap: fieldGap,
+                        ),
+                      ],
+                    )
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.only(right: 20),
+                            decoration: const BoxDecoration(
+                              border: Border(
+                                right: BorderSide(
+                                  color: Color(0xFFF1F5F9),
+                                  width: 1,
+                                ),
+                              ),
+                            ),
+                            child: _buildLeftColumn(
+                              isGrossEnabled,
+                              isTareEnabled,
+                              labelWidth: labelWidth,
+                              fieldGap: fieldGap,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: _buildRightColumn(
+                            isGrossEnabled,
+                            isTareEnabled,
+                            labelWidth: labelWidth,
+                            fieldGap: fieldGap,
+                          ),
+                        ),
+                      ],
+                    ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  /// Left Column Field Rows
+  Widget _buildLeftColumn(
+    bool isGrossEnabled,
+    bool isTareEnabled, {
+    double labelWidth = 148.0,
+    double fieldGap = 11.0,
+  }) {
+    return Column(
+      children: [
+        BillFormRow(
+          label: 'TRUCK NO',
+          labelWidth: labelWidth,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          child: _buildTruckNoField(),
+        ),
+        SizedBox(height: fieldGap),
+        BillFormRow(
+          label: 'TYPE',
+          labelWidth: labelWidth,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          child: _buildTypeSelector(),
+        ),
+        SizedBox(height: fieldGap),
+        BillFormRow(
+          label: 'MATERIAL CODE',
+          labelWidth: labelWidth,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          child: _buildMaterialCodeField(),
+        ),
+        SizedBox(height: fieldGap),
+        BillFormRow(
+          label: 'CUSTOMER CODE',
+          labelWidth: labelWidth,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          child: _buildCustomerCodeField(),
+        ),
+        SizedBox(height: fieldGap),
+        BillFormRow(
+          label: 'CHARGES (₹)',
+          labelWidth: labelWidth,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          child: _buildChargesField(),
+        ),
+        SizedBox(height: fieldGap),
+        BillFormRow(
+          label: 'CONTAINER NO',
+          labelWidth: labelWidth,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          child: _buildContainerNoField(),
+        ),
+        SizedBox(height: fieldGap),
+        BillFormRow(
+          label: 'MOBILE NO',
+          labelWidth: labelWidth,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          child: _buildMobileNoField(),
+        ),
+      ],
+    );
+  }
+
+  void _commitGrossWeight(String text) {
+    widget.onGrossWeightCommitted?.call(text);
+    final weight = double.tryParse(text);
+    if (weight == null || weight <= 0) {
+      if (text.trim().isEmpty || weight == 0) {
+        setState(() {
+          _grossDate = null;
+          _grossTime = null;
+        });
+        widget.onGrossCapturedAtChanged?.call(null);
+      }
+      return;
+    }
+    if (_grossDate == null || _grossTime == null) {
+      final now = widget.grossCapturedAt ?? DateTime.now();
+      setState(() {
+        _grossDate ??= now;
+        _grossTime ??= TimeOfDay.fromDateTime(now);
+      });
+      final combined = DateTime(
+        _grossDate!.year,
+        _grossDate!.month,
+        _grossDate!.day,
+        _grossTime!.hour,
+        _grossTime!.minute,
+      );
+      widget.onGrossCapturedAtChanged?.call(combined);
+    }
+  }
+
+  void _commitTareWeight(String text) {
+    widget.onTareWeightCommitted?.call(text);
+    final weight = double.tryParse(text);
+    if (weight == null || weight <= 0) {
+      if (text.trim().isEmpty || weight == 0) {
+        setState(() {
+          _tareDate = null;
+          _tareTime = null;
+        });
+        widget.onTareCapturedAtChanged?.call(null);
+      }
+      return;
+    }
+    if (_tareDate == null || _tareTime == null) {
+      final now = widget.tareCapturedAt ?? DateTime.now();
+      setState(() {
+        _tareDate ??= now;
+        _tareTime ??= TimeOfDay.fromDateTime(now);
+      });
+      final combined = DateTime(
+        _tareDate!.year,
+        _tareDate!.month,
+        _tareDate!.day,
+        _tareTime!.hour,
+        _tareTime!.minute,
+      );
+      widget.onTareCapturedAtChanged?.call(combined);
+    }
+  }
+
+  void _onSelectGrossDate(DateTime picked) {
+    setState(() => _grossDate = picked);
+    final t = _grossTime ?? TimeOfDay.now();
+    setState(() => _grossTime = t);
+    final dt = DateTime(
+      picked.year,
+      picked.month,
+      picked.day,
+      t.hour,
+      t.minute,
+    );
+    widget.onGrossCapturedAtChanged?.call(dt);
+  }
+
+  void _onSelectGrossTime(TimeOfDay picked) {
+    final d = _grossDate ?? DateTime.now();
+    setState(() {
+      _grossDate = d;
+      _grossTime = picked;
+    });
+    final dt = DateTime(d.year, d.month, d.day, picked.hour, picked.minute);
+    widget.onGrossCapturedAtChanged?.call(dt);
+  }
+
+  void _onSelectTareDate(DateTime picked) {
+    setState(() => _tareDate = picked);
+    final t = _tareTime ?? TimeOfDay.now();
+    setState(() => _tareTime = t);
+    final dt = DateTime(
+      picked.year,
+      picked.month,
+      picked.day,
+      t.hour,
+      t.minute,
+    );
+    widget.onTareCapturedAtChanged?.call(dt);
+  }
+
+  void _onSelectTareTime(TimeOfDay picked) {
+    final d = _tareDate ?? DateTime.now();
+    setState(() {
+      _tareDate = d;
+      _tareTime = picked;
+    });
+    final dt = DateTime(d.year, d.month, d.day, picked.hour, picked.minute);
+    widget.onTareCapturedAtChanged?.call(dt);
+  }
+
+  /// Right Column Field Rows
+  Widget _buildRightColumn(
+    bool isGrossEnabled,
+    bool isTareEnabled, {
+    double labelWidth = 148.0,
+    double fieldGap = 11.0,
+  }) {
+    final effectiveWeightError =
+        widget.weightError ?? widget.weightValidationError;
+
+    return Column(
+      children: [
+        BillFormRow(
+          label: 'SERIAL NO',
+          labelWidth: labelWidth,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          child: BillFormSerialNoDisplay(billNumber: widget.billNumber),
+        ),
+        SizedBox(height: fieldGap),
+        BillFormRow(
+          label: 'MATERIAL NAME',
+          labelWidth: labelWidth,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          child: BillFormMaterialNameField(
+            materials: widget.materials,
+            selectedMaterial: widget.selectedMaterial,
+            focusNode: widget.materialFocusNode,
+            onChanged: widget.onMaterialChanged,
+          ),
+        ),
+        SizedBox(height: fieldGap),
+        BillFormRow(
+          label: 'CUSTOMER NAME',
+          labelWidth: labelWidth,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          child: BillFormCustomerNameField(
+            customers: widget.customers,
+            selectedCustomer: widget.selectedCustomer,
+            focusNode: widget.customerFocusNode,
+            onChanged: widget.onCustomerChanged,
+          ),
+        ),
+        SizedBox(height: fieldGap),
+        BillFormRow(
+          label: 'GROSS WEIGHT',
+          labelWidth: labelWidth,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          child: BillFormWeightRow(
+            controller: widget.grossWeightController,
+            weightKg: widget.grossWeightKg,
+            weightUnit: widget.weightUnit,
+            enabled: isGrossEnabled,
+            isCaptured: widget.grossWeightKg > 0 && _grossDate != null,
+            hasError: effectiveWeightError != null,
+            focusNode: widget.grossWeightFocusNode,
+            date: _grossDate,
+            time: _grossTime,
+            onSelectDate: _onSelectGrossDate,
+            onSelectTime: _onSelectGrossTime,
+            onWeightChanged: widget.onGrossWeightChanged,
+            onWeightCommitted: _commitGrossWeight,
+            onSubmittedNext: () => widget.tareWeightFocusNode?.requestFocus(),
+          ),
+        ),
+        SizedBox(height: fieldGap),
+        BillFormRow(
+          label: 'TARE WEIGHT',
+          labelWidth: labelWidth,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              BillFormWeightRow(
+                controller: widget.tareWeightController,
+                weightKg: widget.tareWeightKg,
+                weightUnit: widget.weightUnit,
+                enabled: isTareEnabled,
+                isCaptured: widget.tareWeightKg > 0 && _tareDate != null,
+                hasError: effectiveWeightError != null,
+                focusNode: widget.tareWeightFocusNode,
+                date: _tareDate,
+                time: _tareTime,
+                onSelectDate: _onSelectTareDate,
+                onSelectTime: _onSelectTareTime,
+                onWeightChanged: widget.onTareWeightChanged,
+                onWeightCommitted: _commitTareWeight,
+                onSubmittedNext: () =>
+                    widget.vehicleChargeFocusNode?.requestFocus(),
+              ),
+              if (effectiveWeightError != null) ...[
+                const SizedBox(height: 6),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
+                    horizontal: 10,
+                    vertical: 6,
                   ),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFEF2F2),
@@ -302,13 +668,13 @@ class _BillFormState extends State<BillForm> {
                     children: [
                       const Icon(
                         Icons.warning_amber_rounded,
-                        size: 16,
+                        size: 15,
                         color: Color(0xFFDC2626),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 6),
                       Expanded(
                         child: Text(
-                          widget.weightValidationError!,
+                          effectiveWeightError,
                           style: const TextStyle(
                             fontFamily: 'PlusJakartaSans',
                             fontSize: 12,
@@ -322,129 +688,19 @@ class _BillFormState extends State<BillForm> {
                 ),
               ],
             ],
-          );
-        },
-      ),
-    );
-  }
-
-  /// Left Column Field Rows
-  Widget _buildLeftColumn(bool isGrossEnabled, bool isTareEnabled) {
-    const labelWidth = 148.0;
-
-    return Column(
-      children: [
-        BillFormRow(
-          label: 'TRUCK NO',
-          labelWidth: labelWidth,
-          child: _buildTruckNoField(),
-        ),
-        const SizedBox(height: 11),
-        BillFormRow(
-          label: 'TYPE',
-          labelWidth: labelWidth,
-          child: _buildTypeSelector(),
-        ),
-        const SizedBox(height: 11),
-        BillFormRow(
-          label: 'MATERIAL CODE',
-          labelWidth: labelWidth,
-          child: _buildMaterialCodeField(),
-        ),
-        const SizedBox(height: 11),
-        BillFormRow(
-          label: 'CUSTOMER CODE',
-          labelWidth: labelWidth,
-          child: _buildCustomerCodeField(),
-        ),
-        const SizedBox(height: 11),
-        BillFormRow(
-          label: 'CHARGES (₹)',
-          labelWidth: labelWidth,
-          child: _buildChargesField(),
-        ),
-        const SizedBox(height: 11),
-        BillFormRow(
-          label: 'CONTAINER NO',
-          labelWidth: labelWidth,
-          child: _buildContainerNoField(),
-        ),
-        const SizedBox(height: 11),
-        BillFormRow(
-          label: 'MOBILE NO',
-          labelWidth: labelWidth,
-          child: _buildMobileNoField(),
-        ),
-      ],
-    );
-  }
-
-  /// Right Column Field Rows
-  Widget _buildRightColumn(bool isGrossEnabled, bool isTareEnabled) {
-    const labelWidth = 148.0;
-
-    return Column(
-      children: [
-        BillFormRow(
-          label: 'SERIAL NO',
-          labelWidth: labelWidth,
-          child: _buildSerialNoDisplay(),
-        ),
-        const SizedBox(height: 11),
-        BillFormRow(
-          label: 'MATERIAL NAME',
-          labelWidth: labelWidth,
-          child: _buildMaterialNameField(),
-        ),
-        const SizedBox(height: 11),
-        BillFormRow(
-          label: 'CUSTOMER NAME',
-          labelWidth: labelWidth,
-          child: _buildCustomerNameField(),
-        ),
-        const SizedBox(height: 11),
-        BillFormRow(
-          label: 'GROSS WEIGHT',
-          labelWidth: labelWidth,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          child: BillFormWeightRow(
-            controller: widget.grossWeightController,
-            weightKg: widget.grossWeightKg,
-            weightUnit: widget.weightUnit,
-            enabled: isGrossEnabled,
-            isCaptured: widget.grossWeightKg > 0,
-            focusNode: widget.grossWeightFocusNode,
-            date: _grossDate,
-            time: _grossTime,
-            onSelectDate: (d) => setState(() => _grossDate = d),
-            onSelectTime: (t) => setState(() => _grossTime = t),
-            onWeightChanged: widget.onGrossWeightChanged,
           ),
         ),
-        const SizedBox(height: 11),
+        SizedBox(height: fieldGap),
         BillFormRow(
-          label: 'TARE WEIGHT',
+          label: 'NET WEIGHT',
           labelWidth: labelWidth,
           crossAxisAlignment: CrossAxisAlignment.start,
-          child: BillFormWeightRow(
-            controller: widget.tareWeightController,
-            weightKg: widget.tareWeightKg,
+          child: BillFormNetWeightDisplay(
+            grossWeightKg: widget.grossWeightKg,
+            tareWeightKg: widget.tareWeightKg,
+            netWeightKg: widget.netWeightKg,
             weightUnit: widget.weightUnit,
-            enabled: isTareEnabled,
-            isCaptured: widget.tareWeightKg > 0,
-            focusNode: widget.tareWeightFocusNode,
-            date: _tareDate,
-            time: _tareTime,
-            onSelectDate: (d) => setState(() => _tareDate = d),
-            onSelectTime: (t) => setState(() => _tareTime = t),
-            onWeightChanged: widget.onTareWeightChanged,
           ),
-        ),
-        const SizedBox(height: 11),
-        BillFormRow(
-          label: 'NETT WEIGHT',
-          labelWidth: labelWidth,
-          child: _buildNettWeightDisplay(),
         ),
       ],
     );
@@ -454,39 +710,54 @@ class _BillFormState extends State<BillForm> {
 
   /// 1. TRUCK NO
   Widget _buildTruckNoField() {
-    return BillFormFieldShell(
-      prefixIcon: Icons.local_shipping_outlined,
-      child: TextField(
-        key: const Key('bill_vehicle_number_field'),
-        controller: widget.vehicleNumberController,
-        focusNode: widget.vehicleFocusNode,
-        inputFormatters: [
-          FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
-          UpperCaseTextFormatter(),
-          LengthLimitingTextInputFormatter(10),
-        ],
-        textCapitalization: TextCapitalization.characters,
-        style: const TextStyle(
-          fontFamily: 'PlusJakartaSans',
-          fontSize: 15,
-          fontWeight: FontWeight.w700,
-          color: Color(0xFF0F172A),
-        ),
-        decoration: const InputDecoration(
-          border: InputBorder.none,
-          isDense: true,
-          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          hintText: 'Enter Vehicle Number',
-          hintStyle: TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            color: Color(0xFF94A3B8),
-            fontSize: 15,
-            fontWeight: FontWeight.w400,
+    final hasError = widget.vehicleNumberError != null;
+    final isValid = widget.vehicleNumber.trim().isNotEmpty && !hasError;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        BillFormFieldShell(
+          prefixIcon: Icons.local_shipping_outlined,
+          hasError: hasError,
+          isValid: isValid,
+          child: TextField(
+            key: const Key('bill_vehicle_number_field'),
+            controller: widget.vehicleNumberController,
+            focusNode: widget.vehicleFocusNode,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+              UpperCaseTextFormatter(),
+              LengthLimitingTextInputFormatter(10),
+            ],
+            textCapitalization: TextCapitalization.characters,
+            style: const TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF0F172A),
+            ),
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
+              hintText: 'Enter Vehicle Number',
+              hintStyle: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                color: Color(0xFF94A3B8),
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+            onChanged: widget.onVehicleNumberChanged,
+            onSubmitted: (_) => widget.typeFocusNode?.requestFocus(),
           ),
         ),
-        onChanged: widget.onVehicleNumberChanged,
-        onSubmitted: (_) => widget.typeFocusNode?.requestFocus(),
-      ),
+        _buildFieldError(widget.vehicleNumberError),
+      ],
     );
   }
 
@@ -538,41 +809,66 @@ class _BillFormState extends State<BillForm> {
 
   /// 3. MATERIAL CODE
   Widget _buildMaterialCodeField() {
-    return BillFormFieldShell(
-      prefixIcon: Icons.search_rounded,
-      suffix: BillFormSearchButton(
-        onTap: widget.onAddMaterial,
-        tooltip: 'Search Material Code',
-      ),
-      child: TextField(
-        key: const Key('bill_material_code_field'),
-        controller: _materialCodeController,
-        focusNode: widget.materialCodeFocusNode,
-        onSubmitted: _onMaterialCodeSubmitted,
-        style: const TextStyle(
-          fontFamily: 'PlusJakartaSans',
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-          color: Color(0xFF0F172A),
-        ),
-        decoration: const InputDecoration(
-          border: InputBorder.none,
-          isDense: true,
-          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          hintText: 'Select Material Code',
-          hintStyle: TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            color: Color(0xFF94A3B8),
-            fontSize: 15,
-            fontWeight: FontWeight.w400,
+    final error = _localMaterialError ?? widget.materialError;
+    final hasError = error != null;
+    final isValid = widget.selectedMaterial != null && !hasError;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        BillFormFieldShell(
+          prefixIcon: Icons.search_rounded,
+          hasError: hasError,
+          isValid: isValid,
+          suffix: BillFormSearchButton(
+            onTap: widget.onAddMaterial,
+            tooltip: 'Search Material Code',
+          ),
+          child: TextField(
+            key: const Key('bill_material_code_field'),
+            controller: _materialCodeController,
+            focusNode: widget.materialCodeFocusNode,
+            onChanged: (val) {
+              if (_localMaterialError != null) {
+                setState(() => _localMaterialError = null);
+              }
+            },
+            onSubmitted: _onMaterialCodeSubmitted,
+            style: const TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF0F172A),
+            ),
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
+              hintText: 'Select Material Code',
+              hintStyle: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                color: Color(0xFF94A3B8),
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
           ),
         ),
-      ),
+        _buildFieldError(error),
+      ],
     );
   }
 
   Future<void> _onMaterialCodeSubmitted(String value) async {
     final code = value.trim().toUpperCase();
+    if (code.isEmpty) {
+      setState(() => _localMaterialError = 'Material code is required.');
+      return;
+    }
     final match = widget.onMaterialCodeSubmitted != null
         ? await widget.onMaterialCodeSubmitted!(code)
         : widget.materials
@@ -580,11 +876,10 @@ class _BillFormState extends State<BillForm> {
               .firstOrNull;
     if (!mounted) return;
     if (match == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Material code not found')));
+      setState(() => _localMaterialError = 'Material code does not exist.');
       return;
     }
+    setState(() => _localMaterialError = null);
     _materialCodeController.text = match.code;
     widget.onMaterialChanged(match);
     widget.customerCodeFocusNode?.requestFocus();
@@ -592,104 +887,152 @@ class _BillFormState extends State<BillForm> {
 
   /// 4. CUSTOMER CODE
   Widget _buildCustomerCodeField() {
-    return BillFormFieldShell(
-      prefixIcon: Icons.domain_rounded,
-      suffix: BillFormSearchButton(
-        onTap: widget.onAddCustomer,
-        tooltip: 'Search Customer Code',
-      ),
-      child: TextField(
-        key: const Key('bill_customer_code_field'),
-        controller: _customerCodeController,
-        focusNode: widget.customerCodeFocusNode,
-        keyboardType: TextInputType.text,
-        onSubmitted: (value) async {
-          final code = value.trim().toUpperCase();
-          final customer = widget.onCustomerCodeSubmitted != null
-              ? await widget.onCustomerCodeSubmitted!(code)
-              : widget.customers
-                    .where(
-                      (customer) => customer.customerCode.toUpperCase() == code,
-                    )
-                    .firstOrNull;
-          if (!mounted) return;
-          if (customer != null) {
-            widget.onCustomerChanged(customer);
-            await _showChargeSelection();
-          } else {
-            _customerCodeController.clear();
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Customer code not found')),
-            );
-          }
-        },
-        style: const TextStyle(
-          fontFamily: 'PlusJakartaSans',
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-          color: Color(0xFF0F172A),
-        ),
-        decoration: const InputDecoration(
-          border: InputBorder.none,
-          isDense: true,
-          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          hintText: 'Type Customer Code',
-          hintStyle: TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            color: Color(0xFF94A3B8),
-            fontSize: 15,
-            fontWeight: FontWeight.w400,
+    final error = _localCustomerError ?? widget.customerError;
+    final hasError = error != null;
+    final isValid = widget.selectedCustomer != null && !hasError;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        BillFormFieldShell(
+          prefixIcon: Icons.domain_rounded,
+          hasError: hasError,
+          isValid: isValid,
+          suffix: BillFormSearchButton(
+            onTap: widget.onAddCustomer,
+            tooltip: 'Search Customer Code',
+          ),
+          child: TextField(
+            key: const Key('bill_customer_code_field'),
+            controller: _customerCodeController,
+            focusNode: widget.customerCodeFocusNode,
+            keyboardType: TextInputType.text,
+            onChanged: (val) {
+              if (_localCustomerError != null) {
+                setState(() => _localCustomerError = null);
+              }
+            },
+            onSubmitted: (value) async {
+              final code = value.trim().toUpperCase();
+              if (code.isEmpty) {
+                setState(
+                  () => _localCustomerError = 'Customer code is required.',
+                );
+                return;
+              }
+              final customer = widget.onCustomerCodeSubmitted != null
+                  ? await widget.onCustomerCodeSubmitted!(code)
+                  : widget.customers
+                        .where(
+                          (customer) =>
+                              customer.customerCode.toUpperCase() == code,
+                        )
+                        .firstOrNull;
+              if (!mounted) return;
+              if (customer != null) {
+                setState(() => _localCustomerError = null);
+                widget.onCustomerChanged(customer);
+                await _showChargeSelection();
+              } else {
+                setState(
+                  () => _localCustomerError = 'Customer code does not exist.',
+                );
+              }
+            },
+            style: const TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF0F172A),
+            ),
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
+              hintText: 'Type Customer Code',
+              hintStyle: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                color: Color(0xFF94A3B8),
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
           ),
         ),
-      ),
+        _buildFieldError(error),
+      ],
     );
   }
 
   /// 5. CHARGES (₹)
   Widget _buildChargesField() {
-    return BillFormFieldShell(
-      prefixText: '₹',
-      suffix: const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 10),
-        child: Icon(Icons.arrow_drop_down, size: 22, color: Color(0xFF64748B)),
-      ),
-      child: TextField(
-        controller: widget.vehicleChargeController,
-        focusNode: widget.vehicleChargeFocusNode,
-        readOnly: true,
-        onTap: _showChargeSelection,
-        style: const TextStyle(
-          fontFamily: 'PlusJakartaSans',
-          fontSize: 15.5,
-          fontWeight: FontWeight.w700,
-          color: Color(0xFF0F172A),
-        ),
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          isDense: true,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 12,
+    final hasError = widget.chargesError != null;
+    final isValid = widget.vehicleCharge > 0 && !hasError;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        BillFormFieldShell(
+          prefixText: '₹',
+          hasError: hasError,
+          isValid: isValid,
+          suffix: const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 10),
+            child: Icon(
+              Icons.arrow_drop_down,
+              size: 22,
+              color: Color(0xFF64748B),
+            ),
           ),
-          hintText: widget.vehicleCharge > 0 ? null : '0.00',
+          child: TextField(
+            controller: widget.vehicleChargeController,
+            focusNode: widget.vehicleChargeFocusNode,
+            readOnly: true,
+            onTap: _showChargeSelection,
+            style: const TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 15.5,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF0F172A),
+            ),
+            decoration: InputDecoration(
+              border: InputBorder.none,
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
+              hintText: widget.vehicleCharge > 0 ? null : '0.00',
+            ),
+          ),
         ),
-      ),
+        _buildFieldError(widget.chargesError),
+      ],
     );
   }
 
   Future<void> _showChargeSelection() async {
-    final database = context.read<AppDatabase>();
-    final amount = await showDialog<double>(
-      context: context,
-      builder: (_) => WeighmentChargeDialog(database: database),
-    );
-    if (amount == null) return;
-    final value = amount.toStringAsFixed(2);
-    widget.vehicleChargeController?.text = value;
-    widget.onVehicleChargeChanged(value);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) widget.remarksFocusNode?.requestFocus();
-    });
+    try {
+      final database = context.read<AppDatabase>();
+      final amount = await showDialog<double>(
+        context: context,
+        builder: (_) => WeighmentChargeDialog(database: database),
+      );
+      if (amount == null) return;
+      final value = amount.toStringAsFixed(2);
+      widget.vehicleChargeController?.text = value;
+      widget.onVehicleChargeChanged(value);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) widget.remarksFocusNode?.requestFocus();
+      });
+    } catch (_) {
+      // Allow running in environments where AppDatabase is not provided
+    }
   }
 
   /// 6. CONTAINER NO
@@ -725,261 +1068,54 @@ class _BillFormState extends State<BillForm> {
 
   /// 7. MOBILE NO
   Widget _buildMobileNoField() {
-    return BillFormFieldShell(
-      prefixIcon: Icons.phone_outlined,
-      child: TextField(
-        controller: _mobileController,
-        focusNode: widget.mobileFocusNode,
-        keyboardType: TextInputType.phone,
-        inputFormatters: [
-          FilteringTextInputFormatter.digitsOnly,
-          LengthLimitingTextInputFormatter(10),
-        ],
-        onSubmitted: (_) => widget.materialFocusNode?.requestFocus(),
-        style: const TextStyle(
-          fontFamily: 'PlusJakartaSans',
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-          color: Color(0xFF0F172A),
-        ),
-        decoration: const InputDecoration(
-          border: InputBorder.none,
-          isDense: true,
-          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          hintText: 'Mobile / Phone No',
-          hintStyle: TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            color: Color(0xFF94A3B8),
-            fontSize: 15,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-      ),
-    );
-  }
+    final hasError = widget.mobileError != null;
+    final isValid = _mobileController.text.trim().length == 10 && !hasError;
 
-  // --- Right Column Field Builders ---
-
-  /// 1. SERIAL NO
-  Widget _buildSerialNoDisplay() {
-    return BillFormFieldShell(
-      prefixText: '#',
-      backgroundColor: const Color(0xFFF8FAFC),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Text(
-          widget.billNumber,
-          style: const TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            fontSize: 15.5,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF0F172A),
-            letterSpacing: 0.5,
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// 2. MATERIAL NAME
-  Widget _buildMaterialNameField() {
-    return BillFormFieldShell(
-      prefixIcon: Icons.inventory_2_outlined,
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<domain.MaterialItem>(
-          value: widget.selectedMaterial,
-          focusNode: widget.materialFocusNode,
-          isExpanded: true,
-          hint: const Padding(
-            padding: EdgeInsets.only(left: 12),
-            child: Text(
-              'Select Material Name',
-              style: TextStyle(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        BillFormFieldShell(
+          prefixIcon: Icons.phone_outlined,
+          hasError: hasError,
+          isValid: isValid,
+          child: TextField(
+            controller: _mobileController,
+            focusNode: widget.mobileFocusNode,
+            keyboardType: TextInputType.phone,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(10),
+            ],
+            onChanged: (val) {
+              widget.onMobileNumberChanged?.call(val);
+            },
+            onSubmitted: (_) => widget.materialFocusNode?.requestFocus(),
+            style: const TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF0F172A),
+            ),
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
+              hintText: 'Mobile / Phone No',
+              hintStyle: TextStyle(
                 fontFamily: 'PlusJakartaSans',
-                fontSize: 15,
                 color: Color(0xFF94A3B8),
+                fontSize: 15,
                 fontWeight: FontWeight.w400,
               ),
             ),
           ),
-          icon: const Padding(
-            padding: EdgeInsets.only(right: 8),
-            child: Icon(
-              Icons.keyboard_arrow_down_rounded,
-              size: 22,
-              color: Color(0xFF64748B),
-            ),
-          ),
-          items: widget.materials.map((m) {
-            return DropdownMenuItem<domain.MaterialItem>(
-              value: m,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 12),
-                child: Text(
-                  m.name,
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-          onChanged: (m) {
-            if (m != null) widget.onMaterialChanged(m);
-          },
         ),
-      ),
-    );
-  }
-
-  /// 3. CUSTOMER NAME
-  Widget _buildCustomerNameField() {
-    // Drift can return fresh Customer instances after a reload. Use the stable
-    // primary key for dropdown values, and collapse any repeated IDs so each
-    // selectable value occurs exactly once.
-    final customersById = <int, Customer>{};
-    for (final customer in widget.customers) {
-      customersById[customer.id] = customer;
-    }
-    final customers = customersById.values.toList(growable: false);
-    final selectedCustomerId =
-        customersById.containsKey(widget.selectedCustomer?.id)
-        ? widget.selectedCustomer!.id
-        : null;
-
-    return BillFormFieldShell(
-      prefixIcon: Icons.person_outline_rounded,
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<int>(
-          value: selectedCustomerId,
-          focusNode: widget.customerFocusNode,
-          isExpanded: true,
-          hint: const Padding(
-            padding: EdgeInsets.only(left: 12),
-            child: Text(
-              'Select Customer Name',
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 15,
-                color: Color(0xFF94A3B8),
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ),
-          icon: const Padding(
-            padding: EdgeInsets.only(right: 8),
-            child: Icon(
-              Icons.keyboard_arrow_down_rounded,
-              size: 22,
-              color: Color(0xFF64748B),
-            ),
-          ),
-          items: customers.map((c) {
-            return DropdownMenuItem<int>(
-              value: c.id,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 12),
-                child: Text(
-                  c.name,
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-          onChanged: (customerId) {
-            if (customerId == null) return;
-            final customer = customersById[customerId];
-            if (customer != null) widget.onCustomerChanged(customer);
-          },
-        ),
-      ),
-    );
-  }
-
-  /// 6. NETT WEIGHT Display
-  Widget _buildNettWeightDisplay() {
-    final isKg = widget.weightUnit.toLowerCase() == 'kg';
-    final hasCompleteWeight =
-        widget.grossWeightKg > 0 && widget.tareWeightKg > 0;
-    final String netDisplay = !hasCompleteWeight || widget.netWeightKg <= 0
-        ? '--'
-        : isKg
-        ? widget.netWeightKg.toStringAsFixed(0)
-        : (widget.netWeightKg > 0
-              ? (widget.netWeightKg / 1000).toStringAsFixed(3)
-              : '--');
-
-    return Container(
-      height: 46,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: const Color(0xFFCBD5E1), width: 1.0),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 46,
-            decoration: const BoxDecoration(
-              color: Color(0xFFE2E8F0),
-              borderRadius: BorderRadius.horizontal(left: Radius.circular(5)),
-              border: Border(
-                right: BorderSide(color: Color(0xFFCBD5E1), width: 1.0),
-              ),
-            ),
-            alignment: Alignment.center,
-            child: const Icon(
-              Icons.scale_rounded,
-              size: 20,
-              color: Color(0xFF475569),
-            ),
-          ),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Text(
-                netDisplay,
-                style: const TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
-                ),
-              ),
-            ),
-          ),
-          Container(
-            width: 54,
-            height: 46,
-            alignment: Alignment.center,
-            decoration: const BoxDecoration(
-              color: Color(0xFFE2E8F0),
-              borderRadius: BorderRadius.horizontal(right: Radius.circular(5)),
-              border: Border(
-                left: BorderSide(color: Color(0xFFCBD5E1), width: 1.0),
-              ),
-            ),
-            child: Text(
-              isKg ? 'Kg' : 'Ton',
-              style: const TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 13.5,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF334155),
-              ),
-            ),
-          ),
-        ],
-      ),
+        _buildFieldError(widget.mobileError),
+      ],
     );
   }
 }

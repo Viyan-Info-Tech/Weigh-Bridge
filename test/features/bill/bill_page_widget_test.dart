@@ -7,12 +7,17 @@ import 'package:weighbridge/features/customer/domain/entities/customer.dart';
 import 'package:weighbridge/features/customer/domain/repositories/customer_repository.dart';
 import 'package:weighbridge/features/material/domain/entities/material_item.dart';
 import 'package:weighbridge/features/material/domain/repositories/material_item_repository.dart';
+import 'package:weighbridge/features/bill/domain/entities/auto_tare_entry.dart';
 import 'package:weighbridge/features/bill/domain/entities/weighment.dart';
+import 'package:weighbridge/features/bill/domain/repositories/auto_tare_repository.dart';
 import 'package:weighbridge/features/bill/domain/usecases/save_bill.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_bloc.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_event.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_state.dart';
 import 'package:weighbridge/features/bill/presentation/pages/bill_page.dart';
+import 'package:weighbridge/features/bill/presentation/widgets/auto_tare_dialog.dart';
+import 'package:weighbridge/features/bill/presentation/widgets/bill_form.dart';
+import 'package:weighbridge/features/bill/presentation/widgets/weight_display.dart';
 
 class MockCustomerRepository extends Mock implements CustomerRepository {}
 
@@ -26,6 +31,42 @@ class MockLoadRecentBillsUseCase extends Mock
 class MockGenerateBillNumberUseCase extends Mock
     implements GenerateBillNumberUseCase {}
 
+/// Minimal in-memory auto tare store with the same one-row-per-day rule as the
+/// database.
+class _FakeAutoTareRepository implements AutoTareRepository {
+  final Map<DateTime, double> _byDay = {};
+
+  /// Makes every write throw, standing in for a SQLite failure.
+  bool failWrites = false;
+
+  static DateTime _day(DateTime date) =>
+      DateTime(date.year, date.month, date.day);
+
+  @override
+  Future<AutoTareEntry?> getAutoTare(DateTime date) async {
+    final tareKg = _byDay[_day(date)];
+    return tareKg == null
+        ? null
+        : AutoTareEntry(tareDate: _day(date), tareKg: tareKg);
+  }
+
+  @override
+  Future<AutoTareEntry> saveAutoTare({
+    required DateTime date,
+    required double tareKg,
+  }) async {
+    if (failWrites) throw Exception('disk full');
+    _byDay[_day(date)] = tareKg;
+    return AutoTareEntry(tareDate: _day(date), tareKg: tareKg);
+  }
+
+  @override
+  Future<void> deleteAutoTare(DateTime date) async {
+    if (failWrites) throw Exception('disk full');
+    _byDay.remove(_day(date));
+  }
+}
+
 void main() {
   setUpAll(() {
     registerFallbackValue(DateTime(2026, 9, 12));
@@ -37,6 +78,7 @@ void main() {
   late MockSaveBillUseCase mockSaveBillUseCase;
   late MockLoadRecentBillsUseCase mockLoadRecentBillsUseCase;
   late MockGenerateBillNumberUseCase mockGenerateBillNumberUseCase;
+  late _FakeAutoTareRepository autoTareRepository;
 
   final testCustomers = [
     Customer(
@@ -117,6 +159,7 @@ void main() {
     mockSaveBillUseCase = MockSaveBillUseCase();
     mockLoadRecentBillsUseCase = MockLoadRecentBillsUseCase();
     mockGenerateBillNumberUseCase = MockGenerateBillNumberUseCase();
+    autoTareRepository = _FakeAutoTareRepository();
 
     when(
       () => mockCustomerRepository.getAllActiveCustomers(),
@@ -146,6 +189,7 @@ void main() {
       saveBillUseCase: mockSaveBillUseCase,
       loadRecentBillsUseCase: mockLoadRecentBillsUseCase,
       generateBillNumberUseCase: mockGenerateBillNumberUseCase,
+      autoTareRepository: autoTareRepository,
     );
   });
 
@@ -202,21 +246,70 @@ void main() {
     expect(find.text('SERIAL NO'), findsOneWidget);
     expect(find.text('GROSS WEIGHT'), findsOneWidget);
     expect(find.text('TARE WEIGHT'), findsOneWidget);
-    expect(find.text('NETT WEIGHT'), findsOneWidget);
+    expect(find.text('NET WEIGHT'), findsOneWidget);
 
     // Verify Action Buttons
     expect(find.text('SAVE'), findsOneWidget);
     expect(find.text('CANCEL'), findsOneWidget);
     expect(find.text('RE-PRINT'), findsOneWidget);
     expect(find.text('MANUAL TARE'), findsOneWidget);
-    expect(find.text('AUTO TARE'), findsOneWidget);
-    expect(find.text('EXIT'), findsOneWidget);
+    expect(
+      find.descendant(of: find.byType(Wrap), matching: find.text('AUTO TARE')),
+      findsOneWidget,
+    );
+    expect(find.byKey(const Key('auto_tare_indicator')), findsOneWidget);
+    expect(find.text('EXIT'), findsNothing);
     expect(find.text('RE-SEND SMS'), findsNothing);
   });
 
-  testWidgets('F2 opens manual tare and Enter confirms a valid value', (
-    tester,
-  ) async {
+  testWidgets(
+    'live scale readings update the weight banner without rebuilding the form',
+    (tester) async {
+      tester.view.physicalSize = const Size(1400, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await pumpBillPage(tester);
+
+      final formBefore = tester.widget<BillForm>(find.byType(BillForm));
+      final bannerBefore = tester.widget<WeightDisplay>(
+        find.byType(WeightDisplay),
+      );
+
+      for (final weightKg in [1000.0, 2000.0, 3000.0, 4000.0, 5000.0]) {
+        billBloc.add(
+          LiveScaleWeightUpdated(weightKg: weightKg, isStable: true),
+        );
+        await tester.runAsync(
+          () => billBloc.stream.firstWhere(
+            (state) => state.liveScaleWeightKg == weightKg,
+          ),
+        );
+        await tester.pump();
+      }
+      await tester.pumpAndSettle();
+
+      // The banner follows the live reading...
+      expect(
+        tester.widget<WeightDisplay>(find.byType(WeightDisplay)),
+        isNot(same(bannerBefore)),
+      );
+      expect(
+        tester
+            .widget<WeightDisplay>(find.byType(WeightDisplay))
+            .liveScaleWeightKg,
+        5000,
+      );
+
+      // ...while the form and the rest of the page are left alone.
+      expect(tester.widget<BillForm>(find.byType(BillForm)), same(formBefore));
+    },
+  );
+
+  testWidgets('F2 focuses tare weight field for manual entry', (tester) async {
     tester.view.physicalSize = const Size(1400, 900);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
@@ -227,13 +320,10 @@ void main() {
 
     await tester.sendKeyEvent(LogicalKeyboardKey.f2);
     await tester.pumpAndSettle();
-    expect(find.text('Manual Tare'), findsOneWidget);
-
-    await tester.enterText(find.byType(TextFormField).last, '10.2');
-    await tester.testTextInput.receiveAction(TextInputAction.done);
-    await tester.pumpAndSettle();
-    expect(find.text('Manual Tare'), findsNothing);
-    expect(billBloc.state.tareWeightKg, 10.2);
+    expect(
+      FocusManager.instance.primaryFocus?.debugLabel,
+      'tareWeightFocusNode',
+    );
   });
 
   testWidgets('F1 refuses to capture when there is no real live scale value', (
@@ -269,6 +359,95 @@ void main() {
     expect(billBloc.state.tareWeightKg, 0);
   });
 
+  testWidgets(
+    'saving the same auto tare again closes the dialog instead of spinning',
+    (tester) async {
+      tester.view.physicalSize = const Size(1400, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      await pumpBillPage(tester);
+
+      // First save creates the day record.
+      await tester.sendKeyEvent(LogicalKeyboardKey.f3);
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('auto_tare_weight_field')),
+        '100',
+      );
+      final saveButton = find.byKey(const Key('auto_tare_save_button'));
+      await tester.ensureVisible(saveButton);
+      await tester.tap(saveButton);
+      await tester.runAsync(
+        () => billBloc.stream.firstWhere((state) => state.autoTareKg == 100),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AutoTareDialog), findsNothing);
+      expect(billBloc.state.autoTareKg, 100);
+
+      // Second save with the identical value produces no state change, which
+      // previously left the dialog stuck in its loading state.
+      await tester.sendKeyEvent(LogicalKeyboardKey.f3);
+      await tester.pumpAndSettle();
+      expect(find.byType(AutoTareDialog), findsOneWidget);
+
+      await tester.ensureVisible(saveButton);
+      await tester.tap(saveButton);
+      // No new state is emitted here, so the dialog closing is the only
+      // observable signal that the save completed. The bloc handler runs in
+      // real async, which widget tests only advance inside runAsync.
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 200)),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AutoTareDialog), findsNothing);
+      expect(billBloc.state.autoTareKg, 100);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'a failing auto tare save surfaces an error and unlocks the form',
+    (tester) async {
+      tester.view.physicalSize = const Size(1400, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      autoTareRepository.failWrites = true;
+      await pumpBillPage(tester);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.f3);
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('auto_tare_weight_field')),
+        '100',
+      );
+      final saveButton = find.byKey(const Key('auto_tare_save_button'));
+      await tester.ensureVisible(saveButton);
+      await tester.tap(saveButton);
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 200)),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('disk full'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+
+      // The controls are usable again, so the operator is not locked out.
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AutoTareDialog), findsNothing);
+    },
+  );
+
   testWidgets('F4 reports when there is no ticket to reprint', (tester) async {
     tester.view.physicalSize = const Size(1400, 900);
     tester.view.devicePixelRatio = 1.0;
@@ -286,26 +465,47 @@ void main() {
     expect(find.text('No ticket available for reprint.'), findsOneWidget);
   });
 
-  testWidgets('F3 captures a stable live reading as tare', (tester) async {
-    tester.view.physicalSize = const Size(1400, 900);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(() {
-      tester.view.resetPhysicalSize();
-      tester.view.resetDevicePixelRatio();
-    });
-    await pumpBillPage(tester);
-    billBloc.add(const LiveScaleWeightUpdated(weightKg: 10200, isStable: true));
-    await tester.runAsync(() async {
-      await billBloc.stream.firstWhere(
-        (state) => state.liveScaleWeightKg == 10200,
+  testWidgets(
+    'F3 opens the auto tare dialog prefilled with a stable live reading',
+    (tester) async {
+      tester.view.physicalSize = const Size(1400, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      await pumpBillPage(tester);
+      billBloc.add(
+        const LiveScaleWeightUpdated(weightKg: 10200, isStable: true),
       );
-    });
-    await tester.pumpAndSettle();
+      await tester.runAsync(() async {
+        await billBloc.stream.firstWhere(
+          (state) => state.liveScaleWeightKg == 10200,
+        );
+      });
+      await tester.pumpAndSettle();
 
-    await tester.sendKeyEvent(LogicalKeyboardKey.f3);
-    await tester.pumpAndSettle();
-    expect(billBloc.state.tareWeightKg, 10200);
-  });
+      await tester.sendKeyEvent(LogicalKeyboardKey.f3);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Enter Auto Tare'), findsOneWidget);
+      expect(find.text('Save Auto Tare'), findsOneWidget);
+      expect(
+        tester
+            .widget<TextFormField>(
+              find.descendant(
+                of: find.byType(AutoTareDialog),
+                matching: find.byType(TextFormField),
+              ),
+            )
+            .controller
+            ?.text,
+        '10200',
+      );
+      // Opening the dialog must not touch the bill's own tare field.
+      expect(billBloc.state.tareWeightKg, 0);
+    },
+  );
 
   testWidgets('F4 opens the most recent valid ticket for reprint', (
     tester,
@@ -425,9 +625,7 @@ void main() {
     expect(FocusManager.instance.primaryFocus?.debugLabel, 'vehicleFocusNode');
   });
 
-  testWidgets('F9 confirms before clearing an unfinished weighment', (
-    tester,
-  ) async {
+  testWidgets('F9 does not trigger an exit dialog', (tester) async {
     tester.view.physicalSize = const Size(1400, 900);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
@@ -442,14 +640,60 @@ void main() {
     await tester.pumpAndSettle();
     await tester.sendKeyEvent(LogicalKeyboardKey.f9);
     await tester.pumpAndSettle();
-    expect(find.text('Exit current weighment?'), findsOneWidget);
-    await tester.tap(find.text('Exit Ticket'));
-    await tester.pumpAndSettle();
-    await tester.runAsync(() async {
-      await billBloc.stream.firstWhere((state) => state.vehicleNumber.isEmpty);
-    });
     expect(find.text('Exit current weighment?'), findsNothing);
-    expect(billBloc.state.vehicleNumber, isEmpty);
+  });
+
+  testWidgets('F3 opens the auto tare management screen', (tester) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await pumpBillPage(tester);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.f3);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Enter Auto Tare'), findsOneWidget);
+    expect(find.text('Not Set'), findsWidgets);
+    expect(find.byKey(const Key('auto_tare_save_button')), findsOneWidget);
+    expect(find.byKey(const Key('auto_tare_delete_button')), findsOneWidget);
+  });
+
+  testWidgets('F4 triggers re-print action', (tester) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await pumpBillPage(tester);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.f4);
+    await tester.pumpAndSettle();
+    expect(find.text('Print Ticket'), findsWidgets);
+  });
+
+  testWidgets('Escape prompts to cancel weighment when unsaved data exists', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await pumpBillPage(tester);
+    await tester.enterText(
+      find.byKey(const Key('bill_vehicle_number_field')),
+      'TN32AB1234',
+    );
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(find.text('Cancel Weighment?'), findsWidgets);
   });
 
   testWidgets('Escape clears an empty current operation without a dialog', (

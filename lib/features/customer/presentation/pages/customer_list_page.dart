@@ -21,6 +21,12 @@ class _CustomerListPageState extends State<CustomerListPage> {
   final _phoneController = TextEditingController();
   final _searchController = TextEditingController();
 
+  final _codeFocusNode = FocusNode();
+  final _nameFocusNode = FocusNode();
+  final _phoneFocusNode = FocusNode();
+  final _saveFocusNode = FocusNode();
+  final _searchFocusNode = FocusNode();
+
   int? _editingCustomerId;
   bool _saving = false;
   String? _codeErrorText;
@@ -40,6 +46,11 @@ class _CustomerListPageState extends State<CustomerListPage> {
     _nameController.dispose();
     _phoneController.dispose();
     _searchController.dispose();
+    _codeFocusNode.dispose();
+    _nameFocusNode.dispose();
+    _phoneFocusNode.dispose();
+    _saveFocusNode.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -52,6 +63,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
       _codeErrorText = null;
       _nameErrorText = null;
     });
+    _codeFocusNode.requestFocus();
   }
 
   void _cancelEdit() {
@@ -61,8 +73,10 @@ class _CustomerListPageState extends State<CustomerListPage> {
       _nameController.clear();
       _phoneController.clear();
       _codeErrorText = null;
+      _nameErrorText = null;
       _formKey.currentState?.reset();
     });
+    _codeFocusNode.requestFocus();
   }
 
   Future<void> _saveCustomer() async {
@@ -181,6 +195,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
         if (state.status == CustomerStatus.success) {
           setState(() => _saving = false);
           _cancelEdit();
+          _codeFocusNode.requestFocus();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.successMessage ?? 'Customer saved'),
@@ -283,167 +298,197 @@ class _CustomerListPageState extends State<CustomerListPage> {
       padding: const EdgeInsets.all(20),
       child: Form(
         key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  _isEditing ? 'EDIT CUSTOMER' : 'ADD CUSTOMER',
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF334155),
-                    letterSpacing: 0.5,
+        child: FocusTraversalGroup(
+          policy: OrderedTraversalPolicy(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    _isEditing ? 'EDIT CUSTOMER' : 'ADD CUSTOMER',
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF334155),
+                      letterSpacing: 0.5,
+                    ),
                   ),
-                ),
-                if (_isEditing)
-                  InkWell(
-                    onTap: _cancelEdit,
-                    child: const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                      child: Text(
-                        'Cancel',
-                        style: TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF64748B),
+                  if (_isEditing)
+                    InkWell(
+                      canRequestFocus: false,
+                      onTap: _cancelEdit,
+                      child: const Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 2,
+                        ),
+                        child: Text(
+                          'Cancel',
+                          style: TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF64748B),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 18),
-
-            // 1. Customer Code *
-            _buildFieldLabel('Customer Code', isRequired: true),
-            const SizedBox(height: 6),
-            TextFormField(
-              controller: _codeController,
-              textCapitalization: TextCapitalization.characters,
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9-]')),
-              ],
-              validator: (v) {
-                if (_codeErrorText != null) return _codeErrorText;
-                final s = v?.trim() ?? '';
-                if (s.isEmpty) return 'Customer code is required';
-                if (s.length > 30) return 'Max 30 characters';
-                return null;
-              },
-              onChanged: (_) {
-                if (_codeErrorText != null) {
-                  setState(() => _codeErrorText = null);
-                  _formKey.currentState?.validate();
-                }
-              },
-              style: const TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF0F172A),
+                ],
               ),
-              decoration: _inputDecoration(),
-            ),
-            const SizedBox(height: 14),
+              const SizedBox(height: 18),
 
-            // 2. Customer Name *
-            _buildFieldLabel('Customer Name', isRequired: true),
-            const SizedBox(height: 6),
-            TextFormField(
-              controller: _nameController,
-              validator: (v) {
-                final s = v?.trim() ?? '';
-                if (s.isEmpty) return 'Customer name is required';
-                return _nameErrorText;
-              },
-              onChanged: (_) {
-                if (_nameErrorText != null) {
-                  setState(() => _nameErrorText = null);
-                  _formKey.currentState?.validate();
-                }
-              },
-              style: const TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF0F172A),
-              ),
-              decoration: _inputDecoration(),
-            ),
-            const SizedBox(height: 14),
-
-            // 3. Phone Number
-            _buildFieldLabel('Phone Number', isRequired: false),
-            const SizedBox(height: 6),
-            TextFormField(
-              controller: _phoneController,
-              keyboardType: TextInputType.phone,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-                LengthLimitingTextInputFormatter(10),
-              ],
-              validator: (v) {
-                final s = v?.trim() ?? '';
-                if (s.isNotEmpty && s.length != 10) {
-                  return 'Enter a valid 10-digit number';
-                }
-                return null;
-              },
-              style: const TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF0F172A),
-              ),
-              decoration: _inputDecoration(),
-            ),
-
-            const Spacer(),
-
-            // Save Customer Button pinned at bottom
-            SizedBox(
-              width: double.infinity,
-              height: 42,
-              child: FilledButton.icon(
-                onPressed: _saving ? null : _saveCustomer,
-                icon: _saving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.save_rounded, size: 18),
-                label: Text(
-                  _saving
-                      ? 'Saving...'
-                      : _isEditing
-                      ? 'Update Customer'
-                      : 'Save Customer',
+              // 1. Customer Code *
+              _buildFieldLabel('Customer Code', isRequired: true),
+              const SizedBox(height: 6),
+              FocusTraversalOrder(
+                order: const NumericFocusOrder(1),
+                child: TextFormField(
+                  controller: _codeController,
+                  focusNode: _codeFocusNode,
+                  autofocus: true,
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (_) => _nameFocusNode.requestFocus(),
+                  textCapitalization: TextCapitalization.characters,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9-]')),
+                  ],
+                  validator: (v) {
+                    if (_codeErrorText != null) return _codeErrorText;
+                    final s = v?.trim() ?? '';
+                    if (s.isEmpty) return 'Customer code is required';
+                    if (s.length > 30) return 'Max 30 characters';
+                    return null;
+                  },
+                  onChanged: (_) {
+                    if (_codeErrorText != null) {
+                      setState(() => _codeErrorText = null);
+                      _formKey.currentState?.validate();
+                    }
+                  },
                   style: const TextStyle(
                     fontFamily: 'PlusJakartaSans',
                     fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF0F172A),
                   ),
+                  decoration: _inputDecoration(),
                 ),
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF174A8B),
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+              ),
+              const SizedBox(height: 14),
+
+              // 2. Customer Name *
+              _buildFieldLabel('Customer Name', isRequired: true),
+              const SizedBox(height: 6),
+              FocusTraversalOrder(
+                order: const NumericFocusOrder(2),
+                child: TextFormField(
+                  controller: _nameController,
+                  focusNode: _nameFocusNode,
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (_) => _phoneFocusNode.requestFocus(),
+                  validator: (v) {
+                    final s = v?.trim() ?? '';
+                    if (s.isEmpty) return 'Customer name is required';
+                    return _nameErrorText;
+                  },
+                  onChanged: (_) {
+                    if (_nameErrorText != null) {
+                      setState(() => _nameErrorText = null);
+                      _formKey.currentState?.validate();
+                    }
+                  },
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF0F172A),
+                  ),
+                  decoration: _inputDecoration(),
+                ),
+              ),
+              const SizedBox(height: 14),
+
+              // 3. Phone Number
+              _buildFieldLabel('Phone Number', isRequired: false),
+              const SizedBox(height: 6),
+              FocusTraversalOrder(
+                order: const NumericFocusOrder(3),
+                child: TextFormField(
+                  controller: _phoneController,
+                  focusNode: _phoneFocusNode,
+                  keyboardType: TextInputType.phone,
+                  textInputAction: TextInputAction.next,
+                  onFieldSubmitted: (_) => _saveFocusNode.requestFocus(),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(10),
+                  ],
+                  validator: (v) {
+                    final s = v?.trim() ?? '';
+                    if (s.isNotEmpty && s.length != 10) {
+                      return 'Enter a valid 10-digit number';
+                    }
+                    return null;
+                  },
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF0F172A),
+                  ),
+                  decoration: _inputDecoration(),
+                ),
+              ),
+
+              const Spacer(),
+
+              // 4. Save Customer Button pinned at bottom
+              FocusTraversalOrder(
+                order: const NumericFocusOrder(4),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 42,
+                  child: FilledButton.icon(
+                    focusNode: _saveFocusNode,
+                    onPressed: _saving ? null : _saveCustomer,
+                    icon: _saving
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.save_rounded, size: 18),
+                    label: Text(
+                      _saving
+                          ? 'Saving...'
+                          : _isEditing
+                          ? 'Update Customer'
+                          : 'Save Customer',
+                      style: const TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF174A8B),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -478,6 +523,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                 height: 36,
                 child: TextField(
                   controller: _searchController,
+                  focusNode: _searchFocusNode,
                   onChanged: (v) =>
                       context.read<CustomerBloc>().add(SearchCustomers(v)),
                   style: const TextStyle(
@@ -556,6 +602,7 @@ class _CustomerListPageState extends State<CustomerListPage> {
                     final isSelected = _editingCustomerId == customer.id;
 
                     return InkWell(
+                      canRequestFocus: false,
                       onTap: () => _startEdit(customer),
                       borderRadius: BorderRadius.circular(6),
                       hoverColor: const Color(0xFFF8FAFC),
@@ -626,28 +673,32 @@ class _CustomerListPageState extends State<CustomerListPage> {
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.edit_outlined,
-                                    size: 17,
-                                    color: Color(0xFF64748B),
+                                ExcludeFocus(
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.edit_outlined,
+                                      size: 17,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                    tooltip: 'Edit',
+                                    splashRadius: 18,
+                                    visualDensity: VisualDensity.compact,
+                                    onPressed: () => _startEdit(customer),
                                   ),
-                                  tooltip: 'Edit',
-                                  splashRadius: 18,
-                                  visualDensity: VisualDensity.compact,
-                                  onPressed: () => _startEdit(customer),
                                 ),
                                 const SizedBox(width: 4),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.delete_outline_rounded,
-                                    size: 17,
-                                    color: Color(0xFFDC2626),
+                                ExcludeFocus(
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      Icons.delete_outline_rounded,
+                                      size: 17,
+                                      color: Color(0xFFDC2626),
+                                    ),
+                                    tooltip: 'Delete',
+                                    splashRadius: 18,
+                                    visualDensity: VisualDensity.compact,
+                                    onPressed: () => _confirmDelete(customer),
                                   ),
-                                  tooltip: 'Delete',
-                                  splashRadius: 18,
-                                  visualDensity: VisualDensity.compact,
-                                  onPressed: () => _confirmDelete(customer),
                                 ),
                               ],
                             ),

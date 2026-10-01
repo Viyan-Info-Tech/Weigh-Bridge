@@ -39,9 +39,9 @@ class _AdminPasswordDialogState extends State<_AdminPasswordDialog> {
     setState(() => _isVerifying = true);
     bool valid;
     try {
-      valid = await context
-          .read<AdminPasswordService>()
-          .verify(_controller.text);
+      valid = await context.read<AdminPasswordService>().verify(
+        _controller.text,
+      );
     } catch (_) {
       if (!mounted) return;
       setState(() {

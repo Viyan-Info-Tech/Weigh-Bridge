@@ -67,6 +67,13 @@ class _LicenseGateState extends State<LicenseGate> {
       licenseService: widget.licenseService,
       authBloc: widget.injection.authBloc,
       licenseStatus: _licenseStatus,
+      onActivated: () {
+        Future.delayed(const Duration(milliseconds: 1200), () {
+          if (mounted) {
+            _validateLicense();
+          }
+        });
+      },
     );
   }
 }

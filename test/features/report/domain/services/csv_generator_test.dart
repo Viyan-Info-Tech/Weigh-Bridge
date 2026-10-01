@@ -120,6 +120,16 @@ void main() {
       expect(csv.split('Completed').length - 1, 2);
     });
 
+    test('marks records without any captured weight as Incomplete', () {
+      final csv = generator.generateCsvString([
+        item(billNumber: 'WB-001', firstWeightKg: 20000, secondWeightKg: 5000),
+        item(billNumber: 'WB-005', firstWeightKg: 0, secondWeightKg: null),
+      ]);
+      expect(csv.split('Completed').length - 1, 1);
+      expect(csv.split('Incomplete').length - 1, 1);
+      expect(csv, isNot(contains('Pending')));
+    });
+
     test('quotes fields containing commas or quotes', () {
       final csv = generator.generateCsvString([
         item(billNumber: 'WB-003', customerName: 'Kumar, Sons & "Co"'),

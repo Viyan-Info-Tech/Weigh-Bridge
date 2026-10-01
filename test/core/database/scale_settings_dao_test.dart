@@ -30,36 +30,41 @@ void main() {
       expect(settings.enabled, isTrue);
     });
 
-    test('updateSettings persists and round-trips through the adapter', () async {
-      await dao.getSettings();
-      await dao.updateSettings(
-        ScaleConfigAdapter.toCompanion(const ScaleConfig(
-          port: 'COM7',
-          baudRate: 19200,
-          dataBits: 7,
-          parity: ScaleParity.even,
-          stopBits: 2,
-          enabled: false,
-        )),
-      );
+    test(
+      'updateSettings persists and round-trips through the adapter',
+      () async {
+        await dao.getSettings();
+        await dao.updateSettings(
+          ScaleConfigAdapter.toCompanion(
+            const ScaleConfig(
+              port: 'COM7',
+              baudRate: 19200,
+              dataBits: 7,
+              parity: ScaleParity.even,
+              stopBits: 2,
+              enabled: false,
+            ),
+          ),
+        );
 
-      final row = await dao.getSettings();
-      expect(row.port, 'COM7');
-      expect(row.baudRate, 19200);
-      expect(row.dataBits, 7);
-      expect(row.parity, 2);
-      expect(row.stopBits, 2);
-      expect(row.enabled, isFalse);
+        final row = await dao.getSettings();
+        expect(row.port, 'COM7');
+        expect(row.baudRate, 19200);
+        expect(row.dataBits, 7);
+        expect(row.parity, 2);
+        expect(row.stopBits, 2);
+        expect(row.enabled, isFalse);
 
-      final config = ScaleConfigAdapter.fromRow(row);
-      expect(config.port, 'COM7');
-      expect(config.baudRate, 19200);
-      expect(config.dataBits, 7);
-      expect(config.parity, ScaleParity.even);
-      expect(config.stopBits, 2);
-      expect(config.enabled, isFalse);
-      expect(config.protocol, ScaleProtocolType.unconfigured);
-    });
+        final config = ScaleConfigAdapter.fromRow(row);
+        expect(config.port, 'COM7');
+        expect(config.baudRate, 19200);
+        expect(config.dataBits, 7);
+        expect(config.parity, ScaleParity.even);
+        expect(config.stopBits, 2);
+        expect(config.enabled, isFalse);
+        expect(config.protocol, ScaleProtocolType.unconfigured);
+      },
+    );
 
     test('adapter maps unknown parity and protocol fallbacks safely', () {
       final config = ScaleConfigAdapter.fromRow(

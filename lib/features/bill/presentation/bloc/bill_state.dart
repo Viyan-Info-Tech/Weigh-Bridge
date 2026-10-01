@@ -30,6 +30,7 @@ class BillState extends Equatable {
   final MaterialItem? selectedMaterial;
 
   final String paymentMode;
+  final String mobileNumber;
 
   final String grossWeightText;
   final String tareWeightText;
@@ -57,9 +58,15 @@ class BillState extends Equatable {
   final DateTime? grossCapturedAt;
   final DateTime? tareCapturedAt;
 
+  /// Common/platform tare configured for the current day (F3). Zero means
+  /// "Not Set"; it is never inherited from a previous day.
+  final double autoTareKg;
+  final DateTime? autoTareDate;
+
   final Weighment? printReceiptBill;
   final Customer? printReceiptCustomer;
   final String? printReceiptMaterialName;
+  final Map<String, String> fieldErrors;
 
   const BillState({
     this.status = BillScreenStatus.initial,
@@ -74,6 +81,7 @@ class BillState extends Equatable {
     this.vehicleNumber = '',
     this.selectedMaterial,
     this.paymentMode = 'Cash',
+    this.mobileNumber = '',
     this.grossWeightText = '',
     this.tareWeightText = '',
     this.remarksText = '',
@@ -96,14 +104,25 @@ class BillState extends Equatable {
     this.selectedWeightType = 'Gross',
     this.grossCapturedAt,
     this.tareCapturedAt,
+    this.autoTareKg = 0,
+    this.autoTareDate,
     this.printReceiptBill,
     this.printReceiptCustomer,
     this.printReceiptMaterialName,
+    this.fieldErrors = const {},
   });
 
   bool get isEditing => editingBillId != null;
   bool get hasBothWeights => grossWeightKg > 0 && tareWeightKg > 0;
   bool get isKg => weightUnit.trim().toLowerCase() == 'kg';
+
+  String? get vehicleNumberError => fieldErrors['vehicleNumber'];
+  String? get materialError => fieldErrors['material'];
+  String? get customerError => fieldErrors['customer'];
+  String? get chargesError => fieldErrors['charges'];
+  String? get weightError => fieldErrors['weight'] ?? weightValidationError;
+  String? get mobileError => fieldErrors['mobile'];
+  bool get hasFieldErrors => fieldErrors.isNotEmpty;
 
   DateTime get effectiveBillsDate {
     final d = billsDate ?? DateTime.now();
@@ -118,11 +137,14 @@ class BillState extends Equatable {
 
   bool get hasDateRange => billsStartDate != null || billsEndDate != null;
   bool get hasWeightError => weightValidationError != null;
+  bool get hasAutoTare => autoTareKg.isFinite && autoTareKg > 0;
 
   BillState copyWith({
     BillScreenStatus? status,
     String? errorMessage,
     bool clearError = false,
+    Map<String, String>? fieldErrors,
+    bool clearFieldErrors = false,
     List<Customer>? customers,
     List<MaterialItem>? materials,
     List<Weighment>? recentBills,
@@ -136,6 +158,7 @@ class BillState extends Equatable {
     MaterialItem? selectedMaterial,
     bool clearMaterial = false,
     String? paymentMode,
+    String? mobileNumber,
     String? grossWeightText,
     String? tareWeightText,
     String? remarksText,
@@ -162,6 +185,9 @@ class BillState extends Equatable {
     DateTime? tareCapturedAt,
     bool clearGrossCapturedAt = false,
     bool clearTareCapturedAt = false,
+    double? autoTareKg,
+    DateTime? autoTareDate,
+    bool clearAutoTare = false,
     Weighment? printReceiptBill,
     Customer? printReceiptCustomer,
     String? printReceiptMaterialName,
@@ -188,6 +214,7 @@ class BillState extends Equatable {
           ? null
           : (selectedMaterial ?? this.selectedMaterial),
       paymentMode: paymentMode ?? this.paymentMode,
+      mobileNumber: mobileNumber ?? this.mobileNumber,
       grossWeightText: grossWeightText ?? this.grossWeightText,
       tareWeightText: tareWeightText ?? this.tareWeightText,
       remarksText: remarksText ?? this.remarksText,
@@ -224,6 +251,8 @@ class BillState extends Equatable {
       tareCapturedAt: clearTareCapturedAt
           ? null
           : (tareCapturedAt ?? this.tareCapturedAt),
+      autoTareKg: clearAutoTare ? 0 : (autoTareKg ?? this.autoTareKg),
+      autoTareDate: clearAutoTare ? null : (autoTareDate ?? this.autoTareDate),
       printReceiptBill: clearPrintReceipt
           ? null
           : (printReceiptBill ?? this.printReceiptBill),
@@ -233,6 +262,9 @@ class BillState extends Equatable {
       printReceiptMaterialName: clearPrintReceipt
           ? null
           : (printReceiptMaterialName ?? this.printReceiptMaterialName),
+      fieldErrors: clearFieldErrors
+          ? const {}
+          : (fieldErrors ?? this.fieldErrors),
     );
   }
 
@@ -250,6 +282,7 @@ class BillState extends Equatable {
     vehicleNumber,
     selectedMaterial,
     paymentMode,
+    mobileNumber,
     grossWeightText,
     tareWeightText,
     remarksText,
@@ -272,8 +305,11 @@ class BillState extends Equatable {
     selectedWeightType,
     grossCapturedAt,
     tareCapturedAt,
+    autoTareKg,
+    autoTareDate,
     printReceiptBill,
     printReceiptCustomer,
     printReceiptMaterialName,
+    fieldErrors,
   ];
 }

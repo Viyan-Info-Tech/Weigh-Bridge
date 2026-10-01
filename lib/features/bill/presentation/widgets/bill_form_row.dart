@@ -48,7 +48,9 @@ class BillFormRow extends StatelessWidget {
           children: [
             Padding(
               padding: EdgeInsets.only(
-                top: crossAxisAlignment == CrossAxisAlignment.start ? 13.0 : 0.0,
+                top: crossAxisAlignment == CrossAxisAlignment.start
+                    ? 13.0
+                    : 0.0,
               ),
               child: SizedBox(width: effectiveLabelWidth, child: label),
             ),

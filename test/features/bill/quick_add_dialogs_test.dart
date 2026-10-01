@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weighbridge/features/bill/presentation/widgets/quick_add_customer_dialog.dart';
+
 import 'package:weighbridge/features/customer/domain/entities/customer.dart';
 
 void main() {

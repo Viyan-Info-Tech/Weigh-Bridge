@@ -66,17 +66,19 @@ void main() {
       );
     });
 
-    test('returns false for a one-stage weighment', () {
+    test('returns true for a one-stage weighment with only Gross', () {
       final w = build(firstWeightKg: 20000);
-      expect(w.isCompleted, isFalse);
+      expect(w.isCompleted, isTrue);
     });
 
-    test('returns false when either weight is missing', () {
+    test('returns true for a one-stage weighment with only Tare', () {
+      final w = build(firstWeightType: 'TARE', firstWeightKg: 5000);
+      expect(w.isCompleted, isTrue);
+    });
+
+    test('returns false when neither weight is present', () {
       expect(build().isCompleted, isFalse);
-      expect(
-        build(firstWeightKg: 0, secondWeightKg: 5000).isCompleted,
-        isFalse,
-      );
+      expect(build(firstWeightKg: 0, secondWeightKg: 0).isCompleted, isFalse);
     });
   });
 

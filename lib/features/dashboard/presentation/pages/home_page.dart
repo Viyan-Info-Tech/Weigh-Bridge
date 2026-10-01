@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -16,6 +15,8 @@ import '../../../settings/presentation/pages/settings_page.dart';
 import '../../../report/presentation/pages/report_page.dart';
 import '../../../auth/presentation/widgets/truck_logo.dart';
 import '../../../../core/presentation/widgets/admin_password_dialog.dart';
+import '../../../../core/status/app_status_cubit.dart';
+import '../../../../core/status/app_status_state.dart';
 import 'about_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -27,26 +28,17 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
-  final FocusNode _appShortcutsFocusNode =
-      FocusNode(debugLabel: 'applicationNavigationShortcuts');
+  final FocusNode _appShortcutsFocusNode = FocusNode(
+    debugLabel: 'applicationNavigationShortcuts',
+  );
   final GlobalKey<BillPageState> _billPageKey = GlobalKey<BillPageState>();
 
-  late final List<Widget> _pages;
   late Timer _clockTimer;
   DateTime _currentTime = DateTime.now();
 
   @override
   void initState() {
     super.initState();
-    _pages = [
-      BillPage(key: _billPageKey),
-      const CustomerListPage(),
-      const MaterialListPage(),
-      const ReportPage(),
-      const SettingsPage(),
-      const AboutPage(),
-    ];
-
     _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) {
         setState(() {
@@ -67,37 +59,39 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Focus(
       focusNode: _appShortcutsFocusNode,
-      child: CallbackShortcuts(
-        bindings: <ShortcutActivator, VoidCallback>{
-          const SingleActivator(LogicalKeyboardKey.f2): () {
-            if (_selectedIndex == 0) {
-              _billPageKey.currentState?.focusTareWeightInput();
-            }
-          },
-        },
-        child: Scaffold(
-          backgroundColor: const Color(0xFFF1F5F9),
-          body: SafeArea(
-            child: Column(
-              children: [
-                // 1. Top Application Header
-                _buildAppHeader(context),
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF1F5F9),
+        body: SafeArea(
+          child: Column(
+            children: [
+              // 1. Top Application Header
+              _buildAppHeader(context),
 
-                // 2. Horizontal Navigation Tabs Bar
-                _buildTopNavigationBar(context),
+              // 2. Horizontal Navigation Tabs Bar
+              _buildTopNavigationBar(context),
 
-                // 3. Main Active Content Screen
-                Expanded(
-                  child: IndexedStack(
-                    index: _selectedIndex,
-                    children: _pages,
-                  ),
+              // 3. Main Active Content Screen
+              Expanded(
+                child: IndexedStack(
+                  index: _selectedIndex,
+                  children: [
+                    BillPage(
+                      key: _billPageKey,
+                      isActive: _selectedIndex == 0,
+                      onExit: () => _confirmLogout(context),
+                    ),
+                    const CustomerListPage(),
+                    const MaterialListPage(),
+                    const ReportPage(),
+                    const SettingsPage(),
+                    const AboutPage(),
+                  ],
                 ),
+              ),
 
-                // 4. Bottom Industrial Status Bar
-                _buildAppStatusBar(context),
-              ],
-            ),
+              // 4. Bottom Industrial Status Bar
+              _buildAppStatusBar(context),
+            ],
           ),
         ),
       ),
@@ -393,7 +387,7 @@ class _HomePageState extends State<HomePage> {
     setState(() => _selectedIndex = index);
     if (index == 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _appShortcutsFocusNode.requestFocus();
+        if (mounted) _billPageKey.currentState?.requestFocus();
       });
     }
   }
@@ -511,111 +505,171 @@ class _HomePageState extends State<HomePage> {
   }
 
   /// 4. Persistent Bottom Industrial Status Bar
+  ///
+  /// Every status item is bound to [AppStatusCubit]; nothing here is
+  /// hardcoded. Scale is tracked live, the other probes refresh periodically.
   Widget _buildAppStatusBar(BuildContext context) {
-    return Container(
-      height: 38,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE2E8F0), width: 1)),
-      ),
-      child: Row(
-        children: [
-          // Status cluster scrolls horizontally so it never overflows on
-          // narrow or compact window sizes.
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Ready indicator
-                  Container(
-                    width: 9,
-                    height: 9,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF10B981),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Ready',
-                    style: TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1E293B),
-                    ),
-                  ),
+    return BlocBuilder<AppStatusCubit, AppStatusState>(
+      builder: (context, status) {
+        const checking = Color(0xFF94A3B8);
+        const ok = Color(0xFF10B981);
+        const warning = Color(0xFFF59E0B);
+        const error = Color(0xFFEF4444);
+        const info = Color(0xFF38BDF8);
 
-                  const SizedBox(width: 20),
-                  _buildStatusDivider(),
-                  const SizedBox(width: 20),
-
-                  // Database: Connected
-                  const Icon(
-                    Icons.storage_rounded,
-                    size: 15,
-                    color: Color(0xFF1E293B),
-                  ),
-                  const SizedBox(width: 6),
-                  const Text(
-                    'Database: Connected',
-                    style: TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF1E293B),
-                    ),
-                  ),
-
-                  const SizedBox(width: 20),
-                  _buildStatusDivider(),
-                  const SizedBox(width: 20),
-
-                  // Printer: Ready
-                  const Icon(
-                    Icons.print_rounded,
-                    size: 15,
-                    color: Color(0xFF1E293B),
-                  ),
-                  const SizedBox(width: 6),
-                  const Text(
-                    'Printer: Ready',
-                    style: TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF1E293B),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+        final (scaleColor, scaleLabel) = switch (status.scale) {
+          ScaleStatusDisplay.checking => (checking, 'Scale: Checking…'),
+          ScaleStatusDisplay.connected => (ok, 'Scale: Connected'),
+          ScaleStatusDisplay.stale => (warning, 'Scale: Stale'),
+          ScaleStatusDisplay.connecting => (info, 'Scale: Connecting'),
+          ScaleStatusDisplay.disconnected => (error, 'Scale: Disconnected'),
+        };
+        final (dbColor, dbLabel) = switch (status.database) {
+          DatabaseStatusDisplay.checking => (checking, 'Database: Checking…'),
+          DatabaseStatusDisplay.open => (ok, 'Database: Open'),
+          DatabaseStatusDisplay.error => (error, 'Database: Error'),
+        };
+        final (printerColor, printerLabel) = switch (status.printer) {
+          PrinterStatusDisplay.checking => (checking, 'Printer: Checking…'),
+          PrinterStatusDisplay.available => (ok, 'Printer: Available'),
+          PrinterStatusDisplay.offline => (warning, 'Printer: Offline'),
+        };
+        final (licenseColor, licenseLabel) = switch (status.license) {
+          LicenseStatusDisplay.checking => (checking, 'License: Checking…'),
+          LicenseStatusDisplay.valid => (ok, 'License: Valid'),
+          LicenseStatusDisplay.expiring => (
+            warning,
+            status.licenseDaysRemaining != null
+                ? 'License: Expiring (${status.licenseDaysRemaining}d)'
+                : 'License: Expiring',
           ),
+          LicenseStatusDisplay.invalid => (error, 'License: Invalid'),
+        };
 
-          const SizedBox(width: 20),
+        return Container(
+          height: 38,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(top: BorderSide(color: Color(0xFFE2E8F0), width: 1)),
+          ),
+          child: Row(
+            children: [
+              // Status cluster scrolls horizontally so it never overflows on
+              // narrow or compact window sizes.
+              Expanded(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _statusItem(
+                        leading: Container(
+                          width: 9,
+                          height: 9,
+                          decoration: BoxDecoration(
+                            color: scaleColor,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        label: scaleLabel,
+                        color: scaleColor,
+                        fontWeight: FontWeight.w600,
+                      ),
 
-          // App Version / About
-          InkWell(
-            onTap: () => setState(() => _selectedIndex = 5),
-            borderRadius: BorderRadius.circular(4),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-              child: Text(
-                'Viyan Weighbridge v1.0.0',
-                style: TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF64748B),
+                      const SizedBox(width: 20),
+                      _buildStatusDivider(),
+                      const SizedBox(width: 20),
+
+                      _statusItem(
+                        leading: Icon(
+                          Icons.storage_rounded,
+                          size: 15,
+                          color: dbColor,
+                        ),
+                        label: dbLabel,
+                        color: dbColor,
+                      ),
+
+                      const SizedBox(width: 20),
+                      _buildStatusDivider(),
+                      const SizedBox(width: 20),
+
+                      _statusItem(
+                        leading: Icon(
+                          Icons.print_rounded,
+                          size: 15,
+                          color: printerColor,
+                        ),
+                        label: printerLabel,
+                        color: printerColor,
+                      ),
+
+                      const SizedBox(width: 20),
+                      _buildStatusDivider(),
+                      const SizedBox(width: 20),
+
+                      _statusItem(
+                        leading: Icon(
+                          Icons.verified_user_rounded,
+                          size: 15,
+                          color: licenseColor,
+                        ),
+                        label: licenseLabel,
+                        color: licenseColor,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
+
+              const SizedBox(width: 20),
+
+              // App Version / About
+              InkWell(
+                onTap: () => setState(() => _selectedIndex = 5),
+                borderRadius: BorderRadius.circular(4),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                  child: Text(
+                    'Viyan Weighbridge v1.0.0',
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
+    );
+  }
+
+  Widget _statusItem({
+    required Widget leading,
+    required String label,
+    required Color color,
+    FontWeight fontWeight = FontWeight.w500,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        leading,
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 11.5,
+            fontWeight: fontWeight,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 

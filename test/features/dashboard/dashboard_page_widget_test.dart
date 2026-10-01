@@ -18,6 +18,7 @@ import 'package:weighbridge/features/bill/domain/usecases/save_bill.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_bloc.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_state.dart';
 import 'package:weighbridge/features/dashboard/presentation/pages/home_page.dart';
+import 'status_bar_test_support.dart';
 
 class MockLoginUseCase extends Mock implements LoginUseCase {}
 
@@ -125,12 +126,14 @@ void main() {
   });
 
   Widget createHomePageUnderTest() {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider<AuthBloc>.value(value: authBloc),
-        BlocProvider<BillBloc>.value(value: billBloc),
-      ],
-      child: const MaterialApp(home: HomePage()),
+    return wrapWithStatusProviders(
+      MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthBloc>.value(value: authBloc),
+          BlocProvider<BillBloc>.value(value: billBloc),
+        ],
+        child: const MaterialApp(home: HomePage()),
+      ),
     );
   }
 

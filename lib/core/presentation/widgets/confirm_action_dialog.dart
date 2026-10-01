@@ -68,19 +68,21 @@ class ConfirmActionDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveIconColor = iconColor ??
+    final effectiveIconColor =
+        iconColor ??
         (isDanger ? const Color(0xFFDC2626) : const Color(0xFF0D3B82));
-    final effectiveIconBgColor = iconBgColor ??
+    final effectiveIconBgColor =
+        iconBgColor ??
         (isDanger ? const Color(0xFFFEF2F2) : const Color(0xFFEFF6FF));
     final effectiveIconBorderColor = isDanger
         ? const Color(0xFFFECDD3)
         : const Color(0xFFDBEAFE);
-    final effectiveConfirmColor = confirmColor ??
+    final effectiveConfirmColor =
+        confirmColor ??
         (isDanger ? const Color(0xFFDC2626) : const Color(0xFF0D3B82));
-    final effectiveIcon = icon ??
-        (isDanger
-            ? Icons.warning_amber_rounded
-            : Icons.info_outline_rounded);
+    final effectiveIcon =
+        icon ??
+        (isDanger ? Icons.warning_amber_rounded : Icons.info_outline_rounded);
 
     return CallbackShortcuts(
       bindings: <ShortcutActivator, VoidCallback>{
@@ -236,8 +238,10 @@ class ConfirmActionDialog extends StatelessWidget {
                 const SizedBox(height: 22),
 
                 // Action Buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
+                Wrap(
+                  alignment: WrapAlignment.end,
+                  spacing: 10,
+                  runSpacing: 10,
                   children: [
                     OutlinedButton(
                       onPressed: () => Navigator.of(context).pop(false),

@@ -81,8 +81,10 @@ class SettingsFormTextField extends StatelessWidget {
                 : const Color(0xFFF1F5F9),
             counterText: '',
             errorMaxLines: 3,
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 10,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: Color(0xFFCBD5E1)),

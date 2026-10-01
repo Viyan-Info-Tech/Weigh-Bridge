@@ -104,8 +104,7 @@ class BillNumberingCard extends StatelessWidget {
                   final n = int.tryParse(v);
                   if (n == null) return 'Enter a number from 1 to 9';
                   final startingNumber = startingNumberController.text.trim();
-                  if (startingNumber.isNotEmpty &&
-                      startingNumber.length > n) {
+                  if (startingNumber.isNotEmpty && startingNumber.length > n) {
                     return 'Starting number cannot exceed the selected number of digits.';
                   }
                   return null;
@@ -142,8 +141,10 @@ class BillNumberingCard extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: const Color(0xFF0D3B82),
                     borderRadius: BorderRadius.circular(6),

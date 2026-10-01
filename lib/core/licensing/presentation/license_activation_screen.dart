@@ -14,12 +14,14 @@ class LicenseActivationScreen extends StatefulWidget {
   final LicenseService licenseService;
   final AuthBloc authBloc;
   final LicenseStatus? licenseStatus;
+  final VoidCallback? onActivated;
 
   const LicenseActivationScreen({
     super.key,
     required this.licenseService,
     required this.authBloc,
     this.licenseStatus,
+    this.onActivated,
   });
 
   @override
@@ -31,14 +33,29 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
   String _machineId = '';
   String? _licenseFileContent;
   String _statusMessage = '';
+  LicenseStatus? _currentStatus;
   bool _isActivating = false;
 
   @override
   void initState() {
     super.initState();
+    _currentStatus = widget.licenseStatus;
     _loadMachineId();
-    if (widget.licenseStatus != null) {
-      _statusMessage = _messageForStatus(widget.licenseStatus!);
+    if (_currentStatus != null) {
+      _statusMessage = _messageForStatus(_currentStatus!);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant LicenseActivationScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.licenseStatus != widget.licenseStatus) {
+      setState(() {
+        _currentStatus = widget.licenseStatus;
+        if (_currentStatus != null) {
+          _statusMessage = _messageForStatus(_currentStatus!);
+        }
+      });
     }
   }
 
@@ -65,12 +82,14 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
             setState(() {
               _licenseFileContent = content;
               _statusMessage = '';
+              _currentStatus = null;
             });
           }
         } catch (e) {
           if (mounted) {
             setState(() {
               _statusMessage = 'Could not read the selected file.';
+              _currentStatus = null;
             });
           }
         }
@@ -84,6 +103,7 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
     setState(() {
       _isActivating = true;
       _statusMessage = '';
+      _currentStatus = null;
     });
 
     try {
@@ -92,17 +112,20 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
 
       if (mounted) {
         setState(() {
+          _currentStatus = status;
           _statusMessage = _messageForStatus(status);
           _isActivating = false;
         });
 
         if (status == LicenseStatus.valid) {
           widget.authBloc.add(const AppStarted());
+          widget.onActivated?.call();
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() {
+          _currentStatus = null;
           _statusMessage = 'The license file could not be processed.';
           _isActivating = false;
         });
@@ -354,6 +377,25 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
     );
   }
 
+  Widget _buildStatusBanner() {
+    final isSuccess = _currentStatus == LicenseStatus.valid;
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: isSuccess ? Colors.green.shade50 : Colors.red.shade50,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        _statusMessage,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: isSuccess ? Colors.green.shade700 : Colors.red.shade700,
+          fontSize: 14,
+        ),
+      ),
+    );
+  }
+
   Widget _buildFormPanel() {
     return Center(
       child: ConstrainedBox(
@@ -376,35 +418,18 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'This computer has not been activated.\n'
-                  'Please contact ViyanInfo to obtain a license.',
-                  style: TextStyle(
+                  _currentStatus == LicenseStatus.valid
+                      ? 'License is active and verified.'
+                      : 'This computer is not activated.',
+                  style: const TextStyle(
                     fontFamily: 'PlusJakartaSans',
                     fontSize: 16,
-                    color: const Color(0xFF64748B),
+                    color: Color(0xFF64748B),
                   ),
                 ),
                 if (_statusMessage.isNotEmpty) ...[
                   const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: widget.licenseStatus == LicenseStatus.valid
-                          ? Colors.green.shade50
-                          : Colors.red.shade50,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      _statusMessage,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: widget.licenseStatus == LicenseStatus.valid
-                            ? Colors.green.shade700
-                            : Colors.red.shade700,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
+                  _buildStatusBanner(),
                 ],
                 const SizedBox(height: 20),
                 _buildContactCard(),
@@ -478,7 +503,10 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                 SizedBox(
                   height: 50,
                   child: ElevatedButton(
-                    onPressed: _isActivating || _licenseFileContent == null
+                    onPressed:
+                        _isActivating ||
+                            _licenseFileContent == null ||
+                            _currentStatus == LicenseStatus.valid
                         ? null
                         : _activate,
                     style: ElevatedButton.styleFrom(
@@ -498,7 +526,11 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                               color: Colors.white,
                             ),
                           )
-                        : const Text('Activate'),
+                        : Text(
+                            _currentStatus == LicenseStatus.valid
+                                ? 'Activated'
+                                : 'Activate',
+                          ),
                   ),
                 ),
               ],
@@ -540,31 +572,18 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'This computer has not been activated.\n'
-                      'Please contact ViyanInfo to obtain a license.',
-                      style: TextStyle(
+                      _currentStatus == LicenseStatus.valid
+                          ? 'License is active and verified.'
+                          : 'This computer is not activated.',
+                      style: const TextStyle(
                         fontFamily: 'PlusJakartaSans',
                         fontSize: 16,
-                        color: const Color(0xFF64748B),
+                        color: Color(0xFF64748B),
                       ),
                     ),
                     if (_statusMessage.isNotEmpty) ...[
                       const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.red.shade50,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          _statusMessage,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.red.shade700,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
+                      _buildStatusBanner(),
                     ],
                     const SizedBox(height: 20),
                     _buildContactCard(),
@@ -621,7 +640,10 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                     SizedBox(
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: _isActivating || _licenseFileContent == null
+                        onPressed:
+                            _isActivating ||
+                                _licenseFileContent == null ||
+                                _currentStatus == LicenseStatus.valid
                             ? null
                             : _activate,
                         style: ElevatedButton.styleFrom(
@@ -641,7 +663,11 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text('Activate'),
+                            : Text(
+                                _currentStatus == LicenseStatus.valid
+                                    ? 'Activated'
+                                    : 'Activate',
+                              ),
                       ),
                     ),
                   ],

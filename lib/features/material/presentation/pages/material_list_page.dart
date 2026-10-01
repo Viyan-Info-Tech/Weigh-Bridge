@@ -7,6 +7,7 @@ import '../bloc/material_event.dart';
 import '../bloc/material_state.dart' as app_material;
 import 'material_form_page.dart' as form;
 import 'material_details_dialog.dart';
+import '../dialogs/material_action_confirmation.dart';
 import '../../../../core/presentation/widgets/action_menu.dart';
 
 class MaterialListPage extends StatefulWidget {
@@ -517,7 +518,10 @@ class _MaterialListPageState extends State<MaterialListPage> {
         children: [
           SizedBox(width: _codeColumnWidth, child: _buildHeaderText('CODE')),
           Expanded(child: _buildHeaderText('MATERIAL NAME')),
-          SizedBox(width: _statusColumnWidth, child: _buildHeaderText('STATUS')),
+          SizedBox(
+            width: _statusColumnWidth,
+            child: _buildHeaderText('STATUS'),
+          ),
           SizedBox(
             width: _actionColumnWidth,
             child: Align(
@@ -559,7 +563,10 @@ class _MaterialListPageState extends State<MaterialListPage> {
             child: Align(
               alignment: Alignment.centerLeft,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3.5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: 3.5,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF1F5F9),
                   borderRadius: BorderRadius.circular(6),
@@ -787,188 +794,37 @@ class _MaterialListPageState extends State<MaterialListPage> {
   }
 
   void _confirmDeactivateMaterial(BuildContext context, MaterialItem material) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        title: const Text(
-          'Deactivate Material?',
-          style: TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-            color: Color(0xFF0F172A),
-          ),
-        ),
-        content: Text(
+    MaterialActionConfirmation.show(
+      context,
+      title: 'Deactivate Material?',
+      message:
           '"${material.name}" will no longer be available for new weighments.',
-          style: const TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            fontSize: 13,
-            color: Color(0xFF475569),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF64748B),
-            ),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          FilledButton(
-            onPressed: () {
-              context.read<MaterialBloc>().add(
-                DeactivateMaterialRequested(material.id),
-              );
-              Navigator.pop(ctx);
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFDC2626),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text(
-              'Deactivate',
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
+      confirmLabel: 'Deactivate',
+      confirmColor: const Color(0xFFDC2626),
+      event: DeactivateMaterialRequested(material.id),
     );
   }
 
   void _confirmActivateMaterial(BuildContext context, MaterialItem material) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        title: const Text(
-          'Activate Material?',
-          style: TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-            color: Color(0xFF0F172A),
-          ),
-        ),
-        content: Text(
-          '"${material.name}" will become available for new weighments.',
-          style: const TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            fontSize: 13,
-            color: Color(0xFF475569),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF64748B),
-            ),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          FilledButton(
-            onPressed: () {
-              context.read<MaterialBloc>().add(
-                ActivateMaterialRequested(material.id),
-              );
-              Navigator.pop(ctx);
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF16A34A),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text(
-              'Activate',
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
+    MaterialActionConfirmation.show(
+      context,
+      title: 'Activate Material?',
+      message: '"${material.name}" will become available for new weighments.',
+      confirmLabel: 'Activate',
+      confirmColor: const Color(0xFF16A34A),
+      event: ActivateMaterialRequested(material.id),
     );
   }
 
   void _confirmDeleteMaterial(BuildContext context, MaterialItem material) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        title: const Text(
-          'Delete Material',
-          style: TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            fontWeight: FontWeight.w700,
-            fontSize: 16,
-            color: Color(0xFF0F172A),
-          ),
-        ),
-        content: Text(
+    MaterialActionConfirmation.show(
+      context,
+      title: 'Delete Material',
+      message:
           'Are you sure you want to permanently delete material "${material.name}"?\n\nThis action cannot be undone.',
-          style: const TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            fontSize: 13,
-            color: Color(0xFF475569),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF64748B),
-            ),
-            child: const Text(
-              'Cancel',
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          FilledButton(
-            onPressed: () {
-              context.read<MaterialBloc>().add(
-                DeleteMaterialRequested(material.id),
-              );
-              Navigator.pop(ctx);
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFDC2626),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text(
-              'Delete',
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
-      ),
+      confirmLabel: 'Delete',
+      confirmColor: const Color(0xFFDC2626),
+      event: DeleteMaterialRequested(material.id),
     );
   }
 
@@ -1012,4 +868,3 @@ class _HoverableRowState extends State<_HoverableRow> {
     );
   }
 }
-

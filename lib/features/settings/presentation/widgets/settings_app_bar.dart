@@ -124,8 +124,7 @@ class SettingsAppBar extends StatelessWidget {
             style: OutlinedButton.styleFrom(
               foregroundColor: const Color(0xFF64748B),
               side: const BorderSide(color: Color(0xFFCBD5E1)),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -145,8 +144,7 @@ class SettingsAppBar extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF0D3B82),
               foregroundColor: Colors.white,
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -169,8 +167,7 @@ class SettingsAppBar extends StatelessWidget {
           style: OutlinedButton.styleFrom(
             foregroundColor: const Color(0xFF64748B),
             side: const BorderSide(color: Color(0xFFCBD5E1)),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),
@@ -199,8 +196,7 @@ class SettingsAppBar extends StatelessWidget {
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF16A34A),
             foregroundColor: Colors.white,
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(8),
             ),

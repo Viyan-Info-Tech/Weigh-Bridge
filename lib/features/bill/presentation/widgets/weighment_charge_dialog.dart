@@ -14,10 +14,7 @@ class _CancelChargeIntent extends Intent {
 }
 
 class WeighmentChargeDialog extends StatefulWidget {
-  const WeighmentChargeDialog({
-    super.key,
-    required this.database,
-  });
+  const WeighmentChargeDialog({super.key, required this.database});
 
   final AppDatabase database;
 
@@ -47,10 +44,11 @@ class _WeighmentChargeDialogState extends State<WeighmentChargeDialog> {
   @override
   void initState() {
     super.initState();
-    _vehicleTypesFuture = (widget.database.select(
-      widget.database.chargeVehicleTypes,
-    )..where((type) => type.isActive.equals(true))
-      ..orderBy([(type) => OrderingTerm.asc(type.id)])).get();
+    _vehicleTypesFuture =
+        (widget.database.select(widget.database.chargeVehicleTypes)
+              ..where((type) => type.isActive.equals(true))
+              ..orderBy([(type) => OrderingTerm.asc(type.id)]))
+            .get();
   }
 
   void _selectVehicleType(int? id) {
@@ -61,9 +59,9 @@ class _WeighmentChargeDialogState extends State<WeighmentChargeDialog> {
       _ratesFuture = id == null
           ? null
           : (widget.database.select(widget.database.weighmentRates)
-                ..where((rate) => rate.vehicleTypeId.equals(id))
-                ..orderBy([(rate) => OrderingTerm.asc(rate.id)]))
-              .get();
+                  ..where((rate) => rate.vehicleTypeId.equals(id))
+                  ..orderBy([(rate) => OrderingTerm.asc(rate.id)]))
+                .get();
     });
   }
 
@@ -130,9 +128,10 @@ class _WeighmentChargeDialogState extends State<WeighmentChargeDialog> {
     return switch (rate.rateType) {
       'EMPTY' => 'Tare / Unloaded weight',
       'LOAD' => 'Gross / Loaded weight',
-      _ => rate.weightLimit != null
-          ? '> ${rate.weightLimit!.toStringAsFixed(0)} Ton slab surcharge'
-          : 'Weight surcharge rate',
+      _ =>
+        rate.weightLimit != null
+            ? '> ${rate.weightLimit!.toStringAsFixed(0)} Ton slab surcharge'
+            : 'Weight surcharge rate',
     };
   }
 
@@ -163,375 +162,393 @@ class _WeighmentChargeDialogState extends State<WeighmentChargeDialog> {
         child: Focus(
           onKeyEvent: _handleArrowKeys,
           child: Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 580),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x1F0F172A),
-              blurRadius: 32,
-              offset: Offset(0, 16),
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(
+              horizontal: 20,
+              vertical: 24,
             ),
-          ],
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: FutureBuilder<List<ChargeVehicleType>>(
-            future: _vehicleTypesFuture,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState != ConnectionState.done) {
-                return const SizedBox(
-                  height: 180,
-                  child: Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        Color(0xFF0D3B82),
-                      ),
-                      strokeWidth: 2.5,
-                    ),
-                  ),
-                );
-              }
-              if (snapshot.hasError) {
-                return _buildErrorState('Could not load the vehicle rate sheet.');
-              }
-
-              final vehicleTypes = snapshot.data ?? const <ChargeVehicleType>[];
-              if (vehicleTypes.isEmpty) {
-                return _buildErrorState('No vehicle charge rates are available.');
-              }
-
-              _vehicleTypeId ??= vehicleTypes.first.id;
-              _ratesFuture ??= (widget.database
-                    .select(widget.database.weighmentRates)
-                  ..where((rate) => rate.vehicleTypeId.equals(_vehicleTypeId!))
-                  ..orderBy([(rate) => OrderingTerm.asc(rate.id)]))
-                  .get();
-
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header
-                  _buildHeader(context),
-                  const SizedBox(height: 20),
-
-                  // Divider
-                  const Divider(height: 1, color: Color(0xFFF1F5F9)),
-                  const SizedBox(height: 20),
-
-                  // Vehicle Type Section
-                  _buildSectionLabel(
-                    icon: Icons.local_shipping_outlined,
-                    label: 'Vehicle Category',
-                  ),
-                  const SizedBox(height: 8),
-                  DropdownButtonFormField<int>(
-                    initialValue: _vehicleTypeId,
-                    isExpanded: true,
-                    icon: const Icon(
-                      Icons.keyboard_arrow_down_rounded,
-                      color: Color(0xFF64748B),
-                    ),
-                    dropdownColor: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    style: const TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF0F172A),
-                    ),
-                    decoration: InputDecoration(
-                      filled: true,
-                      fillColor: const Color(0xFFF8FAFC),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                        borderSide: const BorderSide(
-                          color: Color(0xFF0D3B82),
-                          width: 1.5,
-                        ),
-                      ),
-                    ),
-                    items: vehicleTypes
-                        .map(
-                          (type) => DropdownMenuItem(
-                            value: type.id,
-                            child: Text(
-                              type.name,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        )
-                        .toList(),
-                    onChanged: _selectVehicleType,
-                  ),
-                  const SizedBox(height: 22),
-
-                  // Rates Section
-                  FutureBuilder<List<WeighmentRate>>(
-                    future: _ratesFuture,
-                    builder: (context, ratesSnapshot) {
-                      if (ratesSnapshot.connectionState !=
-                          ConnectionState.done) {
-                        return const SizedBox(
-                          height: 140,
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Color(0xFF0D3B82),
-                              ),
-                              strokeWidth: 2.5,
-                            ),
-                          ),
-                        );
-                      }
-                      if (ratesSnapshot.hasError) {
-                        return _buildErrorState(
-                          'Could not load rates for this vehicle type.',
-                        );
-                      }
-
-                      final rates =
-                          ratesSnapshot.data ?? const <WeighmentRate>[];
-                      if (rates.isEmpty) {
-                        return _buildEmptyRatesState();
-                      }
-                      _visibleRates = rates;
-                      _selectedRate ??= rates.first;
-
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.currency_rupee_rounded,
-                                size: 16,
-                                color: Color(0xFF0D3B82),
-                              ),
-                              const SizedBox(width: 6),
-                              const Text(
-                                'Select Charge Rate',
-                                style: TextStyle(
-                                  fontFamily: 'PlusJakartaSans',
-                                  fontSize: 12.5,
-                                  fontWeight: FontWeight.w600,
-                                  color: Color(0xFF334155),
-                                ),
-                              ),
-                              const Spacer(),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 3,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFF1F5F9),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(
-                                    color: const Color(0xFFE2E8F0),
-                                  ),
-                                ),
-                                child: Text(
-                                  '${rates.length} Slabs Available',
-                                  style: const TextStyle(
-                                    fontFamily: 'PlusJakartaSans',
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: Color(0xFF64748B),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          LayoutBuilder(
-                            builder: (context, constraints) {
-                              final availableWidth = constraints.maxWidth;
-                              final cardWidth = availableWidth > 380
-                                  ? (availableWidth - 10) / 2
-                                  : availableWidth;
-                              return Wrap(
-                                spacing: 10,
-                                runSpacing: 10,
-                                children: rates
-                                    .map(
-                                      (rate) => SizedBox(
-                                        width: cardWidth,
-                                        child: _buildRateCard(
-                                          rate,
-                                          autofocus:
-                                              rate.id == rates.first.id,
-                                        ),
-                                      ),
-                                    )
-                                    .toList(),
-                              );
-                            },
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-
-                  // Selected Highlight Summary
-                  if (_selectedRate != null) ...[
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF0FDF4),
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: const Color(0xFFBBF7D0)),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 20,
-                            height: 20,
-                            decoration: const BoxDecoration(
-                              color: Color(0xFF16A34A),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.check_rounded,
-                              size: 13,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text.rich(
-                              TextSpan(
-                                text: 'Selected: ',
-                                style: const TextStyle(
-                                  fontFamily: 'PlusJakartaSans',
-                                  fontSize: 12.5,
-                                  color: Color(0xFF166534),
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                children: [
-                                  TextSpan(
-                                    text: _label(_selectedRate!),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                    ),
-                                  ),
-                                  const TextSpan(text: '  •  '),
-                                  TextSpan(
-                                    text:
-                                        '₹${_selectedRate!.amount.toStringAsFixed(0)}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 13.5,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const Text(
-                            'Double-click card to apply',
-                            style: TextStyle(
-                              fontFamily: 'PlusJakartaSans',
-                              fontSize: 11,
-                              fontStyle: FontStyle.italic,
-                              color: Color(0xFF15803D),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-
-                  const SizedBox(height: 24),
-
-                  // Footer Actions
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton(
-                        onPressed: _cancelSelection,
-                        style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFF64748B),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 11,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(
-                            fontFamily: 'PlusJakartaSans',
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      ElevatedButton.icon(
-                        onPressed: _selectedRate == null
-                            ? null
-                            : _applySelectedRate,
-                        icon: const Icon(Icons.check_rounded, size: 16),
-                        label: Text(
-                          _selectedRate == null
-                              ? 'Select Charge'
-                              : 'Apply ₹${_selectedRate!.amount.toStringAsFixed(0)}',
-                          style: const TextStyle(
-                            fontFamily: 'PlusJakartaSans',
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0D3B82),
-                          foregroundColor: Colors.white,
-                          disabledBackgroundColor:
-                              const Color(0xFF0D3B82).withValues(alpha: 0.35),
-                          disabledForegroundColor:
-                              Colors.white.withValues(alpha: 0.7),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 11,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          elevation: 0,
-                        ),
-                      ),
-                    ],
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 580),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x1F0F172A),
+                    blurRadius: 32,
+                    offset: Offset(0, 16),
                   ),
                 ],
-              );
-            },
-          ),
-        ),
-      ),
+              ),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: FutureBuilder<List<ChargeVehicleType>>(
+                  future: _vehicleTypesFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState != ConnectionState.done) {
+                      return const SizedBox(
+                        height: 180,
+                        child: Center(
+                          child: CircularProgressIndicator(
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Color(0xFF0D3B82),
+                            ),
+                            strokeWidth: 2.5,
+                          ),
+                        ),
+                      );
+                    }
+                    if (snapshot.hasError) {
+                      return _buildErrorState(
+                        'Could not load the vehicle rate sheet.',
+                      );
+                    }
+
+                    final vehicleTypes =
+                        snapshot.data ?? const <ChargeVehicleType>[];
+                    if (vehicleTypes.isEmpty) {
+                      return _buildErrorState(
+                        'No vehicle charge rates are available.',
+                      );
+                    }
+
+                    _vehicleTypeId ??= vehicleTypes.first.id;
+                    _ratesFuture ??=
+                        (widget.database.select(widget.database.weighmentRates)
+                              ..where(
+                                (rate) =>
+                                    rate.vehicleTypeId.equals(_vehicleTypeId!),
+                              )
+                              ..orderBy([(rate) => OrderingTerm.asc(rate.id)]))
+                            .get();
+
+                    return Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Header
+                        _buildHeader(context),
+                        const SizedBox(height: 20),
+
+                        // Divider
+                        const Divider(height: 1, color: Color(0xFFF1F5F9)),
+                        const SizedBox(height: 20),
+
+                        // Vehicle Type Section
+                        _buildSectionLabel(
+                          icon: Icons.local_shipping_outlined,
+                          label: 'Vehicle Category',
+                        ),
+                        const SizedBox(height: 8),
+                        DropdownButtonFormField<int>(
+                          initialValue: _vehicleTypeId,
+                          isExpanded: true,
+                          icon: const Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                            color: Color(0xFF64748B),
+                          ),
+                          dropdownColor: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          style: const TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontSize: 13.5,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF0F172A),
+                          ),
+                          decoration: InputDecoration(
+                            filled: true,
+                            fillColor: const Color(0xFFF8FAFC),
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE2E8F0),
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE2E8F0),
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF0D3B82),
+                                width: 1.5,
+                              ),
+                            ),
+                          ),
+                          items: vehicleTypes
+                              .map(
+                                (type) => DropdownMenuItem(
+                                  value: type.id,
+                                  child: Text(
+                                    type.name,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: _selectVehicleType,
+                        ),
+                        const SizedBox(height: 22),
+
+                        // Rates Section
+                        FutureBuilder<List<WeighmentRate>>(
+                          future: _ratesFuture,
+                          builder: (context, ratesSnapshot) {
+                            if (ratesSnapshot.connectionState !=
+                                ConnectionState.done) {
+                              return const SizedBox(
+                                height: 140,
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Color(0xFF0D3B82),
+                                    ),
+                                    strokeWidth: 2.5,
+                                  ),
+                                ),
+                              );
+                            }
+                            if (ratesSnapshot.hasError) {
+                              return _buildErrorState(
+                                'Could not load rates for this vehicle type.',
+                              );
+                            }
+
+                            final rates =
+                                ratesSnapshot.data ?? const <WeighmentRate>[];
+                            if (rates.isEmpty) {
+                              return _buildEmptyRatesState();
+                            }
+                            _visibleRates = rates;
+                            _selectedRate ??= rates.first;
+
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.currency_rupee_rounded,
+                                      size: 16,
+                                      color: Color(0xFF0D3B82),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    const Text(
+                                      'Select Charge Rate',
+                                      style: TextStyle(
+                                        fontFamily: 'PlusJakartaSans',
+                                        fontSize: 12.5,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF334155),
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF1F5F9),
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(
+                                          color: const Color(0xFFE2E8F0),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        '${rates.length} Slabs Available',
+                                        style: const TextStyle(
+                                          fontFamily: 'PlusJakartaSans',
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF64748B),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 10),
+                                LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    final availableWidth = constraints.maxWidth;
+                                    final cardWidth = availableWidth > 380
+                                        ? (availableWidth - 10) / 2
+                                        : availableWidth;
+                                    return Wrap(
+                                      spacing: 10,
+                                      runSpacing: 10,
+                                      children: rates
+                                          .map(
+                                            (rate) => SizedBox(
+                                              width: cardWidth,
+                                              child: _buildRateCard(
+                                                rate,
+                                                autofocus:
+                                                    rate.id == rates.first.id,
+                                              ),
+                                            ),
+                                          )
+                                          .toList(),
+                                    );
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        ),
+
+                        // Selected Highlight Summary
+                        if (_selectedRate != null) ...[
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF0FDF4),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: const Color(0xFFBBF7D0),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 20,
+                                  height: 20,
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFF16A34A),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Icon(
+                                    Icons.check_rounded,
+                                    size: 13,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text.rich(
+                                    TextSpan(
+                                      text: 'Selected: ',
+                                      style: const TextStyle(
+                                        fontFamily: 'PlusJakartaSans',
+                                        fontSize: 12.5,
+                                        color: Color(0xFF166534),
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      children: [
+                                        TextSpan(
+                                          text: _label(_selectedRate!),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        const TextSpan(text: '  •  '),
+                                        TextSpan(
+                                          text:
+                                              '₹${_selectedRate!.amount.toStringAsFixed(0)}',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w800,
+                                            fontSize: 13.5,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const Text(
+                                  'Double-click card to apply',
+                                  style: TextStyle(
+                                    fontFamily: 'PlusJakartaSans',
+                                    fontSize: 11,
+                                    fontStyle: FontStyle.italic,
+                                    color: Color(0xFF15803D),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(height: 24),
+
+                        // Footer Actions
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            TextButton(
+                              onPressed: _cancelSelection,
+                              style: TextButton.styleFrom(
+                                foregroundColor: const Color(0xFF64748B),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 11,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: const Text(
+                                'Cancel',
+                                style: TextStyle(
+                                  fontFamily: 'PlusJakartaSans',
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            ElevatedButton.icon(
+                              onPressed: _selectedRate == null
+                                  ? null
+                                  : _applySelectedRate,
+                              icon: const Icon(Icons.check_rounded, size: 16),
+                              label: Text(
+                                _selectedRate == null
+                                    ? 'Select Charge'
+                                    : 'Apply ₹${_selectedRate!.amount.toStringAsFixed(0)}',
+                                style: const TextStyle(
+                                  fontFamily: 'PlusJakartaSans',
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF0D3B82),
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor: const Color(
+                                  0xFF0D3B82,
+                                ).withValues(alpha: 0.35),
+                                disabledForegroundColor: Colors.white
+                                    .withValues(alpha: 0.7),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 11,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                elevation: 0,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -599,10 +616,7 @@ class _WeighmentChargeDialogState extends State<WeighmentChargeDialog> {
     );
   }
 
-  Widget _buildSectionLabel({
-    required IconData icon,
-    required String label,
-  }) {
+  Widget _buildSectionLabel({required IconData icon, required String label}) {
     return Row(
       children: [
         Icon(icon, size: 16, color: const Color(0xFF0D3B82)),
@@ -620,10 +634,7 @@ class _WeighmentChargeDialogState extends State<WeighmentChargeDialog> {
     );
   }
 
-  Widget _buildRateCard(
-    WeighmentRate rate, {
-    required bool autofocus,
-  }) {
+  Widget _buildRateCard(WeighmentRate rate, {required bool autofocus}) {
     final isSelected = rate.id == _selectedRate?.id;
     final subLabel = _subLabel(rate);
 
@@ -747,10 +758,7 @@ class _WeighmentChargeDialogState extends State<WeighmentChargeDialog> {
 
               // Rate Amount Badge
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 9,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? const Color(0xFF2563EB).withValues(alpha: 0.12)
@@ -789,7 +797,11 @@ class _WeighmentChargeDialogState extends State<WeighmentChargeDialog> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.inventory_2_outlined, size: 30, color: Colors.grey.shade400),
+          Icon(
+            Icons.inventory_2_outlined,
+            size: 30,
+            color: Colors.grey.shade400,
+          ),
           const SizedBox(height: 8),
           Text(
             'No rate slabs configured for this vehicle type',

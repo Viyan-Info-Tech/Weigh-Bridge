@@ -91,7 +91,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('The license file could not be verified.'),
+        find.textContaining('The license file could not be verified.'),
         findsOneWidget,
       );
     });
@@ -116,7 +116,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(
-        find.text('This license is registered to another computer.'),
+        find.textContaining('This license is registered to another computer.'),
         findsOneWidget,
       );
     });
@@ -140,7 +140,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Your ViyanInfo license has expired.'), findsOneWidget);
+      expect(
+        find.textContaining('Your ViyanInfo license has expired.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('shows message for clockRollbackDetected status', (
@@ -164,7 +167,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Clock rollback detected.'), findsOneWidget);
+      expect(find.textContaining('Clock rollback detected.'), findsOneWidget);
     });
 
     testWidgets('shows message for malformedLicense status', (tester) async {
@@ -186,7 +189,10 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('The license file is malformed.'), findsOneWidget);
+      expect(
+        find.textContaining('The license file is malformed.'),
+        findsOneWidget,
+      );
     });
   });
 
@@ -209,7 +215,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('abcdef1234567890' * 4), findsOneWidget);
+      expect(find.textContaining('abcd-ef12-3456-7890'), findsOneWidget);
     });
   });
 
@@ -261,6 +267,78 @@ void main() {
 
       final activateButton = find.text('Activate');
       expect(activateButton, findsOneWidget);
+    });
+
+    testWidgets('shows success message in green when status is valid', (
+      tester,
+    ) async {
+      when(
+        () => mockLicenseService.getMachineHash(),
+      ).thenAnswer((_) async => 'a' * 64);
+      when(
+        () => mockAuthBloc.stream,
+      ).thenAnswer((_) => Stream.value(AuthState(status: AuthStatus.initial)));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: LicenseActivationScreen(
+            licenseService: mockLicenseService,
+            authBloc: mockAuthBloc,
+            licenseStatus: LicenseStatus.valid,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final successTextFinder = find.text('License activated successfully');
+      expect(successTextFinder, findsOneWidget);
+
+      final textWidget = tester.widget<Text>(successTextFinder);
+      expect(textWidget.style?.color, Colors.green.shade700);
+
+      final containerFinder = find
+          .ancestor(of: successTextFinder, matching: find.byType(Container))
+          .first;
+      final container = tester.widget<Container>(containerFinder);
+      final decoration = container.decoration as BoxDecoration;
+      expect(decoration.color, Colors.green.shade50);
+    });
+
+    testWidgets('shows error message in red when status is not valid', (
+      tester,
+    ) async {
+      when(
+        () => mockLicenseService.getMachineHash(),
+      ).thenAnswer((_) async => 'a' * 64);
+      when(
+        () => mockAuthBloc.stream,
+      ).thenAnswer((_) => Stream.value(AuthState(status: AuthStatus.initial)));
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: LicenseActivationScreen(
+            licenseService: mockLicenseService,
+            authBloc: mockAuthBloc,
+            licenseStatus: LicenseStatus.expired,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final errorTextFinder = find.textContaining(
+        'Your ViyanInfo license has expired.',
+      );
+      expect(errorTextFinder, findsOneWidget);
+
+      final textWidget = tester.widget<Text>(errorTextFinder);
+      expect(textWidget.style?.color, Colors.red.shade700);
+
+      final containerFinder = find
+          .ancestor(of: errorTextFinder, matching: find.byType(Container))
+          .first;
+      final container = tester.widget<Container>(containerFinder);
+      final decoration = container.decoration as BoxDecoration;
+      expect(decoration.color, Colors.red.shade50);
     });
   });
 
