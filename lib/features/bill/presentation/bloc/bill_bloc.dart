@@ -46,6 +46,9 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
   @override
   AutoTareRepository? get autoTareRepository => _autoTareRepository;
 
+  @override
+  void recalculateWeights(Emitter<BillState> emit) => _recalculate(emit);
+
   BillBloc({
     required CustomerRepository customerRepository,
     required MaterialItemRepository materialRepository,
@@ -78,10 +81,16 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     on<WeightUnitChanged>(_onWeightUnitChanged);
     on<VehicleChargeChanged>(_onVehicleChargeChanged);
     on<ResetVehicleCharge>(_onResetVehicleCharge);
-    on<SaveBillRequested>(_onSaveBillRequested);
-    on<SaveAndPrintBillRequested>(_onSaveAndPrintBillRequested);
+    // Saves run one at a time. The default concurrent transformer would let a
+    // double tap on SAVE (or F5 plus a click) run two inserts against the same
+    // form state, which is how duplicate bill numbers were being produced.
+    on<SaveBillRequested>(_onSaveBillRequested, transformer: _sequential());
+    on<SaveAndPrintBillRequested>(
+      _onSaveAndPrintBillRequested,
+      transformer: _sequential(),
+    );
     on<PrintReceiptDismissed>(_onPrintReceiptDismissed);
-    on<ClearBillRequested>(_onClearBillRequested);
+    on<ClearBillRequested>(_onClearBillRequested, transformer: _sequential());
     on<LoadRecentBills>(_onLoadRecentBills);
     on<CustomerQuickAddRequested>(_onCustomerQuickAdd);
     on<MaterialQuickAddRequested>(_onMaterialQuickAdd);
@@ -94,6 +103,12 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     on<LoadAutoTare>(handleLoadAutoTare);
     on<SaveAutoTare>(handleSaveAutoTare);
     on<DeleteAutoTare>(handleDeleteAutoTare);
+    on<ApplyAutoTareToBill>(handleApplyAutoTareToBill);
+  }
+
+  /// Processes one event at a time for handlers that must not overlap.
+  static EventTransformer<T> _sequential<T>() {
+    return (events, mapper) => events.asyncExpand(mapper);
   }
 
   Future<void> _onLoadBillScreen(
@@ -871,6 +886,9 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
 
     final weighment = Weighment(
       id: savedId,
+      // Placeholder only: a new bill's number is allocated by the database
+      // inside the insert transaction. The value stored on the returned row is
+      // authoritative and replaces this immediately below.
       billNumber: state.currentBillNumber,
       customerId: state.selectedCustomer!.id,
       vehicleNumber: state.vehicleNumber.trim().toUpperCase(),
@@ -889,15 +907,25 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
       updatedAt: updatedAt,
     );
 
+    String savedBillNumber;
+
     if (state.isEditing) {
       await _saveBillUseCase.updateWeighment(state.editingBillId!, weighment);
+      savedId = state.editingBillId!;
+      savedBillNumber = weighment.billNumber;
     } else {
-      savedId = await _saveBillUseCase(weighment);
+      // A new bill never reuses the previewed serial number. The database
+      // allocates it inside the insert transaction, which is the only place
+      // that can guarantee the number is unused, and the returned value is what
+      // gets displayed, printed and stored on the saved weighment.
+      final result = await _saveBillUseCase.withNewBillNumber(weighment);
+      savedId = result.id;
+      savedBillNumber = result.billNumber;
     }
 
     final savedWeighment = Weighment(
       id: savedId,
-      billNumber: weighment.billNumber,
+      billNumber: savedBillNumber,
       customerId: weighment.customerId,
       vehicleNumber: weighment.vehicleNumber,
       materialId: weighment.materialId,

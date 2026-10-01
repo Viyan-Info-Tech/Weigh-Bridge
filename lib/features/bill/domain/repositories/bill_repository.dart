@@ -2,6 +2,17 @@ import '../entities/weighment.dart';
 
 abstract class BillRepository {
   Future<int> saveWeighment(Weighment weighment);
+
+  /// Saves a new weighment under a bill number allocated by the database.
+  ///
+  /// Returns the row id together with the number that was actually stored.
+  /// Callers must treat that number as the single source of truth for
+  /// display, printing and follow-up saves instead of any number they had
+  /// previewed beforehand.
+  Future<({int id, String billNumber})> saveWeighmentWithNewBillNumber(
+    Weighment weighment,
+  );
+
   Future<void> updateWeighment(int id, Weighment weighment);
   Future<List<Weighment>> getRecentBills({DateTime? date, int? limit});
   Future<List<Weighment>> getRecentBillsByDateRange({
@@ -11,6 +22,10 @@ abstract class BillRepository {
   });
   Future<Weighment?> getWeighmentById(int id);
   Future<Weighment?> getWeighmentByBillNumber(String billNumber);
+
+  /// Previews the bill number the next new weighment would receive. Does not
+  /// reserve it; only [saveWeighmentWithNewBillNumber] consumes a number.
   Future<String> generateNextBillNumber();
+
   Future<int> deleteWeighment(int id);
 }

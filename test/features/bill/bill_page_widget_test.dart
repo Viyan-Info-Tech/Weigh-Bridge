@@ -372,7 +372,7 @@ void main() {
       await pumpBillPage(tester);
 
       // First save creates the day record.
-      await tester.sendKeyEvent(LogicalKeyboardKey.f3);
+      await tester.tap(find.byKey(const Key('auto_tare_indicator')));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const Key('auto_tare_weight_field')),
@@ -391,7 +391,7 @@ void main() {
 
       // Second save with the identical value produces no state change, which
       // previously left the dialog stuck in its loading state.
-      await tester.sendKeyEvent(LogicalKeyboardKey.f3);
+      await tester.tap(find.byKey(const Key('auto_tare_indicator')));
       await tester.pumpAndSettle();
       expect(find.byType(AutoTareDialog), findsOneWidget);
 
@@ -424,7 +424,7 @@ void main() {
       autoTareRepository.failWrites = true;
       await pumpBillPage(tester);
 
-      await tester.sendKeyEvent(LogicalKeyboardKey.f3);
+      await tester.tap(find.byKey(const Key('auto_tare_indicator')));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(const Key('auto_tare_weight_field')),
@@ -466,7 +466,8 @@ void main() {
   });
 
   testWidgets(
-    'F3 opens the auto tare dialog prefilled with a stable live reading',
+    'tapping the auto tare status opens the dialog prefilled with a stable '
+    'live reading',
     (tester) async {
       tester.view.physicalSize = const Size(1400, 900);
       tester.view.devicePixelRatio = 1.0;
@@ -485,7 +486,7 @@ void main() {
       });
       await tester.pumpAndSettle();
 
-      await tester.sendKeyEvent(LogicalKeyboardKey.f3);
+      await tester.tap(find.byKey(const Key('auto_tare_indicator')));
       await tester.pumpAndSettle();
 
       expect(find.text('Enter Auto Tare'), findsOneWidget);
@@ -643,7 +644,9 @@ void main() {
     expect(find.text('Exit current weighment?'), findsNothing);
   });
 
-  testWidgets('F3 opens the auto tare management screen', (tester) async {
+  testWidgets('the auto tare status opens the configuration screen', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(1400, 900);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(() {
@@ -652,14 +655,109 @@ void main() {
     });
     await pumpBillPage(tester);
 
-    await tester.sendKeyEvent(LogicalKeyboardKey.f3);
+    await tester.tap(find.byKey(const Key('auto_tare_indicator')));
     await tester.pumpAndSettle();
 
     expect(find.text('Enter Auto Tare'), findsOneWidget);
     expect(find.text('Not Set'), findsWidgets);
     expect(find.byKey(const Key('auto_tare_save_button')), findsOneWidget);
-    expect(find.byKey(const Key('auto_tare_delete_button')), findsOneWidget);
   });
+
+  testWidgets('saving an auto tare updates the status control immediately', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
+    await pumpBillPage(tester);
+
+    await tester.tap(find.byKey(const Key('auto_tare_indicator')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('auto_tare_weight_field')),
+      '8000',
+    );
+    final saveButton = find.byKey(const Key('auto_tare_save_button'));
+    await tester.ensureVisible(saveButton);
+    await tester.tap(saveButton);
+    await tester.runAsync(
+      () => billBloc.stream.firstWhere((state) => state.autoTareKg == 8000),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byType(AutoTareDialog), findsNothing);
+    // The configured value is reported on the status control.
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('auto_tare_indicator')),
+        matching: find.text('8,000 Kg'),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets(
+    'F3 applies the saved auto tare to the bill and captures the current time',
+    (tester) async {
+      tester.view.physicalSize = const Size(1400, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      await pumpBillPage(tester);
+
+      billBloc.add(const SaveAutoTare(8000));
+      billBloc.add(const GrossWeightCommitted('20000'));
+      await tester.runAsync(() async {
+        await billBloc.stream.firstWhere(
+          (state) => state.autoTareKg == 8000 && state.grossWeightKg == 20000,
+        );
+      });
+      await tester.pumpAndSettle();
+
+      final before = DateTime.now();
+      await tester.sendKeyEvent(LogicalKeyboardKey.f3);
+      await tester.pumpAndSettle();
+
+      expect(billBloc.state.tareWeightKg, 8000);
+      expect(billBloc.state.netWeightKg, 12000);
+      // The capture timestamp is when F3 was pressed, not when the auto tare
+      // was configured.
+      expect(billBloc.state.tareCapturedAt, isNotNull);
+      expect(
+        billBloc.state.tareCapturedAt!.isBefore(
+          before.subtract(const Duration(seconds: 2)),
+        ),
+        isFalse,
+      );
+      expect(find.text('Enter Auto Tare'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'F3 opens the configuration screen when no auto tare is configured',
+    (tester) async {
+      tester.view.physicalSize = const Size(1400, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      await pumpBillPage(tester);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.f3);
+      await tester.pumpAndSettle();
+
+      // Nothing to apply, so the operator is taken straight to configuration
+      // instead of F3 silently doing nothing.
+      expect(find.byType(AutoTareDialog), findsOneWidget);
+      expect(billBloc.state.tareWeightKg, 0);
+    },
+  );
 
   testWidgets('F4 triggers re-print action', (tester) async {
     tester.view.physicalSize = const Size(1400, 900);
@@ -795,8 +893,9 @@ void main() {
       await tester.tap(find.byKey(const Key('print_slip_button_WB-00001')));
       await tester.pumpAndSettle();
 
-      // Verify dialog opened with bill details
-      expect(find.text('VIYAN WEIGHBRIDGE'), findsOneWidget);
+      // Verify dialog opened with bill details. The business name appears in the
+      // receipt header and again above the authorised signature, so match both.
+      expect(find.text('VIYAN WEIGHBRIDGE'), findsWidgets);
       expect(find.text('WB-00001'), findsWidgets);
       expect(find.text('Print Ticket'), findsOneWidget);
     },

@@ -4,12 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
-/// Management screen for the day's common (platform) tare weight, opened with
-/// F3 - AUTO TARE.
+/// Management screen for the day's common (platform) tare weight.
+///
+/// Opened by tapping the AUTO TARE status control, and by pressing F3 while no
+/// auto tare has been configured for the day yet.
 ///
 /// The value is stored per calendar day, so yesterday's tare never leaks into
-/// today. Bills copy the value when they are saved, which keeps historical
-/// tickets unchanged when the day's auto tare is replaced later.
+/// today. Applying it to a weighment copies the value onto that bill, which
+/// keeps historical tickets unchanged when the day's auto tare is replaced
+/// later.
 class AutoTareDialog extends StatefulWidget {
   const AutoTareDialog({
     super.key,
@@ -833,33 +836,35 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
               ),
             ),
             const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'CURRENT AUTO TARE',
-                  style: TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 0.5,
-                    color: Color(0xFF15803D),
+            const Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'CURRENT AUTO TARE',
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0.5,
+                      color: Color(0xFF15803D),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 1),
-                Text(
-                  'Active for today\'s weighments',
-                  style: TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 11,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.green.shade800.withValues(alpha: 0.8),
+                  SizedBox(height: 1),
+                  Text(
+                    "Active for today's weighments",
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF15803D),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-            const Spacer(),
+            const SizedBox(width: 10),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
@@ -930,33 +935,35 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
             ),
           ),
           const SizedBox(width: 12),
-          const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'CURRENT AUTO TARE',
-                style: TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0.5,
-                  color: Color(0xFF64748B),
+          const Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'CURRENT AUTO TARE',
+                  style: TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 10.5,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.5,
+                    color: Color(0xFF64748B),
+                  ),
                 ),
-              ),
-              SizedBox(height: 1),
-              Text(
-                'No tare configured for today yet',
-                style: TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF94A3B8),
+                SizedBox(height: 1),
+                Text(
+                  'No tare configured for today yet',
+                  style: TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF94A3B8),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const Spacer(),
+          const SizedBox(width: 10),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(

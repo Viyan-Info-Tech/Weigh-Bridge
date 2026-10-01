@@ -285,3 +285,16 @@ class DeleteAutoTare extends BillEvent {
   @override
   List<Object?> get props => [date];
 }
+
+/// Copies the day's configured auto tare into the current weighment's tare
+/// field (F3 / AUTO TARE button).
+///
+/// This only touches the bill being edited. The configured auto tare itself is
+/// unchanged, and a tare already captured on this bill is replaced because the
+/// operator explicitly asked for the day's common tare.
+class ApplyAutoTareToBill extends BillEvent {
+  const ApplyAutoTareToBill();
+
+  @override
+  List<Object?> get props => [];
+}

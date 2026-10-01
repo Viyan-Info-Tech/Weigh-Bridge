@@ -10,6 +10,16 @@ class SaveBillUseCase {
     return _repository.saveWeighment(weighment);
   }
 
+  /// Saves a new weighment under a bill number allocated by the database.
+  ///
+  /// The returned number is authoritative: it is what was stored, and the
+  /// caller must not substitute a previously previewed value.
+  Future<({int id, String billNumber})> withNewBillNumber(
+    Weighment weighment,
+  ) async {
+    return _repository.saveWeighmentWithNewBillNumber(weighment);
+  }
+
   Future<void> updateWeighment(int id, Weighment weighment) async {
     return _repository.updateWeighment(id, weighment);
   }

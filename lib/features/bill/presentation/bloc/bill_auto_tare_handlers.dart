@@ -16,6 +16,10 @@ import 'bill_state.dart';
 mixin BillAutoTareHandlers on Bloc<BillEvent, BillState> {
   AutoTareRepository? get autoTareRepository;
 
+  /// Recomputes net weight and the weight validation error from the current
+  /// gross/tare pair. Supplied by the host bloc.
+  void recalculateWeights(Emitter<BillState> emit);
+
   DateTime autoTareDayOnly(DateTime date) =>
       DateTime(date.year, date.month, date.day);
 
@@ -124,5 +128,41 @@ mixin BillAutoTareHandlers on Bloc<BillEvent, BillState> {
         }
       }
     }
+  }
+
+  /// F3 / AUTO TARE: copies the day's configured common tare into the bill
+  /// currently being edited and stamps the tare capture time.
+  ///
+  /// The configured auto tare is never modified, so bills saved earlier keep
+  /// their own tare. The capture time is the moment the operator pressed F3,
+  /// which is unrelated to the date the auto tare itself was configured on.
+  void handleApplyAutoTareToBill(
+    ApplyAutoTareToBill event,
+    Emitter<BillState> emit,
+  ) {
+    if (!state.hasAutoTare) {
+      emit(
+        state.copyWith(
+          status: BillScreenStatus.error,
+          errorMessage: 'Auto Tare is not configured for today.',
+        ),
+      );
+      return;
+    }
+
+    final tareKg = state.autoTareKg;
+    final isTon = state.weightUnit.toLowerCase() == 'ton';
+    emit(
+      state.copyWith(
+        tareWeightKg: tareKg,
+        tareWeightText: isTon
+            ? (tareKg / 1000).toStringAsFixed(3)
+            : tareKg.toStringAsFixed(0),
+        tareCapturedAt: DateTime.now(),
+        status: BillScreenStatus.loaded,
+        clearError: true,
+      ),
+    );
+    recalculateWeights(emit);
   }
 }

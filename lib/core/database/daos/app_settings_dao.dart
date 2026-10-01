@@ -46,36 +46,21 @@ class AppSettingsDao extends DatabaseAccessor<AppDatabase>
     }
   }
 
+  /// Previews the bill number the next saved weighment would receive.
+  ///
+  /// This does not reserve the number. Allocation happens inside
+  /// [BillDao.insertWeighmentWithNextBillNumber], which is what a save must
+  /// use; this exists only so the screen can show the upcoming serial number
+  /// before anything is written.
   Future<String> generateNextBillNumber({
     required String prefix,
     required int digits,
     int? startingNumber,
-  }) async {
-    final start = startingNumber ?? 1;
-    if (!RegExp(r'^[A-Z]{1,5}$').hasMatch(prefix) ||
-        digits < 1 ||
-        digits > 9 ||
-        start < 1 ||
-        start.toString().length > digits) {
-      throw ArgumentError('Invalid bill number settings.');
-    }
-
-    final maximumNumber = int.parse(List.filled(digits, '9').join());
-    final startPos = prefix.length + 2;
-    final pattern = '$prefix-%';
-
-    final maxBill = await customSelect(
-      "SELECT MAX(CAST(SUBSTR(bill_number, ?) AS INTEGER)) as max_num FROM weighments WHERE bill_number LIKE ?",
-      variables: [Variable.withInt(startPos), Variable.withString(pattern)],
-    ).getSingleOrNull();
-
-    final maxNum = maxBill?.data['max_num'] as int?;
-    final nextNumber = (maxNum == null || maxNum < start) ? start : maxNum + 1;
-    if (nextNumber > maximumNumber) {
-      throw StateError(
-        'The $digits-digit bill number sequence for $prefix is exhausted.',
-      );
-    }
-    return '$prefix-${nextNumber.toString().padLeft(digits, '0')}';
+  }) {
+    return db.billDao.peekNextBillNumber(
+      prefix: prefix,
+      digits: digits,
+      startingNumber: startingNumber,
+    );
   }
 }

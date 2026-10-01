@@ -59,8 +59,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      // 1. Station Letterhead & Header
-      expect(find.text('VIYAN WEIGHBRIDGE'), findsOneWidget);
+      // 1. Station Letterhead & Header. The business name appears in the
+      // letterhead and again above the authorised signature.
+      expect(find.text('VIYAN WEIGHBRIDGE'), findsWidgets);
       expect(find.text('Computer Weigh Bridge'), findsOneWidget);
       expect(find.text('24 HOURS SERVICE'), findsOneWidget);
 
@@ -113,7 +114,9 @@ void main() {
       await tester.tap(find.text('Open'));
       await tester.pumpAndSettle();
 
-      expect(find.text('VIYAN WEIGHBRIDGE'), findsOneWidget);
+      // The business name shows in the receipt header and above the
+      // authorised signature.
+      expect(find.text('VIYAN WEIGHBRIDGE'), findsWidgets);
 
       await tester.tap(find.text('Close'));
       await tester.pumpAndSettle();

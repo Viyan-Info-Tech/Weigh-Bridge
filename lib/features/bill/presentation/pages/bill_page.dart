@@ -313,8 +313,8 @@ class BillPageState extends State<BillPage> {
       ..showSnackBar(
         SnackBar(
           content: const Text(
-            "Auto Tare Not Set. Set today's Auto Tare with F3 to use it "
-            "automatically.",
+            "Auto Tare Not Set. Configure today's Auto Tare before applying it "
+            "with F3.",
             style: TextStyle(
               fontFamily: 'PlusJakartaSans',
               fontWeight: FontWeight.w500,
@@ -332,7 +332,40 @@ class BillPageState extends State<BillPage> {
       );
   }
 
-  /// F3 - AUTO TARE opens the day's common tare management screen.
+  /// F3 / AUTO TARE button: copies the day's configured common tare into the
+  /// weighment currently being edited and stamps the tare capture time.
+  ///
+  /// When nothing is configured there is no value to apply, so the auto tare
+  /// configuration popup opens instead of failing silently.
+  Future<void> _applyAutoTareToBill() async {
+    final bloc = context.read<BillBloc>();
+    if (!bloc.state.hasAutoTare) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Auto Tare is not configured. Enter today\'s Auto Tare to apply it.',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            backgroundColor: Color(0xFF0D3B82),
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      await _openAutoTareDialog();
+      return;
+    }
+
+    bloc.add(const ApplyAutoTareToBill());
+  }
+
+  /// Opens the "Enter Auto Tare" popup for the day's common tare. Reached by
+  /// tapping the AUTO TARE status control and by pressing F3 while no auto
+  /// tare is configured.
   Future<void> _openAutoTareDialog() async {
     if (_isAutoTareDialogOpen) return;
     _isAutoTareDialogOpen = true;
@@ -672,7 +705,8 @@ class BillPageState extends State<BillPage> {
                               // 1. Hero Weight Display Banner
                               const LiveWeightBanner(),
 
-                              // Auto tare indicator for the current day
+                              // Auto tare status; tapping it opens the
+                              // configuration popup.
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.end,
                                 children: [
@@ -680,6 +714,7 @@ class BillPageState extends State<BillPage> {
                                     autoTareKg: state.autoTareKg,
                                     weightUnit: state.weightUnit,
                                     autoTareDate: state.autoTareDate,
+                                    onTap: _openAutoTareDialog,
                                   ),
                                 ],
                               ),
@@ -764,7 +799,7 @@ class BillPageState extends State<BillPage> {
       onSave: () => _saveTicket(context, context.read<BillBloc>().state),
       onCaptureLiveWeight: _handleF1Workflow,
       onManualTare: _focusTareWeightInput,
-      onAutoTare: _openAutoTareDialog,
+      onAutoTare: _applyAutoTareToBill,
       onReprint: () =>
           _onReprintPressed(context, context.read<BillBloc>().state),
       onExit: widget.onExit,
@@ -781,7 +816,7 @@ class BillPageState extends State<BillPage> {
       onSave: () => _saveTicket(context, context.read<BillBloc>().state),
       onCaptureLiveWeight: _handleF1Workflow,
       onManualTare: _focusTareWeightInput,
-      onAutoTare: _openAutoTareDialog,
+      onAutoTare: _applyAutoTareToBill,
       onReprint: () =>
           _onReprintPressed(context, context.read<BillBloc>().state),
       onExit: widget.onExit,
@@ -808,6 +843,7 @@ class BillPageState extends State<BillPage> {
             autoTareKg: state.autoTareKg,
             weightUnit: state.weightUnit,
             autoTareDate: state.autoTareDate,
+            onTap: _openAutoTareDialog,
           ),
         ),
         const SizedBox(height: 10),
@@ -857,7 +893,7 @@ class BillPageState extends State<BillPage> {
       onCancel: () => _onCancelPressed(context, state),
       onRegisterWeight: _handleF1Workflow,
       onManualTare: _focusTareWeightInput,
-      onAutoTare: _openAutoTareDialog,
+      onAutoTare: _applyAutoTareToBill,
       onReprint: () => _onReprintPressed(context, state),
     );
   }

@@ -8,26 +8,47 @@ class BillLocalDataSource {
 
   BillLocalDataSource(this._database);
 
+  /// Saves a brand new weighment, allocating its bill number from the database.
+  ///
+  /// The caller must not pass a bill number it generated itself: the number is
+  /// read and consumed inside the same transaction as the insert, so the value
+  /// returned here is the only one guaranteed to be both stored and unused.
+  Future<({int id, String billNumber})> saveWeighmentWithNewBillNumber(
+    Weighment weighment,
+  ) async {
+    final settings = await _database.appSettingsDao.getSettings();
+    return _database.billDao.insertWeighmentWithNextBillNumber(
+      (billNumber) => _toCompanion(weighment, billNumber),
+      prefix: settings.billPrefix,
+      digits: settings.billNumberDigits,
+      startingNumber: settings.billStartingNumber,
+    );
+  }
+
+  WeighmentsCompanion _toCompanion(Weighment weighment, String billNumber) {
+    return WeighmentsCompanion.insert(
+      billNumber: billNumber,
+      customerId: weighment.customerId,
+      vehicleNumber: weighment.vehicleNumber,
+      materialId: weighment.materialId,
+      paymentMode: weighment.paymentMode,
+      firstWeightKg: weighment.firstWeightKg,
+      firstWeightType: Value(weighment.firstWeightType),
+      secondWeightKg: Value(weighment.secondWeightKg),
+      secondWeightType: Value(weighment.secondWeightType),
+      netWeightKg: Value(weighment.netWeightKg),
+      vehicleCharge: Value(weighment.vehicleCharge),
+      amount: Value(weighment.amount),
+      remarks: Value(weighment.remarks),
+      weightUnit: Value(weighment.weightUnit),
+      createdAt: Value(weighment.createdAt),
+      updatedAt: Value(weighment.updatedAt),
+    );
+  }
+
   Future<int> saveWeighment(Weighment weighment) async {
     return _database.billDao.insertWeighment(
-      WeighmentsCompanion.insert(
-        billNumber: weighment.billNumber,
-        customerId: weighment.customerId,
-        vehicleNumber: weighment.vehicleNumber,
-        materialId: weighment.materialId,
-        paymentMode: weighment.paymentMode,
-        firstWeightKg: weighment.firstWeightKg,
-        firstWeightType: Value(weighment.firstWeightType),
-        secondWeightKg: Value(weighment.secondWeightKg),
-        secondWeightType: Value(weighment.secondWeightType),
-        netWeightKg: Value(weighment.netWeightKg),
-        vehicleCharge: Value(weighment.vehicleCharge),
-        amount: Value(weighment.amount),
-        remarks: Value(weighment.remarks),
-        weightUnit: Value(weighment.weightUnit),
-        createdAt: Value(weighment.createdAt),
-        updatedAt: Value(weighment.updatedAt),
-      ),
+      _toCompanion(weighment, weighment.billNumber),
     );
   }
 

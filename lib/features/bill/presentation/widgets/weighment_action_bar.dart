@@ -86,11 +86,12 @@ class WeighmentActionBar extends StatelessWidget {
             accentBgColor: const Color(0xFFE0F2FE),
             onTap: isSaving ? null : onManualTare,
           ),
-          // 5. F3: AUTO TARE (today's common tare)
+          // 5. F3: AUTO TARE (apply the day's saved common tare to this bill)
           WeighmentActionButton(
             icon: Icons.monitor_weight_rounded,
             label: 'AUTO TARE',
             shortcut: 'F3',
+            tooltip: "Apply today's saved Auto Tare to this weighment",
             accentColor: const Color(0xFF0891B2),
             accentBgColor: const Color(0xFFE0F7FA),
             onTap: isSaving ? null : onAutoTare,
@@ -122,6 +123,7 @@ class WeighmentActionButton extends StatelessWidget {
     this.accentBgColor,
     required this.onTap,
     this.isLoading = false,
+    this.tooltip,
   });
 
   final IconData icon;
@@ -132,6 +134,9 @@ class WeighmentActionButton extends StatelessWidget {
   final Color? accentBgColor;
   final VoidCallback? onTap;
   final bool isLoading;
+
+  /// Optional explanation of what the shortcut does, shown on hover.
+  final String? tooltip;
 
   @override
   Widget build(BuildContext context) {
@@ -246,85 +251,89 @@ class WeighmentActionButton extends StatelessWidget {
 
     return Material(
       color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
-        hoverColor: style == WeighmentActionButtonStyle.neutral
-            ? const Color(0xFFF8FAFC)
-            : Colors.white.withValues(alpha: 0.12),
-        child: Ink(
-          decoration: decoration,
-          child: Container(
-            height: 38,
-            padding: const EdgeInsets.symmetric(horizontal: 10),
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  // Icon badge container
-                  Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: iconBoxBg,
-                      borderRadius: BorderRadius.circular(5),
-                    ),
-                    child: Center(
-                      child: isLoading
-                          ? SizedBox(
-                              width: 14,
-                              height: 14,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: iconColor,
-                              ),
-                            )
-                          : Icon(icon, size: 15, color: iconColor),
-                    ),
-                  ),
-                  const SizedBox(width: 7),
-
-                  // Button text
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w800,
-                      color: textColor,
-                      letterSpacing: 0.35,
-                    ),
-                  ),
-
-                  // Shortcut keycap badge
-                  if (shortcutLabel != null) ...[
-                    const SizedBox(width: 7),
+      child: Tooltip(
+        message: tooltip ?? label,
+        waitDuration: const Duration(milliseconds: 500),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          hoverColor: style == WeighmentActionButtonStyle.neutral
+              ? const Color(0xFFF8FAFC)
+              : Colors.white.withValues(alpha: 0.12),
+          child: Ink(
+            decoration: decoration,
+            child: Container(
+              height: 38,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    // Icon badge container
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 5,
-                        vertical: 2,
-                      ),
+                      width: 24,
+                      height: 24,
                       decoration: BoxDecoration(
-                        color: keycapBg,
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: keycapBorder, width: 1),
+                        color: iconBoxBg,
+                        borderRadius: BorderRadius.circular(5),
                       ),
-                      child: Text(
-                        shortcutLabel,
-                        style: TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w700,
-                          color: keycapText,
-                          letterSpacing: 0.3,
+                      child: Center(
+                        child: isLoading
+                            ? SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: iconColor,
+                                ),
+                              )
+                            : Icon(icon, size: 15, color: iconColor),
+                      ),
+                    ),
+                    const SizedBox(width: 7),
+
+                    // Button text
+                    Text(
+                      label,
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 11.5,
+                        fontWeight: FontWeight.w800,
+                        color: textColor,
+                        letterSpacing: 0.35,
+                      ),
+                    ),
+
+                    // Shortcut keycap badge
+                    if (shortcutLabel != null) ...[
+                      const SizedBox(width: 7),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 5,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: keycapBg,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: keycapBorder, width: 1),
+                        ),
+                        child: Text(
+                          shortcutLabel,
+                          style: TextStyle(
+                            fontFamily: 'PlusJakartaSans',
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w700,
+                            color: keycapText,
+                            letterSpacing: 0.3,
+                          ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
-                ],
+                ),
               ),
             ),
           ),

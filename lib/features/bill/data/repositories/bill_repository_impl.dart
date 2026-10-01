@@ -14,6 +14,13 @@ class BillRepositoryImpl implements BillRepository {
   }
 
   @override
+  Future<({int id, String billNumber})> saveWeighmentWithNewBillNumber(
+    Weighment weighment,
+  ) async {
+    return _localDataSource.saveWeighmentWithNewBillNumber(weighment);
+  }
+
+  @override
   Future<void> updateWeighment(int id, Weighment weighment) async {
     return _localDataSource.updateWeighment(id, weighment);
   }
