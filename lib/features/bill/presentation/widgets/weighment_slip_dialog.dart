@@ -2,7 +2,6 @@ import 'package:flutter/material.dart' hide Material;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:weighbridge/app/app.dart' show showAppSnackBar;
-
 import '../../../customer/domain/entities/customer.dart';
 import '../../../settings/domain/entities/billing_settings.dart';
 import '../../../settings/presentation/bloc/settings_bloc.dart';
@@ -252,8 +251,7 @@ class _WeighmentSlipDialogState extends State<WeighmentSlipDialog> {
                               ),
                             ),
                             if (activeSettings.businessSubtitle != null &&
-                                activeSettings
-                                    .businessSubtitle!
+                                activeSettings.businessSubtitle!
                                     .trim()
                                     .isNotEmpty) ...[
                               const SizedBox(height: 2),
@@ -264,8 +262,7 @@ class _WeighmentSlipDialogState extends State<WeighmentSlipDialog> {
                               ),
                             ],
                             if (activeSettings.serviceText != null &&
-                                activeSettings
-                                    .serviceText!
+                                activeSettings.serviceText!
                                     .trim()
                                     .isNotEmpty) ...[
                               const SizedBox(height: 2),
@@ -285,20 +282,20 @@ class _WeighmentSlipDialogState extends State<WeighmentSlipDialog> {
                               ),
                             ],
                             if ((activeSettings.phoneNumber != null &&
-                                    activeSettings
-                                        .phoneNumber!
+                                    activeSettings.phoneNumber!
                                         .trim()
                                         .isNotEmpty) ||
                                 (activeSettings.email != null &&
                                     activeSettings.email!.trim().isNotEmpty) ||
                                 (activeSettings.gstin != null &&
-                                    activeSettings.gstin!.trim().isNotEmpty)) ...[
+                                    activeSettings.gstin!
+                                        .trim()
+                                        .isNotEmpty)) ...[
                               const SizedBox(height: 2),
                               Text(
                                 [
                                   if (activeSettings.phoneNumber != null &&
-                                      activeSettings
-                                          .phoneNumber!
+                                      activeSettings.phoneNumber!
                                           .trim()
                                           .isNotEmpty)
                                     'Tel: ${activeSettings.phoneNumber!}',
@@ -338,8 +335,7 @@ class _WeighmentSlipDialogState extends State<WeighmentSlipDialog> {
                         ),
                       if (hasCustomer)
                         _buildScreenFieldRow('DESCRIPTION', customerName),
-                      if (hasMat)
-                        _buildScreenFieldRow('PRODUCT', materialName),
+                      if (hasMat) _buildScreenFieldRow('PRODUCT', materialName),
                       if (customerPhone.isNotEmpty)
                         _buildScreenFieldRow('MOBILE NO', customerPhone),
                       if (hasRemarks)
@@ -408,9 +404,7 @@ class _WeighmentSlipDialogState extends State<WeighmentSlipDialog> {
                           time: tareTime,
                         ),
 
-                      if (hasNet &&
-                          weights.netKg != null &&
-                          weights.netKg! > 0)
+                      if (hasNet && weights.netKg != null && weights.netKg! > 0)
                         _buildScreenWeightRow(
                           label: 'NET',
                           weight: formatWeight(weights.netKg),
