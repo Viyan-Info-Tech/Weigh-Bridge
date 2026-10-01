@@ -3,6 +3,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:weighbridge/features/report/data/datasources/report_local_datasource.dart';
 import 'package:weighbridge/features/report/data/repositories/report_repository_impl.dart';
 import 'package:weighbridge/features/report/domain/entities/report_filter.dart';
+import 'package:weighbridge/features/report/domain/entities/report_summary.dart';
 import 'package:weighbridge/features/report/domain/entities/weighment_report_item.dart';
 
 class MockReportLocalDataSource extends Mock implements ReportLocalDataSource {}
@@ -35,7 +36,7 @@ void main() {
     );
   }
 
-  group('ReportRepositoryImpl.calculateSummary', () {
+  group('ReportRepositoryImpl', () {
     late MockReportLocalDataSource mockSource;
     late ReportRepositoryImpl repository;
 
@@ -48,62 +49,7 @@ void main() {
       repository = ReportRepositoryImpl(mockSource);
     });
 
-    test('returns all zeros for an empty list', () {
-      final summary = repository.calculateSummary([]);
-      expect(summary.totalBills, 0);
-      expect(summary.totalGrossWeightKg, 0);
-      expect(summary.totalRevenue, 0);
-      expect(summary.completedCount, 0);
-    });
-
-    test('sums available weights, revenue and completed counts', () {
-      final records = [
-        item(id: 1, amount: 250, firstWeightKg: 20000, secondWeightKg: 5000),
-        item(id: 2, amount: 300, firstWeightKg: 30000),
-      ];
-
-      final summary = repository.calculateSummary(records);
-      expect(summary.totalBills, 2);
-      expect(summary.totalGrossWeightKg, 50000);
-      expect(summary.totalTareWeightKg, 5000);
-      expect(summary.totalNetWeightKg, 15000);
-      expect(summary.totalRevenue, 550);
-      expect(summary.completedCount, 1);
-    });
-
-    test('skips absent weights instead of adding zero noise', () {
-      final records = [
-        item(id: 1, firstWeightKg: 0, secondWeightKg: null),
-        item(id: 2, firstWeightKg: 10000, secondWeightKg: null),
-      ];
-      final summary = repository.calculateSummary(records);
-      expect(summary.totalGrossWeightKg, 10000);
-      expect(summary.totalTareWeightKg, 0);
-      expect(summary.totalNetWeightKg, 0);
-    });
-
-    test('handles TARE-first records correctly', () {
-      final records = [
-        item(
-          id: 1,
-          amount: 100,
-          firstWeightKg: 5000,
-          firstWeightType: 'TARE',
-          secondWeightKg: 20000,
-        ),
-      ];
-      final summary = repository.calculateSummary(records);
-      expect(summary.totalGrossWeightKg, 20000);
-      expect(summary.totalTareWeightKg, 5000);
-      expect(summary.totalNetWeightKg, 15000);
-      expect(summary.completedCount, 1);
-    });
-  });
-
-  group('ReportRepositoryImpl.getReportRecords', () {
-    test('delegates the filter to the local data source', () async {
-      final mockSource = MockReportLocalDataSource();
-      final repository = ReportRepositoryImpl(mockSource);
+    test('getReportRecords delegates the filter to the data source', () async {
       const filter = ReportFilter();
 
       when(
@@ -113,6 +59,45 @@ void main() {
       final records = await repository.getReportRecords(filter);
       expect(records, hasLength(1));
       verify(() => mockSource.getReportRecords(filter)).called(1);
+    });
+
+    test('getReportRecords forwards the page window', () async {
+      const filter = ReportFilter();
+      when(
+        () => mockSource.getReportRecords(
+          any(),
+          limit: any(named: 'limit'),
+          offset: any(named: 'offset'),
+        ),
+      ).thenAnswer((_) async => []);
+
+      await repository.getReportRecords(filter, limit: 50, offset: 100);
+
+      verify(
+        () => mockSource.getReportRecords(filter, limit: 50, offset: 100),
+      ).called(1);
+    });
+
+    test('countReportRecords delegates to the data source', () async {
+      const filter = ReportFilter();
+      when(
+        () => mockSource.countReportRecords(any()),
+      ).thenAnswer((_) async => 7);
+
+      expect(await repository.countReportRecords(filter), 7);
+      verify(() => mockSource.countReportRecords(filter)).called(1);
+    });
+
+    test('summarizeReportRecords delegates to the data source', () async {
+      const filter = ReportFilter();
+      when(() => mockSource.summarizeReportRecords(any())).thenAnswer(
+        (_) async => const ReportSummary(totalBills: 3, totalRevenue: 900),
+      );
+
+      final summary = await repository.summarizeReportRecords(filter);
+      expect(summary.totalBills, 3);
+      expect(summary.totalRevenue, 900);
+      verify(() => mockSource.summarizeReportRecords(filter)).called(1);
     });
   });
 }

@@ -56,7 +56,9 @@ class ExportReportUseCase {
     String? weightUnit,
   }) async {
     try {
-      // 1. Fetch matching records according to current report filters
+      // 1. Fetch matching records according to current report filters.
+      // Exports deliberately omit the page limit: the file must contain every
+      // matching record, not just what the table has paged in.
       final records = await _reportRepository.getReportRecords(filter);
 
       // 2. If there are no records, notify with a clean domain result

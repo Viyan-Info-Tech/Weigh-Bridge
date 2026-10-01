@@ -47,9 +47,7 @@ class ReportLocalDataSource {
   /// exist, so it must reflect the whole result set rather than the page.
   Future<int> countReportRecords(ReportFilter filter) async {
     final countColumn = _database.weighments.id.count();
-    final query = _database.selectOnly(_database.weighments).join([
-      ..._joins,
-    ]);
+    final query = _database.selectOnly(_database.weighments).join([..._joins]);
     _applyWhere(query, filter);
     query.addColumns([countColumn]);
 
@@ -65,9 +63,7 @@ class ReportLocalDataSource {
   /// the same pure functions the table rows use, so the totals cannot drift from
   /// what the report displays for the same weighment.
   Future<ReportSummary> summarizeReportRecords(ReportFilter filter) async {
-    final query = _database.selectOnly(_database.weighments).join([
-      ..._joins,
-    ]);
+    final query = _database.selectOnly(_database.weighments).join([..._joins]);
     _applyWhere(query, filter);
     query.addColumns([
       _database.weighments.firstWeightKg,
@@ -164,9 +160,10 @@ class ReportLocalDataSource {
 
     final vehicleQuery = filter.vehicleNumber.trim();
     if (vehicleQuery.isNotEmpty) {
-      query.where(
-        weights.vehicleNumber.lower().like('%${_escapeLike(vehicleQuery)}%'),
-      );
+      query.where(weights.vehicleNumber.lower().like(
+        '%${_escapeLike(vehicleQuery)}%',
+        escapeChar: _likeEscapeChar,
+      ));
     }
 
     if (filter.materialId != null) {
@@ -183,10 +180,19 @@ class ReportLocalDataSource {
     if (search.isNotEmpty) {
       final pattern = '%${_escapeLike(search)}%';
       query.where(
-        weights.billNumber.lower().like(pattern) |
-            weights.vehicleNumber.lower().like(pattern) |
-            _database.customers.name.lower().like(pattern) |
-            _database.materials.name.lower().like(pattern),
+        weights.billNumber.lower().like(pattern, escapeChar: _likeEscapeChar) |
+            weights.vehicleNumber.lower().like(
+              pattern,
+              escapeChar: _likeEscapeChar,
+            ) |
+            _database.customers.name.lower().like(
+              pattern,
+              escapeChar: _likeEscapeChar,
+            ) |
+            _database.materials.name.lower().like(
+              pattern,
+              escapeChar: _likeEscapeChar,
+            ),
       );
     }
   }
@@ -219,6 +225,11 @@ class ReportLocalDataSource {
 
   /// Neutralises LIKE wildcards so a search for "50%" or "A_B" matches those
   /// characters literally instead of acting as a wildcard.
+  ///
+  /// The escaping is only honoured by SQLite when the query declares an escape
+  /// character, hence [like] must pass [_likeEscapeChar] alongside the pattern.
+  static const String _likeEscapeChar = r'\';
+
   static String _escapeLike(String value) => value
       .replaceAll(r'\', r'\\')
       .replaceAll('%', r'\%')

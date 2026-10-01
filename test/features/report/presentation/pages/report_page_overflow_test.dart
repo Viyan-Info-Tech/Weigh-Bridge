@@ -91,18 +91,23 @@ void main() {
 
     final reportRepo = MockReportRepository();
     when(
-      () => reportRepo.getReportRecords(any()),
+      () => reportRepo.getReportRecords(
+        any(),
+        limit: any(named: 'limit'),
+        offset: any(named: 'offset'),
+      ),
     ).thenAnswer((_) async => allRecords);
-    when(() => reportRepo.calculateSummary(any())).thenAnswer((invocation) {
-      final items =
-          invocation.positionalArguments.first as List<WeighmentReportItem>;
+    when(
+      () => reportRepo.countReportRecords(any()),
+    ).thenAnswer((_) async => allRecords.length);
+    when(() => reportRepo.summarizeReportRecords(any())).thenAnswer((_) async {
       return ReportSummary(
-        totalBills: items.length,
+        totalBills: allRecords.length,
         totalGrossWeightKg: 47000,
         totalTareWeightKg: 6500,
         totalNetWeightKg: 18500,
         totalRevenue: 12500,
-        completedCount: items.where((i) => i.isCompleted).length,
+        completedCount: allRecords.where((i) => i.isCompleted).length,
       );
     });
 

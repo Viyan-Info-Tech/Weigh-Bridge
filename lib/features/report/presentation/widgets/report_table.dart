@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
 import '../../domain/entities/weighment_report_item.dart';
+import '../bloc/report_bloc.dart';
+import '../bloc/report_event.dart';
 import '../bloc/report_state.dart';
 import '../widgets/weighment_details_dialog.dart';
 
@@ -263,7 +266,9 @@ class _TableFooter extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Total: ${state.records.length} Bills',
+            state.hasMoreRecords
+                ? 'Showing ${state.records.length} of ${state.totalRecords} Bills'
+                : 'Total: ${state.totalRecords} Bills',
             style: const TextStyle(
               fontFamily: 'PlusJakartaSans',
               fontSize: 12,
@@ -273,6 +278,36 @@ class _TableFooter extends StatelessWidget {
           ),
           Row(
             children: [
+              if (state.isLoadingMore) ...[
+                const SizedBox(
+                  width: 12,
+                  height: 12,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Color(0xFF0284C7),
+                  ),
+                ),
+                const SizedBox(width: 12),
+              ] else if (state.hasMoreRecords)
+                TextButton(
+                  onPressed: () => context.read<ReportBloc>().add(
+                    const LoadNextReportPage(),
+                  ),
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    minimumSize: const Size(0, 28),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: const Text(
+                    'Load more',
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF0284C7),
+                    ),
+                  ),
+                ),
               Text(
                 'Total Net: ${state.summary.totalNetTons} T',
                 style: const TextStyle(

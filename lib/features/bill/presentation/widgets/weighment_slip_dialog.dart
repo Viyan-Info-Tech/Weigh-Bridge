@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart' hide Material;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -13,17 +11,7 @@ import '../../domain/entities/weighment.dart';
 import '../../domain/services/receipt_weight_resolver.dart';
 import '../../domain/services/weighment_ticket_pdf_generator.dart';
 
-/// Modern on-screen preview dialog for the A4 invoice-style weighment document.
-///
-/// Features:
-/// - True document-proportioned paper preview reflecting the printed A4 invoice.
-/// - Prominent Viyan Weighbridge letterhead & branding.
-/// - Clean document metadata header with invoice number, date, and time.
-/// - Two-column vehicle, customer, and material summary card.
-/// - Unified weight details with 3 visual highlight cards and a structured table.
-/// - Charges, payment mode, and completed status breakdown with colored chips.
-/// - Operator note, authorized signatory signature lines, and print timestamp.
-/// - Direct "Print Ticket" action sending the document to the system printer.
+/// Authentic on-screen preview dialog for the industrial dot-matrix weighbridge slip.
 class WeighmentSlipDialog extends StatefulWidget {
   final Weighment bill;
   final Customer? customer;
@@ -102,49 +90,23 @@ class _WeighmentSlipDialogState extends State<WeighmentSlipDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final bill = widget.bill;
-    final customer = widget.customer;
-    final materialName = widget.materialName;
-
     final activeSettings = _resolveActiveSettings();
+    final bill = widget.bill;
     final weights = const ReceiptWeightResolver().resolve(bill);
 
-    final vehicleNo = bill.vehicleNumber.isEmpty ? '—' : bill.vehicleNumber;
-    final customerName = customer?.name ?? '—';
-    final customerPhone = customer?.mobile ?? '';
-    final dateFormatted = DateFormat('dd/MM/yyyy').format(bill.createdAt);
-    final timeFormatted = DateFormat('hh:mm:ss a').format(bill.createdAt);
+    final vehicleNo = bill.vehicleNumber.isEmpty ? '--' : bill.vehicleNumber;
+    final customerName = widget.customer?.name ?? '--';
+    final customerPhone = widget.customer?.mobile ?? '';
+    final materialName = widget.materialName.isEmpty
+        ? '--'
+        : widget.materialName;
     final printDate = DateFormat('dd/MM/yyyy HH:mm:ss').format(DateTime.now());
     final isCompleted = bill.isCompleted;
 
-    final isTon =
-        activeSettings.weightUnit.toLowerCase() == 'ton' ||
-        activeSettings.weightUnit.toLowerCase() == 'tonne';
-    final unit = isTon ? 'ton' : 'kg';
-    final decimals = isTon ? 3 : 0;
-    String formatWeight(double? kg) {
-      if (kg == null) return '--';
-      final display = isTon ? kg / 1000 : kg;
-      return '${display.toStringAsFixed(decimals)} $unit';
-    }
-
-    final grossDate = weights.grossKg != null && bill.grossCapturedAt != null
-        ? DateFormat('dd/MM/yyyy').format(bill.grossCapturedAt!)
-        : (weights.grossKg != null ? dateFormatted : '--');
-    final grossTime = weights.grossKg != null && bill.grossCapturedAt != null
-        ? DateFormat('hh:mm a').format(bill.grossCapturedAt!)
-        : (weights.grossKg != null
-              ? DateFormat('hh:mm a').format(bill.createdAt)
-              : '--');
-
-    final tareDate = weights.tareKg != null && bill.tareCapturedAt != null
-        ? DateFormat('dd/MM/yyyy').format(bill.tareCapturedAt!)
-        : (weights.tareKg != null ? dateFormatted : '--');
-    final tareTime = weights.tareKg != null && bill.tareCapturedAt != null
-        ? DateFormat('hh:mm a').format(bill.tareCapturedAt!)
-        : (weights.tareKg != null
-              ? DateFormat('hh:mm a').format(bill.updatedAt)
-              : '--');
+    final hasSerial = activeSettings.showSerialNumber;
+    final hasVehNo = activeSettings.showVehicleNumber;
+    final hasMat = activeSettings.showMaterial;
+    final hasCustomer = activeSettings.showCustomer;
 
     final hasGross =
         isCompleted ||
@@ -162,28 +124,86 @@ class _WeighmentSlipDialogState extends State<WeighmentSlipDialog> {
     final hasAmount =
         isCompleted || activeSettings.showAmount || bill.amount > 0;
     final hasPayment = activeSettings.showPaymentMode;
-    final hasCash = activeSettings.showCashReceived;
 
     final hasRemarks =
         activeSettings.showRemarks &&
         bill.remarks != null &&
         bill.remarks!.trim().isNotEmpty;
     final hasFooter = activeSettings.showFooterNote;
+    final customFooter = activeSettings.footerNote?.trim();
+    final footerNoteText = (customFooter != null && customFooter.isNotEmpty)
+        ? customFooter
+        : 'Please check the weight before leaving the weighbridge.';
+
+    final isTon =
+        activeSettings.weightUnit.toLowerCase() == 'ton' ||
+        activeSettings.weightUnit.toLowerCase() == 'tonne';
+    final unit = isTon ? 'ton' : 'kg';
+    final decimals = isTon ? 3 : 0;
+    String formatWeight(double? kg) {
+      if (kg == null) return '--';
+      final display = isTon ? kg / 1000 : kg;
+      return '${display.toStringAsFixed(decimals)} $unit';
+    }
+
+    final grossDate = weights.grossKg != null && bill.grossCapturedAt != null
+        ? DateFormat('dd/MM/yyyy').format(bill.grossCapturedAt!)
+        : (weights.grossKg != null
+              ? DateFormat('dd/MM/yyyy').format(bill.createdAt)
+              : '--');
+    final grossTime = weights.grossKg != null && bill.grossCapturedAt != null
+        ? DateFormat('hh:mm a').format(bill.grossCapturedAt!)
+        : (weights.grossKg != null
+              ? DateFormat('hh:mm a').format(bill.createdAt)
+              : '--');
+
+    final tareDate = weights.tareKg != null && bill.tareCapturedAt != null
+        ? DateFormat('dd/MM/yyyy').format(bill.tareCapturedAt!)
+        : (weights.tareKg != null
+              ? DateFormat('dd/MM/yyyy').format(bill.createdAt)
+              : '--');
+    final tareTime = weights.tareKg != null && bill.tareCapturedAt != null
+        ? DateFormat('hh:mm a').format(bill.tareCapturedAt!)
+        : (weights.tareKg != null
+              ? DateFormat('hh:mm a').format(bill.updatedAt)
+              : '--');
+
+    final companyName = activeSettings.businessName.isNotEmpty
+        ? activeSettings.businessName
+        : 'VIYAN WEIGHBRIDGE';
+    final receiptTitleConfig = activeSettings.receiptTitle.trim();
+    final receiptTitle = receiptTitleConfig.isNotEmpty
+        ? receiptTitleConfig
+        : 'Public';
+
+    const monoFont = TextStyle(
+      fontFamily: 'Courier',
+      fontSize: 13,
+      color: Colors.black,
+    );
+
+    const monoBold = TextStyle(
+      fontFamily: 'Courier',
+      fontSize: 13,
+      fontWeight: FontWeight.bold,
+      color: Colors.black,
+    );
 
     return Dialog(
       backgroundColor: Colors.transparent,
       elevation: 0,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Container(
-        constraints: const BoxConstraints(maxWidth: 680, maxHeight: 900),
+        width: 720,
+        constraints: const BoxConstraints(maxHeight: 880),
         decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
+          color: const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+          border: Border.all(color: const Color(0xFFCBD5E1), width: 1.2),
           boxShadow: [
             BoxShadow(
               color: const Color(0xFF0F172A).withValues(alpha: 0.20),
-              blurRadius: 40,
+              blurRadius: 36,
               offset: const Offset(0, 16),
             ),
           ],
@@ -193,98 +213,265 @@ class _WeighmentSlipDialogState extends State<WeighmentSlipDialog> {
             // ── Modal Top Header Bar ─────────────────────
             _buildModalTopBar(context, bill.billNumber),
 
-            // ── Document Paper Sheet ─────────────────────
+            // ── Industrial Slip Sheet ────────────────────
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: const Color(0xFFE2E8F0),
-                      width: 1.2,
-                    ),
+                    borderRadius: BorderRadius.circular(4),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF0F172A).withValues(alpha: 0.05),
-                        blurRadius: 16,
-                        offset: const Offset(0, 4),
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 10,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 36,
+                    vertical: 32,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // 1. Company Letterhead Header
-                      _buildCompanyHeader(activeSettings),
-
-                      const SizedBox(height: 18),
-                      const Divider(color: Color(0xFFE2E8F0), height: 1),
-                      const SizedBox(height: 14),
-
-                      // 2. Invoice Title Banner & Bill Info Bar
-                      _buildInvoiceBanner(
-                        activeSettings,
-                        bill.billNumber,
-                        dateFormatted,
-                        timeFormatted,
-                      ),
-
-                      const SizedBox(height: 14),
-
-                      // 3. Vehicle & Party Details Card
-                      _buildVehicleAndPartyCard(
-                        vehicleNo: vehicleNo,
-                        customerName: customerName,
-                        customerPhone: customerPhone,
-                        materialName: materialName,
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // 4. WEIGHT DETAILS Section (Cards + Table)
-                      _buildWeightSection(
-                        hasGross: hasGross,
-                        hasTare: hasTare,
-                        hasNet: hasNet,
-                        grossWeightDisplay: formatWeight(weights.grossKg),
-                        tareWeightDisplay: formatWeight(weights.tareKg),
-                        netWeightDisplay: formatWeight(weights.netKg),
-                        grossDate: grossDate,
-                        grossTime: grossTime,
-                        tareDate: tareDate,
-                        tareTime: tareTime,
-                        hasGrossValue: weights.grossKg != null,
-                        hasTareValue: weights.tareKg != null,
-                        hasNetValue: weights.netKg != null,
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // 5. Financials & Payment Card
-                      if (hasAmount || hasPayment || hasCash)
-                        _buildFinancialsCard(
-                          bill: bill,
-                          isCompleted: isCompleted,
-                          hasAmount: hasAmount,
-                          hasPayment: hasPayment,
-                          hasCash: hasCash,
+                      // 1. Company Letterhead Header (Centered)
+                      Center(
+                        child: Column(
+                          children: [
+                            Text(
+                              companyName.toUpperCase(),
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontFamily: 'Courier',
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            if (activeSettings.businessSubtitle != null &&
+                                activeSettings
+                                    .businessSubtitle!
+                                    .trim()
+                                    .isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                activeSettings.businessSubtitle!,
+                                textAlign: TextAlign.center,
+                                style: monoFont.copyWith(fontSize: 12),
+                              ),
+                            ],
+                            if (activeSettings.serviceText != null &&
+                                activeSettings
+                                    .serviceText!
+                                    .trim()
+                                    .isNotEmpty) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                activeSettings.serviceText!,
+                                textAlign: TextAlign.center,
+                                style: monoBold.copyWith(fontSize: 11.5),
+                              ),
+                            ],
+                            if (activeSettings.address != null &&
+                                activeSettings.address!.trim().isNotEmpty) ...[
+                              const SizedBox(height: 3),
+                              Text(
+                                activeSettings.address!,
+                                textAlign: TextAlign.center,
+                                style: monoFont.copyWith(fontSize: 11.5),
+                              ),
+                            ],
+                            if ((activeSettings.phoneNumber != null &&
+                                    activeSettings
+                                        .phoneNumber!
+                                        .trim()
+                                        .isNotEmpty) ||
+                                (activeSettings.email != null &&
+                                    activeSettings.email!.trim().isNotEmpty) ||
+                                (activeSettings.gstin != null &&
+                                    activeSettings.gstin!.trim().isNotEmpty)) ...[
+                              const SizedBox(height: 2),
+                              Text(
+                                [
+                                  if (activeSettings.phoneNumber != null &&
+                                      activeSettings
+                                          .phoneNumber!
+                                          .trim()
+                                          .isNotEmpty)
+                                    'Tel: ${activeSettings.phoneNumber!}',
+                                  if (activeSettings.email != null &&
+                                      activeSettings.email!.trim().isNotEmpty)
+                                    'E-Mail: ${activeSettings.email!}',
+                                  if (activeSettings.gstin != null &&
+                                      activeSettings.gstin!.trim().isNotEmpty)
+                                    'GSTIN: ${activeSettings.gstin!}',
+                                ].join('   '),
+                                textAlign: TextAlign.center,
+                                style: monoFont.copyWith(fontSize: 11.5),
+                              ),
+                            ],
+                          ],
                         ),
-
-                      if (hasRemarks) ...[
-                        const SizedBox(height: 12),
-                        _buildRemarksCard(bill.remarks!),
-                      ],
+                      ),
 
                       const SizedBox(height: 22),
 
-                      // 6. Signatures & Footer Note
-                      _buildSignaturesAndFooter(
-                        activeSettings: activeSettings,
-                        hasFooter: hasFooter,
-                        printDate: printDate,
+                      // 2. Receipt Subtitle / Category
+                      Text(
+                        receiptTitle,
+                        style: monoBold.copyWith(fontSize: 13.5),
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      // 3. Metadata Fields (Colons vertically aligned)
+                      if (hasSerial)
+                        _buildScreenFieldRow('TOKEN NO', bill.billNumber),
+                      if (hasVehNo)
+                        _buildScreenFieldRow(
+                          'VEHICLE NO',
+                          vehicleNo,
+                          isBold: true,
+                        ),
+                      if (hasCustomer)
+                        _buildScreenFieldRow('DESCRIPTION', customerName),
+                      if (hasMat)
+                        _buildScreenFieldRow('PRODUCT', materialName),
+                      if (customerPhone.isNotEmpty)
+                        _buildScreenFieldRow('MOBILE NO', customerPhone),
+                      if (hasRemarks)
+                        _buildScreenFieldRow('CONTAINER No', bill.remarks!),
+
+                      const SizedBox(height: 10),
+
+                      // 4. Dashed line above table
+                      _buildScreenDashedLine(),
+
+                      // 5. Weight Table Header
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 4),
+                        child: Row(
+                          children: [
+                            const SizedBox(width: 100),
+                            Expanded(
+                              flex: 3,
+                              child: Text(
+                                'WEIGHT',
+                                textAlign: TextAlign.center,
+                                style: monoBold,
+                              ),
+                            ),
+                            Expanded(
+                              flex: 3,
+                              child: Text(
+                                'DATE',
+                                textAlign: TextAlign.center,
+                                style: monoBold,
+                              ),
+                            ),
+                            Expanded(
+                              flex: 3,
+                              child: Text(
+                                'TIME',
+                                textAlign: TextAlign.center,
+                                style: monoBold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // 6. Dashed line below header
+                      _buildScreenDashedLine(),
+
+                      // 7. Weight Rows
+                      if (hasGross &&
+                          weights.grossKg != null &&
+                          weights.grossKg! > 0)
+                        _buildScreenWeightRow(
+                          label: 'GROSS',
+                          weight: formatWeight(weights.grossKg),
+                          date: grossDate,
+                          time: grossTime,
+                        ),
+
+                      if (hasTare &&
+                          weights.tareKg != null &&
+                          weights.tareKg! > 0)
+                        _buildScreenWeightRow(
+                          label: 'TARE',
+                          weight: formatWeight(weights.tareKg),
+                          date: tareDate,
+                          time: tareTime,
+                        ),
+
+                      if (hasNet &&
+                          weights.netKg != null &&
+                          weights.netKg! > 0)
+                        _buildScreenWeightRow(
+                          label: 'NET',
+                          weight: formatWeight(weights.netKg),
+                          date: '--',
+                          time: '--',
+                        ),
+
+                      // 8. Dashed line below table
+                      _buildScreenDashedLine(),
+
+                      // 9. Financials
+                      if (hasAmount || hasPayment) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            if (hasAmount)
+                              Text(
+                                'CHARGES (Rs.) : ${bill.amount.toStringAsFixed(2)}',
+                                style: monoBold,
+                              ),
+                            const Spacer(),
+                            if (hasPayment)
+                              Text(
+                                'PAYMENT MODE : ${bill.paymentMode.toUpperCase()}',
+                                style: monoBold,
+                              ),
+                          ],
+                        ),
+                      ],
+
+                      // 10. Footer note
+                      if (hasFooter) ...[
+                        const SizedBox(height: 12),
+                        Text(
+                          'Note: $footerNoteText',
+                          style: monoFont.copyWith(fontSize: 11),
+                        ),
+                      ],
+
+                      const SizedBox(height: 52),
+
+                      // 11. Signatures
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text("Driver's Signature", style: monoBold),
+                          Text('Authorized Signatory', style: monoBold),
+                        ],
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // 12. Print timestamp
+                      Center(
+                        child: Text(
+                          '* Printed on: $printDate *',
+                          style: monoFont.copyWith(
+                            fontSize: 11,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -300,7 +487,132 @@ class _WeighmentSlipDialogState extends State<WeighmentSlipDialog> {
     );
   }
 
-  // ── 1. Modal Top Bar ──────────────────────────────────────
+  static Widget _buildScreenFieldRow(
+    String label,
+    String value, {
+    bool isBold = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2.5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 130,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'Courier',
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          const Text(
+            ': ',
+            style: TextStyle(
+              fontFamily: 'Courier',
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: Colors.black,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontFamily: 'Courier',
+                fontSize: 13,
+                fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+                color: Colors.black,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static Widget _buildScreenDashedLine() {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 4),
+      child: Text(
+        '--------------------------------------------------------------------------------',
+        maxLines: 1,
+        style: TextStyle(
+          fontFamily: 'Courier',
+          fontSize: 13,
+          color: Colors.black,
+          letterSpacing: -0.2,
+        ),
+      ),
+    );
+  }
+
+  static Widget _buildScreenWeightRow({
+    required String label,
+    required String weight,
+    required String date,
+    required String time,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3.5),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'Courier',
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              weight,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontFamily: 'Courier',
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              date,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontFamily: 'Courier',
+                fontSize: 13,
+                color: Colors.black,
+              ),
+            ),
+          ),
+          Expanded(
+            flex: 3,
+            child: Text(
+              time,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontFamily: 'Courier',
+                fontSize: 13,
+                color: Colors.black,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildModalTopBar(BuildContext context, String billNumber) {
     return Container(
@@ -318,7 +630,6 @@ class _WeighmentSlipDialogState extends State<WeighmentSlipDialog> {
             decoration: BoxDecoration(
               color: const Color(0xFFDCFCE7),
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: const Color(0xFFBBF7D0)),
             ),
             child: const Icon(
               Icons.receipt_long_rounded,
@@ -331,16 +642,16 @@ class _WeighmentSlipDialogState extends State<WeighmentSlipDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Weighment Invoice Preview',
+                'Weighment Slip Preview',
                 style: TextStyle(
                   fontFamily: 'PlusJakartaSans',
                   fontSize: 15,
-                  fontWeight: FontWeight.w800,
+                  fontWeight: FontWeight.w700,
                   color: Color(0xFF0F172A),
                 ),
               ),
               Text(
-                'Document #$billNumber · A4 Format',
+                'Ticket #$billNumber',
                 style: const TextStyle(
                   fontFamily: 'PlusJakartaSans',
                   fontSize: 11.5,
@@ -368,1035 +679,62 @@ class _WeighmentSlipDialogState extends State<WeighmentSlipDialog> {
     );
   }
 
-  // ── 2. Company Letterhead Header ─────────────────────────
-
-  Widget _buildCompanyHeader(BillingSettings settings) {
-    final hasLogo =
-        settings.logoPath != null &&
-        settings.logoPath!.trim().isNotEmpty &&
-        File(settings.logoPath!).existsSync();
-
-    return Column(
-      children: [
-        if (hasLogo)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Image.file(
-              File(settings.logoPath!),
-              height: 44,
-              fit: BoxFit.contain,
-              errorBuilder: (_, _, _) => _buildDefaultLogo(),
-            ),
-          )
-        else
-          _buildDefaultLogo(),
-        const SizedBox(height: 6),
-        Text(
-          settings.businessName.isNotEmpty
-              ? settings.businessName
-              : 'VIYAN WEIGHBRIDGE',
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            fontSize: 18,
-            fontWeight: FontWeight.w900,
-            color: Color(0xFF0F172A),
-            letterSpacing: 1.2,
-          ),
-        ),
-        if (settings.businessSubtitle != null &&
-            settings.businessSubtitle!.trim().isNotEmpty) ...[
-          const SizedBox(height: 2),
-          Text(
-            settings.businessSubtitle!,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF475569),
-            ),
-          ),
-        ],
-        if (settings.serviceText != null &&
-            settings.serviceText!.trim().isNotEmpty) ...[
-          const SizedBox(height: 2),
-          Text(
-            settings.serviceText!,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 10,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF16A34A),
-              letterSpacing: 0.8,
-            ),
-          ),
-        ],
-        if (settings.address != null &&
-            settings.address!.trim().isNotEmpty) ...[
-          const SizedBox(height: 4),
-          Text(
-            settings.address!,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 9.5,
-              color: Color(0xFF64748B),
-            ),
-          ),
-        ],
-        if ((settings.phoneNumber != null &&
-                settings.phoneNumber!.trim().isNotEmpty) ||
-            (settings.email != null && settings.email!.trim().isNotEmpty) ||
-            (settings.gstin != null && settings.gstin!.trim().isNotEmpty)) ...[
-          const SizedBox(height: 3),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 12,
-            children: [
-              if (settings.phoneNumber != null &&
-                  settings.phoneNumber!.trim().isNotEmpty)
-                Text(
-                  'Ph: ${settings.phoneNumber!}',
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 9,
-                    color: Color(0xFF64748B),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              if (settings.email != null && settings.email!.trim().isNotEmpty)
-                Text(
-                  'Email: ${settings.email!}',
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 9,
-                    color: Color(0xFF64748B),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              if (settings.gstin != null && settings.gstin!.trim().isNotEmpty)
-                Text(
-                  'GSTIN: ${settings.gstin!}',
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF475569),
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ],
-    );
-  }
-
-  Widget _buildDefaultLogo() {
-    return Container(
-      width: 36,
-      height: 36,
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFF0F172A), Color(0xFF1E293B)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        shape: BoxShape.circle,
-        border: Border.all(color: const Color(0xFF38BDF8), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.15),
-            blurRadius: 6,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: const Center(
-        child: Text(
-          'VW',
-          style: TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            fontSize: 12,
-            fontWeight: FontWeight.w900,
-            color: Colors.white,
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ── 3. Invoice Title Banner ──────────────────────────────
-
-  Widget _buildInvoiceBanner(
-    BillingSettings settings,
-    String billNumber,
-    String dateFormatted,
-    String timeFormatted,
-  ) {
-    final title = settings.receiptTitle.isNotEmpty
-        ? settings.receiptTitle
-        : 'WEIGHMENT RECEIPT';
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Flexible(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'WEIGHMENT INVOICE',
-                  style: TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 1.2,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-                const SizedBox(height: 1),
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF64748B),
-                    letterSpacing: 0.6,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(color: const Color(0xFFCBD5E1)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Bill No: ',
-                  style: TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF64748B),
-                  ),
-                ),
-                Text(
-                  billNumber,
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w900,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                'Date: $dateFormatted',
-                style: const TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF475569),
-                ),
-              ),
-              Text(
-                'Time: $timeFormatted',
-                style: const TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 10,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF475569),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── 4. Vehicle & Party Information Card ──────────────────
-
-  Widget _buildVehicleAndPartyCard({
-    required String vehicleNo,
-    required String customerName,
-    required String customerPhone,
-    required String materialName,
-  }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Left: Vehicle & Material
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildInfoItem(
-                  icon: Icons.local_shipping_outlined,
-                  label: 'VEHICLE / TRUCK NO',
-                  value: vehicleNo,
-                  isPrimary: true,
-                ),
-                const SizedBox(height: 10),
-                _buildInfoItem(
-                  icon: Icons.category_outlined,
-                  label: 'MATERIAL / COMMODITY',
-                  value: materialName,
-                ),
-              ],
-            ),
-          ),
-          Container(
-            width: 1,
-            height: 60,
-            color: const Color(0xFFF1F5F9),
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-          ),
-          // Right: Customer & Contact
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildInfoItem(
-                  icon: Icons.business_rounded,
-                  label: 'CUSTOMER / PARTY',
-                  value: customerName,
-                  isPrimary: true,
-                ),
-                if (customerPhone.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  _buildInfoItem(
-                    icon: Icons.phone_android_rounded,
-                    label: 'MOBILE / PHONE',
-                    value: customerPhone,
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoItem({
-    required IconData icon,
-    required String label,
-    required String value,
-    bool isPrimary = false,
-  }) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(icon, size: 16, color: const Color(0xFF64748B)),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 9,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.6,
-                  color: Color(0xFF94A3B8),
-                ),
-              ),
-              const SizedBox(height: 1.5),
-              Text(
-                value,
-                style: TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: isPrimary ? 13 : 11.5,
-                  fontWeight: isPrimary ? FontWeight.w800 : FontWeight.w600,
-                  color: const Color(0xFF0F172A),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ── 5. WEIGHT DETAILS Section ────────────────────────────
-
-  Widget _buildWeightSection({
-    required bool hasGross,
-    required bool hasTare,
-    required bool hasNet,
-    required String grossWeightDisplay,
-    required String tareWeightDisplay,
-    required String netWeightDisplay,
-    required String grossDate,
-    required String grossTime,
-    required String tareDate,
-    required String tareTime,
-    required bool hasGrossValue,
-    required bool hasTareValue,
-    required bool hasNetValue,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Section Title Header
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: const BoxDecoration(
-              color: Color(0xFFF8FAFC),
-              border: Border(bottom: BorderSide(color: Color(0xFFE2E8F0))),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(8)),
-            ),
-            child: const Row(
-              children: [
-                Icon(Icons.scale_rounded, size: 16, color: Color(0xFF16A34A)),
-                SizedBox(width: 8),
-                Text(
-                  'WEIGHT DETAILS',
-                  style: TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 11,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.0,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // 3 Visual KPI Cards: Gross | Tare | Net
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                _buildWeightKpiCard(
-                  title: 'GROSS WEIGHT',
-                  weightDisplay: grossWeightDisplay,
-                  dateText: grossDate,
-                  timeText: grossTime,
-                  hasValue: hasGrossValue,
-                  accentColor: const Color(0xFF0284C7),
-                  bgColor: const Color(0xFFF0F9FF),
-                ),
-                const SizedBox(width: 10),
-                _buildWeightKpiCard(
-                  title: 'TARE WEIGHT',
-                  weightDisplay: tareWeightDisplay,
-                  dateText: tareDate,
-                  timeText: tareTime,
-                  hasValue: hasTareValue,
-                  accentColor: const Color(0xFFD97706),
-                  bgColor: const Color(0xFFFFFBEB),
-                ),
-                const SizedBox(width: 10),
-                _buildWeightKpiCard(
-                  title: 'NET WEIGHT',
-                  weightDisplay: netWeightDisplay,
-                  dateText: '--',
-                  timeText: '--',
-                  hasValue: hasNetValue,
-                  isNet: true,
-                  accentColor: const Color(0xFF16A34A),
-                  bgColor: const Color(0xFFF0FDF4),
-                ),
-              ],
-            ),
-          ),
-
-          // Structured Full-width Table
-          Container(
-            decoration: const BoxDecoration(
-              border: Border(top: BorderSide(color: Color(0xFFF1F5F9))),
-            ),
-            child: Table(
-              columnWidths: const {
-                0: FlexColumnWidth(2.4),
-                1: FlexColumnWidth(1.8),
-                2: FlexColumnWidth(1.6),
-                3: FlexColumnWidth(2.0),
-              },
-              children: [
-                // Table Header
-                TableRow(
-                  decoration: const BoxDecoration(color: Color(0xFFF8FAFC)),
-                  children: [
-                    _buildTableCell('Weight Type', isHeader: true),
-                    _buildTableCell('Date', isHeader: true),
-                    _buildTableCell('Time', isHeader: true),
-                    _buildTableCell('Weight', isHeader: true, alignRight: true),
-                  ],
-                ),
-                // Gross Row
-                if (hasGross)
-                  TableRow(
-                    children: [
-                      _buildTableCell('Gross Weight', isBold: true),
-                      _buildTableCell(grossDate),
-                      _buildTableCell(grossTime),
-                      _buildTableCell(
-                        grossWeightDisplay,
-                        alignRight: true,
-                        isBold: true,
-                      ),
-                    ],
-                  ),
-                // Tare Row
-                if (hasTare)
-                  TableRow(
-                    children: [
-                      _buildTableCell('Tare Weight', isBold: true),
-                      _buildTableCell(tareDate),
-                      _buildTableCell(tareTime),
-                      _buildTableCell(
-                        tareWeightDisplay,
-                        alignRight: true,
-                        isBold: true,
-                      ),
-                    ],
-                  ),
-                // Net Row
-                if (hasNet)
-                  TableRow(
-                    decoration: const BoxDecoration(color: Color(0xFFF0FDF4)),
-                    children: [
-                      _buildTableCell(
-                        'Net Weight',
-                        isBold: true,
-                        textColor: const Color(0xFF15803D),
-                      ),
-                      _buildTableCell('—', textColor: const Color(0xFF15803D)),
-                      _buildTableCell('—', textColor: const Color(0xFF15803D)),
-                      _buildTableCell(
-                        netWeightDisplay,
-                        alignRight: true,
-                        isBold: true,
-                        textColor: const Color(0xFF15803D),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildWeightKpiCard({
-    required String title,
-    required String weightDisplay,
-    required String dateText,
-    required String timeText,
-    required bool hasValue,
-    required Color accentColor,
-    required Color bgColor,
-    bool isNet = false,
-  }) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-        decoration: BoxDecoration(
-          color: bgColor,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: hasValue
-                ? accentColor.withValues(alpha: 0.35)
-                : const Color(0xFFE2E8F0),
-            width: isNet ? 1.4 : 1.0,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 9,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.6,
-                color: hasValue ? accentColor : const Color(0xFF64748B),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              weightDisplay,
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 16,
-                fontWeight: FontWeight.w900,
-                color: hasValue
-                    ? const Color(0xFF0F172A)
-                    : const Color(0xFF94A3B8),
-              ),
-            ),
-            const SizedBox(height: 6),
-            Container(height: 1, color: const Color(0xFFE2E8F0)),
-            const SizedBox(height: 4),
-            Text(
-              dateText == '--' ? 'Date : --' : 'Date : $dateText',
-              style: const TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 8.5,
-                color: Color(0xFF64748B),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            Text(
-              timeText == '--' ? 'Time : --' : 'Time : $timeText',
-              style: const TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 8.5,
-                color: Color(0xFF64748B),
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTableCell(
-    String text, {
-    bool isHeader = false,
-    bool alignRight = false,
-    bool isBold = false,
-    Color? textColor,
-  }) {
-    final isDash = text == '--';
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Text(
-        text,
-        textAlign: alignRight ? TextAlign.right : TextAlign.left,
-        style: TextStyle(
-          fontFamily: 'PlusJakartaSans',
-          fontSize: isHeader ? 9.5 : 10.5,
-          fontWeight: isHeader || isBold ? FontWeight.w800 : FontWeight.w600,
-          color: isHeader
-              ? const Color(0xFF475569)
-              : (textColor ??
-                    (isDash
-                        ? const Color(0xFF94A3B8)
-                        : const Color(0xFF0F172A))),
-        ),
-      ),
-    );
-  }
-
-  // ── 6. Financials & Payment Card ──────────────────────────
-
-  Widget _buildFinancialsCard({
-    required Weighment bill,
-    required bool isCompleted,
-    required bool hasAmount,
-    required bool hasPayment,
-    required bool hasCash,
-  }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Row(
-        children: [
-          // Charges
-          if (hasAmount) ...[
-            Flexible(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'WEIGHMENT CHARGES',
-                    style: TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
-                      color: Color(0xFF64748B),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '₹${NumberFormat('#,##0.00').format(bill.amount)}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 16,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF0F172A),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 24),
-          ],
-
-          // Payment Mode
-          if (hasPayment) ...[
-            Flexible(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'PAYMENT MODE',
-                    style: TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
-                      color: Color(0xFF64748B),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    bill.paymentMode.toUpperCase(),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 24),
-          ],
-
-          // Cash Received
-          if (hasCash && bill.paymentMode.toUpperCase() == 'CASH') ...[
-            Flexible(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'CASH RECEIVED',
-                    style: TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 9,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 0.5,
-                      color: Color(0xFF64748B),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '₹${NumberFormat('#,##0.00').format(bill.amount)}',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 13,
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF0F172A),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-
-          const SizedBox(width: 10),
-
-          // Status Badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color: isCompleted
-                  ? const Color(0xFFDCFCE7)
-                  : const Color(0xFFFEF3C7),
-              borderRadius: BorderRadius.circular(6),
-              border: Border.all(
-                color: isCompleted
-                    ? const Color(0xFFBBF7D0)
-                    : const Color(0xFFFDE68A),
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isCompleted
-                      ? Icons.check_circle_rounded
-                      : Icons.pending_rounded,
-                  size: 14,
-                  color: isCompleted
-                      ? const Color(0xFF16A34A)
-                      : const Color(0xFFD97706),
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  isCompleted ? 'COMPLETED' : 'INCOMPLETE',
-                  style: TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 10.5,
-                    fontWeight: FontWeight.w800,
-                    color: isCompleted
-                        ? const Color(0xFF15803D)
-                        : const Color(0xFFB45309),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── 7. Remarks Card ───────────────────────────────────────
-
-  Widget _buildRemarksCard(String remarks) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: const Color(0xFFE2E8F0)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(
-            Icons.chat_bubble_outline_rounded,
-            size: 14,
-            color: Color(0xFF64748B),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: RichText(
-              text: TextSpan(
-                style: const TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 10.5,
-                  color: Color(0xFF475569),
-                ),
-                children: [
-                  const TextSpan(
-                    text: 'Direct delivery to site: ',
-                    style: TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                  TextSpan(text: remarks),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── 8. Signatures & Footer Note ───────────────────────────
-
-  Widget _buildSignaturesAndFooter({
-    required BillingSettings activeSettings,
-    required bool hasFooter,
-    required String printDate,
-  }) {
-    final customNote = activeSettings.footerNote?.trim();
-    final noteText = (customNote != null && customNote.isNotEmpty)
-        ? customNote
-        : 'Please check the weight before leaving the weighbridge.';
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (hasFooter)
-          Center(
-            child: Text(
-              'Note: $noteText',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 9,
-                fontStyle: FontStyle.italic,
-                color: Color(0xFF64748B),
-              ),
-            ),
-          ),
-        const SizedBox(height: 24),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Container(
-                  width: 140,
-                  height: 1,
-                  color: const Color(0xFF0F172A),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  "Driver's Signature",
-                  style: TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 9,
-                    color: Color(0xFF64748B),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  activeSettings.businessName.isNotEmpty
-                      ? activeSettings.businessName
-                      : 'VIYAN WEIGHBRIDGE',
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 10,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Container(
-                  width: 160,
-                  height: 1,
-                  color: const Color(0xFF0F172A),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Authorized Signatory',
-                  style: TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 9,
-                    color: Color(0xFF64748B),
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Center(
-          child: Text(
-            '* Printed on: $printDate *',
-            style: const TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 7.5,
-              color: Color(0xFF94A3B8),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ── 9. Modal Bottom Action Bar ───────────────────────────
-
   Widget _buildModalBottomBar(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(Icons.close_rounded, size: 16),
-              label: const Text('Close'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF475569),
-                side: const BorderSide(color: Color(0xFFCBD5E1), width: 1.2),
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                textStyle: const TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontWeight: FontWeight.w700,
-                ),
+          OutlinedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
+              foregroundColor: const Color(0xFF64748B),
+              side: const BorderSide(color: Color(0xFFCBD5E1)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text(
+              'Close',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
           const SizedBox(width: 12),
-          Expanded(
-            flex: 2,
-            child: ElevatedButton.icon(
-              onPressed: _isPrinting ? null : _handlePrint,
-              icon: _isPrinting
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Icon(Icons.print_rounded, size: 18),
-              label: const Text('Print Ticket'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF16A34A),
-                foregroundColor: Colors.white,
-                elevation: 2,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                textStyle: const TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontWeight: FontWeight.w800,
-                  fontSize: 14,
-                ),
+          ElevatedButton.icon(
+            onPressed: _isPrinting ? null : _handlePrint,
+            icon: _isPrinting
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.print_rounded, size: 18),
+            label: Text(
+              _isPrinting ? 'Printing...' : 'Print Ticket',
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF16A34A),
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 11),
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
               ),
             ),
           ),

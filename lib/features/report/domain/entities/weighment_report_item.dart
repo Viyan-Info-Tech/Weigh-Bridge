@@ -56,8 +56,7 @@ class WeighmentReportItem extends Equatable {
   double? get netWeightKg => deriveNetWeight(grossWeightKg, tareWeightKg);
 
   /// A weighment is completed once both weights have been captured.
-  bool get isCompleted =>
-      deriveIsCompleted(firstWeightKg, secondWeightKg);
+  bool get isCompleted => deriveIsCompleted(firstWeightKg, secondWeightKg);
 
   /// Derives the captured gross weight from the raw stored columns.
   ///
@@ -72,7 +71,7 @@ class WeighmentReportItem extends Equatable {
     if (type == 'GROSS') {
       return firstWeightKg > 0 ? firstWeightKg : null;
     } else if (type == 'TARE') {
-      return (secondWeightKg != null && secondWeightKg! > 0)
+      return secondWeightKg != null && secondWeightKg > 0
           ? secondWeightKg
           : null;
     }
@@ -89,13 +88,11 @@ class WeighmentReportItem extends Equatable {
     if (type == 'TARE') {
       return firstWeightKg > 0 ? firstWeightKg : null;
     } else if (type == 'GROSS') {
-      return (secondWeightKg != null && secondWeightKg! > 0)
+      return secondWeightKg != null && secondWeightKg > 0
           ? secondWeightKg
           : null;
     }
-    return (secondWeightKg != null && secondWeightKg! > 0)
-        ? secondWeightKg
-        : null;
+    return secondWeightKg != null && secondWeightKg > 0 ? secondWeightKg : null;
   }
 
   /// Derives the net weight, which only exists once both weights are captured.
@@ -108,7 +105,7 @@ class WeighmentReportItem extends Equatable {
 
   /// A weighment is complete once both weights have been captured.
   static bool deriveIsCompleted(double firstWeightKg, double? secondWeightKg) =>
-      firstWeightKg > 0 && secondWeightKg != null && secondWeightKg! > 0;
+      firstWeightKg > 0 && secondWeightKg != null && secondWeightKg > 0;
 
   @override
   List<Object?> get props => [

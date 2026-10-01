@@ -171,11 +171,18 @@ void main() {
     when(() => generateBillNumberUseCase()).thenAnswer((_) async => 'WB-00001');
     when(() => getSettingsUseCase()).thenAnswer((_) async => settings);
     when(
-      () => reportRepository.getReportRecords(any()),
+      () => reportRepository.getReportRecords(
+        any(),
+        limit: any(named: 'limit'),
+        offset: any(named: 'offset'),
+      ),
     ).thenAnswer((_) async => <WeighmentReportItem>[]);
     when(
-      () => reportRepository.calculateSummary(any()),
-    ).thenAnswer((_) => const ReportSummary());
+      () => reportRepository.countReportRecords(any()),
+    ).thenAnswer((_) async => 0);
+    when(
+      () => reportRepository.summarizeReportRecords(any()),
+    ).thenAnswer((_) async => const ReportSummary());
     when(() => exportReportUseCase(any())).thenAnswer(
       (_) async => ExportReportResult.success('report.csv', 'report.csv'),
     );
