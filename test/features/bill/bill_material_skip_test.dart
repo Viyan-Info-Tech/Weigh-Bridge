@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:weighbridge/features/bill/domain/entities/weighment.dart';
-import 'package:weighbridge/features/bill/domain/repositories/auto_tare_repository.dart';
 import 'package:weighbridge/features/bill/domain/usecases/save_bill.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_bloc.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_event.dart';
@@ -92,7 +91,7 @@ void main() {
       loadRecentBillsUseCase: mockLoadRecentBillsUseCase,
       generateBillNumberUseCase: mockGenerateBillNumberUseCase,
       autoTareRepository: null,
-    ) as BillBloc;
+    );
   });
 
   Future<void> pumpBillPage(WidgetTester tester) async {
