@@ -146,10 +146,9 @@ class _SettingsPageState extends State<SettingsPage> {
         resolvedCustomerName = customer?.name;
       }
 
-      if (weighment.materialId > 0) {
-        final material = await materialRepository.getMaterialById(
-          weighment.materialId,
-        );
+      final materialId = weighment.materialId;
+      if (materialId != null && materialId > 0) {
+        final material = await materialRepository.getMaterialById(materialId);
         resolvedMaterialName = material?.name;
       }
 

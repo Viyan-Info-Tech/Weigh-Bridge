@@ -207,7 +207,8 @@ class WeighmentTicketPdfGenerator {
 
               // ── 3. METADATA FIELDS (Aligned Colons) ────
               if (hasSerial) _buildFieldRow('TOKEN NO', bill.billNumber),
-              if (hasVehNo) _buildFieldRow('VEHICLE NO', vehicleNo, isBold: true),
+              if (hasVehNo)
+                _buildFieldRow('VEHICLE NO', vehicleNo, isBold: true),
               if (hasCustomer) _buildFieldRow('DESCRIPTION', customerName),
               if (hasMat)
                 _buildFieldRow(
@@ -271,9 +272,7 @@ class WeighmentTicketPdfGenerator {
 
               // ── 7. WEIGHT ROWS ─────────────────────────
               // GROSS
-              if (hasGross &&
-                  weights.grossKg != null &&
-                  weights.grossKg! > 0)
+              if (hasGross && weights.grossKg != null && weights.grossKg! > 0)
                 _buildWeightRow(
                   label: 'GROSS',
                   weight: formatWeight(weights.grossKg),
@@ -282,9 +281,7 @@ class WeighmentTicketPdfGenerator {
                 ),
 
               // TARE
-              if (hasTare &&
-                  weights.tareKg != null &&
-                  weights.tareKg! > 0)
+              if (hasTare && weights.tareKg != null && weights.tareKg! > 0)
                 _buildWeightRow(
                   label: 'TARE',
                   weight: formatWeight(weights.tareKg),
@@ -293,9 +290,7 @@ class WeighmentTicketPdfGenerator {
                 ),
 
               // NET
-              if (hasNet &&
-                  weights.netKg != null &&
-                  weights.netKg! > 0)
+              if (hasNet && weights.netKg != null && weights.netKg! > 0)
                 _buildWeightRow(
                   label: 'NET',
                   weight: formatWeight(weights.netKg),
@@ -341,30 +336,7 @@ class WeighmentTicketPdfGenerator {
                 ),
               ],
 
-              pw.SizedBox(height: 48),
-
-              // ── 11. SIGNATURES ────────────────────────
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-                  pw.Text(
-                    "Driver's Signature",
-                    style: pw.TextStyle(
-                      fontSize: 9.5,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                  pw.Text(
-                    'Authorized Signatory',
-                    style: pw.TextStyle(
-                      fontSize: 9.5,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-
-              pw.SizedBox(height: 18),
+              pw.SizedBox(height: 24),
 
               // ── 12. PRINT TIMESTAMP ───────────────────
               pw.Center(
@@ -396,18 +368,12 @@ class WeighmentTicketPdfGenerator {
             width: 125,
             child: pw.Text(
               label,
-              style: pw.TextStyle(
-                fontSize: 10,
-                fontWeight: pw.FontWeight.bold,
-              ),
+              style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
             ),
           ),
           pw.Text(
             ': ',
-            style: pw.TextStyle(
-              fontSize: 10,
-              fontWeight: pw.FontWeight.bold,
-            ),
+            style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
           ),
           pw.Expanded(
             child: pw.Text(
@@ -429,10 +395,7 @@ class WeighmentTicketPdfGenerator {
       child: pw.Text(
         '--------------------------------------------------------------------------------',
         maxLines: 1,
-        style: const pw.TextStyle(
-          fontSize: 10,
-          letterSpacing: -0.2,
-        ),
+        style: const pw.TextStyle(fontSize: 10, letterSpacing: -0.2),
       ),
     );
   }
@@ -451,10 +414,7 @@ class WeighmentTicketPdfGenerator {
             width: 90,
             child: pw.Text(
               label,
-              style: pw.TextStyle(
-                fontSize: 10,
-                fontWeight: pw.FontWeight.bold,
-              ),
+              style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
             ),
           ),
           pw.Expanded(
@@ -462,10 +422,7 @@ class WeighmentTicketPdfGenerator {
             child: pw.Text(
               weight,
               textAlign: pw.TextAlign.center,
-              style: pw.TextStyle(
-                fontSize: 10,
-                fontWeight: pw.FontWeight.bold,
-              ),
+              style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
             ),
           ),
           pw.Expanded(

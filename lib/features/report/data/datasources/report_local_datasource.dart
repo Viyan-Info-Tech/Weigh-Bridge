@@ -210,7 +210,9 @@ class ReportLocalDataSource {
       customerId: w.customerId,
       customerName: customer?.name ?? 'Customer #${w.customerId}',
       materialId: w.materialId,
-      materialName: material?.name ?? 'Material #${w.materialId}',
+      materialName: material?.name ?? (w.materialId == null
+          ? '—'
+          : 'Material #${w.materialId}'),
       paymentMode: w.paymentMode,
       amount: w.amount,
       vehicleCharge: w.vehicleCharge,

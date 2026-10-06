@@ -168,7 +168,7 @@ void main() {
         billNumber: billNumber,
         customerId: refs.customerId,
         vehicleNumber: 'TN31SEED01',
-        materialId: refs.materialId,
+        materialId: Value(refs.materialId),
         paymentMode: 'Cash',
         firstWeightKg: 20000,
       );

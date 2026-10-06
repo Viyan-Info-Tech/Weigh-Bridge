@@ -28,8 +28,6 @@ class BillForm extends StatefulWidget {
   final String vehicleNumber;
   final domain.MaterialItem? selectedMaterial;
   final String paymentMode;
-  final bool isEditing;
-  final String? editingFirstWeightType;
   final TextEditingController grossWeightController;
   final TextEditingController tareWeightController;
   final TextEditingController remarksController;
@@ -98,8 +96,6 @@ class BillForm extends StatefulWidget {
     this.vehicleNumber = '',
     this.selectedMaterial,
     required this.paymentMode,
-    this.isEditing = false,
-    this.editingFirstWeightType,
     required this.grossWeightController,
     required this.tareWeightController,
     required this.remarksController,
@@ -296,12 +292,9 @@ class _BillFormState extends State<BillForm> {
 
   @override
   Widget build(BuildContext context) {
-    final hasBothWeights = widget.grossWeightKg > 0 && widget.tareWeightKg > 0;
-    final isGrossEnabled =
-        !widget.isEditing ||
-        (hasBothWeights
-            ? widget.editingFirstWeightType == 'GROSS'
-            : widget.grossWeightKg <= 0);
+    // Both weights stay editable: this form always represents a new bill, so
+    // there is no previously captured weight that must be locked.
+    const isGrossEnabled = true;
     const isTareEnabled = true;
 
     return Container(

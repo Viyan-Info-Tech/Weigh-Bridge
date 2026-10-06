@@ -9,6 +9,11 @@ import '../../../customer/domain/entities/customer.dart';
 import '../../../material/domain/entities/material_item.dart' as domain;
 import '../../domain/entities/weighment.dart';
 
+/// Read-only history of saved weighments.
+///
+/// This panel never writes to the active bill form. Completed bills are
+/// immutable records, so tapping one opens a preview of that ticket instead of
+/// loading it back into the entry form.
 class RecentBillsPanel extends StatefulWidget {
   final List<Weighment> recentBills;
   final DateTime? billsDate;
@@ -17,7 +22,6 @@ class RecentBillsPanel extends StatefulWidget {
   final List<Customer> customers;
   final List<domain.MaterialItem> materials;
   final String weightUnit;
-  final ValueChanged<Weighment>? onBillSelected;
   final ValueChanged<DateTime>? onDateChanged;
   final void Function(DateTime? startDate, DateTime? endDate)?
   onDateRangeChanged;
@@ -33,7 +37,6 @@ class RecentBillsPanel extends StatefulWidget {
     required this.customers,
     this.materials = const [],
     this.weightUnit = 'kg',
-    this.onBillSelected,
     this.onDateChanged,
     this.onDateRangeChanged,
     this.searchFocusNode,
@@ -63,7 +66,10 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
     }
   }
 
-  String _getMaterialName(int materialId) {
+  String _getMaterialName(int? materialId) {
+    // A tare-only weighment has no material, so this is expected to be absent
+    // rather than an error.
+    if (materialId == null) return '—';
     try {
       return widget.materials.firstWhere((m) => m.id == materialId).name;
     } catch (_) {
@@ -112,6 +118,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
     }
   }
 
+  /// Opens the read-only ticket preview for a saved bill.
   void _showBillSlipDialog(Weighment bill) {
     final customer = _getCustomer(bill.customerId);
     final materialName = _getMaterialName(bill.materialId);
@@ -632,9 +639,9 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
       materialName: _getMaterialName(bill.materialId),
       weightUnit: widget.weightUnit,
       isCompact: isCompact,
-      onSelected: widget.onBillSelected == null
-          ? null
-          : () => widget.onBillSelected!(bill),
+      // Tapping a saved bill only previews it. The active new-bill form is never
+      // populated from history.
+      onSelected: () => _showBillSlipDialog(bill),
       onPrintSlip: () => _showBillSlipDialog(bill),
     );
   }

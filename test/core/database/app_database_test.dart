@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:drift/drift.dart' hide isNotNull;
+import 'package:drift/drift.dart' hide isNotNull, isNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
@@ -9,10 +9,10 @@ import 'package:weighbridge/core/database/app_database.dart';
 import '../../support/test_database.dart';
 
 void main() {
-  test('schema version is 24', () {
+  test('schema version is 25', () {
     final db = createInMemoryDatabase();
     addTearDown(db.close);
-    expect(db.schemaVersion, 24);
+    expect(db.schemaVersion, 25);
   });
 
   test('onCreate creates all application tables', () async {
@@ -448,6 +448,182 @@ CREATE TABLE app_settings (
 
       final version = await db.customSelect('PRAGMA user_version').get();
       expect(version.single.data['user_version'], db.schemaVersion);
+    });
+  });
+
+  group('v24 -> v25 migration', () {
+    /// Builds a real v24 database on disk: `material_id` is still NOT NULL and
+    /// the weighments indexes exist, exactly as a shipped install would have.
+    Future<NativeDatabase> createV24Database(
+      Directory dir,
+      String fileName,
+    ) async {
+      final file = File(p.join(dir.path, fileName));
+      final sqlite = NativeDatabase(file);
+      await sqlite.ensureOpen(_StubExecutorUser(24));
+      final now = DateTime(2026, 10, 1).millisecondsSinceEpoch;
+
+      await sqlite.runCustom(
+        'CREATE TABLE customers ('
+        'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+        'name TEXT NOT NULL, customer_code TEXT, contact_person TEXT, '
+        'mobile TEXT, email TEXT, address TEXT, gst_number TEXT, city TEXT, '
+        'state TEXT, is_active INTEGER NOT NULL DEFAULT 1, '
+        'created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)',
+      );
+      await sqlite.runCustom(
+        'CREATE TABLE materials ('
+        'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+        'name TEXT NOT NULL, code TEXT NOT NULL DEFAULT \'\', '
+        'category TEXT, unit TEXT NOT NULL DEFAULT \'ton\', '
+        'is_active INTEGER NOT NULL DEFAULT 1, '
+        'created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)',
+      );
+      // The v24 shape: material_id is NOT NULL.
+      await sqlite.runCustom(
+        'CREATE TABLE weighments ('
+        'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+        'bill_number TEXT NOT NULL UNIQUE, '
+        'customer_id INTEGER NOT NULL REFERENCES customers(id), '
+        'vehicle_number TEXT NOT NULL, '
+        'material_id INTEGER NOT NULL REFERENCES materials(id), '
+        'payment_mode TEXT NOT NULL, '
+        'first_weight_kg REAL NOT NULL, '
+        'first_weight_type TEXT NOT NULL DEFAULT \'GROSS\', '
+        'second_weight_kg REAL, second_weight_type TEXT, net_weight_kg REAL, '
+        'vehicle_charge REAL NOT NULL DEFAULT 0, '
+        'amount REAL NOT NULL DEFAULT 0, remarks TEXT, '
+        'weight_unit TEXT NOT NULL DEFAULT \'ton\', '
+        'created_at INTEGER NOT NULL DEFAULT (strftime(\'%s\',\'now\')), '
+        'updated_at INTEGER NOT NULL DEFAULT (strftime(\'%s\',\'now\')))',
+      );
+      await sqlite.runCustom(
+        'INSERT INTO customers (id, name, customer_code, is_active, '
+        'created_at, updated_at) VALUES (1, \'Acme\', \'C-001\', 1, ?, ?)',
+        [now, now],
+      );
+      await sqlite.runCustom(
+        'INSERT INTO materials (id, name, code, is_active, created_at, '
+        'updated_at) VALUES (1, \'Cement\', \'M-1\', 1, ?, ?)',
+        [now, now],
+      );
+      await sqlite.runCustom(
+        'INSERT INTO weighments (id, bill_number, customer_id, '
+        'vehicle_number, material_id, payment_mode, first_weight_kg, '
+        'first_weight_type, second_weight_kg, net_weight_kg, vehicle_charge, '
+        'amount, weight_unit, created_at, updated_at) '
+        'VALUES (1, \'WB-00001\', 1, \'MH12AB1234\', 1, \'cash\', 5000.0, '
+        '\'GROSS\', 2000.0, 3000.0, 100, 300, \'kg\', ?, ?)',
+        [now, now],
+      );
+      await sqlite.runCustom(
+        'CREATE INDEX IF NOT EXISTS idx_weighments_created_at '
+        'ON weighments(created_at DESC)',
+      );
+      await sqlite.runCustom(
+        'CREATE INDEX IF NOT EXISTS idx_weighments_customer_created '
+        'ON weighments(customer_id, created_at DESC)',
+      );
+      await sqlite.runCustom(
+        'CREATE INDEX IF NOT EXISTS idx_weighments_material_created '
+        'ON weighments(material_id, created_at DESC)',
+      );
+      await sqlite.runCustom('PRAGMA user_version = 24');
+      await sqlite.close();
+
+      return NativeDatabase(file);
+    }
+
+    test('preserves existing weighments and allows a null material_id', () async {
+      final dir = await Directory.systemTemp.createTemp('wb_v25');
+      addTearDown(() => dir.delete(recursive: true));
+
+      final db = AppDatabase.forTesting(await createV24Database(dir, 'a.db'));
+      addTearDown(db.close);
+
+      // The pre-existing row survives the table rebuild untouched.
+      final kept = await db.billDao.getWeighmentByBillNumber('WB-00001');
+      expect(kept, isNotNull);
+      expect(kept!.materialId, 1);
+      expect(kept.vehicleNumber, 'MH12AB1234');
+      expect(kept.firstWeightKg, 5000.0);
+      expect(kept.secondWeightKg, 2000.0);
+      expect(kept.netWeightKg, 3000.0);
+      expect(kept.amount, 300);
+
+      // material_id is nullable now.
+      final cols = await db
+          .customSelect("SELECT * FROM pragma_table_info('weighments')")
+          .get();
+      final materialId = cols.firstWhere(
+        (r) => r.data['name'] == 'material_id',
+      );
+      expect(materialId.data['notnull'], 0);
+
+      // And a tare-only weighment can now be stored without one.
+      await db.billDao.insertWeighment(
+        WeighmentsCompanion.insert(
+          billNumber: 'WB-00002',
+          customerId: 1,
+          vehicleNumber: 'MH12AB5678',
+          paymentMode: 'cash',
+          firstWeightKg: 4200,
+          firstWeightType: const Value('TARE'),
+          vehicleCharge: const Value(90),
+          amount: const Value(90),
+          weightUnit: const Value('kg'),
+        ),
+      );
+      final tareOnly = await db.billDao.getWeighmentByBillNumber('WB-00002');
+      expect(tareOnly, isNotNull);
+      expect(tareOnly!.materialId, isNull);
+      expect(tareOnly.firstWeightType, 'TARE');
+
+      final version = await db.customSelect('PRAGMA user_version').get();
+      expect(version.single.data['user_version'], db.schemaVersion);
+    });
+
+    test('recreates the unique bill_number constraint after the rebuild', () async {
+      final dir = await Directory.systemTemp.createTemp('wb_v25_idx');
+      addTearDown(() => dir.delete(recursive: true));
+
+      final db = AppDatabase.forTesting(await createV24Database(dir, 'b.db'));
+      addTearDown(db.close);
+
+      // Dropping and renaming the table discards its indexes, so a duplicate
+      // bill number must still be rejected.
+      await expectLater(
+        db.billDao.insertWeighment(
+          WeighmentsCompanion.insert(
+            billNumber: 'WB-00001',
+            customerId: 1,
+            vehicleNumber: 'MH12AB9999',
+            materialId: const Value(1),
+            paymentMode: 'cash',
+            firstWeightKg: 100,
+          ),
+        ),
+        throwsA(anything),
+      );
+    });
+
+    test('recreates the query indexes after the rebuild', () async {
+      final dir = await Directory.systemTemp.createTemp('wb_v25_query_idx');
+      addTearDown(() => dir.delete(recursive: true));
+
+      final db = AppDatabase.forTesting(await createV24Database(dir, 'c.db'));
+      addTearDown(db.close);
+
+      final indexes = await db
+          .customSelect(
+            "SELECT name FROM sqlite_master WHERE type='index' "
+            "AND tbl_name='weighments'",
+          )
+          .get();
+      final names = indexes.map((r) => r.data['name'] as String);
+      expect(names, contains('idx_weighments_created_at'));
+      expect(names, contains('idx_weighments_customer_created'));
+      expect(names, contains('idx_weighments_material_created'));
     });
   });
 }

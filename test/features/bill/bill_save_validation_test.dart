@@ -353,7 +353,7 @@ void main() {
         tareWeightKg: 850,
         tareWeightText: '850',
         tareCapturedAt: DateTime(2026, 10, 1, 10, 47),
-        editingFirstWeightType: 'TARE',
+        firstWeightType: 'TARE',
       ),
       act: (bloc) => bloc.add(const SaveBillRequested()),
       verify: (bloc) {

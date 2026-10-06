@@ -85,7 +85,7 @@ Future<int> seedWeighment(
       billNumber: billNumber,
       customerId: customerId,
       vehicleNumber: vehicleNumber,
-      materialId: materialId,
+      materialId: Value(materialId),
       paymentMode: paymentMode,
       firstWeightKg: firstWeightKg,
       firstWeightType: Value(firstWeightType),

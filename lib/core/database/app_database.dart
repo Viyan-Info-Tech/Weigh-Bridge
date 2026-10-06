@@ -52,7 +52,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 24;
+  int get schemaVersion => 25;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -693,6 +693,53 @@ class AppDatabase extends _$AppDatabase {
         // constraints. This runs last because the earlier rebuild steps
         // (from < 14/15/16) drop and recreate weighments, which discards any
         // index created before them.
+        await _createWeighmentQueryIndexes();
+      }
+
+      if (from < 25) {
+        // A tare-only weighment has no net weight and so no material. SQLite
+        // cannot drop a NOT NULL constraint in place, so the table is rebuilt
+        // with a nullable material_id and the existing rows are copied across.
+        await customStatement('''
+              CREATE TABLE weighments_new (
+                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                bill_number TEXT NOT NULL UNIQUE,
+                customer_id INTEGER NOT NULL REFERENCES customers(id),
+                vehicle_number TEXT NOT NULL,
+                material_id INTEGER REFERENCES materials(id),
+                payment_mode TEXT NOT NULL,
+                first_weight_kg REAL NOT NULL,
+                first_weight_type TEXT NOT NULL DEFAULT 'GROSS',
+                second_weight_kg REAL,
+                second_weight_type TEXT,
+                net_weight_kg REAL,
+                vehicle_charge REAL NOT NULL DEFAULT 0,
+                amount REAL NOT NULL DEFAULT 0,
+                remarks TEXT,
+                weight_unit TEXT NOT NULL DEFAULT 'ton',
+                created_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000),
+                updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
+              )
+            ''');
+        await customStatement(
+          'INSERT INTO weighments_new (id, bill_number, customer_id, '
+          'vehicle_number, material_id, payment_mode, first_weight_kg, '
+          'first_weight_type, second_weight_kg, second_weight_type, '
+          'net_weight_kg, vehicle_charge, amount, remarks, weight_unit, '
+          'created_at, updated_at) '
+          'SELECT id, bill_number, customer_id, vehicle_number, material_id, '
+          'payment_mode, first_weight_kg, first_weight_type, second_weight_kg, '
+          'second_weight_type, net_weight_kg, vehicle_charge, amount, remarks, '
+          'weight_unit, created_at, updated_at FROM weighments',
+        );
+        await customStatement('DROP TABLE weighments');
+        await customStatement('ALTER TABLE weighments_new RENAME TO weighments');
+        // The rebuild discards every index on the old table, including the
+        // unique constraint on bill_number that SQLite keeps per-table.
+        await customStatement(
+          'CREATE UNIQUE INDEX IF NOT EXISTS weighments_bill_number '
+          'ON weighments(bill_number)',
+        );
         await _createWeighmentQueryIndexes();
       }
     },

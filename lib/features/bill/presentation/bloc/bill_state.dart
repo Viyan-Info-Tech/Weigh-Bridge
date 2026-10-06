@@ -43,10 +43,13 @@ class BillState extends Equatable {
   final double amount;
 
   final String currentBillNumber;
-  final int? editingBillId;
-  final String? editingFirstWeightType;
-  final double? editingFirstWeightKg;
-  final DateTime? editingBillCreatedAt;
+
+  /// Which weight ('GROSS' or 'TARE') was captured first on the active bill.
+  ///
+  /// The bill screen always represents a *new* bill, so this only describes
+  /// what the operator has entered so far. It never refers to a saved record:
+  /// completed bills are immutable history and are never loaded into this form.
+  final String? firstWeightType;
   final String? weightValidationError;
   final String weightUnit;
 
@@ -92,10 +95,7 @@ class BillState extends Equatable {
     this.vehicleCharge = 0,
     this.amount = 0,
     this.currentBillNumber = 'WB-00001',
-    this.editingBillId,
-    this.editingFirstWeightType,
-    this.editingFirstWeightKg,
-    this.editingBillCreatedAt,
+    this.firstWeightType,
     this.weightValidationError,
     this.weightUnit = 'kg',
     this.liveScaleWeightKg = 0,
@@ -114,9 +114,29 @@ class BillState extends Equatable {
     this.fieldErrors = const {},
   });
 
-  bool get isEditing => editingBillId != null;
   bool get hasBothWeights => grossWeightKg > 0 && tareWeightKg > 0;
   bool get isKg => weightUnit.trim().toLowerCase() == 'kg';
+
+  /// A weight counts as captured only once it is a usable positive number.
+  /// NaN and negatives are rejected by validation and must not be read as
+  /// "present" here, or a tare-only bill could be mistaken for a full one.
+  bool get hasGrossWeight => grossWeightKg.isFinite && grossWeightKg > 0;
+  bool get hasTareWeight => tareWeightKg.isFinite && tareWeightKg > 0;
+
+  /// True when the truck has been weighed empty and will not return for a gross.
+  ///
+  /// Derived from the captured weights rather than from the GROSS/TARE toggle,
+  /// because the toggle only says which weight is being captured *right now*;
+  /// what makes a bill tare-only is that no gross exists for it.
+  bool get isTareOnly => hasTareWeight && !hasGrossWeight;
+
+  /// Central rule for the transaction requirements: a tare-only weighment has
+  /// no net weight and so nothing to price against a material. Everything else
+  /// (a full two-weight weighment, or a single gross) must name one.
+  ///
+  /// The form, the validation and the save path all read this one getter so the
+  /// requirement can never disagree with itself.
+  bool get requiresMaterial => !isTareOnly;
 
   String? get vehicleNumberError => fieldErrors['vehicleNumber'];
   String? get materialError => fieldErrors['material'];
@@ -170,11 +190,8 @@ class BillState extends Equatable {
     double? vehicleCharge,
     double? amount,
     String? currentBillNumber,
-    int? editingBillId,
-    bool clearEditingBillId = false,
-    String? editingFirstWeightType,
-    double? editingFirstWeightKg,
-    bool clearEditingFirstWeight = false,
+    String? firstWeightType,
+    bool clearFirstWeightType = false,
     String? weightValidationError,
     bool clearWeightError = false,
     String? weightUnit,
@@ -195,8 +212,6 @@ class BillState extends Equatable {
     Customer? printReceiptCustomer,
     String? printReceiptMaterialName,
     bool clearPrintReceipt = false,
-    DateTime? editingBillCreatedAt,
-    bool clearEditingBillCreatedAt = false,
   }) {
     return BillState(
       status: status ?? this.status,
@@ -227,18 +242,9 @@ class BillState extends Equatable {
       vehicleCharge: vehicleCharge ?? this.vehicleCharge,
       amount: amount ?? this.amount,
       currentBillNumber: currentBillNumber ?? this.currentBillNumber,
-      editingBillId: clearEditingBillId
+      firstWeightType: clearFirstWeightType
           ? null
-          : (editingBillId ?? this.editingBillId),
-      editingFirstWeightType: clearEditingFirstWeight
-          ? null
-          : (editingFirstWeightType ?? this.editingFirstWeightType),
-      editingFirstWeightKg: clearEditingFirstWeight
-          ? null
-          : (editingFirstWeightKg ?? this.editingFirstWeightKg),
-      editingBillCreatedAt: clearEditingBillCreatedAt
-          ? null
-          : (editingBillCreatedAt ?? this.editingBillCreatedAt),
+          : (firstWeightType ?? this.firstWeightType),
       weightValidationError: clearWeightError
           ? null
           : (weightValidationError ?? this.weightValidationError),
@@ -256,8 +262,9 @@ class BillState extends Equatable {
           : (tareCapturedAt ?? this.tareCapturedAt),
       autoTareKg: clearAutoTare ? 0 : (autoTareKg ?? this.autoTareKg),
       autoTareDate: clearAutoTare ? null : (autoTareDate ?? this.autoTareDate),
-      autoTareSavedAt:
-          clearAutoTare ? null : (autoTareSavedAt ?? this.autoTareSavedAt),
+      autoTareSavedAt: clearAutoTare
+          ? null
+          : (autoTareSavedAt ?? this.autoTareSavedAt),
       printReceiptBill: clearPrintReceipt
           ? null
           : (printReceiptBill ?? this.printReceiptBill),
@@ -297,10 +304,7 @@ class BillState extends Equatable {
     vehicleCharge,
     amount,
     currentBillNumber,
-    editingBillId,
-    editingFirstWeightType,
-    editingFirstWeightKg,
-    editingBillCreatedAt,
+    firstWeightType,
     weightValidationError,
     weightUnit,
     liveScaleWeightKg,

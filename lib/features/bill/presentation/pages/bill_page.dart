@@ -77,6 +77,12 @@ class BillPageState extends State<BillPage> {
   void didUpdateWidget(covariant BillPage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.isActive && !oldWidget.isActive) {
+      // This page lives inside an IndexedStack, so it is built once per session
+      // and initState never runs again. Master screens write to the database
+      // through their own blocs, so the lookup lists captured at startup go
+      // stale as soon as a customer or material is edited elsewhere. Re-read
+      // them now that this tab is in front again.
+      context.read<BillBloc>().add(const RefreshBillLookups());
       WidgetsBinding.instance.addPostFrameCallback((_) {
         requestFocus();
       });
@@ -277,18 +283,6 @@ class BillPageState extends State<BillPage> {
         !RegExp(r'^[A-Z0-9]{10}$').hasMatch(vehicleNumber)) {
       _showKeyboardMessage('Truck number must be exactly 10 characters.');
       _vehicleFocusNode.requestFocus();
-      return;
-    }
-    final requiredType = state.hasBothWeights
-        ? state.editingFirstWeightType?.toUpperCase()
-        : (state.editingFirstWeightType?.toUpperCase() == 'GROSS'
-              ? 'TARE'
-              : 'GROSS');
-    if (state.isEditing &&
-        state.selectedWeightType.toUpperCase() != requiredType) {
-      _showKeyboardMessage(
-        'Capture the missing ${requiredType?.toLowerCase()} weight to continue this ticket.',
-      );
       return;
     }
     context.read<BillBloc>().add(
@@ -570,7 +564,6 @@ class BillPageState extends State<BillPage> {
           prev.vehicleNumber != curr.vehicleNumber ||
           prev.remarksText != curr.remarksText ||
           prev.vehicleCharge != curr.vehicleCharge ||
-          prev.editingBillId != curr.editingBillId ||
           prev.autoTareKg != curr.autoTareKg ||
           prev.autoTareDate != curr.autoTareDate ||
           (curr.status == BillScreenStatus.printing &&
@@ -753,11 +746,6 @@ class BillPageState extends State<BillPage> {
                             customers: state.customers,
                             materials: state.materials,
                             weightUnit: state.weightUnit,
-                            onBillSelected: (bill) {
-                              context.read<BillBloc>().add(
-                                LoadBillForEdit(bill),
-                              );
-                            },
                             onDateChanged: (date) {
                               context.read<BillBloc>().add(
                                 LoadRecentBills(date: date),
@@ -871,9 +859,6 @@ class BillPageState extends State<BillPage> {
       customers: state.customers,
       materials: state.materials,
       weightUnit: state.weightUnit,
-      onBillSelected: (bill) {
-        context.read<BillBloc>().add(LoadBillForEdit(bill));
-      },
       onDateChanged: (date) {
         context.read<BillBloc>().add(LoadRecentBills(date: date));
       },

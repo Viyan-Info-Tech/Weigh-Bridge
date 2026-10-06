@@ -7,7 +7,7 @@ class WeighmentReportItem extends Equatable {
   final String vehicleNumber;
   final int customerId;
   final String customerName;
-  final int materialId;
+  final int? materialId;
   final String materialName;
   final String paymentMode;
   final double amount;
@@ -26,7 +26,7 @@ class WeighmentReportItem extends Equatable {
     required this.vehicleNumber,
     required this.customerId,
     required this.customerName,
-    required this.materialId,
+    this.materialId,
     required this.materialName,
     required this.paymentMode,
     required this.amount,

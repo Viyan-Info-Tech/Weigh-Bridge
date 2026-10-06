@@ -5,7 +5,10 @@ class Weighment extends Equatable {
   final String billNumber;
   final int customerId;
   final String vehicleNumber;
-  final int materialId;
+
+  /// Null only for a tare-only weighment, which has no net weight and so no
+  /// material to price against.
+  final int? materialId;
   final String paymentMode;
   final double firstWeightKg;
   final String firstWeightType;
@@ -24,7 +27,7 @@ class Weighment extends Equatable {
     required this.billNumber,
     required this.customerId,
     required this.vehicleNumber,
-    required this.materialId,
+    this.materialId,
     required this.paymentMode,
     double? firstWeightKg,
     this.firstWeightType = 'GROSS',

@@ -1712,9 +1712,9 @@ class $WeighmentsTable extends Weighments
   late final GeneratedColumn<int> materialId = GeneratedColumn<int>(
     'material_id',
     aliasedName,
-    false,
+    true,
     type: DriftSqlType.int,
-    requiredDuringInsert: true,
+    requiredDuringInsert: false,
     defaultConstraints: GeneratedColumn.constraintIsAlways(
       'REFERENCES materials (id)',
     ),
@@ -1942,8 +1942,6 @@ class $WeighmentsTable extends Weighments
         _materialIdMeta,
         materialId.isAcceptableOrUnknown(data['material_id']!, _materialIdMeta),
       );
-    } else if (isInserting) {
-      context.missing(_materialIdMeta);
     }
     if (data.containsKey('payment_mode')) {
       context.handle(
@@ -2070,7 +2068,7 @@ class $WeighmentsTable extends Weighments
       materialId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}material_id'],
-      )!,
+      ),
       paymentMode: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}payment_mode'],
@@ -2133,7 +2131,12 @@ class Weighment extends DataClass implements Insertable<Weighment> {
   final String billNumber;
   final int customerId;
   final String vehicleNumber;
-  final int materialId;
+
+  /// Nullable because a tare-only weighment (tare captured, no gross) has no
+  /// net weight and therefore nothing to price against a material. Gross
+  /// weighments still always carry one; that is enforced by the form rules in
+  /// `BillBloc`, not by this column.
+  final int? materialId;
   final String paymentMode;
   final double firstWeightKg;
   final String firstWeightType;
@@ -2151,7 +2154,7 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     required this.billNumber,
     required this.customerId,
     required this.vehicleNumber,
-    required this.materialId,
+    this.materialId,
     required this.paymentMode,
     required this.firstWeightKg,
     required this.firstWeightType,
@@ -2172,7 +2175,9 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     map['bill_number'] = Variable<String>(billNumber);
     map['customer_id'] = Variable<int>(customerId);
     map['vehicle_number'] = Variable<String>(vehicleNumber);
-    map['material_id'] = Variable<int>(materialId);
+    if (!nullToAbsent || materialId != null) {
+      map['material_id'] = Variable<int>(materialId);
+    }
     map['payment_mode'] = Variable<String>(paymentMode);
     map['first_weight_kg'] = Variable<double>(firstWeightKg);
     map['first_weight_type'] = Variable<String>(firstWeightType);
@@ -2202,7 +2207,9 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       billNumber: Value(billNumber),
       customerId: Value(customerId),
       vehicleNumber: Value(vehicleNumber),
-      materialId: Value(materialId),
+      materialId: materialId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(materialId),
       paymentMode: Value(paymentMode),
       firstWeightKg: Value(firstWeightKg),
       firstWeightType: Value(firstWeightType),
@@ -2236,7 +2243,7 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       billNumber: serializer.fromJson<String>(json['billNumber']),
       customerId: serializer.fromJson<int>(json['customerId']),
       vehicleNumber: serializer.fromJson<String>(json['vehicleNumber']),
-      materialId: serializer.fromJson<int>(json['materialId']),
+      materialId: serializer.fromJson<int?>(json['materialId']),
       paymentMode: serializer.fromJson<String>(json['paymentMode']),
       firstWeightKg: serializer.fromJson<double>(json['firstWeightKg']),
       firstWeightType: serializer.fromJson<String>(json['firstWeightType']),
@@ -2259,7 +2266,7 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       'billNumber': serializer.toJson<String>(billNumber),
       'customerId': serializer.toJson<int>(customerId),
       'vehicleNumber': serializer.toJson<String>(vehicleNumber),
-      'materialId': serializer.toJson<int>(materialId),
+      'materialId': serializer.toJson<int?>(materialId),
       'paymentMode': serializer.toJson<String>(paymentMode),
       'firstWeightKg': serializer.toJson<double>(firstWeightKg),
       'firstWeightType': serializer.toJson<String>(firstWeightType),
@@ -2280,7 +2287,7 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     String? billNumber,
     int? customerId,
     String? vehicleNumber,
-    int? materialId,
+    Value<int?> materialId = const Value.absent(),
     String? paymentMode,
     double? firstWeightKg,
     String? firstWeightType,
@@ -2298,7 +2305,7 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     billNumber: billNumber ?? this.billNumber,
     customerId: customerId ?? this.customerId,
     vehicleNumber: vehicleNumber ?? this.vehicleNumber,
-    materialId: materialId ?? this.materialId,
+    materialId: materialId.present ? materialId.value : this.materialId,
     paymentMode: paymentMode ?? this.paymentMode,
     firstWeightKg: firstWeightKg ?? this.firstWeightKg,
     firstWeightType: firstWeightType ?? this.firstWeightType,
@@ -2434,7 +2441,7 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
   final Value<String> billNumber;
   final Value<int> customerId;
   final Value<String> vehicleNumber;
-  final Value<int> materialId;
+  final Value<int?> materialId;
   final Value<String> paymentMode;
   final Value<double> firstWeightKg;
   final Value<String> firstWeightType;
@@ -2471,7 +2478,7 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     required String billNumber,
     required int customerId,
     required String vehicleNumber,
-    required int materialId,
+    this.materialId = const Value.absent(),
     required String paymentMode,
     required double firstWeightKg,
     this.firstWeightType = const Value.absent(),
@@ -2487,7 +2494,6 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
   }) : billNumber = Value(billNumber),
        customerId = Value(customerId),
        vehicleNumber = Value(vehicleNumber),
-       materialId = Value(materialId),
        paymentMode = Value(paymentMode),
        firstWeightKg = Value(firstWeightKg);
   static Insertable<Weighment> custom({
@@ -2535,7 +2541,7 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     Value<String>? billNumber,
     Value<int>? customerId,
     Value<String>? vehicleNumber,
-    Value<int>? materialId,
+    Value<int?>? materialId,
     Value<String>? paymentMode,
     Value<double>? firstWeightKg,
     Value<String>? firstWeightType,
@@ -6856,7 +6862,7 @@ typedef $$WeighmentsTableCreateCompanionBuilder =
       required String billNumber,
       required int customerId,
       required String vehicleNumber,
-      required int materialId,
+      Value<int?> materialId,
       required String paymentMode,
       required double firstWeightKg,
       Value<String> firstWeightType,
@@ -6876,7 +6882,7 @@ typedef $$WeighmentsTableUpdateCompanionBuilder =
       Value<String> billNumber,
       Value<int> customerId,
       Value<String> vehicleNumber,
-      Value<int> materialId,
+      Value<int?> materialId,
       Value<String> paymentMode,
       Value<double> firstWeightKg,
       Value<String> firstWeightType,
@@ -6915,9 +6921,9 @@ final class $$WeighmentsTableReferences
   static $MaterialsTable _materialIdTable(_$AppDatabase db) =>
       db.materials.createAlias('weighments__material_id__materials__id');
 
-  $$MaterialsTableProcessedTableManager get materialId {
-    final $_column = $_itemColumn<int>('material_id')!;
-
+  $$MaterialsTableProcessedTableManager? get materialId {
+    final $_column = $_itemColumn<int>('material_id');
+    if ($_column == null) return null;
     final manager = $$MaterialsTableTableManager(
       $_db,
       $_db.materials,
@@ -7345,7 +7351,7 @@ class $$WeighmentsTableTableManager
                 Value<String> billNumber = const Value.absent(),
                 Value<int> customerId = const Value.absent(),
                 Value<String> vehicleNumber = const Value.absent(),
-                Value<int> materialId = const Value.absent(),
+                Value<int?> materialId = const Value.absent(),
                 Value<String> paymentMode = const Value.absent(),
                 Value<double> firstWeightKg = const Value.absent(),
                 Value<String> firstWeightType = const Value.absent(),
@@ -7383,7 +7389,7 @@ class $$WeighmentsTableTableManager
                 required String billNumber,
                 required int customerId,
                 required String vehicleNumber,
-                required int materialId,
+                Value<int?> materialId = const Value.absent(),
                 required String paymentMode,
                 required double firstWeightKg,
                 Value<String> firstWeightType = const Value.absent(),

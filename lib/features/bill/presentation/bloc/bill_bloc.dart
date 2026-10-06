@@ -66,6 +66,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
        _autoTareRepository = autoTareRepository,
        super(const BillState()) {
     on<LoadBillScreen>(_onLoadBillScreen);
+    on<RefreshBillLookups>(_onRefreshBillLookups);
     on<CustomerSelected>(_onCustomerSelected);
     on<VehicleNumberChanged>(_onVehicleNumberChanged);
     on<MaterialSelected>(_onMaterialSelected);
@@ -75,7 +76,6 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     on<TareWeightCommitted>(_onTareWeightCommitted);
     on<GrossCapturedAtChanged>(_onGrossCapturedAtChanged);
     on<TareCapturedAtChanged>(_onTareCapturedAtChanged);
-    on<LoadBillForEdit>(_onLoadBillForEdit);
     on<RemarksChanged>(_onRemarksChanged);
     on<PaymentModeChanged>(_onPaymentModeChanged);
     on<WeightUnitChanged>(_onWeightUnitChanged);
@@ -169,6 +169,60 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
           errorMessage: 'Failed to load bill screen: $e',
         ),
       );
+    }
+  }
+
+  /// Re-reads the lookup lists from the database so edits made on the master
+  /// screens are visible here.
+  ///
+  /// Deliberately narrow: it touches only [BillState.customers],
+  /// [BillState.materials] and the selected lookup entities. The bill number,
+  /// captured weights, auto tare and recent-bill list are deliberately left
+  /// alone so that switching to a master screen and back cannot disturb a
+  /// weighment the operator is halfway through.
+  Future<void> _onRefreshBillLookups(
+    RefreshBillLookups event,
+    Emitter<BillState> emit,
+  ) async {
+    try {
+      final customers = await _customerRepository.getAllActiveCustomers();
+      if (emit.isDone) return;
+      final materials = await _materialRepository.getMaterialsByStatus(
+        isActive: true,
+      );
+      if (emit.isDone) return;
+
+      // Keep the already-selected entity pointing at the current row. The
+      // operator's mobile number stays as typed, because that field is theirs
+      // to edit; only the customer record behind the selection is refreshed.
+      Customer? refreshedSelection;
+      for (final customer in customers) {
+        if (customer.id == state.selectedCustomer?.id) {
+          refreshedSelection = customer;
+          break;
+        }
+      }
+
+      MaterialItem? refreshedMaterial;
+      for (final material in materials) {
+        if (material.id == state.selectedMaterial?.id) {
+          refreshedMaterial = material;
+          break;
+        }
+      }
+
+      emit(
+        state.copyWith(
+          customers: customers,
+          materials: materials,
+          selectedCustomer: refreshedSelection,
+          selectedMaterial: refreshedMaterial,
+        ),
+      );
+    } catch (_) {
+      // A failed refresh must not disturb the form: the operator keeps a
+      // usable, if slightly older, list, and the next tab switch retries.
+      return;
     }
   }
 
@@ -313,7 +367,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
         grossWeightText: event.value,
         grossWeightKg: kgValue,
         grossCapturedAt: capturedAt,
-        editingFirstWeightType: state.editingFirstWeightType ?? 'GROSS',
+        firstWeightType: state.firstWeightType ?? 'GROSS',
         clearError: true,
       ),
     );
@@ -374,7 +428,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
         tareWeightText: event.value,
         tareWeightKg: kgValue,
         tareCapturedAt: capturedAt,
-        editingFirstWeightType: state.editingFirstWeightType ?? 'TARE',
+        firstWeightType: state.firstWeightType ?? 'TARE',
         clearError: true,
       ),
     );
@@ -403,58 +457,6 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
         clearTareCapturedAt: event.capturedAt == null,
       ),
     );
-  }
-
-  void _onLoadBillForEdit(LoadBillForEdit event, Emitter<BillState> emit) {
-    final bill = event.bill;
-    final customer = state.customers
-        .where((c) => c.id == bill.customerId)
-        .firstOrNull;
-    final material = state.materials
-        .where((m) => m.id == bill.materialId)
-        .firstOrNull;
-
-    final isTon = bill.weightUnit.toLowerCase() == 'ton';
-    final gw = bill.grossWeightKg ?? 0;
-    final tw = bill.tareWeightKg ?? 0;
-
-    String grossText = '';
-    if (gw > 0) {
-      grossText = isTon
-          ? (gw / 1000).toStringAsFixed(3)
-          : gw.toStringAsFixed(0);
-    }
-    String tareText = '';
-    if (tw > 0) {
-      tareText = isTon ? (tw / 1000).toStringAsFixed(3) : tw.toStringAsFixed(0);
-    }
-
-    emit(
-      state.copyWith(
-        editingBillId: bill.id,
-        currentBillNumber: bill.billNumber,
-        selectedCustomer: customer,
-        vehicleNumber: bill.vehicleNumber,
-        selectedMaterial: material,
-        paymentMode: bill.paymentMode,
-        editingFirstWeightType: bill.firstWeightType,
-        editingFirstWeightKg: bill.firstWeightKg,
-        editingBillCreatedAt: bill.createdAt,
-        grossWeightKg: gw,
-        grossWeightText: grossText,
-        grossCapturedAt: bill.grossCapturedAt,
-        tareWeightKg: tw,
-        tareWeightText: tareText,
-        tareCapturedAt: bill.tareCapturedAt,
-        netWeightKg: bill.netWeightKg ?? 0,
-        vehicleCharge: bill.vehicleCharge,
-        amount: bill.amount,
-        remarksText: bill.remarks ?? '',
-        weightUnit: bill.weightUnit,
-        clearError: true,
-      ),
-    );
-    _recalculate(emit);
   }
 
   void _onRemarksChanged(RemarksChanged event, Emitter<BillState> emit) {
@@ -590,6 +592,8 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     if (event.type.toLowerCase() == 'gross') {
       // The day's auto tare is a copy source only: it fills an empty tare
       // field for this bill. Bills saved earlier keep their own tare value.
+      // Its reference timestamp is kept on the tare field; the bill's own
+      // billing time is stamped separately when the bill is saved.
       final autoTareKg = state.hasAutoTare ? state.autoTareKg : 0.0;
       final shouldApplyAutoTare =
           autoTareKg > 0 &&
@@ -603,7 +607,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
           grossWeightKg: liveKg,
           grossWeightText: weightStr,
           grossCapturedAt: now,
-          editingFirstWeightType: state.editingFirstWeightType ?? 'GROSS',
+          firstWeightType: state.firstWeightType ?? 'GROSS',
           tareWeightKg: shouldApplyAutoTare ? autoTareKg : null,
           tareWeightText: shouldApplyAutoTare ? autoTareText : null,
           tareCapturedAt: shouldApplyAutoTare
@@ -619,7 +623,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
           tareWeightKg: liveKg,
           tareWeightText: weightStr,
           tareCapturedAt: now,
-          editingFirstWeightType: state.editingFirstWeightType ?? 'TARE',
+          firstWeightType: state.firstWeightType ?? 'TARE',
           status: BillScreenStatus.loaded,
           clearError: true,
         ),
@@ -667,7 +671,9 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     }
 
     // ── 2. Material ───────────────────────────────────────────
-    if (state.selectedMaterial == null) {
+    // A tare-only weighment has no net weight and so no material. See
+    // BillState.requiresMaterial, which the form also reads.
+    if (state.requiresMaterial && state.selectedMaterial == null) {
       errors['material'] = 'Material code is required.';
     }
 
@@ -739,7 +745,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     );
 
     try {
-      await _saveOrUpdateBill(emit);
+      await _insertNewBill(emit);
       if (emit.isDone) return;
       final bills = await _loadBillsFor(state.effectiveBillsDate);
       if (emit.isDone) return;
@@ -776,7 +782,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     );
 
     try {
-      final savedData = await _saveOrUpdateBill(emit);
+      final savedData = await _insertNewBill(emit);
       if (emit.isDone) return;
       final bills = await _loadBillsFor(state.effectiveBillsDate);
       if (emit.isDone) return;
@@ -809,93 +815,56 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     );
   }
 
+  /// Persists the active form as a brand new bill.
+  ///
+  /// There is deliberately no update path: a saved bill is an immutable
+  /// historical record and is never edited in place. Every save allocates a
+  /// fresh serial number inside the database insert transaction.
   Future<({Weighment bill, Customer? customer, String materialName})>
-  _saveOrUpdateBill(Emitter<BillState> emit) async {
+  _insertNewBill(Emitter<BillState> emit) async {
     final savedCustomer = state.selectedCustomer;
     final savedMaterialName = state.selectedMaterial?.name ?? '—';
-    double firstWeightKg;
-    String firstWeightType;
-    double? secondWeightKg;
-    String? secondWeightType;
 
-    if (state.isEditing) {
-      final origFirstType =
-          state.editingFirstWeightType?.toUpperCase() ??
-          (state.editingFirstWeightKg != null && state.editingFirstWeightKg! > 0
-              ? 'GROSS'
-              : (state.tareWeightKg > 0 ? 'TARE' : 'GROSS'));
+    // Persist the first captured weight and leave the second absent until
+    // the truck returns for its other weighing.
+    final firstWeightType =
+        state.firstWeightType?.toUpperCase() ??
+        (state.grossWeightKg > 0 ? 'GROSS' : 'TARE');
+    final firstWeightKg = firstWeightType == 'GROSS'
+        ? state.grossWeightKg
+        : state.tareWeightKg;
+    final secondWeight = firstWeightType == 'GROSS'
+        ? state.tareWeightKg
+        : state.grossWeightKg;
+    final secondWeightKg = secondWeight > 0 ? secondWeight : null;
+    final secondWeightType = secondWeightKg == null
+        ? null
+        : (firstWeightType == 'GROSS' ? 'TARE' : 'GROSS');
 
-      if (origFirstType == 'TARE') {
-        firstWeightKg = state.editingFirstWeightKg ?? state.tareWeightKg;
-        firstWeightType = 'TARE';
-        secondWeightKg = state.grossWeightKg > 0 ? state.grossWeightKg : null;
-        secondWeightType = state.grossWeightKg > 0 ? 'GROSS' : null;
-      } else {
-        firstWeightKg = state.editingFirstWeightKg ?? state.grossWeightKg;
-        firstWeightType = 'GROSS';
-        secondWeightKg = state.tareWeightKg > 0 ? state.tareWeightKg : null;
-        secondWeightType = state.tareWeightKg > 0 ? 'TARE' : null;
-      }
-    } else {
-      // Persist the first captured weight and leave the second absent until
-      // the truck returns for its other weighing.
-      firstWeightType =
-          state.editingFirstWeightType?.toUpperCase() ??
-          (state.grossWeightKg > 0 ? 'GROSS' : 'TARE');
-      firstWeightKg = firstWeightType == 'GROSS'
-          ? state.grossWeightKg
-          : state.tareWeightKg;
-      final secondWeight = firstWeightType == 'GROSS'
-          ? state.tareWeightKg
-          : state.grossWeightKg;
-      secondWeightKg = secondWeight > 0 ? secondWeight : null;
-      secondWeightType = secondWeightKg == null
-          ? null
-          : (firstWeightType == 'GROSS' ? 'TARE' : 'GROSS');
-    }
-
-    final DateTime createdAt;
-    final DateTime updatedAt;
-
-    if (state.isEditing) {
-      createdAt = state.editingBillCreatedAt ?? DateTime.now();
-      updatedAt =
-          (secondWeightType == 'GROSS'
-              ? state.grossCapturedAt
-              : state.tareCapturedAt) ??
-          DateTime.now();
-    } else {
-      createdAt =
-          (firstWeightType == 'GROSS'
-              ? state.grossCapturedAt
-              : state.tareCapturedAt) ??
-          DateTime.now();
-      if (secondWeightKg != null && secondWeightKg > 0) {
-        updatedAt =
-            (secondWeightType == 'GROSS'
-                ? state.grossCapturedAt
-                : state.tareCapturedAt) ??
-            createdAt;
-      } else {
-        updatedAt = createdAt;
-      }
-    }
+    // The billing time of this bill is the moment it is saved. It is
+    // deliberately not derived from the weight capture fields: those may carry
+    // the day's shared Auto Tare reference time, which is identical for every
+    // bill weighed that day and would make Recent Billings show one frozen
+    // timestamp instead of when each bill was actually created.
+    //
+    // [updatedAt] is stamped with the same moment so a two-weight bill can
+    // never end up with an `updatedAt` older than its `createdAt`.
+    final createdAt = DateTime.now();
+    final updatedAt = createdAt;
 
     final netWeight = (state.grossWeightKg > 0 && state.tareWeightKg > 0)
         ? (state.grossWeightKg - state.tareWeightKg).abs()
         : null;
 
-    int savedId = state.editingBillId ?? 0;
-
     final weighment = Weighment(
-      id: savedId,
-      // Placeholder only: a new bill's number is allocated by the database
+      id: 0,
+      // Placeholder only: the serial number is allocated by the database
       // inside the insert transaction. The value stored on the returned row is
       // authoritative and replaces this immediately below.
       billNumber: state.currentBillNumber,
       customerId: state.selectedCustomer!.id,
       vehicleNumber: state.vehicleNumber.trim().toUpperCase(),
-      materialId: state.selectedMaterial!.id,
+      materialId: state.selectedMaterial?.id,
       paymentMode: state.paymentMode,
       firstWeightKg: firstWeightKg,
       firstWeightType: firstWeightType,
@@ -910,25 +879,15 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
       updatedAt: updatedAt,
     );
 
-    String savedBillNumber;
-
-    if (state.isEditing) {
-      await _saveBillUseCase.updateWeighment(state.editingBillId!, weighment);
-      savedId = state.editingBillId!;
-      savedBillNumber = weighment.billNumber;
-    } else {
-      // A new bill never reuses the previewed serial number. The database
-      // allocates it inside the insert transaction, which is the only place
-      // that can guarantee the number is unused, and the returned value is what
-      // gets displayed, printed and stored on the saved weighment.
-      final result = await _saveBillUseCase.withNewBillNumber(weighment);
-      savedId = result.id;
-      savedBillNumber = result.billNumber;
-    }
+    // A new bill never reuses the previewed serial number. The database
+    // allocates it inside the insert transaction, which is the only place
+    // that can guarantee the number is unused, and the returned value is what
+    // gets displayed, printed and stored on the saved weighment.
+    final result = await _saveBillUseCase.withNewBillNumber(weighment);
 
     final savedWeighment = Weighment(
-      id: savedId,
-      billNumber: savedBillNumber,
+      id: result.id,
+      billNumber: result.billNumber,
       customerId: weighment.customerId,
       vehicleNumber: weighment.vehicleNumber,
       materialId: weighment.materialId,
@@ -985,9 +944,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
         clearCustomer: true,
         vehicleNumber: '',
         clearMaterial: true,
-        clearEditingBillId: true,
-        clearEditingFirstWeight: true,
-        clearEditingBillCreatedAt: true,
+        clearFirstWeightType: true,
         grossWeightText: '',
         tareWeightText: '',
         remarksText: '',

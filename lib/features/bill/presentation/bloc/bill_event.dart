@@ -4,7 +4,6 @@ import 'package:equatable/equatable.dart';
 
 import '../../../customer/domain/entities/customer.dart';
 import '../../../material/domain/entities/material_item.dart';
-import '../../domain/entities/weighment.dart';
 
 abstract class BillEvent extends Equatable {
   const BillEvent();
@@ -15,6 +14,17 @@ abstract class BillEvent extends Equatable {
 
 class LoadBillScreen extends BillEvent {
   const LoadBillScreen();
+}
+
+/// Reloads the lookup lists (customers, materials) without touching anything
+/// the operator has already entered on the form.
+///
+/// The bill screen is kept alive by an [IndexedStack], so it is built once per
+/// session and `initState` never runs again. Master screens own their own blocs
+/// and write straight to the database, so without this the dropdowns would keep
+/// serving the snapshot taken at startup for the rest of the session.
+class RefreshBillLookups extends BillEvent {
+  const RefreshBillLookups();
 }
 
 class CustomerSelected extends BillEvent {
@@ -232,14 +242,6 @@ class TareCapturedAtChanged extends BillEvent {
 
   @override
   List<Object?> get props => [capturedAt];
-}
-
-class LoadBillForEdit extends BillEvent {
-  final Weighment bill;
-  const LoadBillForEdit(this.bill);
-
-  @override
-  List<Object?> get props => [bill];
 }
 
 class MobileNumberChanged extends BillEvent {

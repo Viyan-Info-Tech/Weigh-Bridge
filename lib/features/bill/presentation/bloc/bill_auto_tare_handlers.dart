@@ -141,6 +141,11 @@ mixin BillAutoTareHandlers on Bloc<BillEvent, BillState> {
   /// The configured auto tare is never modified, so bills saved earlier keep
   /// their own tare and timestamp. The capture timestamp is the exact moment
   /// the Auto Tare was saved or last updated.
+  ///
+  /// This is the Auto Tare's own reference time and deliberately does not
+  /// affect the billing time of the bill: `Weighment.createdAt` is stamped with
+  /// the moment the bill is saved, so a bill weighed against this reference
+  /// still reports its real creation time.
   void handleApplyAutoTareToBill(
     ApplyAutoTareToBill event,
     Emitter<BillState> emit,

@@ -30,7 +30,7 @@ class BillLocalDataSource {
       billNumber: billNumber,
       customerId: weighment.customerId,
       vehicleNumber: weighment.vehicleNumber,
-      materialId: weighment.materialId,
+      materialId: Value(weighment.materialId),
       paymentMode: weighment.paymentMode,
       firstWeightKg: weighment.firstWeightKg,
       firstWeightType: Value(weighment.firstWeightType),

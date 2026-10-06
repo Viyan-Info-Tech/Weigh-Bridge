@@ -444,18 +444,7 @@ class _WeighmentSlipDialogState extends State<WeighmentSlipDialog> {
                         ),
                       ],
 
-                      const SizedBox(height: 52),
-
-                      // 11. Signatures
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text("Driver's Signature", style: monoBold),
-                          Text('Authorized Signatory', style: monoBold),
-                        ],
-                      ),
-
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 28),
 
                       // 12. Print timestamp
                       Center(

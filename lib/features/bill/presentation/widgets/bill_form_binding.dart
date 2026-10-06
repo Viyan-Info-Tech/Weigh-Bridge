@@ -82,8 +82,6 @@ class BillFormBinding extends StatelessWidget {
       vehicleNumber: state.vehicleNumber,
       selectedMaterial: state.selectedMaterial,
       paymentMode: state.paymentMode,
-      isEditing: state.isEditing,
-      editingFirstWeightType: state.editingFirstWeightType,
       grossWeightController: r.grossWeightController,
       tareWeightController: r.tareWeightController,
       remarksController: r.remarksController,
