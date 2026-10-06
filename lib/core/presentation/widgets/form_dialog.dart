@@ -96,6 +96,12 @@ class FormDialogTextField extends StatelessWidget {
   final String? Function(String?)? validator;
   final ValueChanged<String>? onChanged;
 
+  /// Called when the user submits this field, typically with Enter.
+  ///
+  /// Wire this to the same method the submit button uses so both entry points
+  /// share one validation and save path.
+  final ValueChanged<String>? onFieldSubmitted;
+
   const FormDialogTextField({
     super.key,
     required this.label,
@@ -110,6 +116,7 @@ class FormDialogTextField extends StatelessWidget {
     this.keyboardType,
     this.validator,
     this.onChanged,
+    this.onFieldSubmitted,
   });
 
   @override
@@ -171,6 +178,7 @@ class FormDialogTextField extends StatelessWidget {
                   : null),
           validator: validator,
           onChanged: onChanged,
+          onFieldSubmitted: onFieldSubmitted,
           style: const TextStyle(fontFamily: 'PlusJakartaSans', fontSize: 13),
           decoration: InputDecoration(
             hintText: hintText,

@@ -103,6 +103,8 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
                   controller: _codeController,
                   isRequired: true,
                   hintText: 'e.g. 1, 2, 3',
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) => _saveMaterial(),
                   validator: (value) {
                     if (_codeErrorText != null) return _codeErrorText;
                     if (value == null || value.trim().isEmpty) {
@@ -124,6 +126,8 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
                   controller: _nameController,
                   isRequired: true,
                   hintText: 'e.g. Sand, Gravel, Cement',
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) => _saveMaterial(),
                   validator: (value) {
                     if (_nameErrorText != null) return _nameErrorText;
                     if (value == null || value.trim().isEmpty) {
@@ -157,7 +161,15 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
     _nameController.text = material.name;
   }
 
+  /// Single entry point for saving, shared by the submit button and by Enter in
+  /// either field.
+  ///
+  /// [FormDialogActions] disables the button while a save is in flight, but
+  /// Enter bypasses that, so the guard lives here too. Without it a second
+  /// Enter during the async duplicate-code lookup would dispatch a second
+  /// update for the same material.
   Future<void> _saveMaterial() async {
+    if (_isLoading) return;
     if (!_formKey.currentState!.validate()) {
       return;
     }

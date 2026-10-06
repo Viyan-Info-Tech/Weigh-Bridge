@@ -86,7 +86,9 @@ void main() {
     await first.customSelect('SELECT 1').get();
 
     // Rewind to look like a v23 database, which had no report indexes.
-    await first.customStatement('DROP INDEX IF EXISTS idx_weighments_created_at');
+    await first.customStatement(
+      'DROP INDEX IF EXISTS idx_weighments_created_at',
+    );
     await first.customStatement(
       'DROP INDEX IF EXISTS idx_weighments_customer_created',
     );
@@ -136,20 +138,23 @@ void main() {
     });
   });
 
-  test('weighments customer-filtered query avoids a temp b-tree sort', () async {
-    await withDatabase((db) async {
-      final rows = await db
-          .customSelect(
-            'EXPLAIN QUERY PLAN SELECT id FROM weighments '
-            'WHERE customer_id = 1 AND created_at >= 1 AND created_at <= 2 '
-            'ORDER BY created_at DESC',
-          )
-          .get();
-      final detail = rows.map((r) => r.read<String>('detail')).join(' ');
-      expect(detail, contains('idx_weighments_customer_created'));
-      expect(detail, isNot(contains('TEMP B-TREE')));
-    });
-  });
+  test(
+    'weighments customer-filtered query avoids a temp b-tree sort',
+    () async {
+      await withDatabase((db) async {
+        final rows = await db
+            .customSelect(
+              'EXPLAIN QUERY PLAN SELECT id FROM weighments '
+              'WHERE customer_id = 1 AND created_at >= 1 AND created_at <= 2 '
+              'ORDER BY created_at DESC',
+            )
+            .get();
+        final detail = rows.map((r) => r.read<String>('detail')).join(' ');
+        expect(detail, contains('idx_weighments_customer_created'));
+        expect(detail, isNot(contains('TEMP B-TREE')));
+      });
+    },
+  );
 
   test('database user_version is set to the schema version', () async {
     await withDatabase((db) async {
@@ -534,78 +539,84 @@ CREATE TABLE app_settings (
       return NativeDatabase(file);
     }
 
-    test('preserves existing weighments and allows a null material_id', () async {
-      final dir = await Directory.systemTemp.createTemp('wb_v25');
-      addTearDown(() => dir.delete(recursive: true));
+    test(
+      'preserves existing weighments and allows a null material_id',
+      () async {
+        final dir = await Directory.systemTemp.createTemp('wb_v25');
+        addTearDown(() => dir.delete(recursive: true));
 
-      final db = AppDatabase.forTesting(await createV24Database(dir, 'a.db'));
-      addTearDown(db.close);
+        final db = AppDatabase.forTesting(await createV24Database(dir, 'a.db'));
+        addTearDown(db.close);
 
-      // The pre-existing row survives the table rebuild untouched.
-      final kept = await db.billDao.getWeighmentByBillNumber('WB-00001');
-      expect(kept, isNotNull);
-      expect(kept!.materialId, 1);
-      expect(kept.vehicleNumber, 'MH12AB1234');
-      expect(kept.firstWeightKg, 5000.0);
-      expect(kept.secondWeightKg, 2000.0);
-      expect(kept.netWeightKg, 3000.0);
-      expect(kept.amount, 300);
+        // The pre-existing row survives the table rebuild untouched.
+        final kept = await db.billDao.getWeighmentByBillNumber('WB-00001');
+        expect(kept, isNotNull);
+        expect(kept!.materialId, 1);
+        expect(kept.vehicleNumber, 'MH12AB1234');
+        expect(kept.firstWeightKg, 5000.0);
+        expect(kept.secondWeightKg, 2000.0);
+        expect(kept.netWeightKg, 3000.0);
+        expect(kept.amount, 300);
 
-      // material_id is nullable now.
-      final cols = await db
-          .customSelect("SELECT * FROM pragma_table_info('weighments')")
-          .get();
-      final materialId = cols.firstWhere(
-        (r) => r.data['name'] == 'material_id',
-      );
-      expect(materialId.data['notnull'], 0);
+        // material_id is nullable now.
+        final cols = await db
+            .customSelect("SELECT * FROM pragma_table_info('weighments')")
+            .get();
+        final materialId = cols.firstWhere(
+          (r) => r.data['name'] == 'material_id',
+        );
+        expect(materialId.data['notnull'], 0);
 
-      // And a tare-only weighment can now be stored without one.
-      await db.billDao.insertWeighment(
-        WeighmentsCompanion.insert(
-          billNumber: 'WB-00002',
-          customerId: 1,
-          vehicleNumber: 'MH12AB5678',
-          paymentMode: 'cash',
-          firstWeightKg: 4200,
-          firstWeightType: const Value('TARE'),
-          vehicleCharge: const Value(90),
-          amount: const Value(90),
-          weightUnit: const Value('kg'),
-        ),
-      );
-      final tareOnly = await db.billDao.getWeighmentByBillNumber('WB-00002');
-      expect(tareOnly, isNotNull);
-      expect(tareOnly!.materialId, isNull);
-      expect(tareOnly.firstWeightType, 'TARE');
-
-      final version = await db.customSelect('PRAGMA user_version').get();
-      expect(version.single.data['user_version'], db.schemaVersion);
-    });
-
-    test('recreates the unique bill_number constraint after the rebuild', () async {
-      final dir = await Directory.systemTemp.createTemp('wb_v25_idx');
-      addTearDown(() => dir.delete(recursive: true));
-
-      final db = AppDatabase.forTesting(await createV24Database(dir, 'b.db'));
-      addTearDown(db.close);
-
-      // Dropping and renaming the table discards its indexes, so a duplicate
-      // bill number must still be rejected.
-      await expectLater(
-        db.billDao.insertWeighment(
+        // And a tare-only weighment can now be stored without one.
+        await db.billDao.insertWeighment(
           WeighmentsCompanion.insert(
-            billNumber: 'WB-00001',
+            billNumber: 'WB-00002',
             customerId: 1,
-            vehicleNumber: 'MH12AB9999',
-            materialId: const Value(1),
+            vehicleNumber: 'MH12AB5678',
             paymentMode: 'cash',
-            firstWeightKg: 100,
+            firstWeightKg: 4200,
+            firstWeightType: const Value('TARE'),
+            vehicleCharge: const Value(90),
+            amount: const Value(90),
+            weightUnit: const Value('kg'),
           ),
-        ),
-        throwsA(anything),
-      );
-    });
+        );
+        final tareOnly = await db.billDao.getWeighmentByBillNumber('WB-00002');
+        expect(tareOnly, isNotNull);
+        expect(tareOnly!.materialId, isNull);
+        expect(tareOnly.firstWeightType, 'TARE');
+
+        final version = await db.customSelect('PRAGMA user_version').get();
+        expect(version.single.data['user_version'], db.schemaVersion);
+      },
+    );
+
+    test(
+      'recreates the unique bill_number constraint after the rebuild',
+      () async {
+        final dir = await Directory.systemTemp.createTemp('wb_v25_idx');
+        addTearDown(() => dir.delete(recursive: true));
+
+        final db = AppDatabase.forTesting(await createV24Database(dir, 'b.db'));
+        addTearDown(db.close);
+
+        // Dropping and renaming the table discards its indexes, so a duplicate
+        // bill number must still be rejected.
+        await expectLater(
+          db.billDao.insertWeighment(
+            WeighmentsCompanion.insert(
+              billNumber: 'WB-00001',
+              customerId: 1,
+              vehicleNumber: 'MH12AB9999',
+              materialId: const Value(1),
+              paymentMode: 'cash',
+              firstWeightKg: 100,
+            ),
+          ),
+          throwsA(anything),
+        );
+      },
+    );
 
     test('recreates the query indexes after the rebuild', () async {
       final dir = await Directory.systemTemp.createTemp('wb_v25_query_idx');

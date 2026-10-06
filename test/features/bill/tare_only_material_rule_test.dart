@@ -108,36 +108,38 @@ void main() {
 
   /// A tare-only form: customer, truck and charges filled, a tare captured,
   /// no gross, and deliberately no material.
-  BillState tareOnlyForm() => const BillState(
-    status: BillScreenStatus.loaded,
-    vehicleNumber: 'TN09AB1234',
-    tareWeightKg: 4200,
-    tareWeightText: '4200',
-    currentBillNumber: 'WB-00001',
-    weightUnit: 'kg',
-    vehicleCharge: 90,
-    amount: 90,
-  ).copyWith(
-    selectedCustomer: testCustomer,
-    firstWeightType: 'TARE',
-    tareCapturedAt: DateTime(2026, 10, 1, 10, 45),
-  );
+  BillState tareOnlyForm() =>
+      const BillState(
+        status: BillScreenStatus.loaded,
+        vehicleNumber: 'TN09AB1234',
+        tareWeightKg: 4200,
+        tareWeightText: '4200',
+        currentBillNumber: 'WB-00001',
+        weightUnit: 'kg',
+        vehicleCharge: 90,
+        amount: 90,
+      ).copyWith(
+        selectedCustomer: testCustomer,
+        firstWeightType: 'TARE',
+        tareCapturedAt: DateTime(2026, 10, 1, 10, 45),
+      );
 
   /// A gross-only form with no material, for the cases that must still fail.
-  BillState grossOnlyForm() => const BillState(
-    status: BillScreenStatus.loaded,
-    vehicleNumber: 'TN09AB1234',
-    grossWeightKg: 1223,
-    grossWeightText: '1223',
-    currentBillNumber: 'WB-00001',
-    weightUnit: 'kg',
-    vehicleCharge: 90,
-    amount: 90,
-  ).copyWith(
-    selectedCustomer: testCustomer,
-    firstWeightType: 'GROSS',
-    grossCapturedAt: DateTime(2026, 10, 1, 10, 45),
-  );
+  BillState grossOnlyForm() =>
+      const BillState(
+        status: BillScreenStatus.loaded,
+        vehicleNumber: 'TN09AB1234',
+        grossWeightKg: 1223,
+        grossWeightText: '1223',
+        currentBillNumber: 'WB-00001',
+        weightUnit: 'kg',
+        vehicleCharge: 90,
+        amount: 90,
+      ).copyWith(
+        selectedCustomer: testCustomer,
+        firstWeightType: 'GROSS',
+        grossCapturedAt: DateTime(2026, 10, 1, 10, 45),
+      );
 
   group('BillState.requiresMaterial', () {
     test('is false only for a tare-only weighment', () {
@@ -211,9 +213,11 @@ void main() {
       seed: grossOnlyForm,
       act: (bloc) => bloc.add(const SaveBillRequested()),
       expect: () => [
-        isA<BillState>()
-            .having((s) => s.materialError, 'materialError',
-                'Material code is required.'),
+        isA<BillState>().having(
+          (s) => s.materialError,
+          'materialError',
+          'Material code is required.',
+        ),
       ],
       verify: (_) => verifyNever(() => mockSaveBill.withNewBillNumber(any())),
     );
@@ -228,9 +232,11 @@ void main() {
       ),
       act: (bloc) => bloc.add(const SaveBillRequested()),
       expect: () => [
-        isA<BillState>()
-            .having((s) => s.materialError, 'materialError',
-                'Material code is required.'),
+        isA<BillState>().having(
+          (s) => s.materialError,
+          'materialError',
+          'Material code is required.',
+        ),
       ],
       verify: (_) => verifyNever(() => mockSaveBill.withNewBillNumber(any())),
     );
@@ -246,9 +252,11 @@ void main() {
       ),
       act: (bloc) => bloc.add(const SaveBillRequested()),
       expect: () => [
-        isA<BillState>()
-            .having((s) => s.materialError, 'materialError',
-                'Material code is required.'),
+        isA<BillState>().having(
+          (s) => s.materialError,
+          'materialError',
+          'Material code is required.',
+        ),
       ],
       verify: (_) => verifyNever(() => mockSaveBill.withNewBillNumber(any())),
     );
@@ -259,8 +267,11 @@ void main() {
       seed: () => tareOnlyForm().copyWith(vehicleCharge: 0, amount: 0),
       act: (bloc) => bloc.add(const SaveBillRequested()),
       expect: () => [
-        isA<BillState>().having((s) => s.chargesError, 'chargesError',
-            'Weighment charge is required.'),
+        isA<BillState>().having(
+          (s) => s.chargesError,
+          'chargesError',
+          'Weighment charge is required.',
+        ),
       ],
       verify: (_) => verifyNever(() => mockSaveBill.withNewBillNumber(any())),
     );

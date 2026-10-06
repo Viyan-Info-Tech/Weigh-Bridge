@@ -8,6 +8,7 @@ class Weighments extends Table {
   TextColumn get billNumber => text().withLength(min: 1, max: 20).unique()();
   IntColumn get customerId => integer().references(Customers, #id)();
   TextColumn get vehicleNumber => text().withLength(min: 1, max: 30)();
+
   /// Nullable because a tare-only weighment (tare captured, no gross) has no
   /// net weight and therefore nothing to price against a material. Gross
   /// weighments still always carry one; that is enforced by the form rules in

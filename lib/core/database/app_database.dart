@@ -733,7 +733,9 @@ class AppDatabase extends _$AppDatabase {
           'weight_unit, created_at, updated_at FROM weighments',
         );
         await customStatement('DROP TABLE weighments');
-        await customStatement('ALTER TABLE weighments_new RENAME TO weighments');
+        await customStatement(
+          'ALTER TABLE weighments_new RENAME TO weighments',
+        );
         // The rebuild discards every index on the old table, including the
         // unique constraint on bill_number that SQLite keeps per-table.
         await customStatement(

@@ -160,10 +160,12 @@ class ReportLocalDataSource {
 
     final vehicleQuery = filter.vehicleNumber.trim();
     if (vehicleQuery.isNotEmpty) {
-      query.where(weights.vehicleNumber.lower().like(
-        '%${_escapeLike(vehicleQuery)}%',
-        escapeChar: _likeEscapeChar,
-      ));
+      query.where(
+        weights.vehicleNumber.lower().like(
+          '%${_escapeLike(vehicleQuery)}%',
+          escapeChar: _likeEscapeChar,
+        ),
+      );
     }
 
     if (filter.materialId != null) {
@@ -210,9 +212,9 @@ class ReportLocalDataSource {
       customerId: w.customerId,
       customerName: customer?.name ?? 'Customer #${w.customerId}',
       materialId: w.materialId,
-      materialName: material?.name ?? (w.materialId == null
-          ? '—'
-          : 'Material #${w.materialId}'),
+      materialName:
+          material?.name ??
+          (w.materialId == null ? '—' : 'Material #${w.materialId}'),
       paymentMode: w.paymentMode,
       amount: w.amount,
       vehicleCharge: w.vehicleCharge,

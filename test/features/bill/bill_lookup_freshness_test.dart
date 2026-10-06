@@ -69,14 +69,12 @@ void main() {
     mockLoadRecentBillsUseCase = MockLoadRecentBillsUseCase();
     mockGenerateBillNumberUseCase = MockGenerateBillNumberUseCase();
 
-    when(() => mockCustomerRepository.getAllActiveCustomers()).thenAnswer(
-      (_) => Future.value(customersInDatabase),
-    );
+    when(
+      () => mockCustomerRepository.getAllActiveCustomers(),
+    ).thenAnswer((_) => Future.value(customersInDatabase));
     when(
       () => mockMaterialRepository.getMaterialsByStatus(isActive: true),
-    ).thenAnswer(
-      (_) => Future.value(<MaterialItem>[]),
-    );
+    ).thenAnswer((_) => Future.value(<MaterialItem>[]));
     when(
       () => mockLoadRecentBillsUseCase(date: any(named: 'date')),
     ).thenAnswer((_) => Future.value(<Weighment>[]));
@@ -119,10 +117,7 @@ void main() {
   }
 
   /// Polls the real event loop until the refreshed list shows [name].
-  Future<void> waitForCustomer(
-    WidgetTester tester,
-    String name,
-  ) async {
+  Future<void> waitForCustomer(WidgetTester tester, String name) async {
     await tester.runAsync(() async {
       for (var i = 0; i < 40; i++) {
         if (billBloc.state.customers.any((c) => c.name == name)) return;

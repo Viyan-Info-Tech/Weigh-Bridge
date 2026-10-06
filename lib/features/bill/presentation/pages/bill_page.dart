@@ -375,11 +375,8 @@ class BillPageState extends State<BillPage> {
         isScaleOverload: bloc.state.isScaleOverload,
         weightUnit: bloc.state.weightUnit,
         onSave: (tareKg, savedAt) => _runAutoTareWrite(
-          (completer) => SaveAutoTare(
-            tareKg,
-            savedAt: savedAt,
-            completer: completer,
-          ),
+          (completer) =>
+              SaveAutoTare(tareKg, savedAt: savedAt, completer: completer),
         ),
         onDelete: () => _runAutoTareWrite(
           (completer) => DeleteAutoTare(completer: completer),
@@ -424,10 +421,17 @@ class BillPageState extends State<BillPage> {
   void focusTareWeightInput() => _focusTareWeightInput();
 
   void _moveWeighmentFocus({required bool forward}) {
-    final nodes = [
+    // Material Code only exists in the keyboard order while a material applies.
+    // For a tare-only weighment it is skipped, matching the Enter order built
+    // by `BillForm`, so Tab and Enter never disagree about where focus goes.
+    final isTareSelected =
+        context.read<BillBloc>().state.selectedWeightType.toUpperCase() ==
+        'TARE';
+
+    final nodes = <FocusNode>[
       _vehicleFocusNode,
       _typeFocusNode,
-      _materialCodeFocusNode,
+      if (!isTareSelected) _materialCodeFocusNode,
       _customerCodeFocusNode,
       _vehicleChargeFocusNode,
       _remarksFocusNode,

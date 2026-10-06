@@ -171,6 +171,32 @@ class _BillFormState extends State<BillForm> {
   DateTime? _tareDate;
   TimeOfDay? _tareTime;
 
+  /// True when the operator is entering a tare-only weighment.
+  ///
+  /// A tare-only weighment has no net weight and therefore nothing to price
+  /// against a material, so the keyboard focus order skips Material Code and
+  /// the Material picker entirely. The fields stay visible and clickable: this
+  /// only governs where Enter and Tab take the operator.
+  ///
+  /// Reads the form's own selection rather than the bloc's so the focus order
+  /// reacts to the GROSS/TARE toggle on the same frame it is pressed. Save-time
+  /// validation stays keyed on the captured weights via
+  /// [BillState.requiresMaterial], which is the stricter of the two.
+  bool get _skipsMaterial {
+    return (_selectedType ?? widget.selectedType).toLowerCase() == 'tare';
+  }
+
+  /// Moves focus to the next field in the current keyboard order.
+  ///
+  /// Material Code is bypassed for a tare-only weighment; everything else keeps
+  /// its fixed order.
+  void _focusAfterMaterialStep() {
+    final next = _skipsMaterial
+        ? widget.customerCodeFocusNode
+        : widget.materialCodeFocusNode;
+    next?.requestFocus();
+  }
+
   Widget _buildFieldError(String? error) {
     if (error == null || error.isEmpty) return const SizedBox.shrink();
     return Padding(
@@ -762,7 +788,7 @@ class _BillFormState extends State<BillForm> {
         if (event is! KeyDownEvent) return KeyEventResult.ignored;
         if (event.logicalKey == LogicalKeyboardKey.enter ||
             event.logicalKey == LogicalKeyboardKey.numpadEnter) {
-          widget.materialCodeFocusNode?.requestFocus();
+          _focusAfterMaterialStep();
           return KeyEventResult.handled;
         }
         if (event.logicalKey == LogicalKeyboardKey.arrowLeft ||
@@ -857,6 +883,15 @@ class _BillFormState extends State<BillForm> {
   }
 
   Future<void> _onMaterialCodeSubmitted(String value) async {
+    // Reached on a tare-only weighment when the operator typed a code anyway,
+    // or moved focus here by mouse. There is nothing to price against a
+    // material, so step on instead of failing with "Material code is
+    // required." and stranding the operator in this field.
+    if (_skipsMaterial) {
+      widget.customerCodeFocusNode?.requestFocus();
+      return;
+    }
+
     final code = value.trim().toUpperCase();
     if (code.isEmpty) {
       setState(() => _localMaterialError = 'Material code is required.');
@@ -1083,7 +1118,17 @@ class _BillFormState extends State<BillForm> {
             onChanged: (val) {
               widget.onMobileNumberChanged?.call(val);
             },
-            onSubmitted: (_) => widget.materialFocusNode?.requestFocus(),
+            onSubmitted: (_) {
+              // The Material picker is the last stop of the row. For a
+              // tare-only weighment it does not apply, so continue to the
+              // customer picker rather than parking focus on a field the
+              // operator cannot use.
+              if (_skipsMaterial) {
+                widget.customerFocusNode?.requestFocus();
+              } else {
+                widget.materialFocusNode?.requestFocus();
+              }
+            },
             style: const TextStyle(
               fontFamily: 'PlusJakartaSans',
               fontSize: 15,

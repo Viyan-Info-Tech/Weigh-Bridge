@@ -86,9 +86,9 @@ void main() {
     mockLoadRecent = MockLoadRecentBillsUseCase();
     mockGenerateBillNumber = MockGenerateBillNumberUseCase();
 
-    when(() => mockCustomerRepo.getAllActiveCustomers()).thenAnswer(
-      (_) async => [testCustomer],
-    );
+    when(
+      () => mockCustomerRepo.getAllActiveCustomers(),
+    ).thenAnswer((_) async => [testCustomer]);
     when(
       () => mockMaterialRepo.getMaterialsByStatus(isActive: true),
     ).thenAnswer((_) async => [testMaterial]);
@@ -102,7 +102,10 @@ void main() {
     when(() => mockSaveBill.withNewBillNumber(any())).thenAnswer((inv) async {
       final weighment = inv.positionalArguments.first as Weighment;
       saved.add(weighment);
-      return (id: saved.length, billNumber: 'WB-${saved.length.toString().padLeft(5, '0')}');
+      return (
+        id: saved.length,
+        billNumber: 'WB-${saved.length.toString().padLeft(5, '0')}',
+      );
     });
   });
 
@@ -147,7 +150,7 @@ void main() {
           isFalse,
           reason:
               'createdAt fell back to the Auto Tare configured time '
-              '(${autoTareConfiguredAt}), which is stale for every bill of '
+              '($autoTareConfiguredAt), which is stale for every bill of '
               'the day.',
         );
         expect(

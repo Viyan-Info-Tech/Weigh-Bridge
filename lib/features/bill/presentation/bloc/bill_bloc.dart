@@ -43,6 +43,43 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
   final SettingsRepository? _settingsRepository;
   final AutoTareRepository? _autoTareRepository;
 
+  /// The form as it stood immediately after the last successful save.
+  ///
+  /// One Ctrl+S dispatches `SaveAndPrintBillRequested` twice, because
+  /// `BillPage` registers both a raw `HardwareKeyboard` handler and a
+  /// `Shortcuts` widget and the two key systems are independent. The UI-level
+  /// `isSaving()` check cannot catch the duplicate: both events are queued
+  /// before the bloc processes the first one, so the status is still `loaded`
+  /// when the second is handled.
+  ///
+  /// Left unguarded, the first event saves and resets the form and the second
+  /// then validates the now-empty form, painting a wall of red errors behind
+  /// the receipt preview.
+  ///
+  /// The duplicate is recognised by the *form* rather than by a flag or by the
+  /// receipt, because the two key systems can fire in different event-loop
+  /// turns. `BillPage` also dispatches `PrintReceiptDismissed` the moment the
+  /// preview opens, so a receipt-based check only holds if the duplicate
+  /// happens to arrive before that. Comparing the form holds regardless of
+  /// ordering: a request that arrives while the form still looks exactly like
+  /// the one that was just saved can only be that duplicate, because an empty
+  /// form can never pass validation anyway.
+  BillState? _formJustSaved;
+
+  /// True when [state] is still untouched since the last successful save.
+  bool get _isDuplicateSaveRequest {
+    final saved = _formJustSaved;
+    if (saved == null) return false;
+    return saved.vehicleNumber == state.vehicleNumber &&
+        saved.selectedCustomer == state.selectedCustomer &&
+        saved.selectedMaterial == state.selectedMaterial &&
+        saved.grossWeightKg == state.grossWeightKg &&
+        saved.tareWeightKg == state.tareWeightKg &&
+        saved.firstWeightType == state.firstWeightType &&
+        saved.vehicleCharge == state.vehicleCharge &&
+        saved.amount == state.amount;
+  }
+
   @override
   AutoTareRepository? get autoTareRepository => _autoTareRepository;
 
@@ -728,6 +765,9 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     SaveBillRequested event,
     Emitter<BillState> emit,
   ) async {
+    // Ignore the duplicate half of a single save request; see [_formJustSaved].
+    if (_isDuplicateSaveRequest) return;
+
     final errors = _validateAll();
     if (errors.isNotEmpty) {
       emit(
@@ -750,6 +790,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
       final bills = await _loadBillsFor(state.effectiveBillsDate);
       if (emit.isDone) return;
       emit(state.copyWith(status: BillScreenStatus.saved, recentBills: bills));
+      _formJustSaved = state;
     } catch (e) {
       if (emit.isDone) return;
       emit(
@@ -765,6 +806,9 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     SaveAndPrintBillRequested event,
     Emitter<BillState> emit,
   ) async {
+    // Ignore the duplicate half of a single Ctrl+S; see [_formJustSaved].
+    if (_isDuplicateSaveRequest) return;
+
     final errors = _validateAll();
     if (errors.isNotEmpty) {
       emit(
@@ -795,6 +839,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
           printReceiptMaterialName: savedData.materialName,
         ),
       );
+      _formJustSaved = state;
     } catch (e) {
       if (emit.isDone) return;
       emit(

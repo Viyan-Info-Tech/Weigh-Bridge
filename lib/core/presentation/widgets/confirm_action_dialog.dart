@@ -1,6 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+/// A yes/no confirmation dialog with a fixed keyboard contract.
+///
+/// [Enter] (and numpad Enter) confirms, matching the primary action button.
+/// [Escape] backs out and is treated as "keep what I have", so it always pops
+/// `false`.
+///
+/// Both bindings live on this widget's [CallbackShortcuts], so they apply only
+/// while the dialog is open. Nothing outside it is affected, and the bindings
+/// stop applying the moment the dialog is dismissed.
 class ConfirmActionDialog extends StatelessWidget {
   final String title;
   final String message;
@@ -86,8 +95,19 @@ class ConfirmActionDialog extends StatelessWidget {
 
     return CallbackShortcuts(
       bindings: <ShortcutActivator, VoidCallback>{
+        // Escape is the safe way out: keep editing, leave the form untouched.
         const SingleActivator(LogicalKeyboardKey.escape): () {
           Navigator.of(context).pop(false);
+        },
+        // Enter confirms, matching the primary action button. Scoped to this
+        // dialog by construction, so nothing outside it changes behaviour.
+        // Weighbridge operators often work the numpad, so both enter keys are
+        // bound.
+        const SingleActivator(LogicalKeyboardKey.enter): () {
+          Navigator.of(context).pop(true);
+        },
+        const SingleActivator(LogicalKeyboardKey.numpadEnter): () {
+          Navigator.of(context).pop(true);
         },
       },
       child: Dialog(

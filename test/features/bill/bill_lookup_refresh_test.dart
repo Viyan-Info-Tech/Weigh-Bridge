@@ -33,12 +33,7 @@ void main() {
   late MockLoadRecentBillsUseCase mockLoadRecentBillsUseCase;
   late MockGenerateBillNumberUseCase mockGenerateBillNumberUseCase;
 
-  Customer buildCustomer(
-    int id,
-    String code,
-    String name, {
-    String? mobile,
-  }) {
+  Customer buildCustomer(int id, String code, String name, {String? mobile}) {
     final now = DateTime.now();
     return Customer(
       id: id,
@@ -114,10 +109,10 @@ void main() {
 
       // The customer master writes straight to the database, so the next read
       // returns the edited row.
-      when(
-        () => mockCustomerRepository.getAllActiveCustomers(),
-      ).thenAnswer(
-        (_) async => [buildCustomer(1, 'C-001', 'New Name', mobile: '987650001')],
+      when(() => mockCustomerRepository.getAllActiveCustomers()).thenAnswer(
+        (_) async => [
+          buildCustomer(1, 'C-001', 'New Name', mobile: '987650001'),
+        ],
       );
 
       billBloc.add(const RefreshBillLookups());
@@ -132,9 +127,7 @@ void main() {
       billBloc.add(const LoadBillScreen());
       await settle();
 
-      when(
-        () => mockCustomerRepository.getAllActiveCustomers(),
-      ).thenAnswer(
+      when(() => mockCustomerRepository.getAllActiveCustomers()).thenAnswer(
         (_) async => [
           buildCustomer(1, 'C-001', 'Old Name'),
           buildCustomer(2, 'C-002', 'Brand New'),
@@ -148,19 +141,22 @@ void main() {
       expect(billBloc.state.customers.last.name, 'Brand New');
     });
 
-    test('drops a customer that was deactivated on the master screen', () async {
-      billBloc.add(const LoadBillScreen());
-      await settle();
+    test(
+      'drops a customer that was deactivated on the master screen',
+      () async {
+        billBloc.add(const LoadBillScreen());
+        await settle();
 
-      when(
-        () => mockCustomerRepository.getAllActiveCustomers(),
-      ).thenAnswer((_) async => <Customer>[]);
+        when(
+          () => mockCustomerRepository.getAllActiveCustomers(),
+        ).thenAnswer((_) async => <Customer>[]);
 
-      billBloc.add(const RefreshBillLookups());
-      await settle();
+        billBloc.add(const RefreshBillLookups());
+        await settle();
 
-      expect(billBloc.state.customers, isEmpty);
-    });
+        expect(billBloc.state.customers, isEmpty);
+      },
+    );
 
     test(
       're-points an in-progress selection at the edited row, keeping typed mobile',
@@ -169,13 +165,13 @@ void main() {
         await settle();
 
         billBloc.add(
-          CustomerSelected(buildCustomer(1, 'C-001', 'Old Name', mobile: '999')),
+          CustomerSelected(
+            buildCustomer(1, 'C-001', 'Old Name', mobile: '999'),
+          ),
         );
         await settle();
 
-        when(
-          () => mockCustomerRepository.getAllActiveCustomers(),
-        ).thenAnswer(
+        when(() => mockCustomerRepository.getAllActiveCustomers()).thenAnswer(
           (_) async => [
             buildCustomer(1, 'C-001', 'New Name', mobile: '987650001'),
           ],
@@ -197,26 +193,29 @@ void main() {
       },
     );
 
-    test('keeps the selection when the customer is deactivated mid-entry', () async {
-      billBloc.add(const LoadBillScreen());
-      await settle();
+    test(
+      'keeps the selection when the customer is deactivated mid-entry',
+      () async {
+        billBloc.add(const LoadBillScreen());
+        await settle();
 
-      billBloc.add(CustomerSelected(buildCustomer(1, 'C-001', 'Old Name')));
-      await settle();
+        billBloc.add(CustomerSelected(buildCustomer(1, 'C-001', 'Old Name')));
+        await settle();
 
-      when(
-        () => mockCustomerRepository.getAllActiveCustomers(),
-      ).thenAnswer((_) async => <Customer>[]);
+        when(
+          () => mockCustomerRepository.getAllActiveCustomers(),
+        ).thenAnswer((_) async => <Customer>[]);
 
-      billBloc.add(const RefreshBillLookups());
-      await settle();
+        billBloc.add(const RefreshBillLookups());
+        await settle();
 
-      expect(
-        billBloc.state.selectedCustomer,
-        isNotNull,
-        reason: 'a refresh must never silently discard entered work',
-      );
-    });
+        expect(
+          billBloc.state.selectedCustomer,
+          isNotNull,
+          reason: 'a refresh must never silently discard entered work',
+        );
+      },
+    );
 
     test('refreshes materials from the same event', () async {
       billBloc.add(const LoadBillScreen());
@@ -276,7 +275,8 @@ void main() {
       expect(
         billBloc.state.status,
         isNot(BillScreenStatus.error),
-        reason: 'a background refresh must not put the form into an error state',
+        reason:
+            'a background refresh must not put the form into an error state',
       );
     });
   });
