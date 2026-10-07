@@ -7,12 +7,15 @@ import 'package:pdf/widgets.dart' as pw;
 import '../../../settings/domain/entities/billing_settings.dart';
 import '../entities/weighment.dart';
 import '../../../customer/domain/entities/customer.dart';
+import 'receipt_pdf_fonts.dart';
 import 'receipt_weight_resolver.dart';
 
 /// Builds an authentic, industrial weighbridge document PDF matching dot-matrix / slip printer formats.
 ///
 /// Features:
-/// - Clean monospace Courier typography matching real-world industrial weighbridge slips.
+/// - Monospaced typography matching real-world industrial weighbridge slips.
+///   The face comes from [ReceiptPdfFonts], which uses a Unicode-capable
+///   TrueType font when one is bundled and Courier otherwise.
 /// - Centered company name, address, and contact details.
 /// - Left-aligned metadata fields with aligned colons (TOKEN NO, VEHICLE NO, DESCRIPTION, PRODUCT, CONTAINER NO).
 /// - Authentic dashed line separators (`--------------------------------------------------------------------------------`).
@@ -28,10 +31,7 @@ class WeighmentTicketPdfGenerator {
     required BillingSettings settings,
     DateTime? printedAt,
   }) async {
-    final pdfTheme = pw.ThemeData.withFont(
-      base: pw.Font.courier(),
-      bold: pw.Font.courierBold(),
-    );
+    final pdfTheme = await ReceiptPdfFonts.load();
     final pdf = pw.Document(theme: pdfTheme);
 
     final weights = const ReceiptWeightResolver().resolve(bill);
