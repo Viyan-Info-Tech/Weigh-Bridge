@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
 
 import '../../domain/entities/billing_settings.dart';
 import '../bloc/settings_bloc.dart';
@@ -8,6 +7,7 @@ import '../bloc/settings_event.dart';
 import '../bloc/settings_state.dart';
 import '../../../../features/bill/domain/entities/weighment.dart';
 import '../../../../features/bill/domain/repositories/bill_repository.dart';
+import '../../../../features/customer/domain/entities/customer.dart';
 import '../../../../features/customer/domain/repositories/customer_repository.dart';
 import '../../../../features/material/domain/repositories/material_item_repository.dart';
 import '../widgets/bill_numbering_card.dart';
@@ -60,8 +60,6 @@ class _SettingsPageState extends State<SettingsPage> {
   );
 
   bool _showSerialNumber = true;
-  bool _showDate = true;
-  bool _showTime = true;
   bool _showVehicleNumber = true;
   bool _showMaterial = true;
   bool _showCustomer = true;
@@ -70,7 +68,6 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _showNetWeight = true;
   bool _showAmount = true;
   bool _showPaymentMode = true;
-  bool _showCashReceived = true;
   bool _showRemarks = true;
   bool _showFooterNote = true;
 
@@ -79,7 +76,7 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _isInitialized = false;
 
   Weighment? _latestWeighment;
-  String? _customerName;
+  Customer? _latestCustomer;
   String? _materialName;
   bool _isLoadingWeighment = true;
 
@@ -135,15 +132,13 @@ class _SettingsPageState extends State<SettingsPage> {
       }
 
       final weighment = weighments.first;
-
-      String? resolvedCustomerName;
+      Customer? resolvedCustomer;
       String? resolvedMaterialName;
 
       if (weighment.customerId > 0) {
-        final customer = await customerRepository.getCustomerById(
+        resolvedCustomer = await customerRepository.getCustomerById(
           weighment.customerId,
         );
-        resolvedCustomerName = customer?.name;
       }
 
       final materialId = weighment.materialId;
@@ -155,7 +150,7 @@ class _SettingsPageState extends State<SettingsPage> {
       if (mounted) {
         setState(() {
           _latestWeighment = weighment;
-          _customerName = resolvedCustomerName;
+          _latestCustomer = resolvedCustomer;
           _materialName = resolvedMaterialName;
           _isLoadingWeighment = false;
         });
@@ -203,8 +198,6 @@ class _SettingsPageState extends State<SettingsPage> {
     _footerNoteController.text = settings.footerNote ?? '';
 
     _showSerialNumber = settings.showSerialNumber;
-    _showDate = settings.showDate;
-    _showTime = settings.showTime;
     _showVehicleNumber = settings.showVehicleNumber;
     _showMaterial = settings.showMaterial;
     _showCustomer = settings.showCustomer;
@@ -213,7 +206,6 @@ class _SettingsPageState extends State<SettingsPage> {
     _showNetWeight = settings.showNetWeight;
     _showAmount = settings.showAmount;
     _showPaymentMode = settings.showPaymentMode;
-    _showCashReceived = settings.showCashReceived;
     _showRemarks = settings.showRemarks;
     _showFooterNote = settings.showFooterNote;
   }
@@ -330,8 +322,6 @@ class _SettingsPageState extends State<SettingsPage> {
           'Please check the weight before leaving the weighbridge.';
 
       _showSerialNumber = true;
-      _showDate = true;
-      _showTime = true;
       _showVehicleNumber = true;
       _showMaterial = true;
       _showCustomer = true;
@@ -340,7 +330,6 @@ class _SettingsPageState extends State<SettingsPage> {
       _showNetWeight = true;
       _showAmount = true;
       _showPaymentMode = true;
-      _showCashReceived = true;
       _showRemarks = true;
       _showFooterNote = true;
     });
@@ -349,8 +338,6 @@ class _SettingsPageState extends State<SettingsPage> {
   void _selectAllFields(bool select) {
     setState(() {
       _showSerialNumber = select;
-      _showDate = select;
-      _showTime = select;
       _showVehicleNumber = select;
       _showMaterial = select;
       _showCustomer = select;
@@ -359,7 +346,6 @@ class _SettingsPageState extends State<SettingsPage> {
       _showNetWeight = select;
       _showAmount = select;
       _showPaymentMode = select;
-      _showCashReceived = select;
       _showRemarks = select;
       _showFooterNote = select;
     });
@@ -436,8 +422,6 @@ class _SettingsPageState extends State<SettingsPage> {
           ? 'WEIGHMENT RECEIPT'
           : _receiptTitleController.text.trim(),
       showSerialNumber: _showSerialNumber,
-      showDate: _showDate,
-      showTime: _showTime,
       showVehicleNumber: _showVehicleNumber,
       showMaterial: _showMaterial,
       showCustomer: _showCustomer,
@@ -446,7 +430,6 @@ class _SettingsPageState extends State<SettingsPage> {
       showNetWeight: _showNetWeight,
       showAmount: _showAmount,
       showPaymentMode: _showPaymentMode,
-      showCashReceived: _showCashReceived,
       showRemarks: _showRemarks,
       showFooterNote: _showFooterNote,
       footerNote: _footerNoteController.text.trim().isEmpty
@@ -498,8 +481,6 @@ class _SettingsPageState extends State<SettingsPage> {
           ? 'WEIGHMENT RECEIPT'
           : _receiptTitleController.text.trim(),
       showSerialNumber: _showSerialNumber,
-      showDate: _showDate,
-      showTime: _showTime,
       showVehicleNumber: _showVehicleNumber,
       showMaterial: _showMaterial,
       showCustomer: _showCustomer,
@@ -508,7 +489,6 @@ class _SettingsPageState extends State<SettingsPage> {
       showNetWeight: _showNetWeight,
       showAmount: _showAmount,
       showPaymentMode: _showPaymentMode,
-      showCashReceived: _showCashReceived,
       showRemarks: _showRemarks,
       showFooterNote: _showFooterNote,
       footerNote: _footerNoteController.text.trim().isEmpty
@@ -523,10 +503,6 @@ class _SettingsPageState extends State<SettingsPage> {
       switch (field) {
         case 'serialNumber':
           _showSerialNumber = value;
-        case 'date':
-          _showDate = value;
-        case 'time':
-          _showTime = value;
         case 'vehicleNumber':
           _showVehicleNumber = value;
         case 'material':
@@ -543,8 +519,6 @@ class _SettingsPageState extends State<SettingsPage> {
           _showAmount = value;
         case 'paymentMode':
           _showPaymentMode = value;
-        case 'cashReceived':
-          _showCashReceived = value;
         case 'remarks':
           _showRemarks = value;
         case 'footerNote':
@@ -671,8 +645,6 @@ class _SettingsPageState extends State<SettingsPage> {
                             receiptTitleController: _receiptTitleController,
                             isEditing: _isEditing,
                             showSerialNumber: _showSerialNumber,
-                            showDate: _showDate,
-                            showTime: _showTime,
                             showVehicleNumber: _showVehicleNumber,
                             showMaterial: _showMaterial,
                             showCustomer: _showCustomer,
@@ -681,7 +653,6 @@ class _SettingsPageState extends State<SettingsPage> {
                             showNetWeight: _showNetWeight,
                             showAmount: _showAmount,
                             showPaymentMode: _showPaymentMode,
-                            showCashReceived: _showCashReceived,
                             showRemarks: _showRemarks,
                             showFooterNote: _showFooterNote,
                             onSelectAll: () => _selectAllFields(true),
@@ -730,24 +701,11 @@ class _SettingsPageState extends State<SettingsPage> {
                               ),
                               const SizedBox(width: 20),
                               Expanded(
-                                flex: 4,
+                                flex: 5,
                                 child: SingleChildScrollView(
                                   child: ReceiptPreviewCard(
                                     settings: settings,
-                                    billPreview: _currentBillPreview,
-                                    dateFormatted: DateFormat(
-                                      'dd/MM/yyyy',
-                                    ).format(DateTime.now()),
-                                    timeFormatted: DateFormat(
-                                      'hh:mm:ss a',
-                                    ).format(DateTime.now()),
-                                    timestamp: DateFormat(
-                                      'dd/MM/yyyy HH:mm:ss',
-                                    ).format(DateTime.now()),
-                                    weightUnit: _weightUnit,
                                     showSerialNumber: _showSerialNumber,
-                                    showDate: _showDate,
-                                    showTime: _showTime,
                                     showVehicleNumber: _showVehicleNumber,
                                     showMaterial: _showMaterial,
                                     showCustomer: _showCustomer,
@@ -756,11 +714,10 @@ class _SettingsPageState extends State<SettingsPage> {
                                     showNetWeight: _showNetWeight,
                                     showAmount: _showAmount,
                                     showPaymentMode: _showPaymentMode,
-                                    showCashReceived: _showCashReceived,
                                     showRemarks: _showRemarks,
                                     showFooterNote: _showFooterNote,
                                     latestWeighment: _latestWeighment,
-                                    customerName: _customerName,
+                                    customer: _latestCustomer,
                                     materialName: _materialName,
                                     isLoadingWeighment: _isLoadingWeighment,
                                   ),
@@ -785,20 +742,7 @@ class _SettingsPageState extends State<SettingsPage> {
                             const SizedBox(height: 20),
                             ReceiptPreviewCard(
                               settings: settings,
-                              billPreview: _currentBillPreview,
-                              dateFormatted: DateFormat(
-                                'dd/MM/yyyy',
-                              ).format(DateTime.now()),
-                              timeFormatted: DateFormat(
-                                'hh:mm:ss a',
-                              ).format(DateTime.now()),
-                              timestamp: DateFormat(
-                                'dd/MM/yyyy HH:mm:ss',
-                              ).format(DateTime.now()),
-                              weightUnit: _weightUnit,
                               showSerialNumber: _showSerialNumber,
-                              showDate: _showDate,
-                              showTime: _showTime,
                               showVehicleNumber: _showVehicleNumber,
                               showMaterial: _showMaterial,
                               showCustomer: _showCustomer,
@@ -807,11 +751,10 @@ class _SettingsPageState extends State<SettingsPage> {
                               showNetWeight: _showNetWeight,
                               showAmount: _showAmount,
                               showPaymentMode: _showPaymentMode,
-                              showCashReceived: _showCashReceived,
                               showRemarks: _showRemarks,
                               showFooterNote: _showFooterNote,
                               latestWeighment: _latestWeighment,
-                              customerName: _customerName,
+                              customer: _latestCustomer,
                               materialName: _materialName,
                               isLoadingWeighment: _isLoadingWeighment,
                             ),
@@ -834,11 +777,11 @@ class _SettingsPageState extends State<SettingsPage> {
     const gap = 20.0;
     final inner = width - (horizontalPadding * 2) - gap;
     if (inner <= 0) return false;
-    final leftWidth = inner * 0.6;
-    final rightWidth = inner * 0.4;
+    final leftWidth = inner * (6 / 11);
+    final rightWidth = inner * (5 / 11);
     if (width >= 1100) return true;
     if (width >= 900) {
-      return leftWidth >= 380 && rightWidth >= 280;
+      return leftWidth >= 380 && rightWidth >= 340;
     }
     return false;
   }

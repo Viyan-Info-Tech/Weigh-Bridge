@@ -10,7 +10,7 @@ import 'package:flutter/services.dart';
 /// Both bindings live on this widget's [CallbackShortcuts], so they apply only
 /// while the dialog is open. Nothing outside it is affected, and the bindings
 /// stop applying the moment the dialog is dismissed.
-class ConfirmActionDialog extends StatelessWidget {
+class ConfirmActionDialog extends StatefulWidget {
   final String title;
   final String message;
   final String? warningNote;
@@ -23,6 +23,8 @@ class ConfirmActionDialog extends StatelessWidget {
   final Color? confirmColor;
   final bool isDanger;
   final double width;
+  final FocusNode? confirmFocusNode;
+  final VoidCallback? onConfirm;
 
   const ConfirmActionDialog({
     super.key,
@@ -38,6 +40,8 @@ class ConfirmActionDialog extends StatelessWidget {
     this.confirmColor,
     this.isDanger = true,
     this.width = 420,
+    this.confirmFocusNode,
+    this.onConfirm,
   });
 
   static Future<bool?> show({
@@ -54,8 +58,12 @@ class ConfirmActionDialog extends StatelessWidget {
     Color? confirmColor,
     bool isDanger = true,
     double width = 420,
+    FocusNode? confirmFocusNode,
+    VoidCallback? onConfirm,
   }) {
-    return showDialog<bool>(
+    final focusNode =
+        confirmFocusNode ?? FocusNode(debugLabel: 'confirm_dialog_action_focus');
+    final future = showDialog<bool>(
       context: context,
       barrierColor: const Color(0xFF0F172A).withValues(alpha: 0.45),
       builder: (_) => ConfirmActionDialog(
@@ -71,53 +79,108 @@ class ConfirmActionDialog extends StatelessWidget {
         confirmColor: confirmColor,
         isDanger: isDanger,
         width: width,
+        confirmFocusNode: focusNode,
+        onConfirm: onConfirm,
       ),
     );
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (focusNode.canRequestFocus) {
+        focusNode.requestFocus();
+      }
+    });
+
+    if (confirmFocusNode == null) {
+      future.whenComplete(() {
+        focusNode.dispose();
+      });
+    }
+
+    return future;
+  }
+
+  @override
+  State<ConfirmActionDialog> createState() => _ConfirmActionDialogState();
+}
+
+class _ConfirmActionDialogState extends State<ConfirmActionDialog> {
+  late final FocusNode _confirmFocusNode;
+  bool _ownsFocusNode = false;
+  bool _isConfirmed = false;
+
+  void _handleConfirm() {
+    if (_isConfirmed) return;
+    _isConfirmed = true;
+    Navigator.of(context).pop(true);
+    widget.onConfirm?.call();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.confirmFocusNode != null) {
+      _confirmFocusNode = widget.confirmFocusNode!;
+      _ownsFocusNode = false;
+    } else {
+      _confirmFocusNode =
+          FocusNode(debugLabel: 'confirmActionDialog_confirmButton');
+      _ownsFocusNode = true;
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _confirmFocusNode.canRequestFocus) {
+        _confirmFocusNode.requestFocus();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    if (_ownsFocusNode) {
+      _confirmFocusNode.dispose();
+    }
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final effectiveIconColor =
-        iconColor ??
-        (isDanger ? const Color(0xFFDC2626) : const Color(0xFF0D3B82));
+        widget.iconColor ??
+        (widget.isDanger ? const Color(0xFFDC2626) : const Color(0xFF0D3B82));
     final effectiveIconBgColor =
-        iconBgColor ??
-        (isDanger ? const Color(0xFFFEF2F2) : const Color(0xFFEFF6FF));
-    final effectiveIconBorderColor = isDanger
+        widget.iconBgColor ??
+        (widget.isDanger ? const Color(0xFFFEF2F2) : const Color(0xFFEFF6FF));
+    final effectiveIconBorderColor = widget.isDanger
         ? const Color(0xFFFECDD3)
         : const Color(0xFFDBEAFE);
     final effectiveConfirmColor =
-        confirmColor ??
-        (isDanger ? const Color(0xFFDC2626) : const Color(0xFF0D3B82));
+        widget.confirmColor ??
+        (widget.isDanger ? const Color(0xFFDC2626) : const Color(0xFF0D3B82));
     final effectiveIcon =
-        icon ??
-        (isDanger ? Icons.warning_amber_rounded : Icons.info_outline_rounded);
+        widget.icon ??
+        (widget.isDanger
+            ? Icons.warning_amber_rounded
+            : Icons.info_outline_rounded);
 
-    return CallbackShortcuts(
-      bindings: <ShortcutActivator, VoidCallback>{
-        // Escape is the safe way out: keep editing, leave the form untouched.
-        const SingleActivator(LogicalKeyboardKey.escape): () {
-          Navigator.of(context).pop(false);
+    return FocusScope(
+      autofocus: true,
+      child: CallbackShortcuts(
+        bindings: <ShortcutActivator, VoidCallback>{
+          const SingleActivator(LogicalKeyboardKey.escape): () {
+            Navigator.of(context).pop(false);
+          },
+          const SingleActivator(LogicalKeyboardKey.enter): _handleConfirm,
+          const SingleActivator(LogicalKeyboardKey.numpadEnter): _handleConfirm,
         },
-        // Enter confirms, matching the primary action button. Scoped to this
-        // dialog by construction, so nothing outside it changes behaviour.
-        // Weighbridge operators often work the numpad, so both enter keys are
-        // bound.
-        const SingleActivator(LogicalKeyboardKey.enter): () {
-          Navigator.of(context).pop(true);
-        },
-        const SingleActivator(LogicalKeyboardKey.numpadEnter): () {
-          Navigator.of(context).pop(true);
-        },
-      },
-      child: Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-        child: Container(
-          constraints: BoxConstraints(maxWidth: width),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
+        child: Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding:
+              const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+          child: Container(
+            constraints: BoxConstraints(maxWidth: widget.width),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
             border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
             boxShadow: const [
               BoxShadow(
@@ -161,7 +224,7 @@ class ConfirmActionDialog extends StatelessWidget {
                       child: Padding(
                         padding: const EdgeInsets.only(top: 2),
                         child: Text(
-                          title,
+                          widget.title,
                           style: const TextStyle(
                             fontFamily: 'PlusJakartaSans',
                             fontSize: 17,
@@ -194,7 +257,7 @@ class ConfirmActionDialog extends StatelessWidget {
 
                 // Message Text
                 Text(
-                  message,
+                  widget.message,
                   style: const TextStyle(
                     fontFamily: 'PlusJakartaSans',
                     fontSize: 13.5,
@@ -204,7 +267,7 @@ class ConfirmActionDialog extends StatelessWidget {
                 ),
 
                 // Warning / Alert Note Box
-                if (warningNote != null) ...[
+                if (widget.warningNote != null) ...[
                   const SizedBox(height: 14),
                   Container(
                     width: double.infinity,
@@ -213,12 +276,12 @@ class ConfirmActionDialog extends StatelessWidget {
                       vertical: 10,
                     ),
                     decoration: BoxDecoration(
-                      color: isDanger
+                      color: widget.isDanger
                           ? const Color(0xFFFEF2F2)
                           : const Color(0xFFF8FAFC),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: isDanger
+                        color: widget.isDanger
                             ? const Color(0xFFFECDD3)
                             : const Color(0xFFE2E8F0),
                       ),
@@ -227,22 +290,22 @@ class ConfirmActionDialog extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Icon(
-                          isDanger
+                          widget.isDanger
                               ? Icons.error_outline_rounded
                               : Icons.info_outline_rounded,
                           size: 16,
-                          color: isDanger
+                          color: widget.isDanger
                               ? const Color(0xFFDC2626)
                               : const Color(0xFF64748B),
                         ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            warningNote!,
+                            widget.warningNote!,
                             style: TextStyle(
                               fontFamily: 'PlusJakartaSans',
                               fontSize: 12,
-                              color: isDanger
+                              color: widget.isDanger
                                   ? const Color(0xFF991B1B)
                                   : const Color(0xFF475569),
                               fontWeight: FontWeight.w500,
@@ -278,7 +341,7 @@ class ConfirmActionDialog extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        cancelLabel,
+                        widget.cancelLabel,
                         style: const TextStyle(
                           fontFamily: 'PlusJakartaSans',
                           fontSize: 13,
@@ -288,7 +351,9 @@ class ConfirmActionDialog extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     ElevatedButton(
-                      onPressed: () => Navigator.of(context).pop(true),
+                      focusNode: _confirmFocusNode,
+                      autofocus: true,
+                      onPressed: _handleConfirm,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: effectiveConfirmColor,
                         foregroundColor: Colors.white,
@@ -304,12 +369,12 @@ class ConfirmActionDialog extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (confirmIcon != null) ...[
-                            Icon(confirmIcon, size: 16),
+                          if (widget.confirmIcon != null) ...[
+                            Icon(widget.confirmIcon, size: 16),
                             const SizedBox(width: 6),
                           ],
                           Text(
-                            confirmLabel,
+                            widget.confirmLabel,
                             style: const TextStyle(
                               fontFamily: 'PlusJakartaSans',
                               fontSize: 13,
@@ -326,6 +391,7 @@ class ConfirmActionDialog extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }

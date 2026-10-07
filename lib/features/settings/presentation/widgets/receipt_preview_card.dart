@@ -3,24 +3,23 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 import '../../../../features/bill/domain/entities/weighment.dart';
+import '../../../../features/bill/domain/services/weighment_receipt_data.dart';
+import '../../../../features/bill/presentation/widgets/weighment_receipt_template.dart';
+import '../../../../features/customer/domain/entities/customer.dart';
 import '../../../../features/settings/domain/entities/billing_settings.dart';
-import 'receipt_preview.dart';
 
 /// A card wrapper that displays the live receipt preview.
-/// Extracted from settings_page.dart to separate the preview container
-/// from the preview content.
+///
+/// The preview renders [WeighmentReceiptTemplate] from a [WeighmentReceiptData]
+/// built out of the most recent weighment, which is exactly what the ticket
+/// dialog and the printed PDF render. There is no second receipt layout here,
+/// so a template change reaches the preview, the slip and the printout
+/// together.
 class ReceiptPreviewCard extends StatelessWidget {
   const ReceiptPreviewCard({
     super.key,
     required this.settings,
-    required this.billPreview,
-    required this.dateFormatted,
-    required this.timeFormatted,
-    required this.timestamp,
-    required this.weightUnit,
     required this.showSerialNumber,
-    required this.showDate,
-    required this.showTime,
     required this.showVehicleNumber,
     required this.showMaterial,
     required this.showCustomer,
@@ -29,24 +28,17 @@ class ReceiptPreviewCard extends StatelessWidget {
     required this.showNetWeight,
     required this.showAmount,
     required this.showPaymentMode,
-    required this.showCashReceived,
     required this.showRemarks,
     required this.showFooterNote,
     required this.latestWeighment,
-    required this.customerName,
+    required this.customer,
     required this.materialName,
     required this.isLoadingWeighment,
   });
 
   final BillingSettings settings;
-  final String billPreview;
-  final String dateFormatted;
-  final String timeFormatted;
-  final String timestamp;
-  final String weightUnit;
+
   final bool showSerialNumber;
-  final bool showDate;
-  final bool showTime;
   final bool showVehicleNumber;
   final bool showMaterial;
   final bool showCustomer;
@@ -55,13 +47,39 @@ class ReceiptPreviewCard extends StatelessWidget {
   final bool showNetWeight;
   final bool showAmount;
   final bool showPaymentMode;
-  final bool showCashReceived;
   final bool showRemarks;
   final bool showFooterNote;
   final Weighment? latestWeighment;
-  final String? customerName;
+  final Customer? customer;
   final String? materialName;
   final bool isLoadingWeighment;
+
+  static final Weighment _sampleBill = Weighment(
+    id: 0,
+    billNumber: 'WB-00037',
+    customerId: 0,
+    vehicleNumber: 'TN56VD5677',
+    paymentMode: 'Cash',
+    firstWeightKg: 200000,
+    firstWeightType: 'GROSS',
+    secondWeightKg: 10000,
+    secondWeightType: 'TARE',
+    netWeightKg: 190000,
+    vehicleCharge: 0.0,
+    amount: 90.0,
+    remarks: '',
+    createdAt: DateTime(2026, 10, 7, 19, 40),
+    updatedAt: DateTime(2026, 10, 7, 19, 40),
+  );
+
+  static final Customer _sampleCustomer = Customer(
+    id: 0,
+    name: 'Viyaninfo',
+    mobile: '6381812437',
+    isActive: true,
+    createdAt: DateTime(2026, 10, 7),
+    updatedAt: DateTime(2026, 10, 7),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -122,7 +140,7 @@ class ReceiptPreviewCard extends StatelessWidget {
                         isLoadingWeighment
                             ? 'Loading recent weighment data...'
                             : (latestWeighment == null
-                                  ? 'No recent weighment data available'
+                                  ? 'Showing sample weighment (reflects template changes in real time)'
                                   : 'Reflects template changes in real time'),
                         softWrap: true,
                         style: const TextStyle(
@@ -138,72 +156,87 @@ class ReceiptPreviewCard extends StatelessWidget {
             ),
           ),
           const Divider(height: 1, color: Color(0xFFE2E8F0)),
-          // The Thermal Slip
-          Padding(
-            padding: const EdgeInsets.all(16),
+          // The Authentic Bill Canvas - matching Weighment Slip Dialog
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF1F5F9),
+              borderRadius: BorderRadius.vertical(bottom: Radius.circular(14)),
+            ),
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final available = constraints.maxWidth.isFinite
-                    ? constraints.maxWidth
-                    : 290.0;
-                final slipWidth = available < 290 ? available : 290.0;
+                const standardSlipWidth = 640.0;
                 return Center(
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(
-                      maxWidth: slipWidth,
-                      minWidth: slipWidth < 180 ? slipWidth : 180,
+                    constraints: const BoxConstraints(
+                      maxWidth: standardSlipWidth,
                     ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFAFAFA),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(
-                          color: const Color(0xFFCBD5E1),
-                          width: 0.8,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.06),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      padding: EdgeInsets.symmetric(
-                        horizontal: slipWidth < 220 ? 10 : 16,
-                        vertical: 14,
-                      ),
-                      child: ReceiptPreview(
-                        settings: settings,
-                        billPreview: billPreview,
-                        dateFormatted: dateFormatted,
-                        timeFormatted: timeFormatted,
-                        timestamp: timestamp,
-                        hasLogo: hasLogo,
-                        weightUnit: weightUnit,
-                        showSerialNumber: showSerialNumber,
-                        showDate: showDate,
-                        showTime: showTime,
-                        showVehicleNumber: showVehicleNumber,
-                        showMaterial: showMaterial,
-                        showCustomer: showCustomer,
-                        showGrossWeight: showGrossWeight,
-                        showTareWeight: showTareWeight,
-                        showNetWeight: showNetWeight,
-                        showAmount: showAmount,
-                        showPaymentMode: showPaymentMode,
-                        showCashReceived: showCashReceived,
-                        showRemarks: showRemarks,
-                        showFooterNote: showFooterNote,
-                        latestWeighment: latestWeighment,
-                        customerName: customerName,
-                        materialName: materialName,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.topCenter,
+                      child: SizedBox(
+                        width: standardSlipWidth,
+                        child: _buildSlip(hasLogo),
                       ),
                     ),
                   ),
                 );
               },
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSlip(bool hasLogo) {
+    final bill = latestWeighment ?? _sampleBill;
+    final activeCustomer =
+        customer ?? (latestWeighment == null ? _sampleCustomer : null);
+    final activeMaterialName =
+        (materialName != null && materialName!.isNotEmpty)
+            ? materialName!
+            : (latestWeighment == null ? 'Sand' : '');
+
+    final receiptData = WeighmentReceiptData(
+      bill: bill,
+      customer: activeCustomer,
+      materialName: activeMaterialName,
+      settings: settings,
+      forPreview: true,
+    );
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: const Color(0xFFCBD5E1), width: 1.0),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF0F172A).withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (hasLogo)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+              child: Center(
+                child: Image.file(
+                  File(settings.logoPath!),
+                  height: 44,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                ),
+              ),
+            ),
+          WeighmentReceiptTemplate(
+            data: receiptData,
           ),
         ],
       ),

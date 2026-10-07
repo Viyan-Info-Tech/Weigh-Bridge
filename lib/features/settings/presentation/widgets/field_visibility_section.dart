@@ -4,8 +4,6 @@ class FieldVisibilitySection extends StatelessWidget {
   const FieldVisibilitySection({
     super.key,
     required this.showSerialNumber,
-    required this.showDate,
-    required this.showTime,
     required this.showVehicleNumber,
     required this.showMaterial,
     required this.showCustomer,
@@ -14,7 +12,6 @@ class FieldVisibilitySection extends StatelessWidget {
     required this.showNetWeight,
     required this.showAmount,
     required this.showPaymentMode,
-    required this.showCashReceived,
     required this.showRemarks,
     required this.showFooterNote,
     required this.isEditing,
@@ -24,8 +21,6 @@ class FieldVisibilitySection extends StatelessWidget {
   });
 
   final bool showSerialNumber;
-  final bool showDate;
-  final bool showTime;
   final bool showVehicleNumber;
   final bool showMaterial;
   final bool showCustomer;
@@ -34,7 +29,6 @@ class FieldVisibilitySection extends StatelessWidget {
   final bool showNetWeight;
   final bool showAmount;
   final bool showPaymentMode;
-  final bool showCashReceived;
   final bool showRemarks;
   final bool showFooterNote;
   final bool isEditing;
@@ -75,8 +69,6 @@ class FieldVisibilitySection extends StatelessWidget {
                 showSerialNumber,
                 (v) => onToggle('serialNumber', v),
               ),
-              _buildToggleChip('Date', showDate, (v) => onToggle('date', v)),
-              _buildToggleChip('Time', showTime, (v) => onToggle('time', v)),
               _buildToggleChip(
                 'Vehicle Number',
                 showVehicleNumber,
@@ -116,11 +108,6 @@ class FieldVisibilitySection extends StatelessWidget {
                 'Payment Mode',
                 showPaymentMode,
                 (v) => onToggle('paymentMode', v),
-              ),
-              _buildToggleChip(
-                'Cash Received',
-                showCashReceived,
-                (v) => onToggle('cashReceived', v),
               ),
               _buildToggleChip(
                 'Remarks',

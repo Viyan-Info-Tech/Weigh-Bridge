@@ -11,6 +11,8 @@ import 'bill_form_readonly_fields.dart';
 import 'bill_form_row.dart';
 import 'bill_form_type_selector.dart';
 import 'bill_form_weight_row.dart';
+import 'customer_master_dialog.dart';
+import 'material_master_dialog.dart';
 import 'weighment_charge_dialog.dart';
 
 /// Industrial 2-Column Weighment Ticket Form
@@ -77,8 +79,6 @@ class BillForm extends StatefulWidget {
   final ValueChanged<String> onVehicleChargeChanged;
   final VoidCallback onResetVehicleCharge;
   final ValueChanged<String>? onMobileNumberChanged;
-  final Future<void> Function()? onAddCustomer;
-  final Future<void> Function()? onAddMaterial;
 
   final String? vehicleNumberError;
   final String? materialError;
@@ -142,8 +142,6 @@ class BillForm extends StatefulWidget {
     required this.onVehicleChargeChanged,
     required this.onResetVehicleCharge,
     this.onMobileNumberChanged,
-    this.onAddCustomer,
-    this.onAddMaterial,
     this.vehicleNumberError,
     this.materialError,
     this.customerError,
@@ -826,6 +824,52 @@ class _BillFormState extends State<BillForm> {
     );
   }
 
+  /// Opens the material master table and applies the row the operator picked.
+  ///
+   /// The legacy weighbridge software resolved MATERIAL CODE through a grid, not
+   /// a dropdown, so this is what the search icon opens. The operator picks a
+   /// row to fill in both the code and the material name.
+  Future<void> _openMaterialMaster() async {
+    if (_skipsMaterial) {
+      // Same rule as typing a code on a tare-only weighment: there is nothing to
+      // price against, so step on instead of opening a picker that cannot
+      // change the outcome.
+      widget.customerCodeFocusNode?.requestFocus();
+      return;
+    }
+
+    final picked = await MaterialMasterDialog.show(
+      context,
+      materials: widget.materials,
+      selectedMaterial: widget.selectedMaterial,
+    );
+    if (!mounted || picked == null) return;
+
+    setState(() => _localMaterialError = null);
+    _materialCodeController.text = picked.code;
+    widget.onMaterialChanged(picked);
+    widget.customerCodeFocusNode?.requestFocus();
+  }
+
+  /// Opens the customer master table and applies the row the operator picked.
+  ///
+  /// Material Code already opened a charge step on selection; this does the
+  /// same so both code fields behave identically regardless of how the party
+  /// was chosen.
+  Future<void> _openCustomerMaster() async {
+    final picked = await CustomerMasterDialog.show(
+      context,
+      customers: widget.customers,
+      selectedCustomer: widget.selectedCustomer,
+    );
+    if (!mounted || picked == null) return;
+
+    setState(() => _localCustomerError = null);
+    _customerCodeController.text = picked.customerCode;
+    widget.onCustomerChanged(picked);
+    await _showChargeSelection();
+  }
+
   /// 3. MATERIAL CODE
   Widget _buildMaterialCodeField() {
     final error = _localMaterialError ?? widget.materialError;
@@ -841,8 +885,8 @@ class _BillFormState extends State<BillForm> {
           hasError: hasError,
           isValid: isValid,
           suffix: BillFormSearchButton(
-            onTap: widget.onAddMaterial,
-            tooltip: 'Search Material Code',
+            onTap: _openMaterialMaster,
+            tooltip: 'Select Material Code',
           ),
           child: TextField(
             key: const Key('bill_material_code_field'),
@@ -928,8 +972,8 @@ class _BillFormState extends State<BillForm> {
           hasError: hasError,
           isValid: isValid,
           suffix: BillFormSearchButton(
-            onTap: widget.onAddCustomer,
-            tooltip: 'Search Customer Code',
+            onTap: _openCustomerMaster,
+            tooltip: 'Select Customer Code',
           ),
           child: TextField(
             key: const Key('bill_customer_code_field'),

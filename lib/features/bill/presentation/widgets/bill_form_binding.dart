@@ -5,8 +5,6 @@ import '../bloc/bill_bloc.dart';
 import '../bloc/bill_event.dart';
 import '../bloc/bill_state.dart';
 import 'bill_form.dart';
-import 'quick_add_customer_dialog.dart';
-import 'quick_add_material_dialog.dart';
 
 /// Controllers and focus nodes owned by the weighment screen and shared with
 /// the form.
@@ -138,28 +136,6 @@ class BillFormBinding extends StatelessWidget {
       chargesError: state.chargesError,
       weightError: state.weightError,
       mobileError: state.mobileError,
-      onAddCustomer: () async {
-        final created = await QuickAddCustomerDialog.show(
-          context,
-          onSave: (name, contactPerson) async {
-            return bloc.createCustomer(name, contactPerson ?? '');
-          },
-        );
-        if (created != null && context.mounted) {
-          bloc.add(CustomerSelected(created));
-        }
-      },
-      onAddMaterial: () async {
-        final created = await QuickAddMaterialDialog.show(
-          context,
-          onSave: (code, name) async {
-            return bloc.createMaterial(code, name);
-          },
-        );
-        if (created != null && context.mounted) {
-          bloc.add(MaterialSelected(created));
-        }
-      },
     );
   }
 }

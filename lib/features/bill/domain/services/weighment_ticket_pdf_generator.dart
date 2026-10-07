@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 
-import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
@@ -8,9 +7,13 @@ import '../../../settings/domain/entities/billing_settings.dart';
 import '../entities/weighment.dart';
 import '../../../customer/domain/entities/customer.dart';
 import 'receipt_pdf_fonts.dart';
-import 'receipt_weight_resolver.dart';
+import 'weighment_receipt_data.dart';
 
 /// Builds an authentic, industrial weighbridge document PDF matching dot-matrix / slip printer formats.
+///
+/// The page is laid out from a [WeighmentReceiptData], the same object the
+/// on-screen slip and the Settings live preview render, so the printed ticket
+/// cannot drift away from what the operator approved on screen.
 ///
 /// Features:
 /// - Monospaced typography matching real-world industrial weighbridge slips.
@@ -31,90 +34,16 @@ class WeighmentTicketPdfGenerator {
     required BillingSettings settings,
     DateTime? printedAt,
   }) async {
+    final data = WeighmentReceiptData(
+      bill: bill,
+      customer: customer,
+      materialName: materialName,
+      settings: settings,
+      printedAt: printedAt,
+    );
+
     final pdfTheme = await ReceiptPdfFonts.load();
     final pdf = pw.Document(theme: pdfTheme);
-
-    final weights = const ReceiptWeightResolver().resolve(bill);
-
-    final vehicleNo = bill.vehicleNumber.isEmpty ? '--' : bill.vehicleNumber;
-    final customerName = customer?.name ?? '--';
-    final customerPhone = customer?.mobile ?? '';
-    final printDate = DateFormat(
-      'dd/MM/yyyy HH:mm:ss',
-    ).format(printedAt ?? DateTime.now());
-    final isCompleted = bill.isCompleted;
-
-    final hasSerial = settings.showSerialNumber;
-    final hasVehNo = settings.showVehicleNumber;
-    final hasMat = settings.showMaterial;
-    final hasCustomer = settings.showCustomer;
-
-    final hasGross =
-        isCompleted ||
-        settings.showGrossWeight ||
-        (weights.grossKg != null && weights.grossKg! > 0);
-    final hasTare =
-        isCompleted ||
-        settings.showTareWeight ||
-        (weights.tareKg != null && weights.tareKg! > 0);
-    final hasNet =
-        isCompleted ||
-        settings.showNetWeight ||
-        (weights.netKg != null && weights.netKg! > 0);
-
-    final hasAmount = isCompleted || settings.showAmount || bill.amount > 0;
-    final hasPayment = settings.showPaymentMode;
-
-    final hasRemarks =
-        settings.showRemarks &&
-        bill.remarks != null &&
-        bill.remarks!.trim().isNotEmpty;
-    final hasFooter = settings.showFooterNote;
-    final customFooter = settings.footerNote?.trim();
-    final footerNoteText = (customFooter != null && customFooter.isNotEmpty)
-        ? customFooter
-        : 'Please check the weight before leaving the weighbridge.';
-
-    final isTon =
-        settings.weightUnit.toLowerCase() == 'ton' ||
-        settings.weightUnit.toLowerCase() == 'tonne';
-    final unit = isTon ? 'ton' : 'kg';
-    final decimals = isTon ? 3 : 0;
-    String formatWeight(double? kg) {
-      if (kg == null) return '--';
-      final display = isTon ? kg / 1000 : kg;
-      return '${display.toStringAsFixed(decimals)} $unit';
-    }
-
-    final grossDate = weights.grossKg != null && bill.grossCapturedAt != null
-        ? DateFormat('dd/MM/yyyy').format(bill.grossCapturedAt!)
-        : (weights.grossKg != null
-              ? DateFormat('dd/MM/yyyy').format(bill.createdAt)
-              : '--');
-    final grossTime = weights.grossKg != null && bill.grossCapturedAt != null
-        ? DateFormat('hh:mm a').format(bill.grossCapturedAt!)
-        : (weights.grossKg != null
-              ? DateFormat('hh:mm a').format(bill.createdAt)
-              : '--');
-
-    final tareDate = weights.tareKg != null && bill.tareCapturedAt != null
-        ? DateFormat('dd/MM/yyyy').format(bill.tareCapturedAt!)
-        : (weights.tareKg != null
-              ? DateFormat('dd/MM/yyyy').format(bill.createdAt)
-              : '--');
-    final tareTime = weights.tareKg != null && bill.tareCapturedAt != null
-        ? DateFormat('hh:mm a').format(bill.tareCapturedAt!)
-        : (weights.tareKg != null
-              ? DateFormat('hh:mm a').format(bill.updatedAt)
-              : '--');
-
-    final companyName = settings.businessName.isNotEmpty
-        ? settings.businessName
-        : 'VIYAN WEIGHBRIDGE';
-    final receiptTitleConfig = settings.receiptTitle.trim();
-    final receiptTitle = receiptTitleConfig.isNotEmpty
-        ? receiptTitleConfig
-        : 'Public';
 
     pdf.addPage(
       pw.Page(
@@ -130,7 +59,7 @@ class WeighmentTicketPdfGenerator {
                   crossAxisAlignment: pw.CrossAxisAlignment.center,
                   children: [
                     pw.Text(
-                      companyName.toUpperCase(),
+                      data.companyName.toUpperCase(),
                       textAlign: pw.TextAlign.center,
                       style: pw.TextStyle(
                         fontSize: 13,
@@ -138,52 +67,37 @@ class WeighmentTicketPdfGenerator {
                         letterSpacing: 0.5,
                       ),
                     ),
-                    if (settings.businessSubtitle != null &&
-                        settings.businessSubtitle!.trim().isNotEmpty) ...[
+                    if (data.settings.businessSubtitle != null &&
+                        data.settings.businessSubtitle!.trim().isNotEmpty) ...[
                       pw.SizedBox(height: 2),
                       pw.Text(
-                        settings.businessSubtitle!,
+                        data.settings.businessSubtitle!,
                         textAlign: pw.TextAlign.center,
                         style: const pw.TextStyle(fontSize: 9.5),
                       ),
                     ],
-                    if (settings.serviceText != null &&
-                        settings.serviceText!.trim().isNotEmpty) ...[
+                    if (data.settings.serviceText != null &&
+                        data.settings.serviceText!.trim().isNotEmpty) ...[
                       pw.SizedBox(height: 2),
                       pw.Text(
-                        settings.serviceText!,
+                        data.settings.serviceText!,
                         textAlign: pw.TextAlign.center,
                         style: const pw.TextStyle(fontSize: 9),
                       ),
                     ],
-                    if (settings.address != null &&
-                        settings.address!.trim().isNotEmpty) ...[
+                    if (data.settings.address != null &&
+                        data.settings.address!.trim().isNotEmpty) ...[
                       pw.SizedBox(height: 2),
                       pw.Text(
-                        settings.address!,
+                        data.settings.address!,
                         textAlign: pw.TextAlign.center,
                         style: const pw.TextStyle(fontSize: 9),
                       ),
                     ],
-                    if ((settings.phoneNumber != null &&
-                            settings.phoneNumber!.trim().isNotEmpty) ||
-                        (settings.email != null &&
-                            settings.email!.trim().isNotEmpty) ||
-                        (settings.gstin != null &&
-                            settings.gstin!.trim().isNotEmpty)) ...[
+                    if (_hasContactLine(data)) ...[
                       pw.SizedBox(height: 2),
                       pw.Text(
-                        [
-                          if (settings.phoneNumber != null &&
-                              settings.phoneNumber!.trim().isNotEmpty)
-                            'Tel: ${settings.phoneNumber!}',
-                          if (settings.email != null &&
-                              settings.email!.trim().isNotEmpty)
-                            'E-Mail: ${settings.email!}',
-                          if (settings.gstin != null &&
-                              settings.gstin!.trim().isNotEmpty)
-                            'GSTIN: ${settings.gstin!}',
-                        ].join('   '),
+                        _contactLine(data),
                         textAlign: pw.TextAlign.center,
                         style: const pw.TextStyle(fontSize: 9),
                       ),
@@ -196,7 +110,7 @@ class WeighmentTicketPdfGenerator {
 
               // ── 2. SUBTITLE / CATEGORY (Left-aligned) ───
               pw.Text(
-                receiptTitle,
+                data.receiptTitle,
                 style: pw.TextStyle(
                   fontSize: 11,
                   fontWeight: pw.FontWeight.bold,
@@ -206,18 +120,18 @@ class WeighmentTicketPdfGenerator {
               pw.SizedBox(height: 10),
 
               // ── 3. METADATA FIELDS (Aligned Colons) ────
-              if (hasSerial) _buildFieldRow('TOKEN NO', bill.billNumber),
-              if (hasVehNo)
-                _buildFieldRow('VEHICLE NO', vehicleNo, isBold: true),
-              if (hasCustomer) _buildFieldRow('DESCRIPTION', customerName),
-              if (hasMat)
-                _buildFieldRow(
-                  'PRODUCT',
-                  materialName.isEmpty ? '--' : materialName,
-                ),
-              if (customerPhone.isNotEmpty)
-                _buildFieldRow('MOBILE NO', customerPhone),
-              if (hasRemarks) _buildFieldRow('CONTAINER No', bill.remarks!),
+              if (data.hasSerialNumber)
+                _buildFieldRow('TOKEN NO', data.bill.billNumber),
+              if (data.hasVehicleNumber)
+                _buildFieldRow('VEHICLE NO', data.vehicleNumber, isBold: true),
+              if (data.hasCustomer)
+                _buildFieldRow('DESCRIPTION', data.customerName),
+              if (data.hasMaterial)
+                _buildFieldRow('PRODUCT', data.resolvedMaterialName),
+              if (data.customerPhone.isNotEmpty)
+                _buildFieldRow('MOBILE NO', data.customerPhone),
+              if (data.hasRemarks)
+                _buildFieldRow('CONTAINER No', data.bill.remarks!),
 
               pw.SizedBox(height: 8),
 
@@ -271,29 +185,26 @@ class WeighmentTicketPdfGenerator {
               _buildDashedLine(),
 
               // ── 7. WEIGHT ROWS ─────────────────────────
-              // GROSS
-              if (hasGross && weights.grossKg != null && weights.grossKg! > 0)
+              if (data.showGrossRow)
                 _buildWeightRow(
                   label: 'GROSS',
-                  weight: formatWeight(weights.grossKg),
-                  date: grossDate,
-                  time: grossTime,
+                  weight: data.formatWeight(data.weights.grossKg),
+                  date: data.grossDate,
+                  time: data.grossTime,
                 ),
 
-              // TARE
-              if (hasTare && weights.tareKg != null && weights.tareKg! > 0)
+              if (data.showTareRow)
                 _buildWeightRow(
                   label: 'TARE',
-                  weight: formatWeight(weights.tareKg),
-                  date: tareDate,
-                  time: tareTime,
+                  weight: data.formatWeight(data.weights.tareKg),
+                  date: data.tareDate,
+                  time: data.tareTime,
                 ),
 
-              // NET
-              if (hasNet && weights.netKg != null && weights.netKg! > 0)
+              if (data.showNetRow)
                 _buildWeightRow(
                   label: 'NET',
-                  weight: formatWeight(weights.netKg),
+                  weight: data.formatWeight(data.weights.netKg),
                   date: '--',
                   time: '--',
                 ),
@@ -302,22 +213,22 @@ class WeighmentTicketPdfGenerator {
               _buildDashedLine(),
 
               // ── 9. FINANCIALS (If enabled) ────────────
-              if (hasAmount || hasPayment) ...[
+              if (data.hasAmount || data.hasPaymentMode) ...[
                 pw.SizedBox(height: 6),
                 pw.Row(
                   children: [
-                    if (hasAmount)
+                    if (data.hasAmount)
                       pw.Text(
-                        'CHARGES (Rs.) : ${bill.amount.toStringAsFixed(2)}',
+                        'CHARGES (Rs.) : ${data.bill.amount.toStringAsFixed(2)}',
                         style: pw.TextStyle(
                           fontSize: 10,
                           fontWeight: pw.FontWeight.bold,
                         ),
                       ),
                     pw.Spacer(),
-                    if (hasPayment)
+                    if (data.hasPaymentMode)
                       pw.Text(
-                        'PAYMENT MODE : ${bill.paymentMode.toUpperCase()}',
+                        'PAYMENT MODE : ${data.bill.paymentMode.toUpperCase()}',
                         style: pw.TextStyle(
                           fontSize: 10,
                           fontWeight: pw.FontWeight.bold,
@@ -328,10 +239,10 @@ class WeighmentTicketPdfGenerator {
               ],
 
               // ── 10. FOOTER NOTE ───────────────────────
-              if (hasFooter) ...[
+              if (data.hasFooterNote) ...[
                 pw.SizedBox(height: 10),
                 pw.Text(
-                  'Note: $footerNoteText',
+                  'Note: ${data.footerNoteText}',
                   style: const pw.TextStyle(fontSize: 8.5),
                 ),
               ],
@@ -341,7 +252,7 @@ class WeighmentTicketPdfGenerator {
               // ── 12. PRINT TIMESTAMP ───────────────────
               pw.Center(
                 child: pw.Text(
-                  '* Printed on: $printDate *',
+                  '* Printed on: ${data.printDate} *',
                   style: const pw.TextStyle(fontSize: 8),
                 ),
               ),
@@ -353,6 +264,22 @@ class WeighmentTicketPdfGenerator {
 
     return pdf.save();
   }
+
+  static bool _hasContactLine(WeighmentReceiptData data) =>
+      (data.settings.phoneNumber != null &&
+          data.settings.phoneNumber!.trim().isNotEmpty) ||
+      (data.settings.email != null && data.settings.email!.trim().isNotEmpty) ||
+      (data.settings.gstin != null && data.settings.gstin!.trim().isNotEmpty);
+
+  static String _contactLine(WeighmentReceiptData data) => [
+    if (data.settings.phoneNumber != null &&
+        data.settings.phoneNumber!.trim().isNotEmpty)
+      'Tel: ${data.settings.phoneNumber!}',
+    if (data.settings.email != null && data.settings.email!.trim().isNotEmpty)
+      'E-Mail: ${data.settings.email!}',
+    if (data.settings.gstin != null && data.settings.gstin!.trim().isNotEmpty)
+      'GSTIN: ${data.settings.gstin!}',
+  ].join('   ');
 
   static pw.Widget _buildFieldRow(
     String label,
@@ -391,11 +318,12 @@ class WeighmentTicketPdfGenerator {
 
   static pw.Widget _buildDashedLine() {
     return pw.Padding(
-      padding: const pw.EdgeInsets.symmetric(vertical: 3),
-      child: pw.Text(
-        '--------------------------------------------------------------------------------',
-        maxLines: 1,
-        style: const pw.TextStyle(fontSize: 10, letterSpacing: -0.2),
+      padding: const pw.EdgeInsets.symmetric(vertical: 2),
+      child: pw.Divider(
+        height: 6,
+        thickness: 0.8,
+        color: PdfColors.black,
+        borderStyle: pw.BorderStyle.dashed,
       ),
     );
   }

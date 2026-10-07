@@ -9,8 +9,6 @@ class ReceiptContentCard extends StatelessWidget {
     required this.receiptTitleController,
     required this.isEditing,
     required this.showSerialNumber,
-    required this.showDate,
-    required this.showTime,
     required this.showVehicleNumber,
     required this.showMaterial,
     required this.showCustomer,
@@ -19,7 +17,6 @@ class ReceiptContentCard extends StatelessWidget {
     required this.showNetWeight,
     required this.showAmount,
     required this.showPaymentMode,
-    required this.showCashReceived,
     required this.showRemarks,
     required this.showFooterNote,
     required this.onSelectAll,
@@ -31,8 +28,6 @@ class ReceiptContentCard extends StatelessWidget {
   final TextEditingController receiptTitleController;
   final bool isEditing;
   final bool showSerialNumber;
-  final bool showDate;
-  final bool showTime;
   final bool showVehicleNumber;
   final bool showMaterial;
   final bool showCustomer;
@@ -41,7 +36,6 @@ class ReceiptContentCard extends StatelessWidget {
   final bool showNetWeight;
   final bool showAmount;
   final bool showPaymentMode;
-  final bool showCashReceived;
   final bool showRemarks;
   final bool showFooterNote;
   final VoidCallback onSelectAll;
@@ -131,8 +125,6 @@ class ReceiptContentCard extends StatelessWidget {
           ),
           FieldVisibilitySection(
             showSerialNumber: showSerialNumber,
-            showDate: showDate,
-            showTime: showTime,
             showVehicleNumber: showVehicleNumber,
             showMaterial: showMaterial,
             showCustomer: showCustomer,
@@ -141,7 +133,6 @@ class ReceiptContentCard extends StatelessWidget {
             showNetWeight: showNetWeight,
             showAmount: showAmount,
             showPaymentMode: showPaymentMode,
-            showCashReceived: showCashReceived,
             showRemarks: showRemarks,
             showFooterNote: showFooterNote,
             isEditing: isEditing,

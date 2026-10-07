@@ -60,6 +60,7 @@ class BillPageState extends State<BillPage> {
   bool _didRequestInitialFocus = false;
   bool _isReprintDialogOpen = false;
   bool _isAutoTareDialogOpen = false;
+  bool _isCancelDialogOpen = false;
   StreamSubscription<SettingsState>? _settingsSubscription;
   StreamSubscription<ScaleReading>? _scaleReadingSubscription;
   StreamSubscription<ScaleStatus>? _scaleStatusSubscription;
@@ -91,6 +92,9 @@ class BillPageState extends State<BillPage> {
 
   bool get _isModalOpen {
     if (!mounted) return true;
+    if (_isCancelDialogOpen || _isReprintDialogOpen || _isAutoTareDialogOpen) {
+      return true;
+    }
     final modalRoute = ModalRoute.of(context);
     return modalRoute != null && !modalRoute.isCurrent;
   }
@@ -241,7 +245,7 @@ class BillPageState extends State<BillPage> {
     _vehicleNumberController.clear();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        _vehicleFocusNode.requestFocus();
+        requestFocus();
       }
     });
   }
@@ -895,20 +899,33 @@ class BillPageState extends State<BillPage> {
   }
 
   Future<void> _onCancelPressed(BuildContext context, BillState state) async {
+    if (_isCancelDialogOpen) return;
+
     if (_hasUnsavedData(state)) {
-      final shouldCancel = await ConfirmActionDialog.show(
-        context: context,
-        title: 'Cancel Weighment?',
-        message: 'All entered information will be cleared.',
-        warningNote:
-            'Unsaved vehicle weights and form entries will be permanently lost.',
-        cancelLabel: 'Keep Editing',
-        confirmLabel: 'Cancel Weighment',
-        confirmIcon: Icons.delete_outline_rounded,
-        icon: Icons.delete_sweep_outlined,
-        isDanger: true,
-      );
-      if (shouldCancel != true || !context.mounted) return;
+      _isCancelDialogOpen = true;
+      FocusManager.instance.primaryFocus?.unfocus();
+      try {
+        await ConfirmActionDialog.show(
+          context: context,
+          title: 'Cancel Weighment?',
+          message: 'All entered information will be cleared.',
+          warningNote:
+              'Unsaved vehicle weights and form entries will be permanently lost.',
+          cancelLabel: 'Keep Editing',
+          confirmLabel: 'Cancel Weighment',
+          confirmIcon: Icons.delete_outline_rounded,
+          icon: Icons.delete_sweep_outlined,
+          isDanger: true,
+          onConfirm: () {
+            if (!mounted) return;
+            context.read<BillBloc>().add(const ClearBillRequested());
+            _syncControllersAfterReset();
+          },
+        );
+      } finally {
+        _isCancelDialogOpen = false;
+      }
+      return;
     }
 
     context.read<BillBloc>().add(const ClearBillRequested());
