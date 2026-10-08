@@ -2,9 +2,9 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 ; Non-commercial use only.
 
-#define MyAppName "Viyan WeighBridge"
+#define MyAppName "Viyan Weighbridge"
 #define MyAppVersion "1.0.0"
-#define MyAppPublisher "Viyaninfo"
+#define MyAppPublisher "Viyan info"
 #define MyAppURL "https://www.viyaninfo.com/"
 #define MyAppExeName "weighbridge.exe"
 #define DoubleAmp(Value) StringChange(Value, "&", "&&")
@@ -13,7 +13,7 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{6B649B4D-8A68-4C12-8FE7-47976CBB0F58}
+AppId={{D5DE1F5C-22C6-42E7-B711-9EA368A612BD}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={cm:NameAndVersion,{#EscapeConstArgument(MyAppName)},{#EscapeConstArgument(MyAppVersion)}}
@@ -34,7 +34,7 @@ DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only).
 ;PrivilegesRequired=lowest
 OutputDir=G:\Flutter\Weigh-Bridge\installer_output
-OutputBaseFilename=WeighBridge
+OutputBaseFilename=mysetup
 SolidCompression=yes
 WizardStyle=modern dynamic
 
