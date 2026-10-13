@@ -114,8 +114,6 @@ void main() {
     return const BillState(
       status: BillScreenStatus.loaded,
       vehicleNumber: 'TN09AB1234',
-      vehicleCharge: 90,
-      amount: 90,
       weightUnit: 'kg',
       currentBillNumber: 'WB-00001',
     ).copyWith(

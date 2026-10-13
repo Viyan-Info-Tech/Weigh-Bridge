@@ -69,8 +69,8 @@ void main() {
 
         // 2. Insert weighment with WB-00001
         await db.customStatement(
-          "INSERT INTO weighments (bill_number, customer_id, vehicle_number, material_id, payment_mode, first_weight_kg) "
-          "VALUES ('WB-00001', 1, 'MH 12 AB 1234', 1, 'Cash', 15000)",
+          "INSERT INTO weighments (bill_number, customer_id, vehicle_number, material_id, first_weight_kg) "
+          "VALUES ('WB-00001', 1, 'MH 12 AB 1234', 1, 15000)",
         );
 
         final next2 = await db.appSettingsDao.generateNextBillNumber(
@@ -90,8 +90,8 @@ void main() {
 
         // 4. Insert INV-000100 and verify increment to INV-000101
         await db.customStatement(
-          "INSERT INTO weighments (bill_number, customer_id, vehicle_number, material_id, payment_mode, first_weight_kg) "
-          "VALUES ('INV-000100', 1, 'MH 12 AB 1234', 1, 'Cash', 15000)",
+          "INSERT INTO weighments (bill_number, customer_id, vehicle_number, material_id, first_weight_kg) "
+          "VALUES ('INV-000100', 1, 'MH 12 AB 1234', 1, 15000)",
         );
 
         final invNext2 = await db.appSettingsDao.generateNextBillNumber(
@@ -204,12 +204,9 @@ void main() {
       customerId: 1,
       vehicleNumber: 'MH 12 AB 1234',
       materialId: 1,
-      paymentMode: 'Cash',
       grossWeightKg: 25000,
       tareWeightKg: 10000,
       netWeightKg: 15000,
-      amount: 450,
-      vehicleCharge: 50.0,
       remarks: 'Customer special order',
       createdAt: now,
       updatedAt: now,

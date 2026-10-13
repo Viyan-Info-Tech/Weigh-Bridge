@@ -1719,21 +1719,6 @@ class $WeighmentsTable extends Weighments
       'REFERENCES materials (id)',
     ),
   );
-  static const VerificationMeta _paymentModeMeta = const VerificationMeta(
-    'paymentMode',
-  );
-  @override
-  late final GeneratedColumn<String> paymentMode = GeneratedColumn<String>(
-    'payment_mode',
-    aliasedName,
-    false,
-    additionalChecks: GeneratedColumn.checkTextLength(
-      minTextLength: 1,
-      maxTextLength: 20,
-    ),
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
   static const VerificationMeta _firstWeightKgMeta = const VerificationMeta(
     'firstWeightKg',
   );
@@ -1798,28 +1783,6 @@ class $WeighmentsTable extends Weighments
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
-  static const VerificationMeta _vehicleChargeMeta = const VerificationMeta(
-    'vehicleCharge',
-  );
-  @override
-  late final GeneratedColumn<double> vehicleCharge = GeneratedColumn<double>(
-    'vehicle_charge',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(0),
-  );
-  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
-  @override
-  late final GeneratedColumn<double> amount = GeneratedColumn<double>(
-    'amount',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: false,
-    defaultValue: const Constant(0),
-  );
   static const VerificationMeta _remarksMeta = const VerificationMeta(
     'remarks',
   );
@@ -1831,6 +1794,21 @@ class $WeighmentsTable extends Weighments
     additionalChecks: GeneratedColumn.checkTextLength(
       minTextLength: 0,
       maxTextLength: 500,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _mobileNumberMeta = const VerificationMeta(
+    'mobileNumber',
+  );
+  @override
+  late final GeneratedColumn<String> mobileNumber = GeneratedColumn<String>(
+    'mobile_number',
+    aliasedName,
+    true,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 0,
+      maxTextLength: 20,
     ),
     type: DriftSqlType.string,
     requiredDuringInsert: false,
@@ -1882,15 +1860,13 @@ class $WeighmentsTable extends Weighments
     customerId,
     vehicleNumber,
     materialId,
-    paymentMode,
     firstWeightKg,
     firstWeightType,
     secondWeightKg,
     secondWeightType,
     netWeightKg,
-    vehicleCharge,
-    amount,
     remarks,
+    mobileNumber,
     weightUnit,
     createdAt,
     updatedAt,
@@ -1943,17 +1919,6 @@ class $WeighmentsTable extends Weighments
         materialId.isAcceptableOrUnknown(data['material_id']!, _materialIdMeta),
       );
     }
-    if (data.containsKey('payment_mode')) {
-      context.handle(
-        _paymentModeMeta,
-        paymentMode.isAcceptableOrUnknown(
-          data['payment_mode']!,
-          _paymentModeMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_paymentModeMeta);
-    }
     if (data.containsKey('first_weight_kg')) {
       context.handle(
         _firstWeightKgMeta,
@@ -2001,25 +1966,19 @@ class $WeighmentsTable extends Weighments
         ),
       );
     }
-    if (data.containsKey('vehicle_charge')) {
-      context.handle(
-        _vehicleChargeMeta,
-        vehicleCharge.isAcceptableOrUnknown(
-          data['vehicle_charge']!,
-          _vehicleChargeMeta,
-        ),
-      );
-    }
-    if (data.containsKey('amount')) {
-      context.handle(
-        _amountMeta,
-        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
-      );
-    }
     if (data.containsKey('remarks')) {
       context.handle(
         _remarksMeta,
         remarks.isAcceptableOrUnknown(data['remarks']!, _remarksMeta),
+      );
+    }
+    if (data.containsKey('mobile_number')) {
+      context.handle(
+        _mobileNumberMeta,
+        mobileNumber.isAcceptableOrUnknown(
+          data['mobile_number']!,
+          _mobileNumberMeta,
+        ),
       );
     }
     if (data.containsKey('weight_unit')) {
@@ -2069,10 +2028,6 @@ class $WeighmentsTable extends Weighments
         DriftSqlType.int,
         data['${effectivePrefix}material_id'],
       ),
-      paymentMode: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}payment_mode'],
-      )!,
       firstWeightKg: attachedDatabase.typeMapping.read(
         DriftSqlType.double,
         data['${effectivePrefix}first_weight_kg'],
@@ -2093,17 +2048,13 @@ class $WeighmentsTable extends Weighments
         DriftSqlType.double,
         data['${effectivePrefix}net_weight_kg'],
       ),
-      vehicleCharge: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}vehicle_charge'],
-      )!,
-      amount: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}amount'],
-      )!,
       remarks: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}remarks'],
+      ),
+      mobileNumber: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}mobile_number'],
       ),
       weightUnit: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -2137,15 +2088,13 @@ class Weighment extends DataClass implements Insertable<Weighment> {
   /// weighments still always carry one; that is enforced by the form rules in
   /// `BillBloc`, not by this column.
   final int? materialId;
-  final String paymentMode;
   final double firstWeightKg;
   final String firstWeightType;
   final double? secondWeightKg;
   final String? secondWeightType;
   final double? netWeightKg;
-  final double vehicleCharge;
-  final double amount;
   final String? remarks;
+  final String? mobileNumber;
   final String weightUnit;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -2155,15 +2104,13 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     required this.customerId,
     required this.vehicleNumber,
     this.materialId,
-    required this.paymentMode,
     required this.firstWeightKg,
     required this.firstWeightType,
     this.secondWeightKg,
     this.secondWeightType,
     this.netWeightKg,
-    required this.vehicleCharge,
-    required this.amount,
     this.remarks,
+    this.mobileNumber,
     required this.weightUnit,
     required this.createdAt,
     required this.updatedAt,
@@ -2178,7 +2125,6 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     if (!nullToAbsent || materialId != null) {
       map['material_id'] = Variable<int>(materialId);
     }
-    map['payment_mode'] = Variable<String>(paymentMode);
     map['first_weight_kg'] = Variable<double>(firstWeightKg);
     map['first_weight_type'] = Variable<String>(firstWeightType);
     if (!nullToAbsent || secondWeightKg != null) {
@@ -2190,10 +2136,11 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     if (!nullToAbsent || netWeightKg != null) {
       map['net_weight_kg'] = Variable<double>(netWeightKg);
     }
-    map['vehicle_charge'] = Variable<double>(vehicleCharge);
-    map['amount'] = Variable<double>(amount);
     if (!nullToAbsent || remarks != null) {
       map['remarks'] = Variable<String>(remarks);
+    }
+    if (!nullToAbsent || mobileNumber != null) {
+      map['mobile_number'] = Variable<String>(mobileNumber);
     }
     map['weight_unit'] = Variable<String>(weightUnit);
     map['created_at'] = Variable<DateTime>(createdAt);
@@ -2210,7 +2157,6 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       materialId: materialId == null && nullToAbsent
           ? const Value.absent()
           : Value(materialId),
-      paymentMode: Value(paymentMode),
       firstWeightKg: Value(firstWeightKg),
       firstWeightType: Value(firstWeightType),
       secondWeightKg: secondWeightKg == null && nullToAbsent
@@ -2222,11 +2168,12 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       netWeightKg: netWeightKg == null && nullToAbsent
           ? const Value.absent()
           : Value(netWeightKg),
-      vehicleCharge: Value(vehicleCharge),
-      amount: Value(amount),
       remarks: remarks == null && nullToAbsent
           ? const Value.absent()
           : Value(remarks),
+      mobileNumber: mobileNumber == null && nullToAbsent
+          ? const Value.absent()
+          : Value(mobileNumber),
       weightUnit: Value(weightUnit),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
@@ -2244,15 +2191,13 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       customerId: serializer.fromJson<int>(json['customerId']),
       vehicleNumber: serializer.fromJson<String>(json['vehicleNumber']),
       materialId: serializer.fromJson<int?>(json['materialId']),
-      paymentMode: serializer.fromJson<String>(json['paymentMode']),
       firstWeightKg: serializer.fromJson<double>(json['firstWeightKg']),
       firstWeightType: serializer.fromJson<String>(json['firstWeightType']),
       secondWeightKg: serializer.fromJson<double?>(json['secondWeightKg']),
       secondWeightType: serializer.fromJson<String?>(json['secondWeightType']),
       netWeightKg: serializer.fromJson<double?>(json['netWeightKg']),
-      vehicleCharge: serializer.fromJson<double>(json['vehicleCharge']),
-      amount: serializer.fromJson<double>(json['amount']),
       remarks: serializer.fromJson<String?>(json['remarks']),
+      mobileNumber: serializer.fromJson<String?>(json['mobileNumber']),
       weightUnit: serializer.fromJson<String>(json['weightUnit']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
@@ -2267,15 +2212,13 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       'customerId': serializer.toJson<int>(customerId),
       'vehicleNumber': serializer.toJson<String>(vehicleNumber),
       'materialId': serializer.toJson<int?>(materialId),
-      'paymentMode': serializer.toJson<String>(paymentMode),
       'firstWeightKg': serializer.toJson<double>(firstWeightKg),
       'firstWeightType': serializer.toJson<String>(firstWeightType),
       'secondWeightKg': serializer.toJson<double?>(secondWeightKg),
       'secondWeightType': serializer.toJson<String?>(secondWeightType),
       'netWeightKg': serializer.toJson<double?>(netWeightKg),
-      'vehicleCharge': serializer.toJson<double>(vehicleCharge),
-      'amount': serializer.toJson<double>(amount),
       'remarks': serializer.toJson<String?>(remarks),
+      'mobileNumber': serializer.toJson<String?>(mobileNumber),
       'weightUnit': serializer.toJson<String>(weightUnit),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
@@ -2288,15 +2231,13 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     int? customerId,
     String? vehicleNumber,
     Value<int?> materialId = const Value.absent(),
-    String? paymentMode,
     double? firstWeightKg,
     String? firstWeightType,
     Value<double?> secondWeightKg = const Value.absent(),
     Value<String?> secondWeightType = const Value.absent(),
     Value<double?> netWeightKg = const Value.absent(),
-    double? vehicleCharge,
-    double? amount,
     Value<String?> remarks = const Value.absent(),
+    Value<String?> mobileNumber = const Value.absent(),
     String? weightUnit,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -2306,7 +2247,6 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     customerId: customerId ?? this.customerId,
     vehicleNumber: vehicleNumber ?? this.vehicleNumber,
     materialId: materialId.present ? materialId.value : this.materialId,
-    paymentMode: paymentMode ?? this.paymentMode,
     firstWeightKg: firstWeightKg ?? this.firstWeightKg,
     firstWeightType: firstWeightType ?? this.firstWeightType,
     secondWeightKg: secondWeightKg.present
@@ -2316,9 +2256,8 @@ class Weighment extends DataClass implements Insertable<Weighment> {
         ? secondWeightType.value
         : this.secondWeightType,
     netWeightKg: netWeightKg.present ? netWeightKg.value : this.netWeightKg,
-    vehicleCharge: vehicleCharge ?? this.vehicleCharge,
-    amount: amount ?? this.amount,
     remarks: remarks.present ? remarks.value : this.remarks,
+    mobileNumber: mobileNumber.present ? mobileNumber.value : this.mobileNumber,
     weightUnit: weightUnit ?? this.weightUnit,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
@@ -2338,9 +2277,6 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       materialId: data.materialId.present
           ? data.materialId.value
           : this.materialId,
-      paymentMode: data.paymentMode.present
-          ? data.paymentMode.value
-          : this.paymentMode,
       firstWeightKg: data.firstWeightKg.present
           ? data.firstWeightKg.value
           : this.firstWeightKg,
@@ -2356,11 +2292,10 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       netWeightKg: data.netWeightKg.present
           ? data.netWeightKg.value
           : this.netWeightKg,
-      vehicleCharge: data.vehicleCharge.present
-          ? data.vehicleCharge.value
-          : this.vehicleCharge,
-      amount: data.amount.present ? data.amount.value : this.amount,
       remarks: data.remarks.present ? data.remarks.value : this.remarks,
+      mobileNumber: data.mobileNumber.present
+          ? data.mobileNumber.value
+          : this.mobileNumber,
       weightUnit: data.weightUnit.present
           ? data.weightUnit.value
           : this.weightUnit,
@@ -2377,15 +2312,13 @@ class Weighment extends DataClass implements Insertable<Weighment> {
           ..write('customerId: $customerId, ')
           ..write('vehicleNumber: $vehicleNumber, ')
           ..write('materialId: $materialId, ')
-          ..write('paymentMode: $paymentMode, ')
           ..write('firstWeightKg: $firstWeightKg, ')
           ..write('firstWeightType: $firstWeightType, ')
           ..write('secondWeightKg: $secondWeightKg, ')
           ..write('secondWeightType: $secondWeightType, ')
           ..write('netWeightKg: $netWeightKg, ')
-          ..write('vehicleCharge: $vehicleCharge, ')
-          ..write('amount: $amount, ')
           ..write('remarks: $remarks, ')
+          ..write('mobileNumber: $mobileNumber, ')
           ..write('weightUnit: $weightUnit, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -2400,15 +2333,13 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     customerId,
     vehicleNumber,
     materialId,
-    paymentMode,
     firstWeightKg,
     firstWeightType,
     secondWeightKg,
     secondWeightType,
     netWeightKg,
-    vehicleCharge,
-    amount,
     remarks,
+    mobileNumber,
     weightUnit,
     createdAt,
     updatedAt,
@@ -2422,15 +2353,13 @@ class Weighment extends DataClass implements Insertable<Weighment> {
           other.customerId == this.customerId &&
           other.vehicleNumber == this.vehicleNumber &&
           other.materialId == this.materialId &&
-          other.paymentMode == this.paymentMode &&
           other.firstWeightKg == this.firstWeightKg &&
           other.firstWeightType == this.firstWeightType &&
           other.secondWeightKg == this.secondWeightKg &&
           other.secondWeightType == this.secondWeightType &&
           other.netWeightKg == this.netWeightKg &&
-          other.vehicleCharge == this.vehicleCharge &&
-          other.amount == this.amount &&
           other.remarks == this.remarks &&
+          other.mobileNumber == this.mobileNumber &&
           other.weightUnit == this.weightUnit &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
@@ -2442,15 +2371,13 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
   final Value<int> customerId;
   final Value<String> vehicleNumber;
   final Value<int?> materialId;
-  final Value<String> paymentMode;
   final Value<double> firstWeightKg;
   final Value<String> firstWeightType;
   final Value<double?> secondWeightKg;
   final Value<String?> secondWeightType;
   final Value<double?> netWeightKg;
-  final Value<double> vehicleCharge;
-  final Value<double> amount;
   final Value<String?> remarks;
+  final Value<String?> mobileNumber;
   final Value<String> weightUnit;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
@@ -2460,15 +2387,13 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     this.customerId = const Value.absent(),
     this.vehicleNumber = const Value.absent(),
     this.materialId = const Value.absent(),
-    this.paymentMode = const Value.absent(),
     this.firstWeightKg = const Value.absent(),
     this.firstWeightType = const Value.absent(),
     this.secondWeightKg = const Value.absent(),
     this.secondWeightType = const Value.absent(),
     this.netWeightKg = const Value.absent(),
-    this.vehicleCharge = const Value.absent(),
-    this.amount = const Value.absent(),
     this.remarks = const Value.absent(),
+    this.mobileNumber = const Value.absent(),
     this.weightUnit = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
@@ -2479,22 +2404,19 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     required int customerId,
     required String vehicleNumber,
     this.materialId = const Value.absent(),
-    required String paymentMode,
     required double firstWeightKg,
     this.firstWeightType = const Value.absent(),
     this.secondWeightKg = const Value.absent(),
     this.secondWeightType = const Value.absent(),
     this.netWeightKg = const Value.absent(),
-    this.vehicleCharge = const Value.absent(),
-    this.amount = const Value.absent(),
     this.remarks = const Value.absent(),
+    this.mobileNumber = const Value.absent(),
     this.weightUnit = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   }) : billNumber = Value(billNumber),
        customerId = Value(customerId),
        vehicleNumber = Value(vehicleNumber),
-       paymentMode = Value(paymentMode),
        firstWeightKg = Value(firstWeightKg);
   static Insertable<Weighment> custom({
     Expression<int>? id,
@@ -2502,15 +2424,13 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     Expression<int>? customerId,
     Expression<String>? vehicleNumber,
     Expression<int>? materialId,
-    Expression<String>? paymentMode,
     Expression<double>? firstWeightKg,
     Expression<String>? firstWeightType,
     Expression<double>? secondWeightKg,
     Expression<String>? secondWeightType,
     Expression<double>? netWeightKg,
-    Expression<double>? vehicleCharge,
-    Expression<double>? amount,
     Expression<String>? remarks,
+    Expression<String>? mobileNumber,
     Expression<String>? weightUnit,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
@@ -2521,15 +2441,13 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
       if (customerId != null) 'customer_id': customerId,
       if (vehicleNumber != null) 'vehicle_number': vehicleNumber,
       if (materialId != null) 'material_id': materialId,
-      if (paymentMode != null) 'payment_mode': paymentMode,
       if (firstWeightKg != null) 'first_weight_kg': firstWeightKg,
       if (firstWeightType != null) 'first_weight_type': firstWeightType,
       if (secondWeightKg != null) 'second_weight_kg': secondWeightKg,
       if (secondWeightType != null) 'second_weight_type': secondWeightType,
       if (netWeightKg != null) 'net_weight_kg': netWeightKg,
-      if (vehicleCharge != null) 'vehicle_charge': vehicleCharge,
-      if (amount != null) 'amount': amount,
       if (remarks != null) 'remarks': remarks,
+      if (mobileNumber != null) 'mobile_number': mobileNumber,
       if (weightUnit != null) 'weight_unit': weightUnit,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
@@ -2542,15 +2460,13 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     Value<int>? customerId,
     Value<String>? vehicleNumber,
     Value<int?>? materialId,
-    Value<String>? paymentMode,
     Value<double>? firstWeightKg,
     Value<String>? firstWeightType,
     Value<double?>? secondWeightKg,
     Value<String?>? secondWeightType,
     Value<double?>? netWeightKg,
-    Value<double>? vehicleCharge,
-    Value<double>? amount,
     Value<String?>? remarks,
+    Value<String?>? mobileNumber,
     Value<String>? weightUnit,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
@@ -2561,15 +2477,13 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
       customerId: customerId ?? this.customerId,
       vehicleNumber: vehicleNumber ?? this.vehicleNumber,
       materialId: materialId ?? this.materialId,
-      paymentMode: paymentMode ?? this.paymentMode,
       firstWeightKg: firstWeightKg ?? this.firstWeightKg,
       firstWeightType: firstWeightType ?? this.firstWeightType,
       secondWeightKg: secondWeightKg ?? this.secondWeightKg,
       secondWeightType: secondWeightType ?? this.secondWeightType,
       netWeightKg: netWeightKg ?? this.netWeightKg,
-      vehicleCharge: vehicleCharge ?? this.vehicleCharge,
-      amount: amount ?? this.amount,
       remarks: remarks ?? this.remarks,
+      mobileNumber: mobileNumber ?? this.mobileNumber,
       weightUnit: weightUnit ?? this.weightUnit,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
@@ -2594,9 +2508,6 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     if (materialId.present) {
       map['material_id'] = Variable<int>(materialId.value);
     }
-    if (paymentMode.present) {
-      map['payment_mode'] = Variable<String>(paymentMode.value);
-    }
     if (firstWeightKg.present) {
       map['first_weight_kg'] = Variable<double>(firstWeightKg.value);
     }
@@ -2612,14 +2523,11 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     if (netWeightKg.present) {
       map['net_weight_kg'] = Variable<double>(netWeightKg.value);
     }
-    if (vehicleCharge.present) {
-      map['vehicle_charge'] = Variable<double>(vehicleCharge.value);
-    }
-    if (amount.present) {
-      map['amount'] = Variable<double>(amount.value);
-    }
     if (remarks.present) {
       map['remarks'] = Variable<String>(remarks.value);
+    }
+    if (mobileNumber.present) {
+      map['mobile_number'] = Variable<String>(mobileNumber.value);
     }
     if (weightUnit.present) {
       map['weight_unit'] = Variable<String>(weightUnit.value);
@@ -2641,15 +2549,13 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
           ..write('customerId: $customerId, ')
           ..write('vehicleNumber: $vehicleNumber, ')
           ..write('materialId: $materialId, ')
-          ..write('paymentMode: $paymentMode, ')
           ..write('firstWeightKg: $firstWeightKg, ')
           ..write('firstWeightType: $firstWeightType, ')
           ..write('secondWeightKg: $secondWeightKg, ')
           ..write('secondWeightType: $secondWeightType, ')
           ..write('netWeightKg: $netWeightKg, ')
-          ..write('vehicleCharge: $vehicleCharge, ')
-          ..write('amount: $amount, ')
           ..write('remarks: $remarks, ')
+          ..write('mobileNumber: $mobileNumber, ')
           ..write('weightUnit: $weightUnit, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
@@ -2956,51 +2862,6 @@ class $AppSettingsTable extends AppSettings
     ),
     defaultValue: const Constant(true),
   );
-  static const VerificationMeta _showAmountMeta = const VerificationMeta(
-    'showAmount',
-  );
-  @override
-  late final GeneratedColumn<bool> showAmount = GeneratedColumn<bool>(
-    'show_amount',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("show_amount" IN (0, 1))',
-    ),
-    defaultValue: const Constant(true),
-  );
-  static const VerificationMeta _showPaymentModeMeta = const VerificationMeta(
-    'showPaymentMode',
-  );
-  @override
-  late final GeneratedColumn<bool> showPaymentMode = GeneratedColumn<bool>(
-    'show_payment_mode',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("show_payment_mode" IN (0, 1))',
-    ),
-    defaultValue: const Constant(true),
-  );
-  static const VerificationMeta _showCashReceivedMeta = const VerificationMeta(
-    'showCashReceived',
-  );
-  @override
-  late final GeneratedColumn<bool> showCashReceived = GeneratedColumn<bool>(
-    'show_cash_received',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("show_cash_received" IN (0, 1))',
-    ),
-    defaultValue: const Constant(true),
-  );
   static const VerificationMeta _showRemarksMeta = const VerificationMeta(
     'showRemarks',
   );
@@ -3079,9 +2940,6 @@ class $AppSettingsTable extends AppSettings
     showGrossWeight,
     showTareWeight,
     showNetWeight,
-    showAmount,
-    showPaymentMode,
-    showCashReceived,
     showRemarks,
     showFooterNote,
     footerNote,
@@ -3276,30 +3134,6 @@ class $AppSettingsTable extends AppSettings
         ),
       );
     }
-    if (data.containsKey('show_amount')) {
-      context.handle(
-        _showAmountMeta,
-        showAmount.isAcceptableOrUnknown(data['show_amount']!, _showAmountMeta),
-      );
-    }
-    if (data.containsKey('show_payment_mode')) {
-      context.handle(
-        _showPaymentModeMeta,
-        showPaymentMode.isAcceptableOrUnknown(
-          data['show_payment_mode']!,
-          _showPaymentModeMeta,
-        ),
-      );
-    }
-    if (data.containsKey('show_cash_received')) {
-      context.handle(
-        _showCashReceivedMeta,
-        showCashReceived.isAcceptableOrUnknown(
-          data['show_cash_received']!,
-          _showCashReceivedMeta,
-        ),
-      );
-    }
     if (data.containsKey('show_remarks')) {
       context.handle(
         _showRemarksMeta,
@@ -3431,18 +3265,6 @@ class $AppSettingsTable extends AppSettings
         DriftSqlType.bool,
         data['${effectivePrefix}show_net_weight'],
       )!,
-      showAmount: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}show_amount'],
-      )!,
-      showPaymentMode: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}show_payment_mode'],
-      )!,
-      showCashReceived: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}show_cash_received'],
-      )!,
       showRemarks: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}show_remarks'],
@@ -3492,9 +3314,6 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
   final bool showGrossWeight;
   final bool showTareWeight;
   final bool showNetWeight;
-  final bool showAmount;
-  final bool showPaymentMode;
-  final bool showCashReceived;
   final bool showRemarks;
   final bool showFooterNote;
   final String? footerNote;
@@ -3523,9 +3342,6 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     required this.showGrossWeight,
     required this.showTareWeight,
     required this.showNetWeight,
-    required this.showAmount,
-    required this.showPaymentMode,
-    required this.showCashReceived,
     required this.showRemarks,
     required this.showFooterNote,
     this.footerNote,
@@ -3571,9 +3387,6 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     map['show_gross_weight'] = Variable<bool>(showGrossWeight);
     map['show_tare_weight'] = Variable<bool>(showTareWeight);
     map['show_net_weight'] = Variable<bool>(showNetWeight);
-    map['show_amount'] = Variable<bool>(showAmount);
-    map['show_payment_mode'] = Variable<bool>(showPaymentMode);
-    map['show_cash_received'] = Variable<bool>(showCashReceived);
     map['show_remarks'] = Variable<bool>(showRemarks);
     map['show_footer_note'] = Variable<bool>(showFooterNote);
     if (!nullToAbsent || footerNote != null) {
@@ -3622,9 +3435,6 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       showGrossWeight: Value(showGrossWeight),
       showTareWeight: Value(showTareWeight),
       showNetWeight: Value(showNetWeight),
-      showAmount: Value(showAmount),
-      showPaymentMode: Value(showPaymentMode),
-      showCashReceived: Value(showCashReceived),
       showRemarks: Value(showRemarks),
       showFooterNote: Value(showFooterNote),
       footerNote: footerNote == null && nullToAbsent
@@ -3663,9 +3473,6 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       showGrossWeight: serializer.fromJson<bool>(json['showGrossWeight']),
       showTareWeight: serializer.fromJson<bool>(json['showTareWeight']),
       showNetWeight: serializer.fromJson<bool>(json['showNetWeight']),
-      showAmount: serializer.fromJson<bool>(json['showAmount']),
-      showPaymentMode: serializer.fromJson<bool>(json['showPaymentMode']),
-      showCashReceived: serializer.fromJson<bool>(json['showCashReceived']),
       showRemarks: serializer.fromJson<bool>(json['showRemarks']),
       showFooterNote: serializer.fromJson<bool>(json['showFooterNote']),
       footerNote: serializer.fromJson<String?>(json['footerNote']),
@@ -3699,9 +3506,6 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       'showGrossWeight': serializer.toJson<bool>(showGrossWeight),
       'showTareWeight': serializer.toJson<bool>(showTareWeight),
       'showNetWeight': serializer.toJson<bool>(showNetWeight),
-      'showAmount': serializer.toJson<bool>(showAmount),
-      'showPaymentMode': serializer.toJson<bool>(showPaymentMode),
-      'showCashReceived': serializer.toJson<bool>(showCashReceived),
       'showRemarks': serializer.toJson<bool>(showRemarks),
       'showFooterNote': serializer.toJson<bool>(showFooterNote),
       'footerNote': serializer.toJson<String?>(footerNote),
@@ -3733,9 +3537,6 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     bool? showGrossWeight,
     bool? showTareWeight,
     bool? showNetWeight,
-    bool? showAmount,
-    bool? showPaymentMode,
-    bool? showCashReceived,
     bool? showRemarks,
     bool? showFooterNote,
     Value<String?> footerNote = const Value.absent(),
@@ -3766,9 +3567,6 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     showGrossWeight: showGrossWeight ?? this.showGrossWeight,
     showTareWeight: showTareWeight ?? this.showTareWeight,
     showNetWeight: showNetWeight ?? this.showNetWeight,
-    showAmount: showAmount ?? this.showAmount,
-    showPaymentMode: showPaymentMode ?? this.showPaymentMode,
-    showCashReceived: showCashReceived ?? this.showCashReceived,
     showRemarks: showRemarks ?? this.showRemarks,
     showFooterNote: showFooterNote ?? this.showFooterNote,
     footerNote: footerNote.present ? footerNote.value : this.footerNote,
@@ -3831,15 +3629,6 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       showNetWeight: data.showNetWeight.present
           ? data.showNetWeight.value
           : this.showNetWeight,
-      showAmount: data.showAmount.present
-          ? data.showAmount.value
-          : this.showAmount,
-      showPaymentMode: data.showPaymentMode.present
-          ? data.showPaymentMode.value
-          : this.showPaymentMode,
-      showCashReceived: data.showCashReceived.present
-          ? data.showCashReceived.value
-          : this.showCashReceived,
       showRemarks: data.showRemarks.present
           ? data.showRemarks.value
           : this.showRemarks,
@@ -3879,9 +3668,6 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           ..write('showGrossWeight: $showGrossWeight, ')
           ..write('showTareWeight: $showTareWeight, ')
           ..write('showNetWeight: $showNetWeight, ')
-          ..write('showAmount: $showAmount, ')
-          ..write('showPaymentMode: $showPaymentMode, ')
-          ..write('showCashReceived: $showCashReceived, ')
           ..write('showRemarks: $showRemarks, ')
           ..write('showFooterNote: $showFooterNote, ')
           ..write('footerNote: $footerNote, ')
@@ -3915,9 +3701,6 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     showGrossWeight,
     showTareWeight,
     showNetWeight,
-    showAmount,
-    showPaymentMode,
-    showCashReceived,
     showRemarks,
     showFooterNote,
     footerNote,
@@ -3950,9 +3733,6 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           other.showGrossWeight == this.showGrossWeight &&
           other.showTareWeight == this.showTareWeight &&
           other.showNetWeight == this.showNetWeight &&
-          other.showAmount == this.showAmount &&
-          other.showPaymentMode == this.showPaymentMode &&
-          other.showCashReceived == this.showCashReceived &&
           other.showRemarks == this.showRemarks &&
           other.showFooterNote == this.showFooterNote &&
           other.footerNote == this.footerNote &&
@@ -3983,9 +3763,6 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   final Value<bool> showGrossWeight;
   final Value<bool> showTareWeight;
   final Value<bool> showNetWeight;
-  final Value<bool> showAmount;
-  final Value<bool> showPaymentMode;
-  final Value<bool> showCashReceived;
   final Value<bool> showRemarks;
   final Value<bool> showFooterNote;
   final Value<String?> footerNote;
@@ -4014,9 +3791,6 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.showGrossWeight = const Value.absent(),
     this.showTareWeight = const Value.absent(),
     this.showNetWeight = const Value.absent(),
-    this.showAmount = const Value.absent(),
-    this.showPaymentMode = const Value.absent(),
-    this.showCashReceived = const Value.absent(),
     this.showRemarks = const Value.absent(),
     this.showFooterNote = const Value.absent(),
     this.footerNote = const Value.absent(),
@@ -4046,9 +3820,6 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.showGrossWeight = const Value.absent(),
     this.showTareWeight = const Value.absent(),
     this.showNetWeight = const Value.absent(),
-    this.showAmount = const Value.absent(),
-    this.showPaymentMode = const Value.absent(),
-    this.showCashReceived = const Value.absent(),
     this.showRemarks = const Value.absent(),
     this.showFooterNote = const Value.absent(),
     this.footerNote = const Value.absent(),
@@ -4078,9 +3849,6 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Expression<bool>? showGrossWeight,
     Expression<bool>? showTareWeight,
     Expression<bool>? showNetWeight,
-    Expression<bool>? showAmount,
-    Expression<bool>? showPaymentMode,
-    Expression<bool>? showCashReceived,
     Expression<bool>? showRemarks,
     Expression<bool>? showFooterNote,
     Expression<String>? footerNote,
@@ -4111,9 +3879,6 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       if (showGrossWeight != null) 'show_gross_weight': showGrossWeight,
       if (showTareWeight != null) 'show_tare_weight': showTareWeight,
       if (showNetWeight != null) 'show_net_weight': showNetWeight,
-      if (showAmount != null) 'show_amount': showAmount,
-      if (showPaymentMode != null) 'show_payment_mode': showPaymentMode,
-      if (showCashReceived != null) 'show_cash_received': showCashReceived,
       if (showRemarks != null) 'show_remarks': showRemarks,
       if (showFooterNote != null) 'show_footer_note': showFooterNote,
       if (footerNote != null) 'footer_note': footerNote,
@@ -4145,9 +3910,6 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Value<bool>? showGrossWeight,
     Value<bool>? showTareWeight,
     Value<bool>? showNetWeight,
-    Value<bool>? showAmount,
-    Value<bool>? showPaymentMode,
-    Value<bool>? showCashReceived,
     Value<bool>? showRemarks,
     Value<bool>? showFooterNote,
     Value<String?>? footerNote,
@@ -4177,9 +3939,6 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       showGrossWeight: showGrossWeight ?? this.showGrossWeight,
       showTareWeight: showTareWeight ?? this.showTareWeight,
       showNetWeight: showNetWeight ?? this.showNetWeight,
-      showAmount: showAmount ?? this.showAmount,
-      showPaymentMode: showPaymentMode ?? this.showPaymentMode,
-      showCashReceived: showCashReceived ?? this.showCashReceived,
       showRemarks: showRemarks ?? this.showRemarks,
       showFooterNote: showFooterNote ?? this.showFooterNote,
       footerNote: footerNote ?? this.footerNote,
@@ -4259,15 +4018,6 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     if (showNetWeight.present) {
       map['show_net_weight'] = Variable<bool>(showNetWeight.value);
     }
-    if (showAmount.present) {
-      map['show_amount'] = Variable<bool>(showAmount.value);
-    }
-    if (showPaymentMode.present) {
-      map['show_payment_mode'] = Variable<bool>(showPaymentMode.value);
-    }
-    if (showCashReceived.present) {
-      map['show_cash_received'] = Variable<bool>(showCashReceived.value);
-    }
     if (showRemarks.present) {
       map['show_remarks'] = Variable<bool>(showRemarks.value);
     }
@@ -4309,630 +4059,10 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
           ..write('showGrossWeight: $showGrossWeight, ')
           ..write('showTareWeight: $showTareWeight, ')
           ..write('showNetWeight: $showNetWeight, ')
-          ..write('showAmount: $showAmount, ')
-          ..write('showPaymentMode: $showPaymentMode, ')
-          ..write('showCashReceived: $showCashReceived, ')
           ..write('showRemarks: $showRemarks, ')
           ..write('showFooterNote: $showFooterNote, ')
           ..write('footerNote: $footerNote, ')
           ..write('updatedAt: $updatedAt')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $ChargeVehicleTypesTable extends ChargeVehicleTypes
-    with TableInfo<$ChargeVehicleTypesTable, ChargeVehicleType> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $ChargeVehicleTypesTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
-    'id',
-    aliasedName,
-    false,
-    hasAutoIncrement: true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'PRIMARY KEY AUTOINCREMENT',
-    ),
-  );
-  static const VerificationMeta _nameMeta = const VerificationMeta('name');
-  @override
-  late final GeneratedColumn<String> name = GeneratedColumn<String>(
-    'name',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
-  );
-  static const VerificationMeta _isActiveMeta = const VerificationMeta(
-    'isActive',
-  );
-  @override
-  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
-    'is_active',
-    aliasedName,
-    false,
-    type: DriftSqlType.bool,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'CHECK ("is_active" IN (0, 1))',
-    ),
-    defaultValue: const Constant(true),
-  );
-  @override
-  List<GeneratedColumn> get $columns => [id, name, isActive];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'charge_vehicle_types';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<ChargeVehicleType> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    }
-    if (data.containsKey('name')) {
-      context.handle(
-        _nameMeta,
-        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_nameMeta);
-    }
-    if (data.containsKey('is_active')) {
-      context.handle(
-        _isActiveMeta,
-        isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  ChargeVehicleType map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return ChargeVehicleType(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}id'],
-      )!,
-      name: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}name'],
-      )!,
-      isActive: attachedDatabase.typeMapping.read(
-        DriftSqlType.bool,
-        data['${effectivePrefix}is_active'],
-      )!,
-    );
-  }
-
-  @override
-  $ChargeVehicleTypesTable createAlias(String alias) {
-    return $ChargeVehicleTypesTable(attachedDatabase, alias);
-  }
-}
-
-class ChargeVehicleType extends DataClass
-    implements Insertable<ChargeVehicleType> {
-  final int id;
-  final String name;
-  final bool isActive;
-  const ChargeVehicleType({
-    required this.id,
-    required this.name,
-    required this.isActive,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
-    map['name'] = Variable<String>(name);
-    map['is_active'] = Variable<bool>(isActive);
-    return map;
-  }
-
-  ChargeVehicleTypesCompanion toCompanion(bool nullToAbsent) {
-    return ChargeVehicleTypesCompanion(
-      id: Value(id),
-      name: Value(name),
-      isActive: Value(isActive),
-    );
-  }
-
-  factory ChargeVehicleType.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return ChargeVehicleType(
-      id: serializer.fromJson<int>(json['id']),
-      name: serializer.fromJson<String>(json['name']),
-      isActive: serializer.fromJson<bool>(json['isActive']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
-      'name': serializer.toJson<String>(name),
-      'isActive': serializer.toJson<bool>(isActive),
-    };
-  }
-
-  ChargeVehicleType copyWith({int? id, String? name, bool? isActive}) =>
-      ChargeVehicleType(
-        id: id ?? this.id,
-        name: name ?? this.name,
-        isActive: isActive ?? this.isActive,
-      );
-  ChargeVehicleType copyWithCompanion(ChargeVehicleTypesCompanion data) {
-    return ChargeVehicleType(
-      id: data.id.present ? data.id.value : this.id,
-      name: data.name.present ? data.name.value : this.name,
-      isActive: data.isActive.present ? data.isActive.value : this.isActive,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('ChargeVehicleType(')
-          ..write('id: $id, ')
-          ..write('name: $name, ')
-          ..write('isActive: $isActive')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(id, name, isActive);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is ChargeVehicleType &&
-          other.id == this.id &&
-          other.name == this.name &&
-          other.isActive == this.isActive);
-}
-
-class ChargeVehicleTypesCompanion extends UpdateCompanion<ChargeVehicleType> {
-  final Value<int> id;
-  final Value<String> name;
-  final Value<bool> isActive;
-  const ChargeVehicleTypesCompanion({
-    this.id = const Value.absent(),
-    this.name = const Value.absent(),
-    this.isActive = const Value.absent(),
-  });
-  ChargeVehicleTypesCompanion.insert({
-    this.id = const Value.absent(),
-    required String name,
-    this.isActive = const Value.absent(),
-  }) : name = Value(name);
-  static Insertable<ChargeVehicleType> custom({
-    Expression<int>? id,
-    Expression<String>? name,
-    Expression<bool>? isActive,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (name != null) 'name': name,
-      if (isActive != null) 'is_active': isActive,
-    });
-  }
-
-  ChargeVehicleTypesCompanion copyWith({
-    Value<int>? id,
-    Value<String>? name,
-    Value<bool>? isActive,
-  }) {
-    return ChargeVehicleTypesCompanion(
-      id: id ?? this.id,
-      name: name ?? this.name,
-      isActive: isActive ?? this.isActive,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<int>(id.value);
-    }
-    if (name.present) {
-      map['name'] = Variable<String>(name.value);
-    }
-    if (isActive.present) {
-      map['is_active'] = Variable<bool>(isActive.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('ChargeVehicleTypesCompanion(')
-          ..write('id: $id, ')
-          ..write('name: $name, ')
-          ..write('isActive: $isActive')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $WeighmentRatesTable extends WeighmentRates
-    with TableInfo<$WeighmentRatesTable, WeighmentRate> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $WeighmentRatesTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
-    'id',
-    aliasedName,
-    false,
-    hasAutoIncrement: true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'PRIMARY KEY AUTOINCREMENT',
-    ),
-  );
-  static const VerificationMeta _vehicleTypeIdMeta = const VerificationMeta(
-    'vehicleTypeId',
-  );
-  @override
-  late final GeneratedColumn<int> vehicleTypeId = GeneratedColumn<int>(
-    'vehicle_type_id',
-    aliasedName,
-    false,
-    type: DriftSqlType.int,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'REFERENCES charge_vehicle_types (id)',
-    ),
-  );
-  static const VerificationMeta _rateTypeMeta = const VerificationMeta(
-    'rateType',
-  );
-  @override
-  late final GeneratedColumn<String> rateType = GeneratedColumn<String>(
-    'rate_type',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _weightLimitMeta = const VerificationMeta(
-    'weightLimit',
-  );
-  @override
-  late final GeneratedColumn<double> weightLimit = GeneratedColumn<double>(
-    'weight_limit',
-    aliasedName,
-    true,
-    type: DriftSqlType.double,
-    requiredDuringInsert: false,
-  );
-  static const VerificationMeta _amountMeta = const VerificationMeta('amount');
-  @override
-  late final GeneratedColumn<double> amount = GeneratedColumn<double>(
-    'amount',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: true,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    id,
-    vehicleTypeId,
-    rateType,
-    weightLimit,
-    amount,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'weighment_rates';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<WeighmentRate> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    }
-    if (data.containsKey('vehicle_type_id')) {
-      context.handle(
-        _vehicleTypeIdMeta,
-        vehicleTypeId.isAcceptableOrUnknown(
-          data['vehicle_type_id']!,
-          _vehicleTypeIdMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_vehicleTypeIdMeta);
-    }
-    if (data.containsKey('rate_type')) {
-      context.handle(
-        _rateTypeMeta,
-        rateType.isAcceptableOrUnknown(data['rate_type']!, _rateTypeMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_rateTypeMeta);
-    }
-    if (data.containsKey('weight_limit')) {
-      context.handle(
-        _weightLimitMeta,
-        weightLimit.isAcceptableOrUnknown(
-          data['weight_limit']!,
-          _weightLimitMeta,
-        ),
-      );
-    }
-    if (data.containsKey('amount')) {
-      context.handle(
-        _amountMeta,
-        amount.isAcceptableOrUnknown(data['amount']!, _amountMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_amountMeta);
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  WeighmentRate map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return WeighmentRate(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}id'],
-      )!,
-      vehicleTypeId: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}vehicle_type_id'],
-      )!,
-      rateType: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}rate_type'],
-      )!,
-      weightLimit: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}weight_limit'],
-      ),
-      amount: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}amount'],
-      )!,
-    );
-  }
-
-  @override
-  $WeighmentRatesTable createAlias(String alias) {
-    return $WeighmentRatesTable(attachedDatabase, alias);
-  }
-}
-
-class WeighmentRate extends DataClass implements Insertable<WeighmentRate> {
-  final int id;
-  final int vehicleTypeId;
-  final String rateType;
-  final double? weightLimit;
-  final double amount;
-  const WeighmentRate({
-    required this.id,
-    required this.vehicleTypeId,
-    required this.rateType,
-    this.weightLimit,
-    required this.amount,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
-    map['vehicle_type_id'] = Variable<int>(vehicleTypeId);
-    map['rate_type'] = Variable<String>(rateType);
-    if (!nullToAbsent || weightLimit != null) {
-      map['weight_limit'] = Variable<double>(weightLimit);
-    }
-    map['amount'] = Variable<double>(amount);
-    return map;
-  }
-
-  WeighmentRatesCompanion toCompanion(bool nullToAbsent) {
-    return WeighmentRatesCompanion(
-      id: Value(id),
-      vehicleTypeId: Value(vehicleTypeId),
-      rateType: Value(rateType),
-      weightLimit: weightLimit == null && nullToAbsent
-          ? const Value.absent()
-          : Value(weightLimit),
-      amount: Value(amount),
-    );
-  }
-
-  factory WeighmentRate.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return WeighmentRate(
-      id: serializer.fromJson<int>(json['id']),
-      vehicleTypeId: serializer.fromJson<int>(json['vehicleTypeId']),
-      rateType: serializer.fromJson<String>(json['rateType']),
-      weightLimit: serializer.fromJson<double?>(json['weightLimit']),
-      amount: serializer.fromJson<double>(json['amount']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
-      'vehicleTypeId': serializer.toJson<int>(vehicleTypeId),
-      'rateType': serializer.toJson<String>(rateType),
-      'weightLimit': serializer.toJson<double?>(weightLimit),
-      'amount': serializer.toJson<double>(amount),
-    };
-  }
-
-  WeighmentRate copyWith({
-    int? id,
-    int? vehicleTypeId,
-    String? rateType,
-    Value<double?> weightLimit = const Value.absent(),
-    double? amount,
-  }) => WeighmentRate(
-    id: id ?? this.id,
-    vehicleTypeId: vehicleTypeId ?? this.vehicleTypeId,
-    rateType: rateType ?? this.rateType,
-    weightLimit: weightLimit.present ? weightLimit.value : this.weightLimit,
-    amount: amount ?? this.amount,
-  );
-  WeighmentRate copyWithCompanion(WeighmentRatesCompanion data) {
-    return WeighmentRate(
-      id: data.id.present ? data.id.value : this.id,
-      vehicleTypeId: data.vehicleTypeId.present
-          ? data.vehicleTypeId.value
-          : this.vehicleTypeId,
-      rateType: data.rateType.present ? data.rateType.value : this.rateType,
-      weightLimit: data.weightLimit.present
-          ? data.weightLimit.value
-          : this.weightLimit,
-      amount: data.amount.present ? data.amount.value : this.amount,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('WeighmentRate(')
-          ..write('id: $id, ')
-          ..write('vehicleTypeId: $vehicleTypeId, ')
-          ..write('rateType: $rateType, ')
-          ..write('weightLimit: $weightLimit, ')
-          ..write('amount: $amount')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode =>
-      Object.hash(id, vehicleTypeId, rateType, weightLimit, amount);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is WeighmentRate &&
-          other.id == this.id &&
-          other.vehicleTypeId == this.vehicleTypeId &&
-          other.rateType == this.rateType &&
-          other.weightLimit == this.weightLimit &&
-          other.amount == this.amount);
-}
-
-class WeighmentRatesCompanion extends UpdateCompanion<WeighmentRate> {
-  final Value<int> id;
-  final Value<int> vehicleTypeId;
-  final Value<String> rateType;
-  final Value<double?> weightLimit;
-  final Value<double> amount;
-  const WeighmentRatesCompanion({
-    this.id = const Value.absent(),
-    this.vehicleTypeId = const Value.absent(),
-    this.rateType = const Value.absent(),
-    this.weightLimit = const Value.absent(),
-    this.amount = const Value.absent(),
-  });
-  WeighmentRatesCompanion.insert({
-    this.id = const Value.absent(),
-    required int vehicleTypeId,
-    required String rateType,
-    this.weightLimit = const Value.absent(),
-    required double amount,
-  }) : vehicleTypeId = Value(vehicleTypeId),
-       rateType = Value(rateType),
-       amount = Value(amount);
-  static Insertable<WeighmentRate> custom({
-    Expression<int>? id,
-    Expression<int>? vehicleTypeId,
-    Expression<String>? rateType,
-    Expression<double>? weightLimit,
-    Expression<double>? amount,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (vehicleTypeId != null) 'vehicle_type_id': vehicleTypeId,
-      if (rateType != null) 'rate_type': rateType,
-      if (weightLimit != null) 'weight_limit': weightLimit,
-      if (amount != null) 'amount': amount,
-    });
-  }
-
-  WeighmentRatesCompanion copyWith({
-    Value<int>? id,
-    Value<int>? vehicleTypeId,
-    Value<String>? rateType,
-    Value<double?>? weightLimit,
-    Value<double>? amount,
-  }) {
-    return WeighmentRatesCompanion(
-      id: id ?? this.id,
-      vehicleTypeId: vehicleTypeId ?? this.vehicleTypeId,
-      rateType: rateType ?? this.rateType,
-      weightLimit: weightLimit ?? this.weightLimit,
-      amount: amount ?? this.amount,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<int>(id.value);
-    }
-    if (vehicleTypeId.present) {
-      map['vehicle_type_id'] = Variable<int>(vehicleTypeId.value);
-    }
-    if (rateType.present) {
-      map['rate_type'] = Variable<String>(rateType.value);
-    }
-    if (weightLimit.present) {
-      map['weight_limit'] = Variable<double>(weightLimit.value);
-    }
-    if (amount.present) {
-      map['amount'] = Variable<double>(amount.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('WeighmentRatesCompanion(')
-          ..write('id: $id, ')
-          ..write('vehicleTypeId: $vehicleTypeId, ')
-          ..write('rateType: $rateType, ')
-          ..write('weightLimit: $weightLimit, ')
-          ..write('amount: $amount')
           ..write(')'))
         .toString();
   }
@@ -5827,9 +4957,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $MaterialsTable materials = $MaterialsTable(this);
   late final $WeighmentsTable weighments = $WeighmentsTable(this);
   late final $AppSettingsTable appSettings = $AppSettingsTable(this);
-  late final $ChargeVehicleTypesTable chargeVehicleTypes =
-      $ChargeVehicleTypesTable(this);
-  late final $WeighmentRatesTable weighmentRates = $WeighmentRatesTable(this);
   late final $ScaleSettingsTable scaleSettings = $ScaleSettingsTable(this);
   late final $AutoTareSettingsTable autoTareSettings = $AutoTareSettingsTable(
     this,
@@ -5857,8 +4984,6 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     materials,
     weighments,
     appSettings,
-    chargeVehicleTypes,
-    weighmentRates,
     scaleSettings,
     autoTareSettings,
   ];
@@ -6863,15 +5988,13 @@ typedef $$WeighmentsTableCreateCompanionBuilder =
       required int customerId,
       required String vehicleNumber,
       Value<int?> materialId,
-      required String paymentMode,
       required double firstWeightKg,
       Value<String> firstWeightType,
       Value<double?> secondWeightKg,
       Value<String?> secondWeightType,
       Value<double?> netWeightKg,
-      Value<double> vehicleCharge,
-      Value<double> amount,
       Value<String?> remarks,
+      Value<String?> mobileNumber,
       Value<String> weightUnit,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -6883,15 +6006,13 @@ typedef $$WeighmentsTableUpdateCompanionBuilder =
       Value<int> customerId,
       Value<String> vehicleNumber,
       Value<int?> materialId,
-      Value<String> paymentMode,
       Value<double> firstWeightKg,
       Value<String> firstWeightType,
       Value<double?> secondWeightKg,
       Value<String?> secondWeightType,
       Value<double?> netWeightKg,
-      Value<double> vehicleCharge,
-      Value<double> amount,
       Value<String?> remarks,
+      Value<String?> mobileNumber,
       Value<String> weightUnit,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
@@ -6960,11 +6081,6 @@ class $$WeighmentsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get paymentMode => $composableBuilder(
-    column: $table.paymentMode,
-    builder: (column) => ColumnFilters(column),
-  );
-
   ColumnFilters<double> get firstWeightKg => $composableBuilder(
     column: $table.firstWeightKg,
     builder: (column) => ColumnFilters(column),
@@ -6990,18 +6106,13 @@ class $$WeighmentsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<double> get vehicleCharge => $composableBuilder(
-    column: $table.vehicleCharge,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get amount => $composableBuilder(
-    column: $table.amount,
-    builder: (column) => ColumnFilters(column),
-  );
-
   ColumnFilters<String> get remarks => $composableBuilder(
     column: $table.remarks,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get mobileNumber => $composableBuilder(
+    column: $table.mobileNumber,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7091,11 +6202,6 @@ class $$WeighmentsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get paymentMode => $composableBuilder(
-    column: $table.paymentMode,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<double> get firstWeightKg => $composableBuilder(
     column: $table.firstWeightKg,
     builder: (column) => ColumnOrderings(column),
@@ -7121,18 +6227,13 @@ class $$WeighmentsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<double> get vehicleCharge => $composableBuilder(
-    column: $table.vehicleCharge,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get amount => $composableBuilder(
-    column: $table.amount,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<String> get remarks => $composableBuilder(
     column: $table.remarks,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get mobileNumber => $composableBuilder(
+    column: $table.mobileNumber,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -7220,11 +6321,6 @@ class $$WeighmentsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<String> get paymentMode => $composableBuilder(
-    column: $table.paymentMode,
-    builder: (column) => column,
-  );
-
   GeneratedColumn<double> get firstWeightKg => $composableBuilder(
     column: $table.firstWeightKg,
     builder: (column) => column,
@@ -7250,16 +6346,13 @@ class $$WeighmentsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<double> get vehicleCharge => $composableBuilder(
-    column: $table.vehicleCharge,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<double> get amount =>
-      $composableBuilder(column: $table.amount, builder: (column) => column);
-
   GeneratedColumn<String> get remarks =>
       $composableBuilder(column: $table.remarks, builder: (column) => column);
+
+  GeneratedColumn<String> get mobileNumber => $composableBuilder(
+    column: $table.mobileNumber,
+    builder: (column) => column,
+  );
 
   GeneratedColumn<String> get weightUnit => $composableBuilder(
     column: $table.weightUnit,
@@ -7352,15 +6445,13 @@ class $$WeighmentsTableTableManager
                 Value<int> customerId = const Value.absent(),
                 Value<String> vehicleNumber = const Value.absent(),
                 Value<int?> materialId = const Value.absent(),
-                Value<String> paymentMode = const Value.absent(),
                 Value<double> firstWeightKg = const Value.absent(),
                 Value<String> firstWeightType = const Value.absent(),
                 Value<double?> secondWeightKg = const Value.absent(),
                 Value<String?> secondWeightType = const Value.absent(),
                 Value<double?> netWeightKg = const Value.absent(),
-                Value<double> vehicleCharge = const Value.absent(),
-                Value<double> amount = const Value.absent(),
                 Value<String?> remarks = const Value.absent(),
+                Value<String?> mobileNumber = const Value.absent(),
                 Value<String> weightUnit = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -7370,15 +6461,13 @@ class $$WeighmentsTableTableManager
                 customerId: customerId,
                 vehicleNumber: vehicleNumber,
                 materialId: materialId,
-                paymentMode: paymentMode,
                 firstWeightKg: firstWeightKg,
                 firstWeightType: firstWeightType,
                 secondWeightKg: secondWeightKg,
                 secondWeightType: secondWeightType,
                 netWeightKg: netWeightKg,
-                vehicleCharge: vehicleCharge,
-                amount: amount,
                 remarks: remarks,
+                mobileNumber: mobileNumber,
                 weightUnit: weightUnit,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -7390,15 +6479,13 @@ class $$WeighmentsTableTableManager
                 required int customerId,
                 required String vehicleNumber,
                 Value<int?> materialId = const Value.absent(),
-                required String paymentMode,
                 required double firstWeightKg,
                 Value<String> firstWeightType = const Value.absent(),
                 Value<double?> secondWeightKg = const Value.absent(),
                 Value<String?> secondWeightType = const Value.absent(),
                 Value<double?> netWeightKg = const Value.absent(),
-                Value<double> vehicleCharge = const Value.absent(),
-                Value<double> amount = const Value.absent(),
                 Value<String?> remarks = const Value.absent(),
+                Value<String?> mobileNumber = const Value.absent(),
                 Value<String> weightUnit = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
@@ -7408,15 +6495,13 @@ class $$WeighmentsTableTableManager
                 customerId: customerId,
                 vehicleNumber: vehicleNumber,
                 materialId: materialId,
-                paymentMode: paymentMode,
                 firstWeightKg: firstWeightKg,
                 firstWeightType: firstWeightType,
                 secondWeightKg: secondWeightKg,
                 secondWeightType: secondWeightType,
                 netWeightKg: netWeightKg,
-                vehicleCharge: vehicleCharge,
-                amount: amount,
                 remarks: remarks,
+                mobileNumber: mobileNumber,
                 weightUnit: weightUnit,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
@@ -7526,9 +6611,6 @@ typedef $$AppSettingsTableCreateCompanionBuilder =
       Value<bool> showGrossWeight,
       Value<bool> showTareWeight,
       Value<bool> showNetWeight,
-      Value<bool> showAmount,
-      Value<bool> showPaymentMode,
-      Value<bool> showCashReceived,
       Value<bool> showRemarks,
       Value<bool> showFooterNote,
       Value<String?> footerNote,
@@ -7559,9 +6641,6 @@ typedef $$AppSettingsTableUpdateCompanionBuilder =
       Value<bool> showGrossWeight,
       Value<bool> showTareWeight,
       Value<bool> showNetWeight,
-      Value<bool> showAmount,
-      Value<bool> showPaymentMode,
-      Value<bool> showCashReceived,
       Value<bool> showRemarks,
       Value<bool> showFooterNote,
       Value<String?> footerNote,
@@ -7689,21 +6768,6 @@ class $$AppSettingsTableFilterComposer
 
   ColumnFilters<bool> get showNetWeight => $composableBuilder(
     column: $table.showNetWeight,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get showAmount => $composableBuilder(
-    column: $table.showAmount,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get showPaymentMode => $composableBuilder(
-    column: $table.showPaymentMode,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get showCashReceived => $composableBuilder(
-    column: $table.showCashReceived,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7852,21 +6916,6 @@ class $$AppSettingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<bool> get showAmount => $composableBuilder(
-    column: $table.showAmount,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get showPaymentMode => $composableBuilder(
-    column: $table.showPaymentMode,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get showCashReceived => $composableBuilder(
-    column: $table.showCashReceived,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<bool> get showRemarks => $composableBuilder(
     column: $table.showRemarks,
     builder: (column) => ColumnOrderings(column),
@@ -7998,21 +7047,6 @@ class $$AppSettingsTableAnnotationComposer
     builder: (column) => column,
   );
 
-  GeneratedColumn<bool> get showAmount => $composableBuilder(
-    column: $table.showAmount,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<bool> get showPaymentMode => $composableBuilder(
-    column: $table.showPaymentMode,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<bool> get showCashReceived => $composableBuilder(
-    column: $table.showCashReceived,
-    builder: (column) => column,
-  );
-
   GeneratedColumn<bool> get showRemarks => $composableBuilder(
     column: $table.showRemarks,
     builder: (column) => column,
@@ -8086,9 +7120,6 @@ class $$AppSettingsTableTableManager
                 Value<bool> showGrossWeight = const Value.absent(),
                 Value<bool> showTareWeight = const Value.absent(),
                 Value<bool> showNetWeight = const Value.absent(),
-                Value<bool> showAmount = const Value.absent(),
-                Value<bool> showPaymentMode = const Value.absent(),
-                Value<bool> showCashReceived = const Value.absent(),
                 Value<bool> showRemarks = const Value.absent(),
                 Value<bool> showFooterNote = const Value.absent(),
                 Value<String?> footerNote = const Value.absent(),
@@ -8117,9 +7148,6 @@ class $$AppSettingsTableTableManager
                 showGrossWeight: showGrossWeight,
                 showTareWeight: showTareWeight,
                 showNetWeight: showNetWeight,
-                showAmount: showAmount,
-                showPaymentMode: showPaymentMode,
-                showCashReceived: showCashReceived,
                 showRemarks: showRemarks,
                 showFooterNote: showFooterNote,
                 footerNote: footerNote,
@@ -8150,9 +7178,6 @@ class $$AppSettingsTableTableManager
                 Value<bool> showGrossWeight = const Value.absent(),
                 Value<bool> showTareWeight = const Value.absent(),
                 Value<bool> showNetWeight = const Value.absent(),
-                Value<bool> showAmount = const Value.absent(),
-                Value<bool> showPaymentMode = const Value.absent(),
-                Value<bool> showCashReceived = const Value.absent(),
                 Value<bool> showRemarks = const Value.absent(),
                 Value<bool> showFooterNote = const Value.absent(),
                 Value<String?> footerNote = const Value.absent(),
@@ -8181,9 +7206,6 @@ class $$AppSettingsTableTableManager
                 showGrossWeight: showGrossWeight,
                 showTareWeight: showTareWeight,
                 showNetWeight: showNetWeight,
-                showAmount: showAmount,
-                showPaymentMode: showPaymentMode,
-                showCashReceived: showCashReceived,
                 showRemarks: showRemarks,
                 showFooterNote: showFooterNote,
                 footerNote: footerNote,
@@ -8213,604 +7235,6 @@ typedef $$AppSettingsTableProcessedTableManager =
       ),
       AppSetting,
       PrefetchHooks Function()
-    >;
-typedef $$ChargeVehicleTypesTableCreateCompanionBuilder =
-    ChargeVehicleTypesCompanion Function({
-      Value<int> id,
-      required String name,
-      Value<bool> isActive,
-    });
-typedef $$ChargeVehicleTypesTableUpdateCompanionBuilder =
-    ChargeVehicleTypesCompanion Function({
-      Value<int> id,
-      Value<String> name,
-      Value<bool> isActive,
-    });
-
-final class $$ChargeVehicleTypesTableReferences
-    extends
-        BaseReferences<
-          _$AppDatabase,
-          $ChargeVehicleTypesTable,
-          ChargeVehicleType
-        > {
-  $$ChargeVehicleTypesTableReferences(
-    super.$_db,
-    super.$_table,
-    super.$_typedResult,
-  );
-
-  static MultiTypedResultKey<$WeighmentRatesTable, List<WeighmentRate>>
-  _weighmentRatesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
-    db.weighmentRates,
-    aliasName: 'charge_vehicle_types__id__weighment_rates__vehicle_type_id',
-  );
-
-  $$WeighmentRatesTableProcessedTableManager get weighmentRatesRefs {
-    final manager = $$WeighmentRatesTableTableManager(
-      $_db,
-      $_db.weighmentRates,
-    ).filter((f) => f.vehicleTypeId.id.sqlEquals($_itemColumn<int>('id')!));
-
-    final cache = $_typedResult.readTableOrNull(_weighmentRatesRefsTable($_db));
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: cache),
-    );
-  }
-}
-
-class $$ChargeVehicleTypesTableFilterComposer
-    extends Composer<_$AppDatabase, $ChargeVehicleTypesTable> {
-  $$ChargeVehicleTypesTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<bool> get isActive => $composableBuilder(
-    column: $table.isActive,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  Expression<bool> weighmentRatesRefs(
-    Expression<bool> Function($$WeighmentRatesTableFilterComposer f) f,
-  ) {
-    final $$WeighmentRatesTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.weighmentRates,
-      getReferencedColumn: (t) => t.vehicleTypeId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$WeighmentRatesTableFilterComposer(
-            $db: $db,
-            $table: $db.weighmentRates,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-}
-
-class $$ChargeVehicleTypesTableOrderingComposer
-    extends Composer<_$AppDatabase, $ChargeVehicleTypesTable> {
-  $$ChargeVehicleTypesTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get name => $composableBuilder(
-    column: $table.name,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<bool> get isActive => $composableBuilder(
-    column: $table.isActive,
-    builder: (column) => ColumnOrderings(column),
-  );
-}
-
-class $$ChargeVehicleTypesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $ChargeVehicleTypesTable> {
-  $$ChargeVehicleTypesTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<int> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get name =>
-      $composableBuilder(column: $table.name, builder: (column) => column);
-
-  GeneratedColumn<bool> get isActive =>
-      $composableBuilder(column: $table.isActive, builder: (column) => column);
-
-  Expression<T> weighmentRatesRefs<T extends Object>(
-    Expression<T> Function($$WeighmentRatesTableAnnotationComposer a) f,
-  ) {
-    final $$WeighmentRatesTableAnnotationComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.id,
-      referencedTable: $db.weighmentRates,
-      getReferencedColumn: (t) => t.vehicleTypeId,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$WeighmentRatesTableAnnotationComposer(
-            $db: $db,
-            $table: $db.weighmentRates,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return f(composer);
-  }
-}
-
-class $$ChargeVehicleTypesTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $ChargeVehicleTypesTable,
-          ChargeVehicleType,
-          $$ChargeVehicleTypesTableFilterComposer,
-          $$ChargeVehicleTypesTableOrderingComposer,
-          $$ChargeVehicleTypesTableAnnotationComposer,
-          $$ChargeVehicleTypesTableCreateCompanionBuilder,
-          $$ChargeVehicleTypesTableUpdateCompanionBuilder,
-          (ChargeVehicleType, $$ChargeVehicleTypesTableReferences),
-          ChargeVehicleType,
-          PrefetchHooks Function({bool weighmentRatesRefs})
-        > {
-  $$ChargeVehicleTypesTableTableManager(
-    _$AppDatabase db,
-    $ChargeVehicleTypesTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$ChargeVehicleTypesTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$ChargeVehicleTypesTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$ChargeVehicleTypesTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
-          updateCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                Value<String> name = const Value.absent(),
-                Value<bool> isActive = const Value.absent(),
-              }) => ChargeVehicleTypesCompanion(
-                id: id,
-                name: name,
-                isActive: isActive,
-              ),
-          createCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                required String name,
-                Value<bool> isActive = const Value.absent(),
-              }) => ChargeVehicleTypesCompanion.insert(
-                id: id,
-                name: name,
-                isActive: isActive,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable(table),
-                  $$ChargeVehicleTypesTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
-          prefetchHooksCallback: ({weighmentRatesRefs = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [
-                if (weighmentRatesRefs) db.weighmentRates,
-              ],
-              addJoins: null,
-              getPrefetchedDataCallback: (items) async {
-                return [
-                  if (weighmentRatesRefs)
-                    await $_getPrefetchedData<
-                      ChargeVehicleType,
-                      $ChargeVehicleTypesTable,
-                      WeighmentRate
-                    >(
-                      currentTable: table,
-                      referencedTable: $$ChargeVehicleTypesTableReferences
-                          ._weighmentRatesRefsTable(db),
-                      managerFromTypedResult: (p0) =>
-                          $$ChargeVehicleTypesTableReferences(
-                            db,
-                            table,
-                            p0,
-                          ).weighmentRatesRefs,
-                      referencedItemsForCurrentItem: (item, referencedItems) =>
-                          referencedItems.where(
-                            (e) => e.vehicleTypeId == item.id,
-                          ),
-                      typedResults: items,
-                    ),
-                ];
-              },
-            );
-          },
-        ),
-      );
-}
-
-typedef $$ChargeVehicleTypesTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $ChargeVehicleTypesTable,
-      ChargeVehicleType,
-      $$ChargeVehicleTypesTableFilterComposer,
-      $$ChargeVehicleTypesTableOrderingComposer,
-      $$ChargeVehicleTypesTableAnnotationComposer,
-      $$ChargeVehicleTypesTableCreateCompanionBuilder,
-      $$ChargeVehicleTypesTableUpdateCompanionBuilder,
-      (ChargeVehicleType, $$ChargeVehicleTypesTableReferences),
-      ChargeVehicleType,
-      PrefetchHooks Function({bool weighmentRatesRefs})
-    >;
-typedef $$WeighmentRatesTableCreateCompanionBuilder =
-    WeighmentRatesCompanion Function({
-      Value<int> id,
-      required int vehicleTypeId,
-      required String rateType,
-      Value<double?> weightLimit,
-      required double amount,
-    });
-typedef $$WeighmentRatesTableUpdateCompanionBuilder =
-    WeighmentRatesCompanion Function({
-      Value<int> id,
-      Value<int> vehicleTypeId,
-      Value<String> rateType,
-      Value<double?> weightLimit,
-      Value<double> amount,
-    });
-
-final class $$WeighmentRatesTableReferences
-    extends BaseReferences<_$AppDatabase, $WeighmentRatesTable, WeighmentRate> {
-  $$WeighmentRatesTableReferences(
-    super.$_db,
-    super.$_table,
-    super.$_typedResult,
-  );
-
-  static $ChargeVehicleTypesTable _vehicleTypeIdTable(_$AppDatabase db) =>
-      db.chargeVehicleTypes.createAlias(
-        'weighment_rates__vehicle_type_id__charge_vehicle_types__id',
-      );
-
-  $$ChargeVehicleTypesTableProcessedTableManager get vehicleTypeId {
-    final $_column = $_itemColumn<int>('vehicle_type_id')!;
-
-    final manager = $$ChargeVehicleTypesTableTableManager(
-      $_db,
-      $_db.chargeVehicleTypes,
-    ).filter((f) => f.id.sqlEquals($_column));
-    final item = $_typedResult.readTableOrNull(_vehicleTypeIdTable($_db));
-    if (item == null) return manager;
-    return ProcessedTableManager(
-      manager.$state.copyWith(prefetchedData: [item]),
-    );
-  }
-}
-
-class $$WeighmentRatesTableFilterComposer
-    extends Composer<_$AppDatabase, $WeighmentRatesTable> {
-  $$WeighmentRatesTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get rateType => $composableBuilder(
-    column: $table.rateType,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get weightLimit => $composableBuilder(
-    column: $table.weightLimit,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get amount => $composableBuilder(
-    column: $table.amount,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  $$ChargeVehicleTypesTableFilterComposer get vehicleTypeId {
-    final $$ChargeVehicleTypesTableFilterComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.vehicleTypeId,
-      referencedTable: $db.chargeVehicleTypes,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ChargeVehicleTypesTableFilterComposer(
-            $db: $db,
-            $table: $db.chargeVehicleTypes,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$WeighmentRatesTableOrderingComposer
-    extends Composer<_$AppDatabase, $WeighmentRatesTable> {
-  $$WeighmentRatesTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get rateType => $composableBuilder(
-    column: $table.rateType,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get weightLimit => $composableBuilder(
-    column: $table.weightLimit,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get amount => $composableBuilder(
-    column: $table.amount,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  $$ChargeVehicleTypesTableOrderingComposer get vehicleTypeId {
-    final $$ChargeVehicleTypesTableOrderingComposer composer = $composerBuilder(
-      composer: this,
-      getCurrentColumn: (t) => t.vehicleTypeId,
-      referencedTable: $db.chargeVehicleTypes,
-      getReferencedColumn: (t) => t.id,
-      builder:
-          (
-            joinBuilder, {
-            $addJoinBuilderToRootComposer,
-            $removeJoinBuilderFromRootComposer,
-          }) => $$ChargeVehicleTypesTableOrderingComposer(
-            $db: $db,
-            $table: $db.chargeVehicleTypes,
-            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-            joinBuilder: joinBuilder,
-            $removeJoinBuilderFromRootComposer:
-                $removeJoinBuilderFromRootComposer,
-          ),
-    );
-    return composer;
-  }
-}
-
-class $$WeighmentRatesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $WeighmentRatesTable> {
-  $$WeighmentRatesTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<int> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get rateType =>
-      $composableBuilder(column: $table.rateType, builder: (column) => column);
-
-  GeneratedColumn<double> get weightLimit => $composableBuilder(
-    column: $table.weightLimit,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<double> get amount =>
-      $composableBuilder(column: $table.amount, builder: (column) => column);
-
-  $$ChargeVehicleTypesTableAnnotationComposer get vehicleTypeId {
-    final $$ChargeVehicleTypesTableAnnotationComposer composer =
-        $composerBuilder(
-          composer: this,
-          getCurrentColumn: (t) => t.vehicleTypeId,
-          referencedTable: $db.chargeVehicleTypes,
-          getReferencedColumn: (t) => t.id,
-          builder:
-              (
-                joinBuilder, {
-                $addJoinBuilderToRootComposer,
-                $removeJoinBuilderFromRootComposer,
-              }) => $$ChargeVehicleTypesTableAnnotationComposer(
-                $db: $db,
-                $table: $db.chargeVehicleTypes,
-                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
-                joinBuilder: joinBuilder,
-                $removeJoinBuilderFromRootComposer:
-                    $removeJoinBuilderFromRootComposer,
-              ),
-        );
-    return composer;
-  }
-}
-
-class $$WeighmentRatesTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $WeighmentRatesTable,
-          WeighmentRate,
-          $$WeighmentRatesTableFilterComposer,
-          $$WeighmentRatesTableOrderingComposer,
-          $$WeighmentRatesTableAnnotationComposer,
-          $$WeighmentRatesTableCreateCompanionBuilder,
-          $$WeighmentRatesTableUpdateCompanionBuilder,
-          (WeighmentRate, $$WeighmentRatesTableReferences),
-          WeighmentRate,
-          PrefetchHooks Function({bool vehicleTypeId})
-        > {
-  $$WeighmentRatesTableTableManager(
-    _$AppDatabase db,
-    $WeighmentRatesTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$WeighmentRatesTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$WeighmentRatesTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$WeighmentRatesTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                Value<int> vehicleTypeId = const Value.absent(),
-                Value<String> rateType = const Value.absent(),
-                Value<double?> weightLimit = const Value.absent(),
-                Value<double> amount = const Value.absent(),
-              }) => WeighmentRatesCompanion(
-                id: id,
-                vehicleTypeId: vehicleTypeId,
-                rateType: rateType,
-                weightLimit: weightLimit,
-                amount: amount,
-              ),
-          createCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                required int vehicleTypeId,
-                required String rateType,
-                Value<double?> weightLimit = const Value.absent(),
-                required double amount,
-              }) => WeighmentRatesCompanion.insert(
-                id: id,
-                vehicleTypeId: vehicleTypeId,
-                rateType: rateType,
-                weightLimit: weightLimit,
-                amount: amount,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map(
-                (e) => (
-                  e.readTable(table),
-                  $$WeighmentRatesTableReferences(db, table, e),
-                ),
-              )
-              .toList(),
-          prefetchHooksCallback: ({vehicleTypeId = false}) {
-            return PrefetchHooks(
-              db: db,
-              explicitlyWatchedTables: [],
-              addJoins:
-                  <
-                    T extends TableManagerState<
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic,
-                      dynamic
-                    >
-                  >(state) {
-                    if (vehicleTypeId) {
-                      state =
-                          state.withJoin(
-                                currentTable: table,
-                                currentColumn: table.vehicleTypeId,
-                                referencedTable: $$WeighmentRatesTableReferences
-                                    ._vehicleTypeIdTable(db),
-                                referencedColumn:
-                                    $$WeighmentRatesTableReferences
-                                        ._vehicleTypeIdTable(db)
-                                        .id,
-                              )
-                              as T;
-                    }
-
-                    return state;
-                  },
-              getPrefetchedDataCallback: (items) async {
-                return [];
-              },
-            );
-          },
-        ),
-      );
-}
-
-typedef $$WeighmentRatesTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $WeighmentRatesTable,
-      WeighmentRate,
-      $$WeighmentRatesTableFilterComposer,
-      $$WeighmentRatesTableOrderingComposer,
-      $$WeighmentRatesTableAnnotationComposer,
-      $$WeighmentRatesTableCreateCompanionBuilder,
-      $$WeighmentRatesTableUpdateCompanionBuilder,
-      (WeighmentRate, $$WeighmentRatesTableReferences),
-      WeighmentRate,
-      PrefetchHooks Function({bool vehicleTypeId})
     >;
 typedef $$ScaleSettingsTableCreateCompanionBuilder =
     ScaleSettingsCompanion Function({
@@ -9296,10 +7720,6 @@ class $AppDatabaseManager {
       $$WeighmentsTableTableManager(_db, _db.weighments);
   $$AppSettingsTableTableManager get appSettings =>
       $$AppSettingsTableTableManager(_db, _db.appSettings);
-  $$ChargeVehicleTypesTableTableManager get chargeVehicleTypes =>
-      $$ChargeVehicleTypesTableTableManager(_db, _db.chargeVehicleTypes);
-  $$WeighmentRatesTableTableManager get weighmentRates =>
-      $$WeighmentRatesTableTableManager(_db, _db.weighmentRates);
   $$ScaleSettingsTableTableManager get scaleSettings =>
       $$ScaleSettingsTableTableManager(_db, _db.scaleSettings);
   $$AutoTareSettingsTableTableManager get autoTareSettings =>

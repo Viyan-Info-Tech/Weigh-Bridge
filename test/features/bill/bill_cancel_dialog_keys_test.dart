@@ -143,9 +143,8 @@ void main() {
 
       // Focus must land inside the dialog, otherwise no dialog-scoped shortcut
       // can ever see the key.
-      final hasDialogFocus = FocusManager.instance.primaryFocus?.context
-              ?.widget
-              .runtimeType
+      final hasDialogFocus =
+          FocusManager.instance.primaryFocus?.context?.widget.runtimeType
               .toString() ??
           '';
       expect(hasDialogFocus, isNotEmpty);

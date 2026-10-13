@@ -38,7 +38,6 @@ class BillPageState extends State<BillPage> {
   late final TextEditingController _grossWeightController;
   late final TextEditingController _tareWeightController;
   late final TextEditingController _remarksController;
-  late final TextEditingController _vehicleChargeController;
   late final TextEditingController _vehicleNumberController;
 
   /// Controllers and focus nodes shared with the form.
@@ -54,8 +53,6 @@ class BillPageState extends State<BillPage> {
   late final FocusNode _remarksFocusNode;
   late final FocusNode _grossWeightFocusNode;
   late final FocusNode _tareWeightFocusNode;
-  late final FocusNode _vehicleChargeFocusNode;
-  late final FocusNode _paymentModeFocusNode;
   late final FocusNode _searchFocusNode;
   bool _didRequestInitialFocus = false;
   bool _isReprintDialogOpen = false;
@@ -110,7 +107,6 @@ class BillPageState extends State<BillPage> {
     _grossWeightController = TextEditingController();
     _tareWeightController = TextEditingController();
     _remarksController = TextEditingController();
-    _vehicleChargeController = TextEditingController();
     _vehicleNumberController = TextEditingController();
 
     _customerFocusNode = FocusNode(debugLabel: 'customerFocusNode');
@@ -123,14 +119,11 @@ class BillPageState extends State<BillPage> {
     _remarksFocusNode = FocusNode(debugLabel: 'remarksFocusNode');
     _grossWeightFocusNode = FocusNode(debugLabel: 'grossWeightFocusNode');
     _tareWeightFocusNode = FocusNode(debugLabel: 'tareWeightFocusNode');
-    _vehicleChargeFocusNode = FocusNode(debugLabel: 'vehicleChargeFocusNode');
-    _paymentModeFocusNode = FocusNode(debugLabel: 'paymentModeFocusNode');
     _searchFocusNode = FocusNode(debugLabel: 'searchFocusNode');
     _resources = BillFormResources(
       grossWeightController: _grossWeightController,
       tareWeightController: _tareWeightController,
       remarksController: _remarksController,
-      vehicleChargeController: _vehicleChargeController,
       vehicleNumberController: _vehicleNumberController,
       customerFocusNode: _customerFocusNode,
       vehicleFocusNode: _vehicleFocusNode,
@@ -142,8 +135,6 @@ class BillPageState extends State<BillPage> {
       remarksFocusNode: _remarksFocusNode,
       grossWeightFocusNode: _grossWeightFocusNode,
       tareWeightFocusNode: _tareWeightFocusNode,
-      vehicleChargeFocusNode: _vehicleChargeFocusNode,
-      paymentModeFocusNode: _paymentModeFocusNode,
     );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -218,7 +209,6 @@ class BillPageState extends State<BillPage> {
     _grossWeightController.dispose();
     _tareWeightController.dispose();
     _remarksController.dispose();
-    _vehicleChargeController.dispose();
     _vehicleNumberController.dispose();
 
     _customerFocusNode.dispose();
@@ -231,8 +221,6 @@ class BillPageState extends State<BillPage> {
     _remarksFocusNode.dispose();
     _grossWeightFocusNode.dispose();
     _tareWeightFocusNode.dispose();
-    _vehicleChargeFocusNode.dispose();
-    _paymentModeFocusNode.dispose();
     _searchFocusNode.dispose();
     super.dispose();
   }
@@ -241,7 +229,6 @@ class BillPageState extends State<BillPage> {
     _grossWeightController.clear();
     _tareWeightController.clear();
     _remarksController.clear();
-    _vehicleChargeController.clear();
     _vehicleNumberController.clear();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -255,14 +242,6 @@ class BillPageState extends State<BillPage> {
     _setControllerText(_tareWeightController, state.tareWeightText);
     _setControllerText(_vehicleNumberController, state.vehicleNumber);
     _setControllerText(_remarksController, state.remarksText);
-    if (state.vehicleCharge > 0) {
-      _setControllerText(
-        _vehicleChargeController,
-        state.vehicleCharge == state.vehicleCharge.roundToDouble()
-            ? state.vehicleCharge.toStringAsFixed(0)
-            : state.vehicleCharge.toStringAsFixed(2),
-      );
-    }
   }
 
   void _setControllerText(TextEditingController controller, String text) {
@@ -283,9 +262,8 @@ class BillPageState extends State<BillPage> {
         state.status == BillScreenStatus.printing;
     if (isSaving) return;
     final vehicleNumber = _vehicleNumberController.text.trim();
-    if (vehicleNumber.length != 10 ||
-        !RegExp(r'^[A-Z0-9]{10}$').hasMatch(vehicleNumber)) {
-      _showKeyboardMessage('Truck number must be exactly 10 characters.');
+    if (vehicleNumber.isEmpty) {
+      _showKeyboardMessage('Truck number is required.');
       _vehicleFocusNode.requestFocus();
       return;
     }
@@ -437,7 +415,6 @@ class BillPageState extends State<BillPage> {
       _typeFocusNode,
       if (!isTareSelected) _materialCodeFocusNode,
       _customerCodeFocusNode,
-      _vehicleChargeFocusNode,
       _remarksFocusNode,
       _mobileFocusNode,
     ];
@@ -478,8 +455,6 @@ class BillPageState extends State<BillPage> {
         _materialCodeFocusNode.requestFocus();
       } else if (errors.containsKey('customer')) {
         _customerCodeFocusNode.requestFocus();
-      } else if (errors.containsKey('charges')) {
-        _vehicleChargeFocusNode.requestFocus();
       } else if (errors.containsKey('weight')) {
         _grossWeightFocusNode.requestFocus();
       } else if (errors.containsKey('mobile')) {
@@ -495,13 +470,10 @@ class BillPageState extends State<BillPage> {
         state.selectedMaterial != null ||
         state.grossWeightKg > 0 ||
         state.tareWeightKg > 0 ||
-        state.vehicleCharge > 0 ||
-        state.amount > 0 ||
         state.remarksText.isNotEmpty ||
         _grossWeightController.text.isNotEmpty ||
         _tareWeightController.text.isNotEmpty ||
-        _remarksController.text.isNotEmpty ||
-        _vehicleChargeController.text.isNotEmpty;
+        _remarksController.text.isNotEmpty;
   }
 
   void _onReprintPressed(BuildContext context, BillState state) {
@@ -571,7 +543,6 @@ class BillPageState extends State<BillPage> {
           prev.tareWeightText != curr.tareWeightText ||
           prev.vehicleNumber != curr.vehicleNumber ||
           prev.remarksText != curr.remarksText ||
-          prev.vehicleCharge != curr.vehicleCharge ||
           prev.autoTareKg != curr.autoTareKg ||
           prev.autoTareDate != curr.autoTareDate ||
           (curr.status == BillScreenStatus.printing &&
@@ -798,7 +769,7 @@ class BillPageState extends State<BillPage> {
       isActive: widget.isActive,
       isModalOpen: _isModalOpen,
       isSaving: () => _isStatusBusy(context.read<BillBloc>().state),
-      onCancel: () => _onCancelPressed(context, context.read<BillBloc>().state),
+      onCancel: _clearFormFromEscape,
       onSave: () => _saveTicket(context, context.read<BillBloc>().state),
       onCaptureLiveWeight: _handleF1Workflow,
       onManualTare: _focusTareWeightInput,
@@ -815,7 +786,7 @@ class BillPageState extends State<BillPage> {
     return WeighmentShortcutHandlers(
       isModalOpen: () => _isModalOpen,
       isSaving: () => _isStatusBusy(context.read<BillBloc>().state),
-      onCancel: () => _onCancelPressed(context, context.read<BillBloc>().state),
+      onCancel: _clearFormFromEscape,
       onSave: () => _saveTicket(context, context.read<BillBloc>().state),
       onCaptureLiveWeight: _handleF1Workflow,
       onManualTare: _focusTareWeightInput,
@@ -833,6 +804,13 @@ class BillPageState extends State<BillPage> {
   static bool _isStatusBusy(BillState state) =>
       state.status == BillScreenStatus.saving ||
       state.status == BillScreenStatus.printing;
+
+  void _clearFormFromEscape() {
+    final state = context.read<BillBloc>().state;
+    if (_isStatusBusy(state)) return;
+    context.read<BillBloc>().add(const ClearBillRequested());
+    _syncControllersAfterReset();
+  }
 
   Widget _buildWeighmentArea(BillState state, {bool expandForm = false}) {
     final form = _buildBillForm(state);

@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../../../../core/database/app_database.dart';
+import '../../../bill/domain/entities/weighment.dart' as domain;
 import '../../domain/entities/report_filter.dart';
 import '../../domain/entities/report_summary.dart';
 import '../../domain/entities/weighment_report_item.dart';
@@ -69,7 +70,6 @@ class ReportLocalDataSource {
       _database.weighments.firstWeightKg,
       _database.weighments.firstWeightType,
       _database.weighments.secondWeightKg,
-      _database.weighments.amount,
     ]);
 
     final rows = await query.get();
@@ -77,7 +77,6 @@ class ReportLocalDataSource {
     double totalGross = 0;
     double totalTare = 0;
     double totalNet = 0;
-    double totalRevenue = 0;
     int completed = 0;
 
     for (final row in rows) {
@@ -100,11 +99,7 @@ class ReportLocalDataSource {
       totalGross += gross ?? 0;
       totalTare += tare ?? 0;
       totalNet += WeighmentReportItem.deriveNetWeight(gross, tare) ?? 0;
-      totalRevenue += row.read(_database.weighments.amount) ?? 0;
-      if (WeighmentReportItem.deriveIsCompleted(
-        firstWeightKg,
-        secondWeightKg,
-      )) {
+      if (domain.Weighment.isCompletedForWeights(gross, tare)) {
         completed++;
       }
     }
@@ -114,7 +109,6 @@ class ReportLocalDataSource {
       totalGrossWeightKg: totalGross,
       totalTareWeightKg: totalTare,
       totalNetWeightKg: totalNet,
-      totalRevenue: totalRevenue,
       completedCount: completed,
     );
   }
@@ -172,12 +166,6 @@ class ReportLocalDataSource {
       query.where(weights.materialId.equals(filter.materialId!));
     }
 
-    if (filter.paymentMode != 'all') {
-      query.where(
-        weights.paymentMode.lower().equals(filter.paymentMode.toLowerCase()),
-      );
-    }
-
     final search = filter.searchQuery.trim().toLowerCase();
     if (search.isNotEmpty) {
       final pattern = '%${_escapeLike(search)}%';
@@ -215,9 +203,6 @@ class ReportLocalDataSource {
       materialName:
           material?.name ??
           (w.materialId == null ? '—' : 'Material #${w.materialId}'),
-      paymentMode: w.paymentMode,
-      amount: w.amount,
-      vehicleCharge: w.vehicleCharge,
       remarks: w.remarks,
       firstWeightKg: w.firstWeightKg,
       firstWeightType: w.firstWeightType,

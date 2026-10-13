@@ -128,7 +128,7 @@ class WeighmentTicketPdfGenerator {
                 _buildFieldRow('DESCRIPTION', data.customerName),
               if (data.hasMaterial)
                 _buildFieldRow('PRODUCT', data.resolvedMaterialName),
-              if (data.customerPhone.isNotEmpty)
+              if (data.customerPhone.trim().isNotEmpty)
                 _buildFieldRow('MOBILE NO', data.customerPhone),
               if (data.hasRemarks)
                 _buildFieldRow('CONTAINER No', data.bill.remarks!),
@@ -212,33 +212,7 @@ class WeighmentTicketPdfGenerator {
               // ── 8. DASHED LINE BELOW WEIGHT TABLE ──────
               _buildDashedLine(),
 
-              // ── 9. FINANCIALS (If enabled) ────────────
-              if (data.hasAmount || data.hasPaymentMode) ...[
-                pw.SizedBox(height: 6),
-                pw.Row(
-                  children: [
-                    if (data.hasAmount)
-                      pw.Text(
-                        'CHARGES (Rs.) : ${data.bill.amount.toStringAsFixed(2)}',
-                        style: pw.TextStyle(
-                          fontSize: 10,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
-                    pw.Spacer(),
-                    if (data.hasPaymentMode)
-                      pw.Text(
-                        'PAYMENT MODE : ${data.bill.paymentMode.toUpperCase()}',
-                        style: pw.TextStyle(
-                          fontSize: 10,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
-                  ],
-                ),
-              ],
-
-              // ── 10. FOOTER NOTE ───────────────────────
+              // ── 9. FOOTER NOTE ───────────────────────
               if (data.hasFooterNote) ...[
                 pw.SizedBox(height: 10),
                 pw.Text(

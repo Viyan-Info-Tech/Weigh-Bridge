@@ -9,10 +9,10 @@ import 'package:weighbridge/core/database/app_database.dart';
 import '../../support/test_database.dart';
 
 void main() {
-  test('schema version is 25', () {
+  test('schema version is 28', () {
     final db = createInMemoryDatabase();
     addTearDown(db.close);
-    expect(db.schemaVersion, 25);
+    expect(db.schemaVersion, 28);
   });
 
   test('onCreate creates all application tables', () async {
@@ -406,7 +406,6 @@ CREATE TABLE app_settings (
       final migrated = await db.billDao.getWeighmentByBillNumber('WB-00001');
       expect(migrated, isNotNull);
       expect(migrated!.vehicleNumber, 'MH12AB1234');
-      expect(migrated.vehicleCharge, 100);
 
       final orphan = await db.billDao.getWeighmentByBillNumber('WB-00002');
       expect(orphan!.vehicleNumber, 'VEHICLE #99');
@@ -556,7 +555,7 @@ CREATE TABLE app_settings (
         expect(kept.firstWeightKg, 5000.0);
         expect(kept.secondWeightKg, 2000.0);
         expect(kept.netWeightKg, 3000.0);
-        expect(kept.amount, 300);
+        expect(kept.mobileNumber, isNull);
 
         // material_id is nullable now.
         final cols = await db
@@ -566,6 +565,10 @@ CREATE TABLE app_settings (
           (r) => r.data['name'] == 'material_id',
         );
         expect(materialId.data['notnull'], 0);
+        final mobileNumber = cols.firstWhere(
+          (r) => r.data['name'] == 'mobile_number',
+        );
+        expect(mobileNumber.data['notnull'], 0);
 
         // And a tare-only weighment can now be stored without one.
         await db.billDao.insertWeighment(
@@ -573,11 +576,8 @@ CREATE TABLE app_settings (
             billNumber: 'WB-00002',
             customerId: 1,
             vehicleNumber: 'MH12AB5678',
-            paymentMode: 'cash',
             firstWeightKg: 4200,
             firstWeightType: const Value('TARE'),
-            vehicleCharge: const Value(90),
-            amount: const Value(90),
             weightUnit: const Value('kg'),
           ),
         );
@@ -585,6 +585,23 @@ CREATE TABLE app_settings (
         expect(tareOnly, isNotNull);
         expect(tareOnly!.materialId, isNull);
         expect(tareOnly.firstWeightType, 'TARE');
+        expect(tareOnly.mobileNumber, isNull);
+
+        await db.billDao.insertWeighment(
+          WeighmentsCompanion.insert(
+            billNumber: 'WB-00003',
+            customerId: 1,
+            vehicleNumber: 'MH12AB9012',
+            materialId: const Value(1),
+            firstWeightKg: 10000,
+            mobileNumber: const Value('6381812437'),
+            weightUnit: const Value('kg'),
+          ),
+        );
+        final withMobile = await db.billDao.getWeighmentByBillNumber(
+          'WB-00003',
+        );
+        expect(withMobile?.mobileNumber, '6381812437');
 
         final version = await db.customSelect('PRAGMA user_version').get();
         expect(version.single.data['user_version'], db.schemaVersion);
@@ -609,7 +626,6 @@ CREATE TABLE app_settings (
               customerId: 1,
               vehicleNumber: 'MH12AB9999',
               materialId: const Value(1),
-              paymentMode: 'cash',
               firstWeightKg: 100,
             ),
           ),

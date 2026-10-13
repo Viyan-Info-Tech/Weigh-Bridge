@@ -23,6 +23,7 @@ class WeighmentReceiptTemplate extends StatelessWidget {
   static const TextStyle _mono = TextStyle(
     fontFamily: 'Courier',
     fontSize: 13,
+    fontWeight: FontWeight.bold,
     color: Colors.black,
   );
 
@@ -106,9 +107,7 @@ class WeighmentReceiptTemplate extends StatelessWidget {
                       Text(
                         data.settings.serviceText!,
                         textAlign: TextAlign.center,
-                        style: monoBold.copyWith(
-                          fontSize: baseFontSize - 1.5,
-                        ),
+                        style: monoBold.copyWith(fontSize: baseFontSize - 1.5),
                       ),
                     ],
                     if (data.settings.address != null &&
@@ -172,7 +171,7 @@ class WeighmentReceiptTemplate extends StatelessWidget {
                   labelStyle: fieldLabelStyle,
                   valueStyle: fieldValueStyle,
                 ),
-              if (data.customerPhone.isNotEmpty)
+              if (data.customerPhone.trim().isNotEmpty)
                 _buildFieldRow(
                   'MOBILE NO',
                   data.customerPhone,
@@ -269,33 +268,10 @@ class WeighmentReceiptTemplate extends StatelessWidget {
               // 8. Dashed line below the table
               _buildDashedLine(dashedStyle),
 
-              // 9. Financials
-              if (data.hasAmount || data.hasPaymentMode) ...[
-                SizedBox(height: compact ? 4 : 8),
-                Row(
-                  children: [
-                    if (data.hasAmount)
-                      Text(
-                        'CHARGES (Rs.) : ${data.bill.amount.toStringAsFixed(2)}',
-                        style: monoBold.copyWith(fontSize: baseFontSize),
-                      ),
-                    const Spacer(),
-                    if (data.hasPaymentMode)
-                      Text(
-                        'PAYMENT MODE : ${data.bill.paymentMode.toUpperCase()}',
-                        style: monoBold.copyWith(fontSize: baseFontSize),
-                      ),
-                  ],
-                ),
-              ],
-
               // 10. Footer note
               if (data.hasFooterNote) ...[
                 SizedBox(height: compact ? 8 : 12),
-                Text(
-                  'Note: ${data.footerNoteText}',
-                  style: noteStyle,
-                ),
+                Text('Note: ${data.footerNoteText}', style: noteStyle),
               ],
 
               SizedBox(height: compact ? 14 : 28),
@@ -342,7 +318,10 @@ class WeighmentReceiptTemplate extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: labelWidth, child: Text(label, style: labelStyle)),
+          SizedBox(
+            width: labelWidth,
+            child: Text(label, style: labelStyle),
+          ),
           Text(': ', style: labelStyle),
           Expanded(child: Text(value, style: valueStyle)),
         ],
@@ -382,7 +361,10 @@ class WeighmentReceiptTemplate extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 3.5),
       child: Row(
         children: [
-          SizedBox(width: labelWidth, child: Text(label, style: labelStyle)),
+          SizedBox(
+            width: labelWidth,
+            child: Text(label, style: labelStyle),
+          ),
           Expanded(
             flex: 3,
             child: Text(weight, textAlign: TextAlign.center, style: valueStyle),

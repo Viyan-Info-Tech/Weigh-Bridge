@@ -66,9 +66,6 @@ void main() {
         customerId: 0,
         vehicleNumber: 'TN09AB1234',
         materialId: 0,
-        paymentMode: 'cash',
-        vehicleCharge: 0,
-        amount: 0,
         createdAt: DateTime(2026),
         updatedAt: DateTime(2026),
       ),
@@ -92,9 +89,9 @@ void main() {
     when(
       () => mockLoadRecent.call(date: any(named: 'date')),
     ).thenAnswer((_) async => <Weighment>[]);
-    when(() => mockGenerateBillNumber.call()).thenAnswer(
-      (_) async => 'WB-0000$nextBillNumber',
-    );
+    when(
+      () => mockGenerateBillNumber.call(),
+    ).thenAnswer((_) async => 'WB-0000$nextBillNumber');
     when(() => mockSaveBill.withNewBillNumber(any())).thenAnswer((inv) async {
       nextBillNumber++;
       return (id: nextBillNumber, billNumber: 'WB-0000$nextBillNumber');
@@ -125,7 +122,6 @@ void main() {
     bloc.add(MaterialSelected(material));
     bloc.add(CustomerSelected(customer));
     bloc.add(const TareWeightCommitted('2000'));
-    bloc.add(const VehicleChargeChanged('90'));
     await settle();
   }
 
@@ -143,7 +139,6 @@ void main() {
     expect(bloc.state.selectedCustomer, isNull);
     expect(bloc.state.selectedMaterial, isNull);
     expect(bloc.state.tareWeightKg, 0);
-    expect(bloc.state.vehicleCharge, 0);
   });
 
   test(
@@ -197,25 +192,28 @@ void main() {
     },
   );
 
-  test('the next bill can still be saved after the receipt is dismissed', () async {
-    await fillValidTareBill();
-    bloc.add(const SaveAndPrintBillRequested());
-    await settle();
-    expect(bloc.state.printReceiptBill, isNotNull);
+  test(
+    'the next bill can still be saved after the receipt is dismissed',
+    () async {
+      await fillValidTareBill();
+      bloc.add(const SaveAndPrintBillRequested());
+      await settle();
+      expect(bloc.state.printReceiptBill, isNotNull);
 
-    bloc.add(const PrintReceiptDismissed());
-    await settle();
-    expect(bloc.state.printReceiptBill, isNull);
+      bloc.add(const PrintReceiptDismissed());
+      await settle();
+      expect(bloc.state.printReceiptBill, isNull);
 
-    // A fresh, valid second bill must not be swallowed by the guard.
-    await fillValidTareBill(truck: 'TN09AB5678');
-    bloc.add(const SaveAndPrintBillRequested());
-    await settle();
+      // A fresh, valid second bill must not be swallowed by the guard.
+      await fillValidTareBill(truck: 'TN09AB5678');
+      bloc.add(const SaveAndPrintBillRequested());
+      await settle();
 
-    expect(bloc.state.printReceiptBill, isNotNull);
-    expect(bloc.state.hasFieldErrors, isFalse);
-    verify(() => mockSaveBill.withNewBillNumber(any())).called(2);
-  });
+      expect(bloc.state.printReceiptBill, isNotNull);
+      expect(bloc.state.hasFieldErrors, isFalse);
+      verify(() => mockSaveBill.withNewBillNumber(any())).called(2);
+    },
+  );
 
   test('a genuinely invalid form still reports its errors', () async {
     bloc.add(const LoadBillScreen());
@@ -228,7 +226,6 @@ void main() {
     expect(bloc.state.vehicleNumberError, 'Truck number is required.');
     expect(bloc.state.materialError, 'Material code is required.');
     expect(bloc.state.customerError, 'Customer code is required.');
-    expect(bloc.state.chargesError, 'Weighment charge is required.');
     verifyNever(() => mockSaveBill.withNewBillNumber(any()));
   });
 }

@@ -58,29 +58,23 @@ class WeighmentReceiptData {
 
   bool get hasGrossWeight => forPreview
       ? settings.showGrossWeight &&
-          (weights.grossKg != null && weights.grossKg! > 0)
+            (weights.grossKg != null && weights.grossKg! > 0)
       : (isCompleted ||
-          settings.showGrossWeight ||
-          (weights.grossKg != null && weights.grossKg! > 0));
+            settings.showGrossWeight ||
+            (weights.grossKg != null && weights.grossKg! > 0));
 
   bool get hasTareWeight => forPreview
       ? settings.showTareWeight &&
-          (weights.tareKg != null && weights.tareKg! > 0)
+            (weights.tareKg != null && weights.tareKg! > 0)
       : (isCompleted ||
-          settings.showTareWeight ||
-          (weights.tareKg != null && weights.tareKg! > 0));
+            settings.showTareWeight ||
+            (weights.tareKg != null && weights.tareKg! > 0));
 
   bool get hasNetWeight => forPreview
       ? settings.showNetWeight && (weights.netKg != null && weights.netKg! > 0)
       : (isCompleted ||
-          settings.showNetWeight ||
-          (weights.netKg != null && weights.netKg! > 0));
-
-  bool get hasAmount => forPreview
-      ? settings.showAmount
-      : (isCompleted || settings.showAmount || bill.amount > 0);
-
-  bool get hasPaymentMode => settings.showPaymentMode;
+            settings.showNetWeight ||
+            (weights.netKg != null && weights.netKg! > 0));
 
   bool get hasRemarks =>
       settings.showRemarks &&
@@ -130,10 +124,9 @@ class WeighmentReceiptData {
 
   String get customerName => customer?.name ?? '--';
 
-  String get customerPhone => customer?.mobile ?? '';
+  String get customerPhone => bill.mobileNumber ?? '';
 
-  String get resolvedMaterialName =>
-      materialName.isEmpty ? '--' : materialName;
+  String get resolvedMaterialName => materialName.isEmpty ? '--' : materialName;
 
   // ---------------------------------------------------------------------------
   // Weights
@@ -153,29 +146,17 @@ class WeighmentReceiptData {
     return '${display.toStringAsFixed(weightDecimals)} $weightUnit';
   }
 
-  String get grossDate => _dateFor(
-    weights.grossKg,
-    bill.grossCapturedAt,
-    bill.createdAt,
-  );
+  String get grossDate =>
+      _dateFor(weights.grossKg, bill.grossCapturedAt, bill.createdAt);
 
-  String get grossTime => _timeFor(
-    weights.grossKg,
-    bill.grossCapturedAt,
-    bill.createdAt,
-  );
+  String get grossTime =>
+      _timeFor(weights.grossKg, bill.grossCapturedAt, bill.createdAt);
 
-  String get tareDate => _dateFor(
-    weights.tareKg,
-    bill.tareCapturedAt,
-    bill.createdAt,
-  );
+  String get tareDate =>
+      _dateFor(weights.tareKg, bill.tareCapturedAt, bill.createdAt);
 
-  String get tareTime => _timeFor(
-    weights.tareKg,
-    bill.tareCapturedAt,
-    bill.updatedAt,
-  );
+  String get tareTime =>
+      _timeFor(weights.tareKg, bill.tareCapturedAt, bill.updatedAt);
 
   String _dateFor(double? kg, DateTime? capturedAt, DateTime fallback) {
     if (kg == null) return '--';
@@ -187,6 +168,5 @@ class WeighmentReceiptData {
     return DateFormat('hh:mm a').format(capturedAt ?? fallback);
   }
 
-  String get printDate =>
-      DateFormat('dd/MM/yyyy HH:mm:ss').format(printedAt);
+  String get printDate => DateFormat('dd/MM/yyyy HH:mm:ss').format(printedAt);
 }

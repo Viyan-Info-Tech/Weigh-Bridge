@@ -303,82 +303,20 @@ class RecentBillCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
 
-          // Row 4: Total Amount, Payment Badge, and receipt action
-          if (isCompact)
-            Wrap(
-              spacing: 6,
-              runSpacing: 4,
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Text(
-                  'â‚¹${NumberFormat('#,##0.00').format(bill.amount)}',
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF16A34A),
-                  ),
-                ),
-                _buildPaymentBadge(bill.paymentMode),
-                IconButton(
-                  key: Key('print_slip_button_${bill.billNumber}'),
-                  icon: const Icon(Icons.print_outlined, size: 18),
-                  color: const Color(0xFF0D3B82),
-                  tooltip: 'View & Print Slip',
-                  visualDensity: VisualDensity.compact,
-                  constraints: const BoxConstraints.tightFor(
-                    width: 32,
-                    height: 32,
-                  ),
-                  padding: EdgeInsets.zero,
-                  onPressed: () => onPrintSlip?.call(),
-                ),
-              ],
-            )
-          else
-            Row(
-              children: [
-                Text(
-                  '₹${NumberFormat('#,##0.00').format(bill.amount)}',
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w800,
-                    color: Color(0xFF16A34A),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFE0E7FF),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    bill.paymentMode.toUpperCase(),
-                    style: const TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 10,
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF4338CA),
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                // Print slip button (always shown)
-                IconButton(
-                  key: Key('print_slip_button_${bill.billNumber}'),
-                  icon: const Icon(Icons.print_outlined, size: 18),
-                  color: const Color(0xFF0D3B82),
-                  tooltip: 'View & Print Slip',
-                  visualDensity: VisualDensity.compact,
-                  onPressed: () => onPrintSlip?.call(),
-                ),
-              ],
-            ),
+          // Row 4: Slip print action
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              IconButton(
+                key: Key('print_slip_button_${bill.billNumber}'),
+                icon: const Icon(Icons.print_outlined, size: 18),
+                color: const Color(0xFF0D3B82),
+                tooltip: 'View & Print Slip',
+                visualDensity: VisualDensity.compact,
+                onPressed: () => onPrintSlip?.call(),
+              ),
+            ],
+          ),
         ],
       ),
     );
@@ -534,25 +472,6 @@ class RecentBillCard extends StatelessWidget {
         fontSize: 11,
         fontWeight: FontWeight.w600,
         color: Color(0xFF475569),
-      ),
-    ),
-  );
-
-  Widget _buildPaymentBadge(String paymentMode) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-    decoration: BoxDecoration(
-      color: const Color(0xFFE0E7FF),
-      borderRadius: BorderRadius.circular(4),
-    ),
-    child: Text(
-      paymentMode.toUpperCase(),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: const TextStyle(
-        fontFamily: 'PlusJakartaSans',
-        fontSize: 10,
-        fontWeight: FontWeight.w700,
-        color: Color(0xFF4338CA),
       ),
     ),
   );

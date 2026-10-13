@@ -186,10 +186,6 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
     final netWeightDisplay = isTon
         ? '${(totalNetWeightKg / 1000).toStringAsFixed(1)} ton'
         : '${NumberFormat('#,##0').format(totalNetWeightKg)} kg';
-    final totalRevenue = displayBills.fold<double>(
-      0,
-      (sum, b) => sum + b.amount,
-    );
 
     String countLabel;
     String subtitle;
@@ -281,7 +277,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const Text(
-                                'Recent Billings',
+                                "Today's Weighments",
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   fontFamily: 'PlusJakartaSans',
@@ -353,24 +349,17 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           _buildMetricTile(
-                            'Total Bills',
+                            'Total Weighments',
                             '${displayBills.length}',
                             const Color(0xFF0D3B82),
                             Icons.format_list_numbered_rounded,
                           ),
                           const SizedBox(height: 8),
                           _buildMetricTile(
-                            'Net Weight',
+                            'Total Net Weight',
                             netWeightDisplay,
                             const Color(0xFF0284C7),
                             Icons.scale_rounded,
-                          ),
-                          const SizedBox(height: 8),
-                          _buildMetricTile(
-                            'Total Revenue',
-                            'â‚¹${totalRevenue.toStringAsFixed(0)}',
-                            const Color(0xFF16A34A),
-                            Icons.currency_rupee_rounded,
                           ),
                         ],
                       )
@@ -379,7 +368,7 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                         children: [
                           Expanded(
                             child: _buildMetricTile(
-                              'Total Bills',
+                              'Total Weighments',
                               '${displayBills.length}',
                               const Color(0xFF0D3B82),
                               Icons.format_list_numbered_rounded,
@@ -388,19 +377,10 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: _buildMetricTile(
-                              'Net Tonnage',
+                              'Total Net Weight',
                               netWeightDisplay,
                               const Color(0xFF0284C7),
                               Icons.scale_rounded,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: _buildMetricTile(
-                              'Total Revenue',
-                              '₹${totalRevenue.toStringAsFixed(0)}',
-                              const Color(0xFF16A34A),
-                              Icons.currency_rupee_rounded,
                             ),
                           ),
                         ],

@@ -25,7 +25,6 @@ void main() {
       expect(settings.receiptTitle, 'WEIGHMENT RECEIPT');
       expect(settings.weightUnit, 'ton');
       expect(settings.showSerialNumber, isTrue);
-      expect(settings.showAmount, isTrue);
       expect(settings.showFooterNote, isTrue);
     });
 
@@ -46,7 +45,7 @@ void main() {
           billPrefix: Value('RW'),
           billNumberDigits: Value(4),
           businessName: Value('Railway Weighbridge'),
-          showAmount: Value(false),
+          showFooterNote: Value(false),
         ),
       );
 
@@ -54,7 +53,7 @@ void main() {
       expect(settings.billPrefix, 'RW');
       expect(settings.billNumberDigits, 4);
       expect(settings.businessName, 'Railway Weighbridge');
-      expect(settings.showAmount, isFalse);
+      expect(settings.showFooterNote, isFalse);
       expect(settings.showSerialNumber, isTrue);
     });
 

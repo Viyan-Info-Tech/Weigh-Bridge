@@ -75,9 +75,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
         saved.selectedMaterial == state.selectedMaterial &&
         saved.grossWeightKg == state.grossWeightKg &&
         saved.tareWeightKg == state.tareWeightKg &&
-        saved.firstWeightType == state.firstWeightType &&
-        saved.vehicleCharge == state.vehicleCharge &&
-        saved.amount == state.amount;
+        saved.firstWeightType == state.firstWeightType;
   }
 
   @override
@@ -114,10 +112,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     on<GrossCapturedAtChanged>(_onGrossCapturedAtChanged);
     on<TareCapturedAtChanged>(_onTareCapturedAtChanged);
     on<RemarksChanged>(_onRemarksChanged);
-    on<PaymentModeChanged>(_onPaymentModeChanged);
     on<WeightUnitChanged>(_onWeightUnitChanged);
-    on<VehicleChargeChanged>(_onVehicleChargeChanged);
-    on<ResetVehicleCharge>(_onResetVehicleCharge);
     // Saves run one at a time. The default concurrent transformer would let a
     // double tap on SAVE (or F5 plus a click) run two inserts against the same
     // form state, which is how duplicate bill numbers were being produced.
@@ -266,14 +261,10 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
   void _onCustomerSelected(CustomerSelected event, Emitter<BillState> emit) {
     final updatedErrors = Map<String, String>.from(state.fieldErrors)
       ..remove('customer');
-    final mobile = (event.customer.mobile ?? '').trim();
-    if (mobile.isEmpty || RegExp(r'^[6-9]\d{9}$').hasMatch(mobile)) {
-      updatedErrors.remove('mobile');
-    }
+    updatedErrors.remove('mobile');
     emit(
       state.copyWith(
         selectedCustomer: event.customer,
-        mobileNumber: event.customer.mobile ?? '',
         fieldErrors: updatedErrors,
         clearError: true,
       ),
@@ -286,7 +277,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
   ) {
     final updatedErrors = Map<String, String>.from(state.fieldErrors);
     final trimmed = event.value.trim();
-    if (trimmed.isEmpty || RegExp(r'^[6-9]\d{9}$').hasMatch(trimmed)) {
+    if (trimmed.isEmpty || RegExp(r'^\d+$').hasMatch(trimmed)) {
       updatedErrors.remove('mobile');
     }
     emit(
@@ -303,8 +294,8 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     Emitter<BillState> emit,
   ) {
     final updatedErrors = Map<String, String>.from(state.fieldErrors);
-    final trimmed = event.vehicleNumber.trim().toUpperCase();
-    if (RegExp(r'^[A-Z0-9]{10}$').hasMatch(trimmed)) {
+    final trimmed = event.vehicleNumber.trim();
+    if (trimmed.isNotEmpty) {
       updatedErrors.remove('vehicleNumber');
     }
     emit(
@@ -500,13 +491,6 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     emit(state.copyWith(remarksText: event.value));
   }
 
-  void _onPaymentModeChanged(
-    PaymentModeChanged event,
-    Emitter<BillState> emit,
-  ) {
-    emit(state.copyWith(paymentMode: event.value));
-  }
-
   void _onWeightUnitChanged(WeightUnitChanged event, Emitter<BillState> emit) {
     final oldUnit = _normalizeUnit(state.weightUnit);
     final newUnit = _normalizeUnit(event.value);
@@ -536,32 +520,6 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
       ),
     );
     _recalculate(emit);
-  }
-
-  void _onVehicleChargeChanged(
-    VehicleChargeChanged event,
-    Emitter<BillState> emit,
-  ) {
-    final value = double.tryParse(event.value) ?? 0;
-    final updatedErrors = Map<String, String>.from(state.fieldErrors);
-    if (value > 0) {
-      updatedErrors.remove('charges');
-    }
-    emit(
-      state.copyWith(
-        vehicleCharge: value,
-        amount: value,
-        fieldErrors: updatedErrors,
-        clearError: true,
-      ),
-    );
-  }
-
-  void _onResetVehicleCharge(
-    ResetVehicleCharge event,
-    Emitter<BillState> emit,
-  ) {
-    emit(state.copyWith(vehicleCharge: 0, amount: 0, clearError: true));
   }
 
   void _recalculate(Emitter<BillState> emit) {
@@ -702,9 +660,6 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     final rawVehicle = state.vehicleNumber.trim();
     if (rawVehicle.isEmpty) {
       errors['vehicleNumber'] = 'Truck number is required.';
-    } else if (!RegExp(r'^[A-Z0-9]{10}$').hasMatch(rawVehicle.toUpperCase())) {
-      errors['vehicleNumber'] =
-          'Truck number must be exactly 10 alphanumeric characters.';
     }
 
     // ── 2. Material ───────────────────────────────────────────
@@ -719,12 +674,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
       errors['customer'] = 'Customer code is required.';
     }
 
-    // ── 4. Charges / Amount ───────────────────────────────────
-    if (state.vehicleCharge <= 0 && state.amount <= 0) {
-      errors['charges'] = 'Weighment charge is required.';
-    }
-
-    // ── 5. Weight presence ────────────────────────────────────
+    // ── 4. Weight presence ────────────────────────────────────
     final hasGross = state.grossWeightKg.isFinite && state.grossWeightKg > 0;
     final hasTare = state.tareWeightKg.isFinite && state.tareWeightKg > 0;
     if (!hasGross && !hasTare) {
@@ -752,9 +702,8 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     // ── 6. Mobile number (optional) ───────────────────────────
     final mobile = state.mobileNumber.trim();
     if (mobile.isNotEmpty) {
-      if (!RegExp(r'^[6-9]\d{9}$').hasMatch(mobile)) {
-        errors['mobile'] =
-            'Enter a valid 10-digit mobile number (starting with 6, 7, 8 or 9).';
+      if (!RegExp(r'^\d+$').hasMatch(mobile)) {
+        errors['mobile'] = 'Mobile number can contain digits only.';
       }
     }
 
@@ -910,15 +859,15 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
       customerId: state.selectedCustomer!.id,
       vehicleNumber: state.vehicleNumber.trim().toUpperCase(),
       materialId: state.selectedMaterial?.id,
-      paymentMode: state.paymentMode,
       firstWeightKg: firstWeightKg,
       firstWeightType: firstWeightType,
       secondWeightKg: secondWeightKg,
       secondWeightType: secondWeightType,
       netWeightKg: netWeight,
-      vehicleCharge: state.vehicleCharge,
-      amount: state.amount,
       remarks: state.remarksText.isNotEmpty ? state.remarksText : null,
+      mobileNumber: state.mobileNumber.trim().isEmpty
+          ? null
+          : state.mobileNumber.trim(),
       weightUnit: state.weightUnit,
       createdAt: createdAt,
       updatedAt: updatedAt,
@@ -936,15 +885,13 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
       customerId: weighment.customerId,
       vehicleNumber: weighment.vehicleNumber,
       materialId: weighment.materialId,
-      paymentMode: weighment.paymentMode,
       firstWeightKg: weighment.firstWeightKg,
       firstWeightType: weighment.firstWeightType,
       secondWeightKg: weighment.secondWeightKg,
       secondWeightType: weighment.secondWeightType,
       netWeightKg: weighment.explicitNetWeightKg,
-      vehicleCharge: weighment.vehicleCharge,
-      amount: weighment.amount,
       remarks: weighment.remarks,
+      mobileNumber: weighment.mobileNumber,
       weightUnit: weighment.weightUnit,
       createdAt: weighment.createdAt,
       updatedAt: weighment.updatedAt,
@@ -997,10 +944,8 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
         grossWeightKg: 0,
         tareWeightKg: 0,
         netWeightKg: 0,
-        vehicleCharge: 0,
-        amount: 0,
-        paymentMode: 'Cash',
         currentBillNumber: nextBillNumber,
+        formResetRevision: state.formResetRevision + 1,
         clearError: true,
         clearWeightError: true,
         clearGrossCapturedAt: true,

@@ -470,13 +470,8 @@ class _MasterLookupDialogState<T extends Object>
 
   Widget _headerCell(String title, {bool center = false, TextAlign? align}) {
     return Container(
-      alignment: center
-          ? Alignment.center
-          : Alignment.centerLeft,
-      padding: EdgeInsets.only(
-        left: center ? 0 : 12,
-        right: 12,
-      ),
+      alignment: center ? Alignment.center : Alignment.centerLeft,
+      padding: EdgeInsets.only(left: center ? 0 : 12, right: 12),
       decoration: const BoxDecoration(
         border: Border(right: BorderSide(color: Color(0xFFCBD5E1))),
       ),
@@ -571,9 +566,7 @@ class _MasterLookupDialogState<T extends Object>
                         fontWeight: isSelected
                             ? FontWeight.w800
                             : FontWeight.w500,
-                        color: isSelected
-                            ? _brand
-                            : const Color(0xFF64748B),
+                        color: isSelected ? _brand : const Color(0xFF64748B),
                       ),
                     ),
                   ),

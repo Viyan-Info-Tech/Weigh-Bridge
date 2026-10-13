@@ -17,8 +17,6 @@ import 'tables/customers_table.dart';
 import 'tables/materials_table.dart';
 import 'tables/weighments_table.dart';
 import 'tables/app_settings_table.dart';
-import 'tables/charge_vehicle_types_table.dart';
-import 'tables/weighment_rates_table.dart';
 import 'tables/scale_settings_table.dart';
 import 'tables/auto_tare_settings_table.dart';
 
@@ -31,8 +29,6 @@ part 'app_database.g.dart';
     Materials,
     Weighments,
     AppSettings,
-    ChargeVehicleTypes,
-    WeighmentRates,
     ScaleSettings,
     AutoTareSettings,
   ],
@@ -52,7 +48,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 25;
+  int get schemaVersion => 28;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -66,7 +62,6 @@ class AppDatabase extends _$AppDatabase {
         'CREATE UNIQUE INDEX customers_name_unique ON customers (lower(trim(name)))',
       );
       await _createWeighmentQueryIndexes();
-      await _seedWeighmentRates();
     },
     onUpgrade: (m, from, to) async {
       if (from < 5) {
@@ -235,12 +230,7 @@ class AppDatabase extends _$AppDatabase {
       }
 
       if (from < 8) {
-        final hasAmountColumn = await customSelect(
-          "SELECT name FROM pragma_table_info('weighments') WHERE name='amount'",
-        ).getSingleOrNull();
-        if (hasAmountColumn == null) {
-          await m.addColumn(weighments, weighments.amount);
-        }
+        // Amount column previously added here; removed in schema 26
       }
 
       if (from < 9) {
@@ -641,12 +631,6 @@ class AppDatabase extends _$AppDatabase {
         );
       }
 
-      if (from < 19) {
-        await m.createTable(chargeVehicleTypes);
-        await m.createTable(weighmentRates);
-        await _seedWeighmentRates();
-      }
-
       if (from < 20) {
         // Preserve legacy rows and their bill references while making their
         // previously duplicated names distinct before enforcing uniqueness.
@@ -744,6 +728,139 @@ class AppDatabase extends _$AppDatabase {
         );
         await _createWeighmentQueryIndexes();
       }
+
+      if (from < 26) {
+        await customStatement('DROP TABLE IF EXISTS weighment_rates');
+        await customStatement('DROP TABLE IF EXISTS charge_vehicle_types');
+
+        await customStatement('''
+              CREATE TABLE weighments_new (
+                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                bill_number TEXT NOT NULL UNIQUE,
+                customer_id INTEGER NOT NULL REFERENCES customers(id),
+                vehicle_number TEXT NOT NULL,
+                material_id INTEGER REFERENCES materials(id),
+                first_weight_kg REAL NOT NULL,
+                first_weight_type TEXT NOT NULL DEFAULT 'GROSS',
+                second_weight_kg REAL,
+                second_weight_type TEXT,
+                net_weight_kg REAL,
+                remarks TEXT,
+                weight_unit TEXT NOT NULL DEFAULT 'ton',
+                created_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000),
+                updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
+              )
+            ''');
+        await customStatement(
+          'INSERT INTO weighments_new (id, bill_number, customer_id, '
+          'vehicle_number, material_id, first_weight_kg, '
+          'first_weight_type, second_weight_kg, second_weight_type, '
+          'net_weight_kg, remarks, weight_unit, '
+          'created_at, updated_at) '
+          'SELECT id, bill_number, customer_id, vehicle_number, material_id, '
+          'first_weight_kg, first_weight_type, second_weight_kg, '
+          'second_weight_type, net_weight_kg, remarks, '
+          'weight_unit, created_at, updated_at FROM weighments',
+        );
+        await customStatement('DROP TABLE weighments');
+        await customStatement(
+          'ALTER TABLE weighments_new RENAME TO weighments',
+        );
+        await customStatement(
+          'CREATE UNIQUE INDEX IF NOT EXISTS weighments_bill_number '
+          'ON weighments(bill_number)',
+        );
+        await _createWeighmentQueryIndexes();
+
+        await customStatement('''
+              CREATE TABLE app_settings_new (
+                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                weight_unit TEXT NOT NULL DEFAULT 'ton',
+                bill_prefix TEXT NOT NULL DEFAULT 'WB',
+                bill_starting_number INTEGER NOT NULL DEFAULT 1,
+                bill_number_digits INTEGER NOT NULL DEFAULT 5,
+                business_name TEXT NOT NULL DEFAULT 'VIYAN WEIGHBRIDGE',
+                business_subtitle TEXT,
+                service_text TEXT,
+                address TEXT,
+                phone_number TEXT,
+                email TEXT,
+                gstin TEXT,
+                logo_path TEXT,
+                receipt_title TEXT NOT NULL DEFAULT 'WEIGHMENT RECEIPT',
+                show_serial_number INTEGER NOT NULL DEFAULT 1,
+                show_date INTEGER NOT NULL DEFAULT 1,
+                show_time INTEGER NOT NULL DEFAULT 1,
+                show_vehicle_number INTEGER NOT NULL DEFAULT 1,
+                show_material INTEGER NOT NULL DEFAULT 1,
+                show_party INTEGER NOT NULL DEFAULT 1,
+                show_gross_weight INTEGER NOT NULL DEFAULT 1,
+                show_tare_weight INTEGER NOT NULL DEFAULT 1,
+                show_net_weight INTEGER NOT NULL DEFAULT 1,
+                show_remarks INTEGER NOT NULL DEFAULT 1,
+                show_footer_note INTEGER NOT NULL DEFAULT 1,
+                footer_note TEXT,
+                updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
+              )
+            ''');
+        await customStatement(
+          'INSERT INTO app_settings_new (id, weight_unit, bill_prefix, '
+          'bill_starting_number, bill_number_digits, business_name, '
+          'business_subtitle, service_text, address, phone_number, '
+          'email, gstin, logo_path, receipt_title, show_serial_number, '
+          'show_date, show_time, show_vehicle_number, show_material, '
+          'show_party, show_gross_weight, show_tare_weight, '
+          'show_net_weight, show_remarks, show_footer_note, footer_note, '
+          'updated_at) '
+          'SELECT id, weight_unit, bill_prefix, bill_starting_number, '
+          'bill_number_digits, business_name, business_subtitle, '
+          'service_text, address, phone_number, email, gstin, logo_path, '
+          'receipt_title, show_serial_number, show_date, show_time, '
+          'show_vehicle_number, show_material, show_party, '
+          'show_gross_weight, show_tare_weight, show_net_weight, '
+          'show_remarks, show_footer_note, footer_note, updated_at '
+          'FROM app_settings',
+        );
+        await customStatement('DROP TABLE app_settings');
+        await customStatement(
+          'ALTER TABLE app_settings_new RENAME TO app_settings',
+        );
+      }
+
+      if (from < 28) {
+        final mobileColumn = await customSelect(
+          "SELECT \"notnull\" FROM pragma_table_info('weighments') "
+          "WHERE name = 'mobile_number'",
+        ).getSingleOrNull();
+
+        if (mobileColumn == null) {
+          await m.addColumn(weighments, weighments.mobileNumber);
+        } else if (mobileColumn.read<int>('notnull') != 0) {
+          // Version 27 briefly shipped the field with NOT NULL + a blank
+          // default. Rebuild that table so new and existing records can use
+          // the intended nullable representation without losing any data.
+          await customStatement(
+            'ALTER TABLE weighments RENAME TO weighments_mobile_old',
+          );
+          await m.createTable(weighments);
+          await customStatement('''
+            INSERT INTO weighments (
+              id, bill_number, customer_id, vehicle_number, material_id,
+              first_weight_kg, first_weight_type, second_weight_kg,
+              second_weight_type, net_weight_kg, remarks, mobile_number,
+              weight_unit, created_at, updated_at
+            )
+            SELECT
+              id, bill_number, customer_id, vehicle_number, material_id,
+              first_weight_kg, first_weight_type, second_weight_kg,
+              second_weight_type, net_weight_kg, remarks,
+              NULLIF(mobile_number, ''), weight_unit, created_at, updated_at
+            FROM weighments_mobile_old
+          ''');
+          await customStatement('DROP TABLE weighments_mobile_old');
+          await _createWeighmentQueryIndexes();
+        }
+      }
     },
   );
 
@@ -813,91 +930,6 @@ class AppDatabase extends _$AppDatabase {
     'password_hash = excluded.password_hash, updated_at = excluded.updated_at',
     [hash, DateTime.now().millisecondsSinceEpoch],
   );
-
-  Future<void> _seedWeighmentRates() async {
-    const data = <(String, List<(String, double?, double)>)>[
-      (
-        'Lorry & Mini Lorry - 6 Wheelers',
-        [
-          ('EMPTY', null, 90),
-          ('LOAD', null, 110),
-          ('ABOVE_20', 20, 130),
-          ('ABOVE_30', 30, 150),
-        ],
-      ),
-      (
-        'Tarus',
-        [
-          ('EMPTY', null, 110),
-          ('LOAD', null, 130),
-          ('ABOVE_20', 20, 150),
-          ('ABOVE_30', 30, 170),
-          ('ABOVE_40', 40, 190),
-          ('ABOVE_50', 50, 210),
-          ('ABOVE_60', 60, 230),
-        ],
-      ),
-      (
-        'Tarus Above 10 Wheelers',
-        [
-          ('EMPTY', null, 120),
-          ('LOAD', null, 140),
-          ('ABOVE_20', 20, 160),
-          ('ABOVE_30', 30, 180),
-          ('ABOVE_40', 40, 200),
-          ('ABOVE_50', 50, 220),
-          ('ABOVE_60', 60, 240),
-        ],
-      ),
-      (
-        'Trailers',
-        [
-          ('EMPTY', null, 130),
-          ('LOAD', null, 150),
-          ('ABOVE_20', 20, 170),
-          ('ABOVE_30', 30, 190),
-          ('ABOVE_40', 40, 220),
-          ('ABOVE_50', 50, 240),
-          ('ABOVE_60', 60, 260),
-        ],
-      ),
-      (
-        'Multi Axel Trailer',
-        [
-          ('EMPTY', null, 180),
-          ('LOAD', null, 260),
-          ('ABOVE_20', 20, 280),
-          ('ABOVE_30', 30, 300),
-          ('ABOVE_40', 40, 320),
-          ('ABOVE_50', 50, 340),
-          ('ABOVE_60', 60, 360),
-        ],
-      ),
-      (
-        'Van / Mini Van / Bullock Carts / 3&4 Wheelers / Tri-cycle',
-        [('EMPTY', null, 80), ('LOAD', null, 90)],
-      ),
-    ];
-
-    for (final (name, rates) in data) {
-      final vehicleTypeId = await into(
-        chargeVehicleTypes,
-      ).insert(ChargeVehicleTypesCompanion.insert(name: name));
-      await batch((batch) {
-        batch.insertAll(
-          weighmentRates,
-          rates.map(
-            (rate) => WeighmentRatesCompanion.insert(
-              vehicleTypeId: vehicleTypeId,
-              rateType: rate.$1,
-              weightLimit: Value(rate.$2),
-              amount: rate.$3,
-            ),
-          ),
-        );
-      });
-    }
-  }
 }
 
 LazyDatabase _openConnection() {

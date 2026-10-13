@@ -28,7 +28,6 @@ void main() {
     String? vehicleNumberError,
     String? materialError,
     String? customerError,
-    String? chargesError,
     String? weightError,
   }) {
     return MaterialApp(
@@ -43,17 +42,13 @@ void main() {
               materials: [testMaterial],
               selectedCustomer: null,
               selectedMaterial: null,
-              paymentMode: 'Cash',
               grossWeightController: TextEditingController(),
               tareWeightController: TextEditingController(),
               remarksController: TextEditingController(),
-              vehicleChargeController: TextEditingController(text: '0.00'),
               vehicleNumberController: TextEditingController(),
               grossWeightKg: 0,
               tareWeightKg: 0,
               netWeightKg: 0,
-              vehicleCharge: 0,
-              amount: 0,
               weightUnit: 'Kg',
               selectedType: 'Gross',
               onCustomerChanged: (_) {},
@@ -62,13 +57,9 @@ void main() {
               onGrossWeightChanged: (_) {},
               onTareWeightChanged: (_) {},
               onRemarksChanged: (_) {},
-              onPaymentModeChanged: (_) {},
-              onVehicleChargeChanged: (_) {},
-              onResetVehicleCharge: () {},
               vehicleNumberError: vehicleNumberError,
               materialError: materialError,
               customerError: customerError,
-              chargesError: chargesError,
               weightError: weightError,
             ),
           ),
@@ -94,7 +85,6 @@ void main() {
             vehicleNumberError: 'Truck number is required.',
             materialError: 'Material code is required.',
             customerError: 'Customer code is required.',
-            chargesError: 'Weighment charge is required.',
             weightError:
                 'Enter or capture at least one weight (Gross or Tare).',
           ),
@@ -105,7 +95,6 @@ void main() {
         expect(find.text('Truck number is required.'), findsOneWidget);
         expect(find.text('Material code is required.'), findsOneWidget);
         expect(find.text('Customer code is required.'), findsOneWidget);
-        expect(find.text('Weighment charge is required.'), findsOneWidget);
       },
     );
 
@@ -148,7 +137,6 @@ void main() {
             vehicleNumberError: 'Truck number is required.',
             materialError: 'Material code is required.',
             customerError: 'Customer code is required.',
-            chargesError: 'Weighment charge is required.',
             weightError:
                 'Enter or capture at least one weight (Gross or Tare).',
           ),

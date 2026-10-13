@@ -282,45 +282,7 @@ class ReportFilterBar extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
-
-              // Payment Mode Dropdown
-              Expanded(
-                flex: 2,
-                child: _buildDropdownContainer(
-                  label: 'Payment',
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: filter.paymentMode,
-                      isExpanded: true,
-                      icon: const Icon(Icons.arrow_drop_down, size: 20),
-                      style: const TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 13,
-                        color: Color(0xFF0F172A),
-                      ),
-                      onChanged: (val) {
-                        if (val != null) {
-                          bloc.add(ReportPaymentFilterChanged(val));
-                        }
-                      },
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'all',
-                          child: Text('All Modes'),
-                        ),
-                        DropdownMenuItem(value: 'cash', child: Text('Cash')),
-                        DropdownMenuItem(
-                          value: 'credit',
-                          child: Text('Credit'),
-                        ),
-                        DropdownMenuItem(value: 'upi', child: Text('UPI')),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 16),
+              const Spacer(),
 
               // Apply and Reset Buttons
               Row(

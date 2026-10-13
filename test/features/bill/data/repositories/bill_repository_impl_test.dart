@@ -16,11 +16,8 @@ void main() {
     customerId: 1,
     vehicleNumber: 'TN31AB1234',
     materialId: 2,
-    paymentMode: 'Cash',
     grossWeightKg: 20000,
     tareWeightKg: 5000,
-    vehicleCharge: 100,
-    amount: 100,
     createdAt: DateTime(2026, 9, 21, 10, 30),
     updatedAt: DateTime(2026, 9, 21, 10, 30),
   );

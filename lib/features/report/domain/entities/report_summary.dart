@@ -5,7 +5,6 @@ class ReportSummary extends Equatable {
   final double totalGrossWeightKg;
   final double totalTareWeightKg;
   final double totalNetWeightKg;
-  final double totalRevenue;
   final int completedCount;
 
   const ReportSummary({
@@ -13,7 +12,6 @@ class ReportSummary extends Equatable {
     this.totalGrossWeightKg = 0,
     this.totalTareWeightKg = 0,
     this.totalNetWeightKg = 0,
-    this.totalRevenue = 0,
     this.completedCount = 0,
   });
 
@@ -26,7 +24,6 @@ class ReportSummary extends Equatable {
     totalGrossWeightKg,
     totalTareWeightKg,
     totalNetWeightKg,
-    totalRevenue,
     completedCount,
   ];
 }

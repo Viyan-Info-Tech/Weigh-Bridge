@@ -18,9 +18,6 @@ void main() {
       customerName: 'Customer',
       materialId: 1,
       materialName: 'Cement',
-      paymentMode: 'cash',
-      amount: 0,
-      vehicleCharge: 0,
       firstWeightKg: firstWeightKg,
       firstWeightType: firstWeightType,
       secondWeightKg: secondWeightKg,
@@ -68,9 +65,14 @@ void main() {
       expect(item.isCompleted, isTrue);
     });
 
-    test('returns false when only a first weight is present', () {
+    test('returns true when only a gross weight is present', () {
       final item = build(firstWeightKg: 20000);
-      expect(item.isCompleted, isFalse);
+      expect(item.isCompleted, isTrue);
+    });
+
+    test('returns true when only a tare weight is present', () {
+      final item = build(firstWeightKg: 5000, firstWeightType: 'TARE');
+      expect(item.isCompleted, isTrue);
     });
 
     test('returns false when no weights are present', () {

@@ -38,9 +38,6 @@ void main() {
       customerName: 'ACME Traders Private Limited',
       materialId: 1,
       materialName: 'Portland Pozzolana Cement',
-      paymentMode: 'cash',
-      amount: 12500,
-      vehicleCharge: 12500,
       firstWeightKg: 25000,
       secondWeightKg: 6500,
     ),
@@ -53,9 +50,6 @@ void main() {
       customerName: 'Second Customer',
       materialId: 1,
       materialName: 'Cement',
-      paymentMode: 'credit',
-      amount: 0,
-      vehicleCharge: 0,
       firstWeightKg: 22000,
     ),
   ];
@@ -106,7 +100,6 @@ void main() {
         totalGrossWeightKg: 47000,
         totalTareWeightKg: 6500,
         totalNetWeightKg: 18500,
-        totalRevenue: 12500,
         completedCount: allRecords.where((i) => i.isCompleted).length,
       );
     });

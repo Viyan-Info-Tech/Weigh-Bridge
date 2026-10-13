@@ -13,7 +13,6 @@ void main() {
 
   WeighmentReportItem item({
     int id = 1,
-    double amount = 0,
     double firstWeightKg = 0,
     String firstWeightType = 'GROSS',
     double? secondWeightKg,
@@ -27,9 +26,6 @@ void main() {
       customerName: 'Customer$id',
       materialId: 1,
       materialName: 'Cement',
-      paymentMode: 'cash',
-      amount: amount,
-      vehicleCharge: 0,
       firstWeightKg: firstWeightKg,
       firstWeightType: firstWeightType,
       secondWeightKg: secondWeightKg,
@@ -91,12 +87,13 @@ void main() {
     test('summarizeReportRecords delegates to the data source', () async {
       const filter = ReportFilter();
       when(() => mockSource.summarizeReportRecords(any())).thenAnswer(
-        (_) async => const ReportSummary(totalBills: 3, totalRevenue: 900),
+        (_) async =>
+            const ReportSummary(totalBills: 3, totalGrossWeightKg: 900),
       );
 
       final summary = await repository.summarizeReportRecords(filter);
       expect(summary.totalBills, 3);
-      expect(summary.totalRevenue, 900);
+      expect(summary.totalGrossWeightKg, 900);
       verify(() => mockSource.summarizeReportRecords(filter)).called(1);
     });
   });

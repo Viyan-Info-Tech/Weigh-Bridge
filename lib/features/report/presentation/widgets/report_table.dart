@@ -230,10 +230,6 @@ class _TableHeader extends StatelessWidget {
             child: _HeaderCell('NET WEIGHT', align: TextAlign.right),
           ),
           Expanded(
-            flex: 10,
-            child: _HeaderCell('AMOUNT', align: TextAlign.right),
-          ),
-          Expanded(
             flex: 11,
             child: _HeaderCell('STATUS', align: TextAlign.center),
           ),
@@ -267,8 +263,8 @@ class _TableFooter extends StatelessWidget {
         children: [
           Text(
             state.hasMoreRecords
-                ? 'Showing ${state.records.length} of ${state.totalRecords} Bills'
-                : 'Total: ${state.totalRecords} Bills',
+                ? 'Showing ${state.records.length} of ${state.totalRecords} Weighments'
+                : 'Total: ${state.totalRecords} Weighments',
             style: const TextStyle(
               fontFamily: 'PlusJakartaSans',
               fontSize: 12,
@@ -315,16 +311,6 @@ class _TableFooter extends StatelessWidget {
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: Color(0xFF16A34A),
-                ),
-              ),
-              const SizedBox(width: 24),
-              Text(
-                'Total Amount: ₹${NumberFormat('#,##,###').format(state.summary.totalRevenue.round())}',
-                style: const TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0F172A),
                 ),
               ),
             ],
@@ -505,22 +491,6 @@ class _TableRow extends StatelessWidget {
                     color: item.netWeightKg != null
                         ? const Color(0xFF0284C7)
                         : const Color(0xFF94A3B8),
-                  ),
-                ),
-              ),
-            ),
-            // Amount
-            Expanded(
-              flex: 10,
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: Text(
-                  '₹${item.amount.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF0F172A),
                   ),
                 ),
               ),

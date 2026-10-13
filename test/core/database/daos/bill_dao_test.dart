@@ -22,20 +22,14 @@ void main() {
     DateTime? createdAt,
     double firstWeightKg = 20000,
     double? secondWeightKg = 5000,
-    double vehicleCharge = 100,
-    double amount = 100,
-    String paymentMode = 'cash',
   }) {
     return seedWeighment(
       db,
       customerId: refs.customerId,
       materialId: refs.materialId,
       billNumber: billNumber,
-      paymentMode: paymentMode,
       firstWeightKg: firstWeightKg,
       secondWeightKg: secondWeightKg,
-      vehicleCharge: vehicleCharge,
-      amount: amount,
       createdAt: createdAt,
     );
   }
@@ -46,8 +40,6 @@ void main() {
       final w = await db.billDao.getWeighmentById(id);
       expect(w, isNotNull);
       final bill = w!;
-      expect(bill.amount, 100);
-      expect(bill.vehicleCharge, 100);
       expect(bill.weightUnit, 'ton');
       expect(bill.firstWeightType, 'GROSS');
       expect(bill.createdAt, isNotNull);
@@ -144,14 +136,12 @@ void main() {
         WeighmentsCompanion(
           secondWeightKg: const Value(5000),
           netWeightKg: const Value(15000),
-          amount: const Value(250),
           updatedAt: Value(DateTime.now()),
         ),
       );
       expect(updated, 1);
       final w = await db.billDao.getWeighmentById(id);
-      expect(w!.amount, 250);
-      expect(w.netWeightKg, 15000);
+      expect(w!.netWeightKg, 15000);
     });
 
     test('deleteWeighment removes the record', () async {
@@ -169,7 +159,6 @@ void main() {
         customerId: refs.customerId,
         vehicleNumber: 'TN31SEED01',
         materialId: Value(refs.materialId),
-        paymentMode: 'Cash',
         firstWeightKg: 20000,
       );
     }

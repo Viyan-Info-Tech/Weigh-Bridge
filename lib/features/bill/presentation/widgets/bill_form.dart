@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../core/database/app_database.dart' show AppDatabase;
 import '../../../../core/utils/text_formatters.dart';
 import '../../../customer/domain/entities/customer.dart';
 import '../../../material/domain/entities/material_item.dart' as domain;
@@ -13,33 +11,28 @@ import 'bill_form_type_selector.dart';
 import 'bill_form_weight_row.dart';
 import 'customer_master_dialog.dart';
 import 'material_master_dialog.dart';
-import 'weighment_charge_dialog.dart';
 
 /// Industrial 2-Column Weighment Ticket Form
 /// Designed with premium tactile instrument aesthetics:
 /// - Framed icon prefix badges with soft slate background
 /// - Integrated blue search action buttons for codes
-/// - Precision currency stepper for charges
 /// - Clean proportional Weight, Date & Time pickers
 /// - Balanced 2-column layout with subtle dividing rhythm
 class BillForm extends StatefulWidget {
   final String billNumber;
+  final String mobileNumber;
   final List<Customer> customers;
   final List<domain.MaterialItem> materials;
   final Customer? selectedCustomer;
   final String vehicleNumber;
   final domain.MaterialItem? selectedMaterial;
-  final String paymentMode;
   final TextEditingController grossWeightController;
   final TextEditingController tareWeightController;
   final TextEditingController remarksController;
-  final TextEditingController? vehicleChargeController;
   final TextEditingController? vehicleNumberController;
   final double grossWeightKg;
   final double tareWeightKg;
   final double netWeightKg;
-  final double vehicleCharge;
-  final double amount;
   final String weightUnit;
   final String? weightValidationError;
   final bool isReady;
@@ -58,8 +51,6 @@ class BillForm extends StatefulWidget {
   final FocusNode? remarksFocusNode;
   final FocusNode? grossWeightFocusNode;
   final FocusNode? tareWeightFocusNode;
-  final FocusNode? vehicleChargeFocusNode;
-  final FocusNode? paymentModeFocusNode;
 
   final ValueChanged<Customer> onCustomerChanged;
   final ValueChanged<String> onVehicleNumberChanged;
@@ -74,38 +65,31 @@ class BillForm extends StatefulWidget {
   final ValueChanged<DateTime?>? onGrossCapturedAtChanged;
   final ValueChanged<DateTime?>? onTareCapturedAtChanged;
   final ValueChanged<String> onRemarksChanged;
-  final ValueChanged<String> onPaymentModeChanged;
   final ValueChanged<String>? onWeightUnitChanged;
-  final ValueChanged<String> onVehicleChargeChanged;
-  final VoidCallback onResetVehicleCharge;
   final ValueChanged<String>? onMobileNumberChanged;
 
   final String? vehicleNumberError;
   final String? materialError;
   final String? customerError;
-  final String? chargesError;
   final String? weightError;
   final String? mobileError;
 
   const BillForm({
     super.key,
     required this.billNumber,
+    this.mobileNumber = '',
     required this.customers,
     required this.materials,
     this.selectedCustomer,
     this.vehicleNumber = '',
     this.selectedMaterial,
-    required this.paymentMode,
     required this.grossWeightController,
     required this.tareWeightController,
     required this.remarksController,
-    this.vehicleChargeController,
     this.vehicleNumberController,
     this.grossWeightKg = 0,
     this.tareWeightKg = 0,
     required this.netWeightKg,
-    required this.vehicleCharge,
-    required this.amount,
     this.weightUnit = 'kg',
     this.weightValidationError,
     this.isReady = true,
@@ -123,8 +107,6 @@ class BillForm extends StatefulWidget {
     this.remarksFocusNode,
     this.grossWeightFocusNode,
     this.tareWeightFocusNode,
-    this.vehicleChargeFocusNode,
-    this.paymentModeFocusNode,
     required this.onCustomerChanged,
     required this.onVehicleNumberChanged,
     required this.onMaterialChanged,
@@ -137,15 +119,11 @@ class BillForm extends StatefulWidget {
     this.onGrossCapturedAtChanged,
     this.onTareCapturedAtChanged,
     required this.onRemarksChanged,
-    required this.onPaymentModeChanged,
     this.onWeightUnitChanged,
-    required this.onVehicleChargeChanged,
-    required this.onResetVehicleCharge,
     this.onMobileNumberChanged,
     this.vehicleNumberError,
     this.materialError,
     this.customerError,
-    this.chargesError,
     this.weightError,
     this.mobileError,
   });
@@ -236,9 +214,7 @@ class _BillFormState extends State<BillForm> {
       _tareDate = widget.tareCapturedAt!;
       _tareTime = TimeOfDay.fromDateTime(widget.tareCapturedAt!);
     }
-    _mobileController = TextEditingController(
-      text: widget.selectedCustomer?.mobile ?? '',
-    );
+    _mobileController = TextEditingController(text: widget.mobileNumber);
     _materialCodeController = TextEditingController(
       text:
           widget.selectedMaterial != null &&
@@ -275,10 +251,14 @@ class _BillFormState extends State<BillForm> {
       _customerCodeController.text = widget.selectedCustomer != null
           ? widget.selectedCustomer!.customerCode
           : '';
-      if (_mobileController.text.isEmpty &&
-          widget.selectedCustomer?.mobile != null) {
-        _mobileController.text = widget.selectedCustomer!.mobile!;
-      }
+    }
+
+    if (widget.mobileNumber != oldWidget.mobileNumber &&
+        _mobileController.text != widget.mobileNumber) {
+      _mobileController.value = TextEditingValue(
+        text: widget.mobileNumber,
+        selection: TextSelection.collapsed(offset: widget.mobileNumber.length),
+      );
     }
 
     if (widget.selectedType != oldWidget.selectedType) {
@@ -445,13 +425,6 @@ class _BillFormState extends State<BillForm> {
           labelWidth: labelWidth,
           crossAxisAlignment: CrossAxisAlignment.start,
           child: _buildCustomerCodeField(),
-        ),
-        SizedBox(height: fieldGap),
-        BillFormRow(
-          label: 'CHARGES (₹)',
-          labelWidth: labelWidth,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          child: _buildChargesField(),
         ),
         SizedBox(height: fieldGap),
         BillFormRow(
@@ -666,8 +639,7 @@ class _BillFormState extends State<BillForm> {
                 onSelectTime: _onSelectTareTime,
                 onWeightChanged: widget.onTareWeightChanged,
                 onWeightCommitted: _commitTareWeight,
-                onSubmittedNext: () =>
-                    widget.vehicleChargeFocusNode?.requestFocus(),
+                onSubmittedNext: () => widget.remarksFocusNode?.requestFocus(),
               ),
               if (effectiveWeightError != null) ...[
                 const SizedBox(height: 6),
@@ -745,7 +717,6 @@ class _BillFormState extends State<BillForm> {
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
               UpperCaseTextFormatter(),
-              LengthLimitingTextInputFormatter(10),
             ],
             textCapitalization: TextCapitalization.characters,
             style: const TextStyle(
@@ -826,9 +797,9 @@ class _BillFormState extends State<BillForm> {
 
   /// Opens the material master table and applies the row the operator picked.
   ///
-   /// The legacy weighbridge software resolved MATERIAL CODE through a grid, not
-   /// a dropdown, so this is what the search icon opens. The operator picks a
-   /// row to fill in both the code and the material name.
+  /// The legacy weighbridge software resolved MATERIAL CODE through a grid, not
+  /// a dropdown, so this is what the search icon opens. The operator picks a
+  /// row to fill in both the code and the material name.
   Future<void> _openMaterialMaster() async {
     if (_skipsMaterial) {
       // Same rule as typing a code on a tare-only weighment: there is nothing to
@@ -867,7 +838,7 @@ class _BillFormState extends State<BillForm> {
     setState(() => _localCustomerError = null);
     _customerCodeController.text = picked.customerCode;
     widget.onCustomerChanged(picked);
-    await _showChargeSelection();
+    widget.remarksFocusNode?.requestFocus();
   }
 
   /// 3. MATERIAL CODE
@@ -1005,7 +976,7 @@ class _BillFormState extends State<BillForm> {
               if (customer != null) {
                 setState(() => _localCustomerError = null);
                 widget.onCustomerChanged(customer);
-                await _showChargeSelection();
+                widget.remarksFocusNode?.requestFocus();
               } else {
                 setState(
                   () => _localCustomerError = 'Customer code does not exist.',
@@ -1038,73 +1009,6 @@ class _BillFormState extends State<BillForm> {
         _buildFieldError(error),
       ],
     );
-  }
-
-  /// 5. CHARGES (₹)
-  Widget _buildChargesField() {
-    final hasError = widget.chargesError != null;
-    final isValid = widget.vehicleCharge > 0 && !hasError;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        BillFormFieldShell(
-          prefixText: '₹',
-          hasError: hasError,
-          isValid: isValid,
-          suffix: const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 10),
-            child: Icon(
-              Icons.arrow_drop_down,
-              size: 22,
-              color: Color(0xFF64748B),
-            ),
-          ),
-          child: TextField(
-            controller: widget.vehicleChargeController,
-            focusNode: widget.vehicleChargeFocusNode,
-            readOnly: true,
-            onTap: _showChargeSelection,
-            style: const TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 15.5,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF0F172A),
-            ),
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 12,
-              ),
-              hintText: widget.vehicleCharge > 0 ? null : '0.00',
-            ),
-          ),
-        ),
-        _buildFieldError(widget.chargesError),
-      ],
-    );
-  }
-
-  Future<void> _showChargeSelection() async {
-    try {
-      final database = context.read<AppDatabase>();
-      final amount = await showDialog<double>(
-        context: context,
-        builder: (_) => WeighmentChargeDialog(database: database),
-      );
-      if (amount == null) return;
-      final value = amount.toStringAsFixed(2);
-      widget.vehicleChargeController?.text = value;
-      widget.onVehicleChargeChanged(value);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) widget.remarksFocusNode?.requestFocus();
-      });
-    } catch (_) {
-      // Allow running in environments where AppDatabase is not provided
-    }
   }
 
   /// 6. CONTAINER NO
@@ -1141,7 +1045,7 @@ class _BillFormState extends State<BillForm> {
   /// 7. MOBILE NO
   Widget _buildMobileNoField() {
     final hasError = widget.mobileError != null;
-    final isValid = _mobileController.text.trim().length == 10 && !hasError;
+    final isValid = _mobileController.text.trim().isNotEmpty && !hasError;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1155,10 +1059,7 @@ class _BillFormState extends State<BillForm> {
             controller: _mobileController,
             focusNode: widget.mobileFocusNode,
             keyboardType: TextInputType.phone,
-            inputFormatters: [
-              FilteringTextInputFormatter.digitsOnly,
-              LengthLimitingTextInputFormatter(10),
-            ],
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
             onChanged: (val) {
               widget.onMobileNumberChanged?.call(val);
             },

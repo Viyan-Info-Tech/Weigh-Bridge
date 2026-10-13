@@ -163,7 +163,7 @@ void main() {
     });
 
     testWidgets(
-      'Esc when unsaved data exists triggers cancel confirmation dialog',
+      'Esc when unsaved data exists clears the form without confirmation',
       (tester) async {
         tester.view.physicalSize = const Size(1400, 900);
         tester.view.devicePixelRatio = 1.0;
@@ -185,7 +185,8 @@ void main() {
         await tester.sendKeyEvent(LogicalKeyboardKey.escape);
         await tester.pumpAndSettle();
 
-        expect(find.text('Cancel Weighment?'), findsOneWidget);
+        expect(find.text('Cancel Weighment?'), findsNothing);
+        expect(billBloc.state.vehicleNumber, isEmpty);
       },
     );
 

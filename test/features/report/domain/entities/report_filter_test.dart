@@ -6,10 +6,9 @@ void main() {
   final today = DateTime(now.year, now.month, now.day);
 
   group('defaults', () {
-    test('uses today, all modes and empty search', () {
+    test('uses today and empty search', () {
       const filter = ReportFilter();
       expect(filter.datePreset, DateRangePreset.today);
-      expect(filter.paymentMode, 'all');
       expect(filter.searchQuery, '');
       expect(filter.customerId, isNull);
       expect(filter.vehicleNumber, '');
@@ -95,7 +94,6 @@ void main() {
       customerId: 5,
       vehicleNumber: 'KA01AB2345',
       materialId: 2,
-      paymentMode: 'cash',
       searchQuery: 'TN',
     );
 

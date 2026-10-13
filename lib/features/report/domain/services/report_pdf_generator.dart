@@ -58,10 +58,6 @@ class ReportPdfGenerator {
         ? companyName.trim()
         : 'VIYAN WEIGHBRIDGE';
 
-    final paymentLabel = filter.paymentMode == 'all'
-        ? 'All Modes'
-        : filter.paymentMode.toUpperCase();
-
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4.landscape,
@@ -160,8 +156,6 @@ class ReportPdfGenerator {
                       children: [
                         _pdfMetaText('Total Bills', '${records.length}'),
                         pw.SizedBox(height: 2),
-                        _pdfMetaText('Payment Mode', paymentLabel),
-                        pw.SizedBox(height: 2),
                         _pdfMetaText('Export Type', 'Production Report'),
                       ],
                     ),
@@ -217,7 +211,6 @@ class ReportPdfGenerator {
                 'GROSS',
                 'TARE',
                 'NET',
-                'AMOUNT',
                 'STATUS',
               ],
               data: records.map((r) {
@@ -238,7 +231,6 @@ class ReportPdfGenerator {
                     : '-';
                 final dateStr =
                     '${dateFormat.format(r.createdAt)} ${timeFormat.format(r.createdAt)}';
-                final amtStr = 'Rs. ${r.amount.toStringAsFixed(0)}';
 
                 return [
                   r.billNumber,
@@ -249,8 +241,7 @@ class ReportPdfGenerator {
                   grossStr,
                   tareStr,
                   netStr,
-                  amtStr,
-                  'COMPLETED',
+                  r.isCompleted ? 'COMPLETED' : 'INCOMPLETE',
                 ];
               }).toList(),
               headerStyle: pw.TextStyle(
@@ -270,15 +261,13 @@ class ReportPdfGenerator {
                 5: pw.Alignment.centerRight,
                 6: pw.Alignment.centerRight,
                 7: pw.Alignment.centerRight,
-                8: pw.Alignment.centerRight,
-                9: pw.Alignment.center,
+                8: pw.Alignment.center,
               },
               headerAlignments: {
                 5: pw.Alignment.centerRight,
                 6: pw.Alignment.centerRight,
                 7: pw.Alignment.centerRight,
-                8: pw.Alignment.centerRight,
-                9: pw.Alignment.center,
+                8: pw.Alignment.center,
               },
               columnWidths: {
                 0: const pw.FlexColumnWidth(1.2),
@@ -289,8 +278,7 @@ class ReportPdfGenerator {
                 5: const pw.FlexColumnWidth(1.2),
                 6: const pw.FlexColumnWidth(1.2),
                 7: const pw.FlexColumnWidth(1.2),
-                8: const pw.FlexColumnWidth(1.0),
-                9: const pw.FlexColumnWidth(1.1),
+                8: const pw.FlexColumnWidth(1.1),
               },
               border: pw.TableBorder.all(
                 color: PdfColor.fromHex('#CBD5E1'),
@@ -329,10 +317,6 @@ class ReportPdfGenerator {
                   _pdfSummaryCol(
                     'Total Net',
                     '${(weightUnit == 'ton' ? summary.totalNetWeightKg / 1000 : summary.totalNetWeightKg).toStringAsFixed(weightUnit == 'ton' ? 3 : 0)} $weightUnit',
-                  ),
-                  _pdfSummaryCol(
-                    'Total Revenue',
-                    'Rs. ${summary.totalRevenue.toStringAsFixed(0)}',
                   ),
                   _pdfSummaryCol('Completed', '${summary.completedCount}'),
                 ],

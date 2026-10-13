@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import '../../../bill/domain/entities/weighment.dart';
 
 class WeighmentReportItem extends Equatable {
   final int id;
@@ -9,9 +10,6 @@ class WeighmentReportItem extends Equatable {
   final String customerName;
   final int? materialId;
   final String materialName;
-  final String paymentMode;
-  final double amount;
-  final double vehicleCharge;
   final String? remarks;
   final double firstWeightKg;
   final String firstWeightType;
@@ -28,9 +26,6 @@ class WeighmentReportItem extends Equatable {
     required this.customerName,
     this.materialId,
     required this.materialName,
-    required this.paymentMode,
-    required this.amount,
-    required this.vehicleCharge,
     this.remarks,
     required this.firstWeightKg,
     this.firstWeightType = 'GROSS',
@@ -55,8 +50,9 @@ class WeighmentReportItem extends Equatable {
   /// netWeight = grossWeight - tareWeight
   double? get netWeightKg => deriveNetWeight(grossWeightKg, tareWeightKg);
 
-  /// A weighment is completed once both weights have been captured.
-  bool get isCompleted => deriveIsCompleted(firstWeightKg, secondWeightKg);
+  /// Uses the same completion rule as the saved weighment entity.
+  bool get isCompleted =>
+      Weighment.isCompletedForWeights(grossWeightKg, tareWeightKg);
 
   /// Derives the captured gross weight from the raw stored columns.
   ///
@@ -103,10 +99,6 @@ class WeighmentReportItem extends Equatable {
     return null;
   }
 
-  /// A weighment is complete once both weights have been captured.
-  static bool deriveIsCompleted(double firstWeightKg, double? secondWeightKg) =>
-      firstWeightKg > 0 && secondWeightKg != null && secondWeightKg > 0;
-
   @override
   List<Object?> get props => [
     id,
@@ -117,9 +109,6 @@ class WeighmentReportItem extends Equatable {
     customerName,
     materialId,
     materialName,
-    paymentMode,
-    amount,
-    vehicleCharge,
     remarks,
     firstWeightKg,
     firstWeightType,

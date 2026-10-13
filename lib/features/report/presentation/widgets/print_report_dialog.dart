@@ -174,9 +174,6 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
           final gstin = settings?.gstin ?? '';
 
           final statusLabel = 'All Statuses';
-          final paymentLabel = widget.filter.paymentMode == 'all'
-              ? 'All Modes'
-              : widget.filter.paymentMode.toUpperCase();
 
           return Container(
             width: 950,
@@ -342,11 +339,9 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     _metaRow(
-                                      'Total Bills',
+                                      'Total Weighments',
                                       '${widget.records.length}',
                                     ),
-                                    const SizedBox(height: 4),
-                                    _metaRow('Payment Mode', paymentLabel),
                                   ],
                                 ),
                               ],
@@ -369,8 +364,7 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
                               5: FlexColumnWidth(1.2), // Gross
                               6: FlexColumnWidth(1.2), // Tare
                               7: FlexColumnWidth(1.2), // Net
-                              8: FlexColumnWidth(1.0), // Amount
-                              9: FlexColumnWidth(1.1), // Status
+                              8: FlexColumnWidth(1.1), // Status
                             },
                             children: [
                               // Table Header
@@ -396,11 +390,6 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
                                   ),
                                   _cell(
                                     'NET',
-                                    isHeader: true,
-                                    align: TextAlign.right,
-                                  ),
-                                  _cell(
-                                    'AMOUNT',
                                     isHeader: true,
                                     align: TextAlign.right,
                                   ),
@@ -445,11 +434,9 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
                                       bold: true,
                                     ),
                                     _cell(
-                                      '₹${r.amount.toStringAsFixed(0)}',
-                                      align: TextAlign.right,
-                                    ),
-                                    _cell(
-                                      'COMPLETED',
+                                      r.isCompleted
+                                          ? 'COMPLETED'
+                                          : 'INCOMPLETE',
                                       align: TextAlign.center,
                                       isStatusBadge: true,
                                     ),
@@ -477,7 +464,7 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
                               mainAxisAlignment: MainAxisAlignment.spaceAround,
                               children: [
                                 _summaryItem(
-                                  'Total Bills',
+                                  'Total Weighments',
                                   '${widget.summary.totalBills}',
                                 ),
                                 _summaryItem(
@@ -500,10 +487,6 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
                                     widget.summary.totalNetWeightKg,
                                     widget.weightUnit,
                                   ),
-                                ),
-                                _summaryItem(
-                                  'Total Revenue',
-                                  '₹${widget.summary.totalRevenue.toStringAsFixed(0)}',
                                 ),
                                 _summaryItem(
                                   'Completed',

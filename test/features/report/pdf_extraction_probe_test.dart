@@ -42,19 +42,15 @@ void main() {
       customerName: 'Test Customer',
       materialId: 1,
       materialName: 'Cement',
-      paymentMode: 'cash',
-      amount: 250,
-      vehicleCharge: 250,
       firstWeightKg: 20000,
       secondWeightKg: 5000,
       weightUnit: 'ton',
     );
-    final summary = ReportSummary(
+    final summary = const ReportSummary(
       totalBills: 1,
       totalGrossWeightKg: 20000,
       totalTareWeightKg: 5000,
       totalNetWeightKg: 15000,
-      totalRevenue: 250,
       completedCount: 1,
     );
 

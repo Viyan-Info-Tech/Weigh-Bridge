@@ -18,9 +18,7 @@ void main() {
     double firstWeightKg = 20000,
     String firstWeightType = 'GROSS',
     double? secondWeightKg = 5000,
-    double amount = 125,
     String weightUnit = 'ton',
-    double vehicleCharge = 125,
   }) {
     return WeighmentReportItem(
       id: id,
@@ -31,9 +29,6 @@ void main() {
       customerName: customerName,
       materialId: 1,
       materialName: materialName,
-      paymentMode: 'cash',
-      amount: amount,
-      vehicleCharge: vehicleCharge,
       firstWeightKg: firstWeightKg,
       firstWeightType: firstWeightType,
       secondWeightKg: secondWeightKg,
@@ -75,7 +70,7 @@ void main() {
         lines.first,
         contains(
           'Bill No,Date & Time,Vehicle,Customer,Material,Gross Weight,'
-          'Tare Weight,Net Weight,Weight Unit,Amount,Status',
+          'Tare Weight,Net Weight,Weight Unit,Status',
         ),
       );
     });

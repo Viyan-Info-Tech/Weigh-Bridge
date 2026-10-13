@@ -14,7 +14,6 @@ class Weighments extends Table {
   /// weighments still always carry one; that is enforced by the form rules in
   /// `BillBloc`, not by this column.
   IntColumn get materialId => integer().references(Materials, #id).nullable()();
-  TextColumn get paymentMode => text().withLength(min: 1, max: 20)();
   RealColumn get firstWeightKg => real()();
   TextColumn get firstWeightType =>
       text().withLength(min: 1, max: 20).withDefault(const Constant('GROSS'))();
@@ -22,9 +21,9 @@ class Weighments extends Table {
   TextColumn get secondWeightType =>
       text().withLength(min: 1, max: 20).nullable()();
   RealColumn get netWeightKg => real().nullable()();
-  RealColumn get vehicleCharge => real().withDefault(const Constant(0))();
-  RealColumn get amount => real().withDefault(const Constant(0))();
   TextColumn get remarks => text().withLength(min: 0, max: 500).nullable()();
+  TextColumn get mobileNumber =>
+      text().withLength(min: 0, max: 20).nullable()();
   TextColumn get weightUnit =>
       text().withLength(min: 1, max: 10).withDefault(const Constant('ton'))();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();

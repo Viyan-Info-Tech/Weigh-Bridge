@@ -10,8 +10,6 @@ class FieldVisibilitySection extends StatelessWidget {
     required this.showGrossWeight,
     required this.showTareWeight,
     required this.showNetWeight,
-    required this.showAmount,
-    required this.showPaymentMode,
     required this.showRemarks,
     required this.showFooterNote,
     required this.isEditing,
@@ -27,8 +25,6 @@ class FieldVisibilitySection extends StatelessWidget {
   final bool showGrossWeight;
   final bool showTareWeight;
   final bool showNetWeight;
-  final bool showAmount;
-  final bool showPaymentMode;
   final bool showRemarks;
   final bool showFooterNote;
   final bool isEditing;
@@ -98,16 +94,6 @@ class FieldVisibilitySection extends StatelessWidget {
                 'Net Weight',
                 showNetWeight,
                 (v) => onToggle('netWeight', v),
-              ),
-              _buildToggleChip(
-                'Amount',
-                showAmount,
-                (v) => onToggle('amount', v),
-              ),
-              _buildToggleChip(
-                'Payment Mode',
-                showPaymentMode,
-                (v) => onToggle('paymentMode', v),
               ),
               _buildToggleChip(
                 'Remarks',

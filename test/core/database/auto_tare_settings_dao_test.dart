@@ -113,7 +113,6 @@ void main() {
           customerId: customerId,
           vehicleNumber: 'TN32AT0014',
           materialId: Value(materialId),
-          paymentMode: 'Cash',
           firstWeightKg: 20000,
           firstWeightType: const Value('GROSS'),
           secondWeightKg: const Value(8000),

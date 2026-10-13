@@ -49,12 +49,9 @@ class WeighmentDetailsDialog extends StatelessWidget {
       customerId: record.customerId,
       vehicleNumber: record.vehicleNumber,
       materialId: record.materialId,
-      paymentMode: record.paymentMode,
       grossWeightKg: record.grossWeightKg ?? record.firstWeightKg,
       tareWeightKg: record.tareWeightKg,
       netWeightKg: record.netWeightKg,
-      vehicleCharge: record.vehicleCharge,
-      amount: record.amount,
       weightUnit: weightUnit ?? record.weightUnit,
       remarks: record.remarks,
       firstWeightType: record.firstWeightType,
@@ -271,72 +268,6 @@ class WeighmentDetailsDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Financial Info
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      const Text(
-                        'Amount: ',
-                        style: TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 13,
-                          color: Color(0xFF475569),
-                        ),
-                      ),
-                      Text(
-                        '₹${NumberFormat('#,##0.00').format(record.amount)}',
-                        style: const TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF0F172A),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      const Text(
-                        'Payment: ',
-                        style: TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 13,
-                          color: Color(0xFF475569),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(4),
-                          border: Border.all(color: const Color(0xFFCBD5E1)),
-                        ),
-                        child: Text(
-                          record.paymentMode.toUpperCase(),
-                          style: const TextStyle(
-                            fontFamily: 'PlusJakartaSans',
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF334155),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
             if (record.remarks != null &&
                 record.remarks!.trim().isNotEmpty) ...[
               const SizedBox(height: 10),

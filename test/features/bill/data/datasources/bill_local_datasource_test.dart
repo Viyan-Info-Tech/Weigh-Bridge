@@ -26,8 +26,6 @@ void main() {
     double firstWeightKg = 20000,
     double? secondWeightKg = 5000,
     double? netWeightKg,
-    double amount = 250,
-    double vehicleCharge = 250,
   }) {
     return Weighment(
       id: 0,
@@ -35,12 +33,9 @@ void main() {
       customerId: refs.customerId,
       vehicleNumber: 'TN31SEED01',
       materialId: refs.materialId,
-      paymentMode: 'cash',
       firstWeightKg: firstWeightKg,
       secondWeightKg: secondWeightKg,
       netWeightKg: netWeightKg,
-      vehicleCharge: vehicleCharge,
-      amount: amount,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
@@ -55,11 +50,8 @@ void main() {
       expect(stored.customerId, refs.customerId);
       expect(stored.vehicleNumber, 'TN31SEED01');
       expect(stored.materialId, refs.materialId);
-      expect(stored.paymentMode, 'cash');
       expect(stored.firstWeightKg, 20000);
       expect(stored.secondWeightKg, 5000);
-      expect(stored.amount, 250);
-      expect(stored.vehicleCharge, 250);
       expect(stored.weightUnit, 'ton');
     });
 
@@ -71,7 +63,7 @@ void main() {
       expect(today, hasLength(2));
 
       final byId = await source.getWeighmentById(id);
-      expect(byId!.amount, 250);
+      expect(byId!.firstWeightKg, 20000);
 
       final byBill = await source.getWeighmentByBillNumber('WB-00002');
       expect(byBill, isNotNull);
@@ -87,7 +79,7 @@ void main() {
       expect(future, isEmpty);
     });
 
-    test('updateWeighment replaces weights and amount', () async {
+    test('updateWeighment replaces weights', () async {
       final id = await source.saveWeighment(
         buildEntity(billNumber: 'WB-00001'),
       );
@@ -98,7 +90,6 @@ void main() {
           firstWeightKg: 25000,
           secondWeightKg: 8000,
           netWeightKg: 17000,
-          amount: 350,
         ),
       );
 
@@ -106,7 +97,6 @@ void main() {
       expect(updated!.firstWeightKg, 25000);
       expect(updated.secondWeightKg, 8000);
       expect(updated.netWeightKg, 17000);
-      expect(updated.amount, 350);
     });
 
     test('self-heals legacy zero-first-weight rows into TARE', () async {

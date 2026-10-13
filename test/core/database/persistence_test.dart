@@ -96,14 +96,11 @@ void main() {
             customerId: refs.customerId,
             vehicleNumber: 'TN31PER001',
             materialId: Value(refs.materialId),
-            paymentMode: 'cash',
             firstWeightKg: 20000,
             firstWeightType: const Value('GROSS'),
             secondWeightKg: const Value(5000.0),
             secondWeightType: const Value('TARE'),
             netWeightKg: const Value(15000.0),
-            vehicleCharge: const Value(500.0),
-            amount: const Value(500.0),
           ),
         );
         expect(id, greaterThan(0));
@@ -118,10 +115,10 @@ void main() {
         // Update
         await db.billDao.updateWeighment(
           id,
-          WeighmentsCompanion(amount: const Value(750.0)),
+          const WeighmentsCompanion(remarks: Value('Updated remarks')),
         );
         final updated = await db.billDao.getWeighmentById(id);
-        expect(updated!.amount, 750.0);
+        expect(updated!.remarks, 'Updated remarks');
 
         // Delete
         final deleted = await db.billDao.deleteWeighment(id);
@@ -235,7 +232,6 @@ void main() {
             customerId: refs.customerId,
             vehicleNumber: 'TN31AB1234',
             materialId: Value(refs.materialId),
-            paymentMode: 'cash',
             firstWeightKg: 10000,
           ),
         );
@@ -264,7 +260,6 @@ void main() {
             customerId: refs.customerId,
             vehicleNumber: 'TN31AB1234',
             materialId: Value(refs.materialId),
-            paymentMode: 'cash',
             firstWeightKg: 10000,
           ),
         );

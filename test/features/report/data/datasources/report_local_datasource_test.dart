@@ -24,10 +24,8 @@ void main() {
       customerId: refs.customerId,
       materialId: refs.materialId,
       billNumber: 'WB-00001',
-      paymentMode: 'cash',
       firstWeightKg: 20000,
       secondWeightKg: 5000,
-      amount: 250,
       createdAt: todayMorning,
     );
     await seedWeighment(
@@ -35,9 +33,7 @@ void main() {
       customerId: refs.customerId,
       materialId: refs.materialId,
       billNumber: 'WB-00002',
-      paymentMode: 'credit',
       firstWeightKg: 30000,
-      amount: 300,
       createdAt: todayNoon,
     );
 
@@ -80,24 +76,6 @@ void main() {
         ),
       );
       expect(forSeed.length, 2);
-    });
-
-    test('filters by payment mode case-insensitively', () async {
-      final credit = await source.getReportRecords(
-        const ReportFilter(
-          datePreset: DateRangePreset.today,
-          paymentMode: 'CREDIT',
-        ),
-      );
-      expect(credit.map((r) => r.billNumber), ['WB-00002']);
-
-      final cash = await source.getReportRecords(
-        const ReportFilter(
-          datePreset: DateRangePreset.today,
-          paymentMode: 'cash',
-        ),
-      );
-      expect(cash.map((r) => r.billNumber), ['WB-00001']);
     });
 
     test('searches by bill number, vehicle, customer and material', () async {
@@ -163,7 +141,7 @@ void main() {
       final first = records.firstWhere((r) => r.billNumber == 'WB-00002');
       expect(first.firstWeightKg, 30000);
       expect(first.grossWeightKg, 30000);
-      expect(first.isCompleted, isFalse);
+      expect(first.isCompleted, isTrue);
 
       final second = records.firstWhere((r) => r.billNumber == 'WB-00001');
       expect(second.netWeightKg, 15000);
@@ -298,12 +276,12 @@ void main() {
       expect(await source.countReportRecords(const ReportFilter()), 2);
       expect(
         await source.countReportRecords(
-          const ReportFilter(
+          ReportFilter(
             datePreset: DateRangePreset.today,
-            paymentMode: 'credit',
+            customerId: customer2,
           ),
         ),
-        1,
+        0,
       );
       expect(
         await source.countReportRecords(
@@ -337,8 +315,7 @@ void main() {
       expect(summary.totalGrossWeightKg, 50000);
       expect(summary.totalTareWeightKg, 5000);
       expect(summary.totalNetWeightKg, 15000);
-      expect(summary.totalRevenue, 550);
-      expect(summary.completedCount, 1);
+      expect(summary.completedCount, 2);
     });
 
     test('is zero for an empty result set', () async {
@@ -347,7 +324,6 @@ void main() {
       );
       expect(summary.totalBills, 0);
       expect(summary.totalGrossWeightKg, 0);
-      expect(summary.totalRevenue, 0);
       expect(summary.completedCount, 0);
     });
 
@@ -355,12 +331,11 @@ void main() {
       final summary = await source.summarizeReportRecords(
         const ReportFilter(
           datePreset: DateRangePreset.today,
-          paymentMode: 'cash',
+          searchQuery: 'WB-00001',
         ),
       );
       expect(summary.totalBills, 1);
       expect(summary.totalGrossWeightKg, 20000);
-      expect(summary.totalRevenue, 250);
     });
 
     test('handles TARE-first weighments the same way the table does', () async {
@@ -373,7 +348,6 @@ void main() {
         firstWeightKg: 5000,
         firstWeightType: 'TARE',
         secondWeightKg: 20000,
-        amount: 100,
         createdAt: todayNoon,
       );
 
@@ -385,7 +359,7 @@ void main() {
       expect(summary.totalGrossWeightKg, 70000);
       expect(summary.totalTareWeightKg, 10000);
       expect(summary.totalNetWeightKg, 30000);
-      expect(summary.completedCount, 2);
+      expect(summary.completedCount, 3);
 
       // The aggregate must agree with the row it summarises.
       expect(

@@ -29,7 +29,6 @@ class BillState extends Equatable {
   final String vehicleNumber;
   final MaterialItem? selectedMaterial;
 
-  final String paymentMode;
   final String mobileNumber;
 
   final String grossWeightText;
@@ -39,10 +38,9 @@ class BillState extends Equatable {
   final double grossWeightKg;
   final double tareWeightKg;
   final double netWeightKg;
-  final double vehicleCharge;
-  final double amount;
 
   final String currentBillNumber;
+  final int formResetRevision;
 
   /// Which weight ('GROSS' or 'TARE') was captured first on the active bill.
   ///
@@ -84,7 +82,6 @@ class BillState extends Equatable {
     this.selectedCustomer,
     this.vehicleNumber = '',
     this.selectedMaterial,
-    this.paymentMode = 'Cash',
     this.mobileNumber = '',
     this.grossWeightText = '',
     this.tareWeightText = '',
@@ -92,9 +89,8 @@ class BillState extends Equatable {
     this.grossWeightKg = 0,
     this.tareWeightKg = 0,
     this.netWeightKg = 0,
-    this.vehicleCharge = 0,
-    this.amount = 0,
     this.currentBillNumber = 'WB-00001',
+    this.formResetRevision = 0,
     this.firstWeightType,
     this.weightValidationError,
     this.weightUnit = 'kg',
@@ -141,7 +137,6 @@ class BillState extends Equatable {
   String? get vehicleNumberError => fieldErrors['vehicleNumber'];
   String? get materialError => fieldErrors['material'];
   String? get customerError => fieldErrors['customer'];
-  String? get chargesError => fieldErrors['charges'];
   String? get weightError => fieldErrors['weight'] ?? weightValidationError;
   String? get mobileError => fieldErrors['mobile'];
   bool get hasFieldErrors => fieldErrors.isNotEmpty;
@@ -179,7 +174,6 @@ class BillState extends Equatable {
     String? vehicleNumber,
     MaterialItem? selectedMaterial,
     bool clearMaterial = false,
-    String? paymentMode,
     String? mobileNumber,
     String? grossWeightText,
     String? tareWeightText,
@@ -187,9 +181,8 @@ class BillState extends Equatable {
     double? grossWeightKg,
     double? tareWeightKg,
     double? netWeightKg,
-    double? vehicleCharge,
-    double? amount,
     String? currentBillNumber,
+    int? formResetRevision,
     String? firstWeightType,
     bool clearFirstWeightType = false,
     String? weightValidationError,
@@ -231,7 +224,6 @@ class BillState extends Equatable {
       selectedMaterial: clearMaterial
           ? null
           : (selectedMaterial ?? this.selectedMaterial),
-      paymentMode: paymentMode ?? this.paymentMode,
       mobileNumber: mobileNumber ?? this.mobileNumber,
       grossWeightText: grossWeightText ?? this.grossWeightText,
       tareWeightText: tareWeightText ?? this.tareWeightText,
@@ -239,9 +231,8 @@ class BillState extends Equatable {
       grossWeightKg: grossWeightKg ?? this.grossWeightKg,
       tareWeightKg: tareWeightKg ?? this.tareWeightKg,
       netWeightKg: netWeightKg ?? this.netWeightKg,
-      vehicleCharge: vehicleCharge ?? this.vehicleCharge,
-      amount: amount ?? this.amount,
       currentBillNumber: currentBillNumber ?? this.currentBillNumber,
+      formResetRevision: formResetRevision ?? this.formResetRevision,
       firstWeightType: clearFirstWeightType
           ? null
           : (firstWeightType ?? this.firstWeightType),
@@ -293,7 +284,6 @@ class BillState extends Equatable {
     selectedCustomer,
     vehicleNumber,
     selectedMaterial,
-    paymentMode,
     mobileNumber,
     grossWeightText,
     tareWeightText,
@@ -301,9 +291,8 @@ class BillState extends Equatable {
     grossWeightKg,
     tareWeightKg,
     netWeightKg,
-    vehicleCharge,
-    amount,
     currentBillNumber,
+    formResetRevision,
     firstWeightType,
     weightValidationError,
     weightUnit,

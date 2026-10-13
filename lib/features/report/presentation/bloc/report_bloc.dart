@@ -34,7 +34,6 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     on<ReportCustomerFilterChanged>(_onCustomerFilterChanged);
     on<ReportVehicleFilterChanged>(_onVehicleFilterChanged);
     on<ReportMaterialFilterChanged>(_onMaterialFilterChanged);
-    on<ReportPaymentFilterChanged>(_onPaymentFilterChanged);
     on<ReportSearchQueryChanged>(_onSearchQueryChanged);
     on<ApplyReportFilters>(_onApplyReportFilters);
     on<ResetReportFilters>(_onResetReportFilters);
@@ -157,17 +156,6 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     );
   }
 
-  void _onPaymentFilterChanged(
-    ReportPaymentFilterChanged event,
-    Emitter<ReportState> emit,
-  ) {
-    emit(
-      state.copyWith(
-        filter: state.filter.copyWith(paymentMode: event.paymentMode),
-      ),
-    );
-  }
-
   Future<void> _onSearchQueryChanged(
     ReportSearchQueryChanged event,
     Emitter<ReportState> emit,
@@ -190,7 +178,6 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
   ) async {
     const defaultFilter = ReportFilter(
       datePreset: DateRangePreset.today,
-      paymentMode: 'all',
       searchQuery: '',
     );
     emit(state.copyWith(filter: defaultFilter));

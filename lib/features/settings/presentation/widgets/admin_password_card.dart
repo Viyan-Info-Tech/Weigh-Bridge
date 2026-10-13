@@ -247,14 +247,12 @@ class AdminPasswordCard extends StatelessWidget {
                 const _ProtectedItem(
                   icon: Icons.bar_chart_rounded,
                   title: 'Reports & Export',
-                  subtitle:
-                      'Viewing financial metrics, weigh slips, and exports',
+                  subtitle: 'Viewing weighment records, slips, and exports',
                 ),
                 const _ProtectedItem(
                   icon: Icons.tune_rounded,
-                  title: 'Configuration & Rates',
-                  subtitle:
-                      'Modifying rates, bill prefixes, and scale settings',
+                  title: 'Scale & Configuration',
+                  subtitle: 'Modifying scale settings and bill prefixes',
                 ),
               ];
 

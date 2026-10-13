@@ -9,15 +9,13 @@ class Weighment extends Equatable {
   /// Null only for a tare-only weighment, which has no net weight and so no
   /// material to price against.
   final int? materialId;
-  final String paymentMode;
   final double firstWeightKg;
   final String firstWeightType;
   final double? secondWeightKg;
   final String? secondWeightType;
   final double? explicitNetWeightKg;
-  final double vehicleCharge;
-  final double amount;
   final String? remarks;
+  final String? mobileNumber;
   final String weightUnit;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -28,7 +26,6 @@ class Weighment extends Equatable {
     required this.customerId,
     required this.vehicleNumber,
     this.materialId,
-    required this.paymentMode,
     double? firstWeightKg,
     this.firstWeightType = 'GROSS',
     this.secondWeightKg,
@@ -36,9 +33,8 @@ class Weighment extends Equatable {
     double? grossWeightKg,
     double? tareWeightKg,
     double? netWeightKg,
-    required this.vehicleCharge,
-    required this.amount,
     this.remarks,
+    this.mobileNumber,
     this.weightUnit = 'ton',
     required this.createdAt,
     required this.updatedAt,
@@ -49,7 +45,15 @@ class Weighment extends Equatable {
                : (grossWeightKg ?? 0)),
        explicitNetWeightKg = netWeightKg;
 
-  bool get isCompleted => grossWeightKg != null || tareWeightKg != null;
+  bool get isCompleted => isCompletedForWeights(grossWeightKg, tareWeightKg);
+
+  /// A saved weighment is completed once at least one valid weight exists.
+  static bool isCompletedForWeights(
+    double? grossWeightKg,
+    double? tareWeightKg,
+  ) =>
+      (grossWeightKg != null && grossWeightKg > 0) ||
+      (tareWeightKg != null && tareWeightKg > 0);
 
   /// Business Logic for Gross Weight:
   /// If firstWeightType == GROSS -> firstWeight (if > 0)
@@ -129,8 +133,7 @@ class Weighment extends Equatable {
     secondWeightKg,
     secondWeightType,
     explicitNetWeightKg,
-    vehicleCharge,
-    amount,
+    mobileNumber,
     weightUnit,
     createdAt,
     updatedAt,

@@ -23,9 +23,6 @@ class BillingSettings extends Equatable {
   final bool showGrossWeight;
   final bool showTareWeight;
   final bool showNetWeight;
-  final bool showAmount;
-  final bool showPaymentMode;
-  final bool showCashReceived;
   final bool showRemarks;
   final bool showFooterNote;
   final String? footerNote;
@@ -54,9 +51,6 @@ class BillingSettings extends Equatable {
     this.showGrossWeight = true,
     this.showTareWeight = true,
     this.showNetWeight = true,
-    this.showAmount = true,
-    this.showPaymentMode = true,
-    this.showCashReceived = true,
     this.showRemarks = true,
     this.showFooterNote = true,
     this.footerNote = 'Please check the weight before leaving the weighbridge.',
@@ -98,9 +92,6 @@ class BillingSettings extends Equatable {
     bool? showGrossWeight,
     bool? showTareWeight,
     bool? showNetWeight,
-    bool? showAmount,
-    bool? showPaymentMode,
-    bool? showCashReceived,
     bool? showRemarks,
     bool? showFooterNote,
     String? footerNote,
@@ -132,9 +123,6 @@ class BillingSettings extends Equatable {
       showGrossWeight: showGrossWeight ?? this.showGrossWeight,
       showTareWeight: showTareWeight ?? this.showTareWeight,
       showNetWeight: showNetWeight ?? this.showNetWeight,
-      showAmount: showAmount ?? this.showAmount,
-      showPaymentMode: showPaymentMode ?? this.showPaymentMode,
-      showCashReceived: showCashReceived ?? this.showCashReceived,
       showRemarks: showRemarks ?? this.showRemarks,
       showFooterNote: showFooterNote ?? this.showFooterNote,
       footerNote: clearFooterNote ? null : (footerNote ?? this.footerNote),
@@ -166,9 +154,6 @@ class BillingSettings extends Equatable {
     showGrossWeight,
     showTareWeight,
     showNetWeight,
-    showAmount,
-    showPaymentMode,
-    showCashReceived,
     showRemarks,
     showFooterNote,
     footerNote,

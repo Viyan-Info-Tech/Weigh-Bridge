@@ -122,7 +122,6 @@ void main() {
       customerId: 1,
       vehicleNumber: 'MH 12 AB 1234',
       materialId: 1,
-      paymentMode: 'Cash',
       firstWeightKg: 25000,
       firstWeightType: 'GROSS',
       secondWeightKg: 10000,
@@ -130,8 +129,6 @@ void main() {
       grossWeightKg: 25000,
       tareWeightKg: 10000,
       netWeightKg: 15000,
-      vehicleCharge: 500,
-      amount: 500,
       createdAt: now,
       updatedAt: now,
     ),
@@ -145,7 +142,6 @@ void main() {
       customerId: 1,
       vehicleNumber: 'MH 12 AB 1234',
       materialId: 1,
-      paymentMode: 'Cash',
       firstWeightKg: 10000,
       firstWeightType: 'TARE',
       secondWeightKg: 20000,
@@ -153,8 +149,6 @@ void main() {
       grossWeightKg: 20000,
       tareWeightKg: 10000,
       netWeightKg: 10000,
-      vehicleCharge: 500,
-      amount: 500,
       createdAt: yesterday,
       updatedAt: yesterday,
     ),
@@ -780,7 +774,7 @@ void main() {
     expect(find.text('Print Ticket'), findsWidgets);
   });
 
-  testWidgets('Escape prompts to cancel weighment when unsaved data exists', (
+  testWidgets('Escape clears unsaved weighment from the focused field', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(1400, 900);
@@ -798,7 +792,8 @@ void main() {
 
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
-    expect(find.text('Cancel Weighment?'), findsWidgets);
+    expect(find.text('Cancel Weighment?'), findsNothing);
+    expect(billBloc.state.vehicleNumber, isEmpty);
   });
 
   testWidgets('Escape clears an empty current operation without a dialog', (

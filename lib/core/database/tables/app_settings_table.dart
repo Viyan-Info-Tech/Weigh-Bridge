@@ -42,11 +42,6 @@ class AppSettings extends Table {
   BoolColumn get showTareWeight =>
       boolean().withDefault(const Constant(true))();
   BoolColumn get showNetWeight => boolean().withDefault(const Constant(true))();
-  BoolColumn get showAmount => boolean().withDefault(const Constant(true))();
-  BoolColumn get showPaymentMode =>
-      boolean().withDefault(const Constant(true))();
-  BoolColumn get showCashReceived =>
-      boolean().withDefault(const Constant(true))();
   BoolColumn get showRemarks => boolean().withDefault(const Constant(true))();
 
   // Footer

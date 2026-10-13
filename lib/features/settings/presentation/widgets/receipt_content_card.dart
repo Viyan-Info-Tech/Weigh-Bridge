@@ -15,8 +15,6 @@ class ReceiptContentCard extends StatelessWidget {
     required this.showGrossWeight,
     required this.showTareWeight,
     required this.showNetWeight,
-    required this.showAmount,
-    required this.showPaymentMode,
     required this.showRemarks,
     required this.showFooterNote,
     required this.onSelectAll,
@@ -34,8 +32,6 @@ class ReceiptContentCard extends StatelessWidget {
   final bool showGrossWeight;
   final bool showTareWeight;
   final bool showNetWeight;
-  final bool showAmount;
-  final bool showPaymentMode;
   final bool showRemarks;
   final bool showFooterNote;
   final VoidCallback onSelectAll;
@@ -131,8 +127,6 @@ class ReceiptContentCard extends StatelessWidget {
             showGrossWeight: showGrossWeight,
             showTareWeight: showTareWeight,
             showNetWeight: showNetWeight,
-            showAmount: showAmount,
-            showPaymentMode: showPaymentMode,
             showRemarks: showRemarks,
             showFooterNote: showFooterNote,
             isEditing: isEditing,

@@ -8,7 +8,6 @@ void main() {
     expect(summary.totalGrossWeightKg, 0);
     expect(summary.totalTareWeightKg, 0);
     expect(summary.totalNetWeightKg, 0);
-    expect(summary.totalRevenue, 0);
     expect(summary.completedCount, 0);
   });
 
@@ -26,13 +25,11 @@ void main() {
     const a = ReportSummary(
       totalBills: 3,
       totalGrossWeightKg: 100,
-      totalRevenue: 250,
       completedCount: 2,
     );
     const b = ReportSummary(
       totalBills: 3,
       totalGrossWeightKg: 100,
-      totalRevenue: 250,
       completedCount: 2,
     );
     const c = ReportSummary(totalBills: 4);

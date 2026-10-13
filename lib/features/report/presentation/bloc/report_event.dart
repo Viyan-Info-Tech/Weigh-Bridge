@@ -59,15 +59,6 @@ class ReportMaterialFilterChanged extends ReportEvent {
   List<Object?> get props => [materialId];
 }
 
-class ReportPaymentFilterChanged extends ReportEvent {
-  final String paymentMode;
-
-  const ReportPaymentFilterChanged(this.paymentMode);
-
-  @override
-  List<Object?> get props => [paymentMode];
-}
-
 class ReportSearchQueryChanged extends ReportEvent {
   final String query;
 

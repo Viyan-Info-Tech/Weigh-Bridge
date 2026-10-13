@@ -71,9 +71,6 @@ void main() {
         customerId: 0,
         vehicleNumber: 'TN09AB1234',
         materialId: 0,
-        paymentMode: 'cash',
-        vehicleCharge: 0,
-        amount: 0,
         createdAt: DateTime(2026),
         updatedAt: DateTime(2026),
       ),
@@ -106,7 +103,7 @@ void main() {
     });
   });
 
-  /// A tare-only form: customer, truck and charges filled, a tare captured,
+  /// A tare-only form: customer and truck filled, a tare captured,
   /// no gross, and deliberately no material.
   BillState tareOnlyForm() =>
       const BillState(
@@ -116,8 +113,6 @@ void main() {
         tareWeightText: '4200',
         currentBillNumber: 'WB-00001',
         weightUnit: 'kg',
-        vehicleCharge: 90,
-        amount: 90,
       ).copyWith(
         selectedCustomer: testCustomer,
         firstWeightType: 'TARE',
@@ -133,8 +128,6 @@ void main() {
         grossWeightText: '1223',
         currentBillNumber: 'WB-00001',
         weightUnit: 'kg',
-        vehicleCharge: 90,
-        amount: 90,
       ).copyWith(
         selectedCustomer: testCustomer,
         firstWeightType: 'GROSS',
@@ -256,21 +249,6 @@ void main() {
           (s) => s.materialError,
           'materialError',
           'Material code is required.',
-        ),
-      ],
-      verify: (_) => verifyNever(() => mockSaveBill.withNewBillNumber(any())),
-    );
-
-    blocTest<BillBloc, BillState>(
-      'charges are still required on a tare-only weighment',
-      build: createBloc,
-      seed: () => tareOnlyForm().copyWith(vehicleCharge: 0, amount: 0),
-      act: (bloc) => bloc.add(const SaveBillRequested()),
-      expect: () => [
-        isA<BillState>().having(
-          (s) => s.chargesError,
-          'chargesError',
-          'Weighment charge is required.',
         ),
       ],
       verify: (_) => verifyNever(() => mockSaveBill.withNewBillNumber(any())),

@@ -26,8 +26,6 @@ class ReceiptPreviewCard extends StatelessWidget {
     required this.showGrossWeight,
     required this.showTareWeight,
     required this.showNetWeight,
-    required this.showAmount,
-    required this.showPaymentMode,
     required this.showRemarks,
     required this.showFooterNote,
     required this.latestWeighment,
@@ -45,8 +43,6 @@ class ReceiptPreviewCard extends StatelessWidget {
   final bool showGrossWeight;
   final bool showTareWeight;
   final bool showNetWeight;
-  final bool showAmount;
-  final bool showPaymentMode;
   final bool showRemarks;
   final bool showFooterNote;
   final Weighment? latestWeighment;
@@ -59,14 +55,11 @@ class ReceiptPreviewCard extends StatelessWidget {
     billNumber: 'WB-00037',
     customerId: 0,
     vehicleNumber: 'TN56VD5677',
-    paymentMode: 'Cash',
     firstWeightKg: 200000,
     firstWeightType: 'GROSS',
     secondWeightKg: 10000,
     secondWeightType: 'TARE',
     netWeightKg: 190000,
-    vehicleCharge: 0.0,
-    amount: 90.0,
     remarks: '',
     createdAt: DateTime(2026, 10, 7, 19, 40),
     updatedAt: DateTime(2026, 10, 7, 19, 40),
@@ -195,8 +188,8 @@ class ReceiptPreviewCard extends StatelessWidget {
         customer ?? (latestWeighment == null ? _sampleCustomer : null);
     final activeMaterialName =
         (materialName != null && materialName!.isNotEmpty)
-            ? materialName!
-            : (latestWeighment == null ? 'Sand' : '');
+        ? materialName!
+        : (latestWeighment == null ? 'Sand' : '');
 
     final receiptData = WeighmentReceiptData(
       bill: bill,
@@ -235,9 +228,7 @@ class ReceiptPreviewCard extends StatelessWidget {
                 ),
               ),
             ),
-          WeighmentReceiptTemplate(
-            data: receiptData,
-          ),
+          WeighmentReceiptTemplate(data: receiptData),
         ],
       ),
     );

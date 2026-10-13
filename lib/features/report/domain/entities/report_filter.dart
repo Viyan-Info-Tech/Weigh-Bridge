@@ -25,7 +25,6 @@ class ReportFilter extends Equatable {
   final int? customerId;
   final String vehicleNumber;
   final int? materialId;
-  final String paymentMode; // 'all', 'cash', 'credit'
   final String searchQuery;
 
   const ReportFilter({
@@ -35,7 +34,6 @@ class ReportFilter extends Equatable {
     this.customerId,
     this.vehicleNumber = '',
     this.materialId,
-    this.paymentMode = 'all',
     this.searchQuery = '',
   });
 
@@ -120,7 +118,6 @@ class ReportFilter extends Equatable {
     int? customerId,
     String? vehicleNumber,
     int? materialId,
-    String? paymentMode,
     String? searchQuery,
     bool clearCustomer = false,
     bool clearMaterial = false,
@@ -137,7 +134,6 @@ class ReportFilter extends Equatable {
       customerId: clearCustomer ? null : (customerId ?? this.customerId),
       vehicleNumber: vehicleNumber ?? this.vehicleNumber,
       materialId: clearMaterial ? null : (materialId ?? this.materialId),
-      paymentMode: paymentMode ?? this.paymentMode,
       searchQuery: searchQuery ?? this.searchQuery,
     );
   }
@@ -150,7 +146,6 @@ class ReportFilter extends Equatable {
     customerId,
     vehicleNumber,
     materialId,
-    paymentMode,
     searchQuery,
   ];
 }

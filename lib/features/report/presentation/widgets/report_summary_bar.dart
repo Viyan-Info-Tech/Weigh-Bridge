@@ -24,7 +24,7 @@ class ReportSummaryBar extends StatelessWidget {
           children: [
             Expanded(
               child: _SummaryCard(
-                title: 'Total Bills',
+                title: 'Total Weighments',
                 value: '${summary.totalBills}',
                 subtitle: 'Total weighments',
                 icon: Icons.receipt_long_outlined,
@@ -52,18 +52,6 @@ class ReportSummaryBar extends StatelessWidget {
                 icon: Icons.line_weight_rounded,
                 iconColor: const Color(0xFF16A34A),
                 bgColor: const Color(0xFFDCFCE7),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _SummaryCard(
-                title: 'Total Revenue',
-                value:
-                    '₹${NumberFormat('#,##,###').format(summary.totalRevenue.round())}',
-                subtitle: 'Billed amount',
-                icon: Icons.currency_rupee_rounded,
-                iconColor: const Color(0xFFD97706),
-                bgColor: const Color(0xFFFEF3C7),
               ),
             ),
           ],

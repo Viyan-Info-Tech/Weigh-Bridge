@@ -88,8 +88,6 @@ void main() {
       grossWeightText: '1223',
       currentBillNumber: 'WB-00001',
       weightUnit: 'kg',
-      vehicleCharge: 90.0,
-      amount: 90.0,
     ).copyWith(
       selectedCustomer: testCustomer,
       selectedMaterial: testMaterial,
@@ -106,8 +104,6 @@ void main() {
       seed: () => const BillState(
         status: BillScreenStatus.loaded,
         vehicleNumber: '',
-        vehicleCharge: 0,
-        amount: 0,
         grossWeightKg: 0,
         tareWeightKg: 0,
       ),
@@ -128,11 +124,6 @@ void main() {
               (s) => s.customerError,
               'customerError',
               'Customer code is required.',
-            )
-            .having(
-              (s) => s.chargesError,
-              'chargesError',
-              'Weighment charge is required.',
             )
             .having(
               (s) => s.weightError,
@@ -287,24 +278,6 @@ void main() {
           (s) => s.materialError,
           'materialError',
           'Material code is required.',
-        ),
-      ],
-    );
-  });
-
-  // ─── 4. CHARGES ───────────────────────────────────────────────
-
-  group('Validation: Charges', () {
-    blocTest<BillBloc, BillState>(
-      'charges 0 → error',
-      build: createBloc,
-      seed: () => validFormState().copyWith(vehicleCharge: 0, amount: 0),
-      act: (bloc) => bloc.add(const SaveBillRequested()),
-      expect: () => [
-        isA<BillState>().having(
-          (s) => s.chargesError,
-          'chargesError',
-          'Weighment charge is required.',
         ),
       ],
     );
@@ -560,18 +533,6 @@ void main() {
           'customerError',
           isNull,
         ),
-      ],
-    );
-
-    blocTest<BillBloc, BillState>(
-      'selecting charge clears chargesError',
-      build: createBloc,
-      seed: () => validFormState().copyWith(
-        fieldErrors: {'charges': 'Weighment charge is required.'},
-      ),
-      act: (bloc) => bloc.add(const VehicleChargeChanged('90.00')),
-      expect: () => [
-        isA<BillState>().having((s) => s.chargesError, 'chargesError', isNull),
       ],
     );
   });

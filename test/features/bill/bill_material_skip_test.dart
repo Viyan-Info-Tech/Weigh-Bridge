@@ -194,7 +194,8 @@ void main() {
       expect(
         find.text('Material code is required.'),
         findsNothing,
-        reason: 'A tare-only weighment must not be blocked by a material error.',
+        reason:
+            'A tare-only weighment must not be blocked by a material error.',
       );
     });
 

@@ -75,32 +75,12 @@ class RemarksChanged extends BillEvent {
   List<Object?> get props => [value];
 }
 
-class PaymentModeChanged extends BillEvent {
-  final String value;
-  const PaymentModeChanged(this.value);
-
-  @override
-  List<Object?> get props => [value];
-}
-
 class WeightUnitChanged extends BillEvent {
   final String value;
   const WeightUnitChanged(this.value);
 
   @override
   List<Object?> get props => [value];
-}
-
-class VehicleChargeChanged extends BillEvent {
-  final String value;
-  const VehicleChargeChanged(this.value);
-
-  @override
-  List<Object?> get props => [value];
-}
-
-class ResetVehicleCharge extends BillEvent {
-  const ResetVehicleCharge();
 }
 
 class SaveBillRequested extends BillEvent {

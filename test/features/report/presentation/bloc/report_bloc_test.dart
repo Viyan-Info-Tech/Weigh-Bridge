@@ -43,16 +43,10 @@ void main() {
     customerName: 'Customer',
     materialId: 1,
     materialName: 'Cement',
-    paymentMode: 'cash',
-    amount: 100.0 * id,
-    vehicleCharge: 0,
     firstWeightKg: 20000,
     firstWeightType: 'GROSS',
     secondWeightKg: 5000,
   );
-
-  /// Sum of `100.0 * id` for ids 1..[n]: the revenue of every fixture item.
-  double revenueOf(int n) => 100.0 * n * (n + 1) / 2;
 
   /// Serves [total] items one page at a time.
   ///
@@ -83,7 +77,6 @@ void main() {
         totalGrossWeightKg: 20000.0 * total,
         totalTareWeightKg: 5000.0 * total,
         totalNetWeightKg: 15000.0 * total,
-        totalRevenue: revenueOf(total),
         completedCount: total,
       ),
     );
@@ -152,7 +145,7 @@ void main() {
       await bloc.stream.firstWhere((s) => s.status == ReportStatus.loaded);
 
       expect(bloc.state.summary.totalBills, total);
-      expect(bloc.state.summary.totalRevenue, revenueOf(total));
+      expect(bloc.state.summary.totalNetWeightKg, 15000.0 * total);
       expect(bloc.state.records, hasLength(pageSize));
     });
 
@@ -328,9 +321,9 @@ void main() {
       await bloc.stream.firstWhere((s) => s.records.length > pageSize);
       expect(bloc.state.records, hasLength(total));
 
-      bloc.add(const ReportPaymentFilterChanged('credit'));
-      await bloc.stream.firstWhere((s) => s.filter.paymentMode == 'credit');
-      // Payment mode only updates the draft filter; applying it re-queries.
+      bloc.add(const ReportVehicleFilterChanged('MH12'));
+      await bloc.stream.firstWhere((s) => s.filter.vehicleNumber == 'MH12');
+      // Vehicle filter only updates the draft filter; applying it re-queries.
       expect(bloc.state.records, hasLength(total));
 
       bloc.add(const ApplyReportFilters());

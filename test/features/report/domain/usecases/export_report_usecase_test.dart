@@ -28,9 +28,6 @@ void main() {
     customerName: 'Customer',
     materialId: 1,
     materialName: 'Cement',
-    paymentMode: 'cash',
-    amount: 250,
-    vehicleCharge: 250,
     firstWeightKg: 20000,
     secondWeightKg: 5000,
   );

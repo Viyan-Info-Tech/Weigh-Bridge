@@ -17,7 +17,6 @@ import '../widgets/receipt_content_card.dart';
 import '../widgets/receipt_preview_card.dart';
 import '../widgets/settings_app_bar.dart';
 import '../widgets/weight_unit_card.dart';
-import '../widgets/weighment_rate_settings_card.dart';
 import '../widgets/weighing_scale_settings_card.dart';
 import '../widgets/admin_password_card.dart';
 
@@ -66,8 +65,6 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _showGrossWeight = true;
   bool _showTareWeight = true;
   bool _showNetWeight = true;
-  bool _showAmount = true;
-  bool _showPaymentMode = true;
   bool _showRemarks = true;
   bool _showFooterNote = true;
 
@@ -204,8 +201,6 @@ class _SettingsPageState extends State<SettingsPage> {
     _showGrossWeight = settings.showGrossWeight;
     _showTareWeight = settings.showTareWeight;
     _showNetWeight = settings.showNetWeight;
-    _showAmount = settings.showAmount;
-    _showPaymentMode = settings.showPaymentMode;
     _showRemarks = settings.showRemarks;
     _showFooterNote = settings.showFooterNote;
   }
@@ -328,8 +323,6 @@ class _SettingsPageState extends State<SettingsPage> {
       _showGrossWeight = true;
       _showTareWeight = true;
       _showNetWeight = true;
-      _showAmount = true;
-      _showPaymentMode = true;
       _showRemarks = true;
       _showFooterNote = true;
     });
@@ -344,8 +337,6 @@ class _SettingsPageState extends State<SettingsPage> {
       _showGrossWeight = select;
       _showTareWeight = select;
       _showNetWeight = select;
-      _showAmount = select;
-      _showPaymentMode = select;
       _showRemarks = select;
       _showFooterNote = select;
     });
@@ -428,8 +419,6 @@ class _SettingsPageState extends State<SettingsPage> {
       showGrossWeight: _showGrossWeight,
       showTareWeight: _showTareWeight,
       showNetWeight: _showNetWeight,
-      showAmount: _showAmount,
-      showPaymentMode: _showPaymentMode,
       showRemarks: _showRemarks,
       showFooterNote: _showFooterNote,
       footerNote: _footerNoteController.text.trim().isEmpty
@@ -487,8 +476,6 @@ class _SettingsPageState extends State<SettingsPage> {
       showGrossWeight: _showGrossWeight,
       showTareWeight: _showTareWeight,
       showNetWeight: _showNetWeight,
-      showAmount: _showAmount,
-      showPaymentMode: _showPaymentMode,
       showRemarks: _showRemarks,
       showFooterNote: _showFooterNote,
       footerNote: _footerNoteController.text.trim().isEmpty
@@ -515,10 +502,6 @@ class _SettingsPageState extends State<SettingsPage> {
           _showTareWeight = value;
         case 'netWeight':
           _showNetWeight = value;
-        case 'amount':
-          _showAmount = value;
-        case 'paymentMode':
-          _showPaymentMode = value;
         case 'remarks':
           _showRemarks = value;
         case 'footerNote':
@@ -618,8 +601,6 @@ class _SettingsPageState extends State<SettingsPage> {
                             nextBillPreview: _currentBillPreview,
                           ),
                           const SizedBox(height: 16),
-                          WeighmentRateSettingsCard(isEditing: _isEditing),
-                          const SizedBox(height: 16),
                           WeighingScaleSettingsCard(isEditing: _isEditing),
                           const SizedBox(height: 16),
                           BusinessInformationCard(
@@ -651,8 +632,6 @@ class _SettingsPageState extends State<SettingsPage> {
                             showGrossWeight: _showGrossWeight,
                             showTareWeight: _showTareWeight,
                             showNetWeight: _showNetWeight,
-                            showAmount: _showAmount,
-                            showPaymentMode: _showPaymentMode,
                             showRemarks: _showRemarks,
                             showFooterNote: _showFooterNote,
                             onSelectAll: () => _selectAllFields(true),
@@ -712,8 +691,6 @@ class _SettingsPageState extends State<SettingsPage> {
                                     showGrossWeight: _showGrossWeight,
                                     showTareWeight: _showTareWeight,
                                     showNetWeight: _showNetWeight,
-                                    showAmount: _showAmount,
-                                    showPaymentMode: _showPaymentMode,
                                     showRemarks: _showRemarks,
                                     showFooterNote: _showFooterNote,
                                     latestWeighment: _latestWeighment,
@@ -749,8 +726,6 @@ class _SettingsPageState extends State<SettingsPage> {
                               showGrossWeight: _showGrossWeight,
                               showTareWeight: _showTareWeight,
                               showNetWeight: _showNetWeight,
-                              showAmount: _showAmount,
-                              showPaymentMode: _showPaymentMode,
                               showRemarks: _showRemarks,
                               showFooterNote: _showFooterNote,
                               latestWeighment: _latestWeighment,

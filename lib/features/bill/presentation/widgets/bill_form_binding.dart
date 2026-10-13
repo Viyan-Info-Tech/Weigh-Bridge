@@ -16,7 +16,6 @@ class BillFormResources {
     required this.grossWeightController,
     required this.tareWeightController,
     required this.remarksController,
-    required this.vehicleChargeController,
     required this.vehicleNumberController,
     required this.customerFocusNode,
     required this.vehicleFocusNode,
@@ -28,14 +27,11 @@ class BillFormResources {
     required this.remarksFocusNode,
     required this.grossWeightFocusNode,
     required this.tareWeightFocusNode,
-    required this.vehicleChargeFocusNode,
-    required this.paymentModeFocusNode,
   });
 
   final TextEditingController grossWeightController;
   final TextEditingController tareWeightController;
   final TextEditingController remarksController;
-  final TextEditingController vehicleChargeController;
   final TextEditingController vehicleNumberController;
 
   final FocusNode customerFocusNode;
@@ -48,8 +44,6 @@ class BillFormResources {
   final FocusNode remarksFocusNode;
   final FocusNode grossWeightFocusNode;
   final FocusNode tareWeightFocusNode;
-  final FocusNode vehicleChargeFocusNode;
-  final FocusNode paymentModeFocusNode;
 }
 
 /// Binds a [BillState] and the screen's [BillFormResources] to [BillForm],
@@ -73,23 +67,21 @@ class BillFormBinding extends StatelessWidget {
     final r = resources;
 
     return BillForm(
+      key: ValueKey(state.formResetRevision),
       billNumber: state.currentBillNumber,
+      mobileNumber: state.mobileNumber,
       customers: state.customers,
       materials: state.materials,
       selectedCustomer: state.selectedCustomer,
       vehicleNumber: state.vehicleNumber,
       selectedMaterial: state.selectedMaterial,
-      paymentMode: state.paymentMode,
       grossWeightController: r.grossWeightController,
       tareWeightController: r.tareWeightController,
       remarksController: r.remarksController,
-      vehicleChargeController: r.vehicleChargeController,
       vehicleNumberController: r.vehicleNumberController,
       grossWeightKg: state.grossWeightKg,
       tareWeightKg: state.tareWeightKg,
       netWeightKg: state.netWeightKg,
-      vehicleCharge: state.vehicleCharge,
-      amount: state.amount,
       weightUnit: state.weightUnit,
       weightValidationError: state.weightValidationError,
       isReady:
@@ -110,8 +102,6 @@ class BillFormBinding extends StatelessWidget {
       remarksFocusNode: r.remarksFocusNode,
       grossWeightFocusNode: r.grossWeightFocusNode,
       tareWeightFocusNode: r.tareWeightFocusNode,
-      vehicleChargeFocusNode: r.vehicleChargeFocusNode,
-      paymentModeFocusNode: r.paymentModeFocusNode,
       onCustomerChanged: (customer) => bloc.add(CustomerSelected(customer)),
       onCustomerCodeSubmitted: (code) => bloc.findCustomerByCode(code),
       onVehicleNumberChanged: (vehicleNumber) =>
@@ -125,15 +115,11 @@ class BillFormBinding extends StatelessWidget {
       onGrossCapturedAtChanged: (v) => bloc.add(GrossCapturedAtChanged(v)),
       onTareCapturedAtChanged: (v) => bloc.add(TareCapturedAtChanged(v)),
       onRemarksChanged: (v) => bloc.add(RemarksChanged(v)),
-      onPaymentModeChanged: (v) => bloc.add(PaymentModeChanged(v)),
       onWeightUnitChanged: (v) => bloc.add(WeightUnitChanged(v)),
-      onVehicleChargeChanged: (v) => bloc.add(VehicleChargeChanged(v)),
-      onResetVehicleCharge: () => bloc.add(const ResetVehicleCharge()),
       onMobileNumberChanged: (v) => bloc.add(MobileNumberChanged(v)),
       vehicleNumberError: state.vehicleNumberError,
       materialError: state.materialError,
       customerError: state.customerError,
-      chargesError: state.chargesError,
       weightError: state.weightError,
       mobileError: state.mobileError,
     );

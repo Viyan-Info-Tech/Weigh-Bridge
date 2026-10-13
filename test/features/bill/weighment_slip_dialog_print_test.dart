@@ -33,9 +33,6 @@ void main() {
       grossWeightKg: 100000.0,
       tareWeightKg: 20000.0,
       netWeightKg: 80000.0,
-      vehicleCharge: 1000.0,
-      amount: 1000.0,
-      paymentMode: 'Cash',
       createdAt: now,
       updatedAt: now,
     );
