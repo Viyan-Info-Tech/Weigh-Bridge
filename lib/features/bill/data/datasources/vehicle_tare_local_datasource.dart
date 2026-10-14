@@ -11,6 +11,12 @@ class VehicleTareLocalDataSource {
     return rows.map(_toEntity).toList();
   }
 
+  Stream<List<VehicleTareRecord>> watchVehicleTares() {
+    return _database.vehicleTareRecordsDao
+        .watchTareWeights()
+        .map((rows) => rows.map(_toEntity).toList());
+  }
+
   Future<VehicleTareRecord> saveVehicleTare({
     required String vehicleNumber,
     required double tareKg,
@@ -35,9 +41,12 @@ class VehicleTareLocalDataSource {
     required double tareKg,
   }) async {
     final normalized = vehicleNumber.trim().toUpperCase();
-    if (normalized.isEmpty) throw ArgumentError('Vehicle number is required.');
-    if (!tareKg.isFinite || tareKg <= 0)
+    if (normalized.isEmpty) {
+      throw ArgumentError('Vehicle number is required.');
+    }
+    if (!tareKg.isFinite || tareKg <= 0) {
       throw ArgumentError('Tare weight must be greater than zero.');
+    }
     return _toEntity(
       await _database.vehicleTareRecordsDao.updateById(
         id: id,

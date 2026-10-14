@@ -427,8 +427,8 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                           hintText: widget.displayWeight,
                           hintStyle: TextStyle(
                             fontFamily: 'PlusJakartaSans',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
                             color:
                                 (widget.isCaptured ||
                                     (widget.displayWeight != '0' &&
@@ -442,8 +442,8 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                         ),
                         style: TextStyle(
                           fontFamily: 'PlusJakartaSans',
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
                           color: widget.accent.textColor,
                         ),
                       ),

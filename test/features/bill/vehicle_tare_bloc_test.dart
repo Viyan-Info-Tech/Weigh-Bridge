@@ -53,6 +53,9 @@ class FakeVehicleTareRepository implements VehicleTareRepository {
     if (failWrites) throw Exception('disk full');
     _byVehicle.remove(vehicleNumber.trim().toUpperCase());
   }
+
+  @override
+  Stream<List<VehicleTareRecord>> watchVehicleTares() => const Stream.empty();
 }
 
 void main() {

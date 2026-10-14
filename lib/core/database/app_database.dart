@@ -44,7 +44,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 32;
+  int get schemaVersion => 33;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -1030,6 +1030,11 @@ class AppDatabase extends _$AppDatabase {
           await m.addColumn(weighments, weighments.tareCapturedAt);
         }
       }
+      if (from < 33) {
+        // Seed default vehicle tare weights if they do not already exist,
+        // and correct TN 21 AW 4924 to 7,850 kg.
+        await _seedDefaultVehicleTareRecords();
+      }
     },
   );
 
@@ -1042,6 +1047,10 @@ class AppDatabase extends _$AppDatabase {
       'CREATE INDEX IF NOT EXISTS idx_weighments_created_at '
       'ON weighments(created_at DESC)',
     );
+  }
+
+  Future<void> _seedDefaultVehicleTareRecords() async {
+    await vehicleTareRecordsDao.seedDefaultTareWeights();
   }
 
   Future<void> _createAdminCredentialsTable() => customStatement('''

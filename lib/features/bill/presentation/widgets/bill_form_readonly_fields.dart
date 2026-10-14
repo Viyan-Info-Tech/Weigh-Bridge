@@ -93,8 +93,8 @@ class BillFormNetWeightDisplay extends StatelessWidget {
                 netDisplay,
                 style: TextStyle(
                   fontFamily: 'PlusJakartaSans',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
                   color: hasCompleteWeight && netWeightKg > 0
                       ? const Color(0xFF0284C7)
                       : const Color(0xFF0F172A),

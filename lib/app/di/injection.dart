@@ -186,7 +186,7 @@ class Injection {
       }
     }
 
-    await _seedInitialData(authLocalDataSource, passwordHasher);
+    await _seedInitialData(database, authLocalDataSource, passwordHasher);
 
     return Injection(
       database: database,
@@ -204,6 +204,7 @@ class Injection {
   }
 
   static Future<void> _seedInitialData(
+    AppDatabase database,
     AuthLocalDataSource dataSource,
     PasswordHasher passwordHasher,
   ) async {
@@ -212,5 +213,6 @@ class Injection {
       final hash = passwordHasher.hashPassword('Admin@123');
       await dataSource.seedAdminUser(hash);
     }
+    await database.vehicleTareRecordsDao.seedDefaultTareWeights();
   }
 }

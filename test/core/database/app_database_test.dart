@@ -9,10 +9,10 @@ import 'package:weighbridge/core/database/app_database.dart';
 import '../../support/test_database.dart';
 
 void main() {
-  test('schema version is 31', () {
+  test('schema version is 33', () {
     final db = createInMemoryDatabase();
     addTearDown(db.close);
-    expect(db.schemaVersion, 31);
+    expect(db.schemaVersion, 33);
   });
 
   test('onCreate creates all application tables', () async {
@@ -124,6 +124,58 @@ void main() {
 
         await db.vehicleTareRecordsDao.deleteByVehicleNumber('TN14L1112');
         expect(await db.vehicleTareRecordsDao.getAllOrdered(), isEmpty);
+      });
+    },
+  );
+
+  test(
+    'seedDefaultTareWeights inserts 11 default records and corrects TN 21 AW 4924 to 7850',
+    () async {
+      await withDatabase((db) async {
+        // Pre-insert TN 21 AW 4924 with the old weight of 7550
+        await db.vehicleTareRecordsDao.upsert(
+          vehicleNumber: 'TN 21 AW 4924',
+          tareKg: 7550,
+        );
+
+        // Run the seed routine
+        await db.vehicleTareRecordsDao.seedDefaultTareWeights();
+
+        final rows = await db.vehicleTareRecordsDao.getAllOrdered();
+        expect(rows, hasLength(11));
+
+        // Verify TN 21 AW 4924 was corrected to 7850
+        final tn21 = rows.firstWhere((r) => r.vehicleNumber == 'TN 21 AW 4924');
+        expect(tn21.tareKg, 7850.0);
+
+        // Verify all 11 default vehicles exist in expected order
+        expect(rows[0].vehicleNumber, 'TN 14 L 1112');
+        expect(rows[0].tareKg, 8200.0);
+        expect(rows[1].vehicleNumber, 'TN 21 AW 4924');
+        expect(rows[1].tareKg, 7850.0);
+        expect(rows[2].vehicleNumber, 'TN 21 AV 2459');
+        expect(rows[2].tareKg, 7510.0);
+        expect(rows[3].vehicleNumber, 'TN 21 AV 2463');
+        expect(rows[3].tareKg, 7300.0);
+        expect(rows[4].vehicleNumber, 'TN 21 AV 2464');
+        expect(rows[4].tareKg, 7540.0);
+        expect(rows[5].vehicleNumber, 'TN 01 X 0793');
+        expect(rows[5].tareKg, 4700.0);
+        expect(rows[6].vehicleNumber, 'BULK QUARTZ');
+        expect(rows[6].tareKg, 21500.0);
+        expect(rows[7].vehicleNumber, 'JCB - 11');
+        expect(rows[7].tareKg, 7180.0);
+        expect(rows[8].vehicleNumber, 'JCB - 19');
+        expect(rows[8].tareKg, 7470.0);
+        expect(rows[9].vehicleNumber, 'JCB - 33');
+        expect(rows[9].tareKg, 7970.0);
+        expect(rows[10].vehicleNumber, 'JCB - 45');
+        expect(rows[10].tareKg, 7700.0);
+
+        // Running a second time is idempotent: does not duplicate or overwrite
+        await db.vehicleTareRecordsDao.seedDefaultTareWeights();
+        final rowsAfter = await db.vehicleTareRecordsDao.getAllOrdered();
+        expect(rowsAfter, hasLength(11));
       });
     },
   );

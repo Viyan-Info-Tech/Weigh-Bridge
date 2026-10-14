@@ -31,6 +31,9 @@ class ProbeVehicleTareRepository implements VehicleTareRepository {
 
   @override
   Future<void> deleteVehicleTare(String vehicleNumber) async {}
+
+  @override
+  Stream<List<VehicleTareRecord>> watchVehicleTares() => const Stream.empty();
 }
 
 void main() {

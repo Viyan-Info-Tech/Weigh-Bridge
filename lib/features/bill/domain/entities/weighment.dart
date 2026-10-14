@@ -153,7 +153,7 @@ class Weighment extends Equatable {
       firstWeightType: firstWeightType ?? this.firstWeightType,
       secondWeightKg: secondWeightKg ?? this.secondWeightKg,
       secondWeightType: secondWeightType ?? this.secondWeightType,
-      netWeightKg: netWeightKg ?? this.explicitNetWeightKg,
+      netWeightKg: netWeightKg ?? explicitNetWeightKg,
       grossCapturedAt: grossCapturedAt ?? this.grossCapturedAt,
       tareCapturedAt: tareCapturedAt ?? this.tareCapturedAt,
       material: material ?? this.material,

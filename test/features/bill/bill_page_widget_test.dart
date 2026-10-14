@@ -106,6 +106,9 @@ class _FakeVehicleTareRepository implements VehicleTareRepository {
     if (failWrites) throw Exception('disk full');
     _byVehicle.remove(vehicleNumber.trim().toUpperCase());
   }
+
+  @override
+  Stream<List<VehicleTareRecord>> watchVehicleTares() => const Stream.empty();
 }
 
 void main() {
@@ -712,19 +715,6 @@ void main() {
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.byType(AutoTareDialog), findsOneWidget);
     expect(find.text(vehicle.toUpperCase()), findsOneWidget);
-  }
-
-  bool hasSelectionHighlight(WidgetTester tester) {
-    for (final container in tester.widgetList<Container>(
-      find.byType(Container),
-    )) {
-      final decoration = container.decoration;
-      if (decoration is! BoxDecoration) continue;
-      final border = decoration.border;
-      if (border is! Border) continue;
-      if (border.top.color == const Color(0xFF0D53FC)) return true;
-    }
-    return false;
   }
 
   testWidgets(

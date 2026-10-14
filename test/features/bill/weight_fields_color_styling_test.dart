@@ -6,7 +6,7 @@ import 'package:weighbridge/features/bill/presentation/widgets/bill_form_weight_
 void main() {
   group('Weight Fields Color Styling Tests', () {
     testWidgets(
-      'Gross Weight: only numeric value is green Color(0xFF16A34A), w600',
+      'Gross Weight: only numeric value is green Color(0xFF16A34A), bold, 24pt',
       (tester) async {
         final controller = TextEditingController(text: '15400');
         final now = DateTime.now();
@@ -33,7 +33,8 @@ void main() {
 
         final textField = tester.widget<TextField>(find.byType(TextField));
         expect(textField.style?.color, const Color(0xFF16A34A));
-        expect(textField.style?.fontWeight, FontWeight.w600);
+        expect(textField.style?.fontWeight, FontWeight.bold);
+        expect(textField.style?.fontSize, 24);
 
         // Verify decoration and container remain normal neutral appearance
         final container = tester.widget<Container>(
@@ -60,7 +61,7 @@ void main() {
     );
 
     testWidgets(
-      'Tare Weight: only numeric value is red Color(0xFFDC2626), w600',
+      'Tare Weight: only numeric value is red Color(0xFFDC2626), bold, 24pt',
       (tester) async {
         final controller = TextEditingController(text: '5200');
         final now = DateTime.now();
@@ -87,7 +88,8 @@ void main() {
 
         final textField = tester.widget<TextField>(find.byType(TextField));
         expect(textField.style?.color, const Color(0xFFDC2626));
-        expect(textField.style?.fontWeight, FontWeight.w600);
+        expect(textField.style?.fontWeight, FontWeight.bold);
+        expect(textField.style?.fontSize, 24);
 
         // Verify container and decoration remain normal neutral appearance
         final container = tester.widget<Container>(
@@ -114,7 +116,7 @@ void main() {
     );
 
     testWidgets(
-      'Net Weight: only numeric value is blue Color(0xFF0284C7), w600',
+      'Net Weight: only numeric value is blue Color(0xFF0284C7), bold, 24pt',
       (tester) async {
         await tester.pumpWidget(
           const MaterialApp(
@@ -131,7 +133,8 @@ void main() {
 
         final netText = tester.widget<Text>(find.text('10200'));
         expect(netText.style?.color, const Color(0xFF0284C7));
-        expect(netText.style?.fontWeight, FontWeight.w600);
+        expect(netText.style?.fontWeight, FontWeight.bold);
+        expect(netText.style?.fontSize, 24);
 
         // Verify container and decoration remain normal neutral appearance
         final container = tester.widget<Container>(

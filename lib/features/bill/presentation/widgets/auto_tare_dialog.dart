@@ -27,11 +27,15 @@ class AutoTareDialog extends StatefulWidget {
     required this.onDelete,
     required this.onSelect,
     required this.onUpdate,
+    this.recordsStream,
     this.date,
   });
 
   /// Vehicle tare records known when the popup opens.
   final List<VehicleTareRecord> records;
+
+  /// Optional reactive stream that pushes tare record updates from Drift.
+  final Stream<List<VehicleTareRecord>>? recordsStream;
 
   final double liveScaleWeightKg;
   final bool isScaleStable;
@@ -59,6 +63,7 @@ class AutoTareDialog extends StatefulWidget {
   static Future<void> show(
     BuildContext context, {
     required List<VehicleTareRecord> records,
+    Stream<List<VehicleTareRecord>>? recordsStream,
     required double liveScaleWeightKg,
     required bool isScaleStable,
     required bool isScaleMotion,
@@ -85,6 +90,7 @@ class AutoTareDialog extends StatefulWidget {
       barrierColor: const Color(0xFF0F172A).withValues(alpha: 0.50),
       builder: (_) => AutoTareDialog(
         records: records,
+        recordsStream: recordsStream,
         liveScaleWeightKg: liveScaleWeightKg,
         isScaleStable: isScaleStable,
         isScaleMotion: isScaleMotion,
@@ -125,6 +131,7 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
   late DateTime _currentTime;
   Timer? _timeTimer;
   Timer? _singleTapTimer;
+  StreamSubscription<List<VehicleTareRecord>>? _recordsSubscription;
 
   bool get _isTon => widget.weightUnit.trim().toLowerCase() == 'ton';
 
@@ -142,18 +149,30 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
 
   String _formatTableWeight(double kg) {
     final value = _isTon ? kg / 1000 : kg;
-    final unitLabel = _isTon ? 'ton' : 'kg';
+    final unitLabel = _isTon ? 'Ton' : 'Kg';
     final number = _isTon
         ? value.toStringAsFixed(3)
         : NumberFormat('#,##0').format(value);
     return '$number $unitLabel';
   }
 
+  static int _sortRecords(VehicleTareRecord a, VehicleTareRecord b) {
+    if (a.id != null && b.id != null) {
+      return a.id!.compareTo(b.id!);
+    }
+    return a.vehicleNumber.compareTo(b.vehicleNumber);
+  }
+
   @override
   void initState() {
     super.initState();
-    _records = List.of(widget.records)
-      ..sort((a, b) => a.vehicleNumber.compareTo(b.vehicleNumber));
+    _records = List.of(widget.records)..sort(_sortRecords);
+    _recordsSubscription = widget.recordsStream?.listen((updated) {
+      if (!mounted) return;
+      setState(() {
+        _records = List.of(updated)..sort(_sortRecords);
+      });
+    });
     _vehicleController = TextEditingController();
     _weightController = TextEditingController();
     _vehicleFocusNode = FocusNode(debugLabel: 'vehicleTareVehicleFocusNode');
@@ -169,6 +188,7 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
 
   @override
   void dispose() {
+    _recordsSubscription?.cancel();
     _singleTapTimer?.cancel();
     _timeTimer?.cancel();
     _vehicleController.dispose();
@@ -304,7 +324,7 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
               (editingOriginal != null && r.vehicleNumber == editingOriginal),
         );
         _records.add(saved);
-        _records.sort((a, b) => a.vehicleNumber.compareTo(b.vehicleNumber));
+        _records.sort(_sortRecords);
         _showEntryForm = false;
         _editingVehicle = null;
         _selectedVehicle = saved.vehicleNumber;
@@ -668,7 +688,7 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
                 SizedBox(width: 52, child: Text('SL NO', style: headerStyle)),
                 Expanded(child: Text('VEHICLE NO', style: headerStyle)),
                 SizedBox(
-                  width: 130,
+                  width: 136,
                   child: Text(
                     'WEIGHT',
                     style: headerStyle,
@@ -765,11 +785,30 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
                   ),
                 ),
                 SizedBox(
-                  width: 130,
+                  width: 104,
                   child: Text(
                     _formatTableWeight(record.tareKg),
                     style: weightStyle,
                     textAlign: TextAlign.right,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Tooltip(
+                  message: 'Edit Tare Weight',
+                  child: InkWell(
+                    key: Key('vehicle_tare_row_edit_${record.id ?? index}'),
+                    onTap: _isBusy ? null : () => _editRecord(record),
+                    borderRadius: BorderRadius.circular(6),
+                    child: Padding(
+                      padding: const EdgeInsets.all(3.0),
+                      child: Icon(
+                        Icons.edit_outlined,
+                        size: 15,
+                        color: isSelected
+                            ? const Color(0xFF0D53FC)
+                            : const Color(0xFF94A3B8),
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -830,7 +869,7 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
           enabled: !_isBusy,
           textCapitalization: TextCapitalization.characters,
           inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9 ]')),
+            FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\s\-/]')),
             UpperCaseTextFormatter(),
           ],
           style: const TextStyle(

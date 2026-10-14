@@ -4,6 +4,9 @@ abstract class VehicleTareRepository {
   /// Every stored vehicle tare record, ordered by vehicle number.
   Future<List<VehicleTareRecord>> loadVehicleTares();
 
+  /// Reactive stream of stored vehicle tare records.
+  Stream<List<VehicleTareRecord>> watchVehicleTares() => const Stream.empty();
+
   /// Inserts a new vehicle tare or updates the tare of an existing vehicle.
   ///
   /// Throws [ArgumentError] when the vehicle number is blank or the tare is

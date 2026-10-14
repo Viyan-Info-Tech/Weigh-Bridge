@@ -1,10 +1,13 @@
 import 'dart:async';
+import 'dart:io' show Platform, Process;
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
@@ -473,42 +476,198 @@ class _HomePageState extends State<HomePage>
                 child: Divider(height: 1, color: Color(0xFFE2E8F0)),
               ),
               const SizedBox(height: 8),
-              _buildDrawerMenuItem(
-                icon: Icons.scale_rounded,
-                label: 'Weighment',
-                isSelected: _selectedIndex == 0,
-                onTap: () => _onDrawerMenuSelected(0),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      _buildDrawerMenuItem(
+                        icon: Icons.scale_rounded,
+                        label: 'Weighment',
+                        isSelected: _selectedIndex == 0,
+                        onTap: () => _onDrawerMenuSelected(0),
+                      ),
+                      _buildDrawerMenuItem(
+                        icon: Icons.bar_chart_rounded,
+                        label: 'Reports',
+                        isSelected: _selectedIndex == 1,
+                        onTap: () => _onDrawerMenuSelected(1),
+                      ),
+                      _buildDrawerMenuItem(
+                        icon: Icons.settings_rounded,
+                        label: 'Settings',
+                        isSelected: _selectedIndex == 2,
+                        onTap: () => _onDrawerMenuSelected(2),
+                      ),
+                      _buildDrawerMenuItem(
+                        icon: Icons.info_outline_rounded,
+                        label: 'About',
+                        isSelected: _selectedIndex == 3,
+                        onTap: () => _onDrawerMenuSelected(3),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+                      ),
+                      _buildDrawerMenuItem(
+                        icon: Icons.power_settings_new_rounded,
+                        label: 'Exit',
+                        isDestructive: true,
+                        onTap: () {
+                          _closeNavMenu();
+                          _confirmLogout(context);
+                        },
+                      ),
+                    ],
+                  ),
+                ),
               ),
-              _buildDrawerMenuItem(
-                icon: Icons.bar_chart_rounded,
-                label: 'Reports',
-                isSelected: _selectedIndex == 1,
-                onTap: () => _onDrawerMenuSelected(1),
-              ),
-              _buildDrawerMenuItem(
-                icon: Icons.settings_rounded,
-                label: 'Settings',
-                isSelected: _selectedIndex == 2,
-                onTap: () => _onDrawerMenuSelected(2),
-              ),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                child: Divider(height: 1, color: Color(0xFFE2E8F0)),
-              ),
-              _buildDrawerMenuItem(
-                icon: Icons.power_settings_new_rounded,
-                label: 'Exit',
-                isDestructive: true,
-                onTap: () {
-                  _closeNavMenu();
-                  _confirmLogout(context);
-                },
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+                child: _buildDrawerContactCard(context),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Widget _buildDrawerContactCard(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            children: const [
+              Icon(
+                Icons.support_agent_rounded,
+                size: 15,
+                color: Color(0xFF0F52BA),
+              ),
+              SizedBox(width: 6),
+              Text(
+                'Contact ViyanInfo',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          _buildDrawerContactRow(
+            icon: Icons.phone_outlined,
+            value: '+91 6379723465',
+            onTap: () => _copyContactValue('+91 6379723465'),
+          ),
+          _buildDrawerContactRow(
+            icon: Icons.email_outlined,
+            value: 'viyanninfo@gmail.com',
+            onTap: () => _copyContactValue('viyanninfo@gmail.com'),
+          ),
+          _buildDrawerContactRow(
+            icon: Icons.email_outlined,
+            value: 'rithiknathan@gmail.com',
+            onTap: () => _copyContactValue('rithiknathan@gmail.com'),
+          ),
+          _buildDrawerContactRow(
+            icon: Icons.language_outlined,
+            value: 'www.viyaninfo.com',
+            onTap: _openWebsite,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDrawerContactRow({
+    required IconData icon,
+    required String value,
+    VoidCallback? onTap,
+    IconData? trailingIcon,
+  }) {
+    final rowContent = Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3.5),
+      child: Row(
+        children: [
+          Icon(icon, size: 14, color: const Color(0xFF0F52BA)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              value,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 11.5,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1E293B),
+              ),
+            ),
+          ),
+          if (trailingIcon != null)
+            Icon(trailingIcon, size: 12, color: const Color(0xFF94A3B8)),
+        ],
+      ),
+    );
+
+    if (onTap == null) return rowContent;
+
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: onTap,
+        child: rowContent,
+      ),
+    );
+  }
+
+  Future<void> _copyContactValue(String value) async {
+    await Clipboard.setData(ClipboardData(text: value));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('$value copied to clipboard'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _openWebsite() async {
+    const formattedUrl = 'https://www.viyaninfo.com';
+    bool launched = false;
+
+    if (kIsWeb || !Platform.isWindows) {
+      try {
+        final uri = Uri.parse(formattedUrl);
+        if (await canLaunchUrl(uri)) {
+          launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+      } catch (_) {}
+    } else {
+      try {
+        final result = await Process.run('rundll32', [
+          'url.dll,FileProtocolHandler',
+          formattedUrl,
+        ]);
+        launched = result.exitCode == 0;
+      } catch (_) {}
+    }
+
+    if (!launched && mounted) {
+      _copyContactValue('www.viyaninfo.com');
+    }
   }
 
   Widget _buildDrawerMenuItem({

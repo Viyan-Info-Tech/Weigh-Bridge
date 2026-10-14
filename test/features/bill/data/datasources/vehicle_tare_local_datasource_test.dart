@@ -22,14 +22,30 @@ void main() {
       expect(await source.loadVehicleTares(), isEmpty);
     });
 
-    test('save persists and load returns records ordered by vehicle', () async {
-      await source.saveVehicleTare(vehicleNumber: 'TN21AW4924', tareKg: 7850);
+    test('save persists and load returns records ordered by id', () async {
       await source.saveVehicleTare(vehicleNumber: 'TN14L1112', tareKg: 8200);
+      await source.saveVehicleTare(vehicleNumber: 'TN21AW4924', tareKg: 7850);
 
       final records = await source.loadVehicleTares();
       expect(records.map((r) => r.vehicleNumber), ['TN14L1112', 'TN21AW4924']);
       expect(records.first.tareKg, 8200);
       expect(records.first.id, isNotNull);
+    });
+
+    test('watchVehicleTares emits updated records reactively', () async {
+      final streamExpectation = expectLater(
+        source.watchVehicleTares(),
+        emitsInOrder([
+          isEmpty,
+          hasLength(1),
+          hasLength(2),
+        ]),
+      );
+
+      await source.saveVehicleTare(vehicleNumber: 'TN14L1112', tareKg: 8200);
+      await source.saveVehicleTare(vehicleNumber: 'TN21AW4924', tareKg: 7850);
+
+      await streamExpectation;
     });
 
     test('vehicle numbers are normalized to upper case', () async {

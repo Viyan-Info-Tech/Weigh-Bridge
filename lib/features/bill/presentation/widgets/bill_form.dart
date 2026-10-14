@@ -347,6 +347,66 @@ class _BillFormState extends State<BillForm> {
     );
   }
 
+  void _onGrossWeightChanged(String text) {
+    widget.onGrossWeightChanged(text);
+    final trimmed = text.trim();
+    if (trimmed.isNotEmpty) {
+      if (_grossDate == null || _grossTime == null) {
+        final now = widget.grossCapturedAt ?? DateTime.now();
+        setState(() {
+          _grossDate ??= now;
+          _grossTime ??= TimeOfDay.fromDateTime(now);
+        });
+        final combined = DateTime(
+          _grossDate!.year,
+          _grossDate!.month,
+          _grossDate!.day,
+          _grossTime!.hour,
+          _grossTime!.minute,
+        );
+        widget.onGrossCapturedAtChanged?.call(combined);
+      }
+    } else {
+      if (_grossDate != null || _grossTime != null) {
+        setState(() {
+          _grossDate = null;
+          _grossTime = null;
+        });
+        widget.onGrossCapturedAtChanged?.call(null);
+      }
+    }
+  }
+
+  void _onTareWeightChanged(String text) {
+    widget.onTareWeightChanged(text);
+    final trimmed = text.trim();
+    if (trimmed.isNotEmpty) {
+      if (_tareDate == null || _tareTime == null) {
+        final now = widget.tareCapturedAt ?? DateTime.now();
+        setState(() {
+          _tareDate ??= now;
+          _tareTime ??= TimeOfDay.fromDateTime(now);
+        });
+        final combined = DateTime(
+          _tareDate!.year,
+          _tareDate!.month,
+          _tareDate!.day,
+          _tareTime!.hour,
+          _tareTime!.minute,
+        );
+        widget.onTareCapturedAtChanged?.call(combined);
+      }
+    } else {
+      if (_tareDate != null || _tareTime != null) {
+        setState(() {
+          _tareDate = null;
+          _tareTime = null;
+        });
+        widget.onTareCapturedAtChanged?.call(null);
+      }
+    }
+  }
+
   void _commitGrossWeight(String text) {
     widget.onGrossWeightCommitted?.call(text);
     final weight = double.tryParse(text);
@@ -477,14 +537,16 @@ class _BillFormState extends State<BillForm> {
             weightKg: widget.grossWeightKg,
             weightUnit: widget.weightUnit,
             enabled: isGrossEnabled,
-            isCaptured: widget.grossWeightKg > 0 && _grossDate != null,
+            isCaptured: (widget.grossWeightKg > 0 ||
+                    widget.grossWeightController.text.trim().isNotEmpty) &&
+                _grossDate != null,
             hasError: effectiveWeightError != null,
             focusNode: widget.grossWeightFocusNode,
             date: _grossDate,
             time: _grossTime,
             onSelectDate: _onSelectGrossDate,
             onSelectTime: _onSelectGrossTime,
-            onWeightChanged: widget.onGrossWeightChanged,
+            onWeightChanged: _onGrossWeightChanged,
             onWeightCommitted: _commitGrossWeight,
             onSubmittedNext: () => widget.tareWeightFocusNode?.requestFocus(),
             accent: WeightRowAccent.green,
@@ -504,14 +566,16 @@ class _BillFormState extends State<BillForm> {
                 weightKg: widget.tareWeightKg,
                 weightUnit: widget.weightUnit,
                 enabled: isTareEnabled,
-                isCaptured: widget.tareWeightKg > 0 && _tareDate != null,
+                isCaptured: (widget.tareWeightKg > 0 ||
+                        widget.tareWeightController.text.trim().isNotEmpty) &&
+                    _tareDate != null,
                 hasError: effectiveWeightError != null,
                 focusNode: widget.tareWeightFocusNode,
                 date: _tareDate,
                 time: _tareTime,
                 onSelectDate: _onSelectTareDate,
                 onSelectTime: _onSelectTareTime,
-                onWeightChanged: widget.onTareWeightChanged,
+                onWeightChanged: _onTareWeightChanged,
                 onWeightCommitted: _commitTareWeight,
                 accent: WeightRowAccent.red,
               ),
@@ -589,7 +653,6 @@ class _BillFormState extends State<BillForm> {
             controller: widget.vehicleNumberController,
             focusNode: widget.vehicleFocusNode,
             inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
               UpperCaseTextFormatter(),
             ],
             textCapitalization: TextCapitalization.characters,

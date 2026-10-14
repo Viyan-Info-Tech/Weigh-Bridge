@@ -9,6 +9,8 @@ import 'package:weighbridge/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:weighbridge/features/auth/presentation/bloc/auth_event.dart';
 import 'package:weighbridge/core/licensing/license_service.dart';
 import 'package:weighbridge/core/licensing/domain/enums/license_status.dart';
+import 'package:weighbridge/features/auth/presentation/widgets/truck_logo.dart';
+import 'package:weighbridge/features/auth/presentation/widgets/ambient_background_painter.dart';
 
 class LicenseActivationScreen extends StatefulWidget {
   final LicenseService licenseService;
@@ -339,40 +341,68 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFF0F52BA), Color(0xFF0D3B82)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF0F56CD),
+            Color(0xFF0A3E9C),
+            Color(0xFF072B70),
+            Color(0xFF051D4E),
+          ],
         ),
       ),
-      child: const Center(
-        child: Padding(
-          padding: EdgeInsets.all(48),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                'Viyan\nWeighbridge',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 36,
-                  fontWeight: FontWeight.w800,
-                  color: Colors.white,
-                  height: 1.1,
-                ),
-              ),
-              SizedBox(height: 16),
-              Text(
-                'Secure Desktop Weighbridge Management',
-                style: TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 16,
-                  color: Colors.white70,
-                ),
-              ),
-            ],
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          Positioned.fill(
+            child: CustomPaint(painter: BlueConcentricArcsPainter()),
           ),
-        ),
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.all(48),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const ViyanWeighbridgeLogo(size: 88),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Viyan\nWeighbridge',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 36,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      height: 1.1,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Container(
+                    width: 36,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF6B00),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Secure Desktop Weighbridge Management',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white70,
+                      letterSpacing: 0.1,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -561,14 +591,22 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Text(
-                      'Viyan Weighbridge',
-                      style: TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 24,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF0F52BA),
-                      ),
+                    Row(
+                      children: [
+                        const ViyanWeighbridgeLogo(size: 40),
+                        const SizedBox(width: 12),
+                        const Expanded(
+                          child: Text(
+                            'Viyan Weighbridge',
+                            style: TextStyle(
+                              fontFamily: 'PlusJakartaSans',
+                              fontSize: 24,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF0F52BA),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 8),
                     Text(

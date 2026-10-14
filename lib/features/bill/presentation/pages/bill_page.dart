@@ -331,12 +331,16 @@ class BillPageState extends State<BillPage> {
     _isAutoTareDialogOpen = true;
     final bloc = context.read<BillBloc>();
     try {
-      // Refresh the registry records in background while opening the dialog
-      bloc.add(const LoadVehicleTares());
+      final completer = Completer<void>();
+      bloc.add(LoadVehicleTares(completer: completer));
+      try {
+        await completer.future.timeout(const Duration(milliseconds: 300));
+      } catch (_) {}
       if (!mounted) return;
       await AutoTareDialog.show(
         context,
         records: bloc.state.vehicleTareRecords,
+        recordsStream: bloc.vehicleTareRepository?.watchVehicleTares(),
         liveScaleWeightKg: bloc.state.liveScaleWeightKg,
         isScaleStable: bloc.state.isScaleStable,
         isScaleMotion: bloc.state.isScaleMotion,

@@ -13,6 +13,10 @@ class VehicleTareRepositoryImpl
       localDataSource.loadVehicleTares();
 
   @override
+  Stream<List<VehicleTareRecord>> watchVehicleTares() =>
+      localDataSource.watchVehicleTares();
+
+  @override
   Future<VehicleTareRecord> saveVehicleTare({
     required String vehicleNumber,
     required double tareKg,

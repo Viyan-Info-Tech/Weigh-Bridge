@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/entities/weighment.dart';
 import '../../domain/entities/auto_tare_entry.dart';
+import '../../domain/entities/vehicle_tare_record.dart';
 import '../../domain/usecases/save_bill.dart';
 import '../../domain/repositories/auto_tare_repository.dart';
 import '../../domain/repositories/vehicle_tare_repository.dart';
@@ -149,6 +150,14 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
         }
       }
 
+      List<VehicleTareRecord> vehicleTareRecords = const [];
+      final vehicleTareRepo = _vehicleTareRepository;
+      if (vehicleTareRepo != null) {
+        try {
+          vehicleTareRecords = await vehicleTareRepo.loadVehicleTares();
+        } catch (_) {}
+      }
+
       emit(
         state.copyWith(
           status: BillScreenStatus.loaded,
@@ -160,6 +169,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
           autoTareDate: autoTare?.tareDate,
           autoTareSavedAt: autoTare?.savedAt,
           clearAutoTare: autoTare == null,
+          vehicleTareRecords: vehicleTareRecords,
         ),
       );
     } catch (e) {
@@ -259,10 +269,14 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     }
     final kgValue = _toKg(displayValue);
     final isCleared = event.value.trim().isEmpty || displayValue == 0;
+    final capturedAt = isCleared
+        ? null
+        : (state.grossCapturedAt ?? DateTime.now());
     emit(
       state.copyWith(
         grossWeightText: event.value,
         grossWeightKg: kgValue,
+        grossCapturedAt: capturedAt,
         clearGrossCapturedAt: isCleared,
         clearError: true,
       ),
@@ -320,10 +334,14 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     }
     final kgValue = _toKg(displayValue);
     final isCleared = event.value.trim().isEmpty || displayValue == 0;
+    final capturedAt = isCleared
+        ? null
+        : (state.tareCapturedAt ?? DateTime.now());
     emit(
       state.copyWith(
         tareWeightText: event.value,
         tareWeightKg: kgValue,
+        tareCapturedAt: capturedAt,
         clearTareCapturedAt: isCleared,
         clearError: true,
       ),
