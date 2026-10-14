@@ -51,11 +51,12 @@ void main() {
       expect(find.text('TN31CM2026'), findsOneWidget);
 
       // 4. Weight Table
-      expect(find.text('Gross Weight'), findsWidgets);
-      expect(find.text('Tare Weight'), findsWidgets);
-      expect(find.text('Net Weight'), findsWidgets);
+      expect(find.text('GROSS'), findsWidgets);
+      expect(find.text('TARE'), findsWidgets);
+      expect(find.text('NET'), findsWidgets);
 
       // 5. Remarks & Actions
+      expect(find.text('CONTAINER NO'), findsOneWidget);
       expect(find.text('Direct delivery to site'), findsOneWidget);
       expect(find.text('Close'), findsOneWidget);
       expect(find.text('Print Ticket'), findsOneWidget);

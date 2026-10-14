@@ -9,13 +9,13 @@ import 'package:intl/intl.dart';
 /// keeping the same box + date/time-chip structure.
 class WeightRowAccent {
   const WeightRowAccent({
-    required this.border,
-    required this.background,
-    required this.iconBackground,
-    required this.iconColor,
+    this.border = const Color(0xFFCBD5E1),
+    this.background = const Color(0xFFF8FAFC),
+    this.iconBackground = const Color(0xFFE2E8F0),
+    this.iconColor = const Color(0xFF64748B),
     required this.textColor,
-    required this.unitBackground,
-    required this.unitColor,
+    this.unitBackground = const Color(0xFFF1F5F9),
+    this.unitColor = const Color(0xFF334155),
   });
 
   final Color border;
@@ -27,33 +27,15 @@ class WeightRowAccent {
   final Color unitColor;
 
   static const WeightRowAccent green = WeightRowAccent(
-    border: Color(0xFF86EFAC),
-    background: Color(0xFFF0FDF4),
-    iconBackground: Color(0xFFDCFCE7),
-    iconColor: Color(0xFF16A34A),
-    textColor: Color(0xFF15803D),
-    unitBackground: Color(0xFFDCFCE7),
-    unitColor: Color(0xFF166534),
+    textColor: Color(0xFF16A34A),
   );
 
   static const WeightRowAccent red = WeightRowAccent(
-    border: Color(0xFFFCA5A5),
-    background: Color(0xFFFEF2F2),
-    iconBackground: Color(0xFFFEE2E2),
-    iconColor: Color(0xFFDC2626),
-    textColor: Color(0xFFB91C1C),
-    unitBackground: Color(0xFFFEE2E2),
-    unitColor: Color(0xFF991B1B),
+    textColor: Color(0xFFDC2626),
   );
 
   static const WeightRowAccent blue = WeightRowAccent(
-    border: Color(0xFF93C5FD),
-    background: Color(0xFFEFF6FF),
-    iconBackground: Color(0xFFDBEAFE),
-    iconColor: Color(0xFF0284C7),
-    textColor: Color(0xFF0C4A6E),
-    unitBackground: Color(0xFFDBEAFE),
-    unitColor: Color(0xFF0C4A6E),
+    textColor: Color(0xFF0284C7),
   );
 }
 
@@ -110,9 +92,9 @@ class BillFormWeightRow extends StatelessWidget {
     final dateStr = date != null
         ? DateFormat('dd/MM/yyyy').format(date!)
         : '--/--/----';
-    final timeStr = date != null
-        ? DateFormat('hh:mm:ss a').format(date!)
-        : (time != null ? _formatTime(time!) : '--:--:--');
+    final timeStr = time != null
+        ? _formatTime(time!)
+        : (date != null ? DateFormat('hh:mm a').format(date!) : '--:-- --');
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -204,10 +186,10 @@ class BillFormWeightRow extends StatelessWidget {
     required bool isCaptured,
     required VoidCallback onTap,
   }) {
-    final borderColor = isCaptured ? accent.border : const Color(0xFFCBD5E1);
-    final bgColor = isCaptured ? accent.background : const Color(0xFFF8FAFC);
-    final iconColor = isCaptured ? accent.iconColor : const Color(0xFF475569);
-    final textColor = isCaptured ? accent.textColor : const Color(0xFF0F172A);
+    const borderColor = Color(0xFFCBD5E1);
+    const bgColor = Color(0xFFF8FAFC);
+    const iconColor = Color(0xFF475569);
+    const textColor = Color(0xFF0F172A);
 
     return Tooltip(
       message: tooltip,
@@ -217,9 +199,7 @@ class BillFormWeightRow extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(6),
-          hoverColor: isCaptured
-              ? accent.iconBackground.withValues(alpha: 0.5)
-              : const Color(0xFFEFF6FF),
+          hoverColor: const Color(0xFFEFF6FF),
           child: Ink(
             height: 34,
             decoration: BoxDecoration(
@@ -239,7 +219,7 @@ class BillFormWeightRow extends StatelessWidget {
                       value,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontFamily: 'PlusJakartaSans',
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -364,15 +344,11 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
         ? const Color(0xFFDC2626)
         : _editing
         ? const Color(0xFF3B82F6)
-        : widget.isCaptured
-        ? widget.accent.border
         : const Color(0xFFCBD5E1);
     final backgroundColor = widget.hasError
         ? const Color(0xFFFEF2F2)
         : _editing
         ? const Color(0xFFEFF6FF)
-        : widget.isCaptured
-        ? widget.accent.background
         : const Color(0xFFF8FAFC);
 
     return Tooltip(
@@ -407,8 +383,6 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                           ? const Color(0xFFFEE2E2)
                           : _editing
                           ? const Color(0xFFDBEAFE)
-                          : widget.isCaptured
-                          ? widget.accent.iconBackground
                           : const Color(0xFFE2E8F0),
                       borderRadius: const BorderRadius.horizontal(
                         left: Radius.circular(5),
@@ -423,8 +397,6 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                           ? const Color(0xFFDC2626)
                           : _editing
                           ? const Color(0xFF2563EB)
-                          : widget.isCaptured
-                          ? widget.accent.iconColor
                           : const Color(0xFF64748B),
                     ),
                   ),
@@ -456,8 +428,11 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                           hintStyle: TextStyle(
                             fontFamily: 'PlusJakartaSans',
                             fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: widget.isCaptured
+                            fontWeight: FontWeight.w600,
+                            color:
+                                (widget.isCaptured ||
+                                    (widget.displayWeight != '0' &&
+                                        widget.displayWeight != '0.000'))
                                 ? widget.accent.textColor
                                 : const Color(0xFF0F172A),
                           ),
@@ -468,10 +443,8 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                         style: TextStyle(
                           fontFamily: 'PlusJakartaSans',
                           fontSize: 16,
-                          fontWeight: FontWeight.w800,
-                          color: widget.isCaptured
-                              ? widget.accent.textColor
-                              : const Color(0xFF0F172A),
+                          fontWeight: FontWeight.w600,
+                          color: widget.accent.textColor,
                         ),
                       ),
                     ),
@@ -481,9 +454,7 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                     height: 46,
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
-                      color: widget.isCaptured
-                          ? widget.accent.unitBackground.withValues(alpha: 0.6)
-                          : const Color(0xFFF1F5F9),
+                      color: const Color(0xFFF1F5F9),
                       borderRadius: const BorderRadius.horizontal(
                         right: Radius.circular(5),
                       ),
@@ -491,13 +462,11 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                     ),
                     child: Text(
                       widget.unitLabel,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontFamily: 'PlusJakartaSans',
                         fontSize: 13.5,
                         fontWeight: FontWeight.w800,
-                        color: widget.isCaptured
-                            ? widget.accent.unitColor
-                            : const Color(0xFF334155),
+                        color: Color(0xFF334155),
                       ),
                     ),
                   ),

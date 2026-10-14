@@ -27,10 +27,7 @@ void main() {
       await source.saveVehicleTare(vehicleNumber: 'TN14L1112', tareKg: 8200);
 
       final records = await source.loadVehicleTares();
-      expect(
-        records.map((r) => r.vehicleNumber),
-        ['TN14L1112', 'TN21AW4924'],
-      );
+      expect(records.map((r) => r.vehicleNumber), ['TN14L1112', 'TN21AW4924']);
       expect(records.first.tareKg, 8200);
       expect(records.first.id, isNotNull);
     });
@@ -43,19 +40,21 @@ void main() {
       expect(saved.vehicleNumber, 'TN14L1112');
     });
 
-    test('re-adding a vehicle updates its tare instead of duplicating',
-        () async {
-      await source.saveVehicleTare(vehicleNumber: 'TN14L1112', tareKg: 8200);
-      final updated = await source.saveVehicleTare(
-        vehicleNumber: 'TN14L1112',
-        tareKg: 8300,
-      );
+    test(
+      're-adding a vehicle updates its tare instead of duplicating',
+      () async {
+        await source.saveVehicleTare(vehicleNumber: 'TN14L1112', tareKg: 8200);
+        final updated = await source.saveVehicleTare(
+          vehicleNumber: 'TN14L1112',
+          tareKg: 8300,
+        );
 
-      expect(updated.tareKg, 8300);
-      final records = await source.loadVehicleTares();
-      expect(records, hasLength(1));
-      expect(records.single.tareKg, 8300);
-    });
+        expect(updated.tareKg, 8300);
+        final records = await source.loadVehicleTares();
+        expect(records, hasLength(1));
+        expect(records.single.tareKg, 8300);
+      },
+    );
 
     test('blank vehicle numbers are rejected', () async {
       await expectLater(

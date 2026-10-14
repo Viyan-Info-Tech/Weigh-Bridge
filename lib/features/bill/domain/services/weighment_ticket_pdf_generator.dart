@@ -123,10 +123,9 @@ class WeighmentTicketPdfGenerator {
                 _buildFieldRow('MATERIAL', data.materialName),
               if (data.hasDescription)
                 _buildFieldRow('DESCRIPTION', data.descriptionText),
-              if (data.contactPhone.trim().isNotEmpty)
-                _buildFieldRow('MOBILE NO', data.contactPhone),
+            
               if (data.hasRemarks)
-                _buildFieldRow('CONTAINER No', data.bill.remarks!),
+                _buildFieldRow('CONTAINER NO', data.bill.remarks!),
 
               pw.SizedBox(height: 8),
 

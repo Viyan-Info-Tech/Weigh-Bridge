@@ -82,7 +82,8 @@ class VehicleTareRecordsDao extends DatabaseAccessor<AppDatabase>
         updatedAt: Value(DateTime.now()),
       ),
     );
-    return (select(vehicleTareRecords)..where((t) => t.id.equals(id)))
-        .getSingle();
+    return (select(
+      vehicleTareRecords,
+    )..where((t) => t.id.equals(id))).getSingle();
   }
 }

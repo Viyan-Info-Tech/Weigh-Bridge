@@ -1,4 +1,3 @@
-import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -345,81 +344,80 @@ void main() {
     expect(billBloc.state.tareWeightKg, 0);
   });
 
-  testWidgets(
-    'adding a vehicle tare persists it and refreshes the table',
-    (tester) async {
-      tester.view.physicalSize = const Size(1400, 900);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
+  testWidgets('adding a vehicle tare persists it and refreshes the table', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1400, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
 
-      await pumpBillPage(tester);
+    await pumpBillPage(tester);
 
-      // Open the registry: empty table, entry form hidden, Add + Cancel only.
-      await tester.tap(find.byKey(const Key('auto_tare_indicator')));
-      await tester.pumpAndSettle();
-      expect(find.byType(AutoTareDialog), findsOneWidget);
-      expect(find.text('SL NO'), findsOneWidget);
-      expect(find.text('VEHICLE NO'), findsOneWidget);
-      expect(
-        find.descendant(
-          of: find.byType(AutoTareDialog),
-          matching: find.text('WEIGHT'),
-        ),
-        findsOneWidget,
-      );
-      expect(find.text('No vehicle tare records yet.'), findsOneWidget);
-      expect(find.text('Add'), findsOneWidget);
-      expect(find.text('Cancel'), findsOneWidget);
-      expect(find.text('Save Auto Tare'), findsNothing);
-      expect(find.text('Clear'), findsNothing);
-      expect(find.byKey(const Key('vehicle_tare_vehicle_field')), findsNothing);
+    // Open the registry: empty table, entry form hidden, Add + Cancel only.
+    await tester.tap(find.byKey(const Key('auto_tare_indicator')));
+    await tester.pumpAndSettle();
+    expect(find.byType(AutoTareDialog), findsOneWidget);
+    expect(find.text('SL NO'), findsOneWidget);
+    expect(find.text('VEHICLE NO'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(AutoTareDialog),
+        matching: find.text('WEIGHT'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('No vehicle tare records yet.'), findsOneWidget);
+    expect(find.text('Add'), findsOneWidget);
+    expect(find.text('Cancel'), findsOneWidget);
+    expect(find.text('Save Auto Tare'), findsNothing);
+    expect(find.text('Clear'), findsNothing);
+    expect(find.byKey(const Key('vehicle_tare_vehicle_field')), findsNothing);
 
-      // First Add tap reveals the entry form.
-      await tester.tap(find.byKey(const Key('vehicle_tare_add_button')));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('vehicle_tare_vehicle_field')), findsOneWidget);
-      expect(find.byKey(const Key('auto_tare_weight_field')), findsOneWidget);
+    // First Add tap reveals the entry form.
+    await tester.tap(find.byKey(const Key('vehicle_tare_add_button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('vehicle_tare_vehicle_field')), findsOneWidget);
+    expect(find.byKey(const Key('auto_tare_weight_field')), findsOneWidget);
 
-      await tester.enterText(
-        find.byKey(const Key('vehicle_tare_vehicle_field')),
-        'TN14L1112',
-      );
-      await tester.enterText(
-        find.byKey(const Key('auto_tare_weight_field')),
-        '8200',
-      );
-      await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('vehicle_tare_vehicle_field')),
+      'TN14L1112',
+    );
+    await tester.enterText(
+      find.byKey(const Key('auto_tare_weight_field')),
+      '8200',
+    );
+    await tester.pumpAndSettle();
 
-      // Second Add tap validates and persists.
-      await tester.tap(find.byKey(const Key('vehicle_tare_add_button')));
-      await tester.runAsync(
-        () => billBloc.stream.firstWhere(
-          (state) => state.vehicleTareRecords.length == 1,
-        ),
-      );
-      await tester.pumpAndSettle();
+    // Second Add tap validates and persists.
+    await tester.tap(find.byKey(const Key('vehicle_tare_add_button')));
+    await tester.runAsync(
+      () => billBloc.stream.firstWhere(
+        (state) => state.vehicleTareRecords.length == 1,
+      ),
+    );
+    await tester.pumpAndSettle();
 
-      // The table refreshes in place; the dialog stays open for more entries.
-      expect(find.byType(AutoTareDialog), findsOneWidget);
-      expect(find.text('TN14L1112'), findsOneWidget);
-      expect(find.text('8,200 Kg'), findsOneWidget);
-      expect(find.text('No vehicle tare records yet.'), findsNothing);
-      expect(billBloc.state.vehicleTareRecords.single.tareKg, 8200);
+    // The table refreshes in place; the dialog stays open for more entries.
+    expect(find.byType(AutoTareDialog), findsOneWidget);
+    expect(find.text('TN14L1112'), findsOneWidget);
+    expect(find.text('8,200 Kg'), findsOneWidget);
+    expect(find.text('No vehicle tare records yet.'), findsNothing);
+    expect(billBloc.state.vehicleTareRecords.single.tareKg, 8200);
 
-      // Adding creates a registry record, never a weighment.
-      expect(billBloc.state.tareWeightKg, 0);
-      expect(billBloc.state.recentBills, hasLength(1));
+    // Adding creates a registry record, never a weighment.
+    expect(billBloc.state.tareWeightKg, 0);
+    expect(billBloc.state.recentBills, hasLength(1));
 
-      // Cancel closes without touching the saved record.
-      await tester.tap(find.text('Cancel'));
-      await tester.pumpAndSettle();
-      expect(find.byType(AutoTareDialog), findsNothing);
-      expect(billBloc.state.vehicleTareRecords, hasLength(1));
-    },
-  );
+    // Cancel closes without touching the saved record.
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(find.byType(AutoTareDialog), findsNothing);
+    expect(billBloc.state.vehicleTareRecords, hasLength(1));
+  });
 
   testWidgets(
     'a failing vehicle tare add surfaces an error and keeps the dialog open',
@@ -519,7 +517,9 @@ void main() {
       await tester.pumpAndSettle();
       expect(
         tester
-            .widget<TextFormField>(find.byKey(const Key('auto_tare_weight_field')))
+            .widget<TextFormField>(
+              find.byKey(const Key('auto_tare_weight_field')),
+            )
             .controller
             ?.text,
         '10200',
@@ -697,13 +697,19 @@ void main() {
     String vehicle,
     double tareKg,
   ) async {
-    final completer = Completer<VehicleTareRecord>();
-    billBloc.add(SaveVehicleTare(vehicle, tareKg, completer: completer));
-    await tester.runAsync(() => completer.future);
+    await vehicleTareRepository.saveVehicleTare(
+      vehicleNumber: vehicle,
+      tareKg: tareKg,
+    );
+    billBloc.add(const LoadVehicleTares());
+    await tester.runAsync(() async {
+      await billBloc.stream.firstWhere((s) => s.vehicleTareRecords.isNotEmpty);
+    });
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('auto_tare_indicator')));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.byType(AutoTareDialog), findsOneWidget);
     expect(find.text(vehicle.toUpperCase()), findsOneWidget);
   }
@@ -721,205 +727,53 @@ void main() {
     return false;
   }
 
-  testWidgets('edit without a selection shows a hint and opens no form', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(1400, 900);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(() {
-      tester.view.resetPhysicalSize();
-      tester.view.resetDevicePixelRatio();
-    });
-    await pumpBillPage(tester);
-    await openRegistryWithRecord(tester, 'TN14L1112', 8200);
+  testWidgets(
+    'tapping a vehicle tare record populates only tare weight and closes popup',
+    (tester) async {
+      tester.view.physicalSize = const Size(1400, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+      await pumpBillPage(tester);
 
-    expect(find.byKey(const Key('vehicle_tare_edit_button')), findsOneWidget);
+      // Pre-fill a vehicle number in the bill form to verify it is NOT changed
+      await tester.enterText(
+        find.byKey(const Key('bill_vehicle_number_field')),
+        'AP01XX1234',
+      );
+      await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const Key('vehicle_tare_edit_button')));
-    await tester.pumpAndSettle();
+      await openRegistryWithRecord(tester, 'TN14L1112', 8200);
 
-    expect(
-      find.text('Select a record from the table to edit it.'),
-      findsOneWidget,
-    );
-    expect(find.byKey(const Key('vehicle_tare_vehicle_field')), findsNothing);
-    expect(find.byType(AutoTareDialog), findsOneWidget);
-  });
+      // Verify the edit icon was removed from the header
+      expect(find.byKey(const Key('vehicle_tare_edit_button')), findsNothing);
 
-  testWidgets('selecting a row highlights it and edit prefills the form', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(1400, 900);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(() {
-      tester.view.resetPhysicalSize();
-      tester.view.resetDevicePixelRatio();
-    });
-    await pumpBillPage(tester);
-    await openRegistryWithRecord(tester, 'TN14L1112', 8200);
+      // Tap the vehicle tare record row
+      await tester.tap(find.text('TN14L1112'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
 
-    // No highlight before selection.
-    expect(hasSelectionHighlight(tester), isFalse);
+      // Popup is automatically closed after selecting
+      expect(find.byType(AutoTareDialog), findsNothing);
 
-    await tester.tap(find.text('TN14L1112'));
-    await tester.pumpAndSettle();
-    expect(hasSelectionHighlight(tester), isTrue);
+      // Vehicle number in bill form remains unchanged ('AP01XX1234')
+      expect(
+        tester
+            .widget<TextField>(
+              find.byKey(const Key('bill_vehicle_number_field')),
+            )
+            .controller
+            ?.text,
+        'AP01XX1234',
+      );
 
-    await tester.tap(find.byKey(const Key('vehicle_tare_edit_button')));
-    await tester.pumpAndSettle();
-
-    expect(find.text('EDIT VEHICLE TARE'), findsOneWidget);
-    expect(
-      tester
-          .widget<TextFormField>(
-            find.byKey(const Key('vehicle_tare_vehicle_field')),
-          )
-          .controller
-          ?.text,
-      'TN14L1112',
-    );
-    expect(
-      tester
-          .widget<TextFormField>(find.byKey(const Key('auto_tare_weight_field')))
-          .controller
-          ?.text,
-      '8200',
-    );
-  });
-
-  testWidgets('editing a weight updates the record and refreshes the table', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(1400, 900);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(() {
-      tester.view.resetPhysicalSize();
-      tester.view.resetDevicePixelRatio();
-    });
-    await pumpBillPage(tester);
-    await openRegistryWithRecord(tester, 'TN14L1112', 8200);
-
-    await tester.tap(find.text('TN14L1112'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('vehicle_tare_edit_button')));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(
-      find.byKey(const Key('auto_tare_weight_field')),
-      '8300',
-    );
-    await tester.tap(find.byKey(const Key('vehicle_tare_add_button')));
-    await tester.runAsync(
-      () => billBloc.stream.firstWhere(
-        (state) =>
-            state.vehicleTareRecords.length == 1 &&
-            state.vehicleTareRecords.single.tareKg == 8300,
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    // Table and bloc show the updated tare; the dialog stays open.
-    expect(find.text('8,300 Kg'), findsOneWidget);
-    expect(find.text('8,200 Kg'), findsNothing);
-    expect(find.byType(AutoTareDialog), findsOneWidget);
-    // No duplicate row was created.
-    expect(billBloc.state.vehicleTareRecords, hasLength(1));
-    // The daily tare and the bill are untouched by the edit.
-    expect(billBloc.state.hasAutoTare, isFalse);
-    expect(billBloc.state.tareWeightKg, 0);
-  });
-
-  testWidgets('renaming a vehicle moves the record without duplicating', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(1400, 900);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(() {
-      tester.view.resetPhysicalSize();
-      tester.view.resetDevicePixelRatio();
-    });
-    await pumpBillPage(tester);
-    await openRegistryWithRecord(tester, 'TN14L1112', 8200);
-
-    await tester.tap(find.text('TN14L1112'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('vehicle_tare_edit_button')));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(
-      find.byKey(const Key('vehicle_tare_vehicle_field')),
-      'TN99ZZ9999',
-    );
-    await tester.tap(find.byKey(const Key('vehicle_tare_add_button')));
-    await tester.runAsync(
-      () => billBloc.stream.firstWhere(
-        (state) =>
-            state.vehicleTareRecords.length == 1 &&
-            state.vehicleTareRecords.single.vehicleNumber == 'TN99ZZ9999',
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    expect(find.text('TN99ZZ9999'), findsOneWidget);
-    expect(find.text('TN14L1112'), findsNothing);
-    expect(billBloc.state.vehicleTareRecords, hasLength(1));
-    expect(billBloc.state.vehicleTareRecords.single.tareKg, 8200);
-  });
-
-  testWidgets('edit validation rejects an empty weight without saving', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(1400, 900);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(() {
-      tester.view.resetPhysicalSize();
-      tester.view.resetDevicePixelRatio();
-    });
-    await pumpBillPage(tester);
-    await openRegistryWithRecord(tester, 'TN14L1112', 8200);
-
-    await tester.tap(find.text('TN14L1112'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('vehicle_tare_edit_button')));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(find.byKey(const Key('auto_tare_weight_field')), '');
-    await tester.tap(find.byKey(const Key('vehicle_tare_add_button')));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Tare weight is required'), findsOneWidget);
-    expect(billBloc.state.vehicleTareRecords.single.tareKg, 8200);
-    expect(find.byType(AutoTareDialog), findsOneWidget);
-  });
-
-  testWidgets('cancel during edit closes without persisting the edit', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(1400, 900);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(() {
-      tester.view.resetPhysicalSize();
-      tester.view.resetDevicePixelRatio();
-    });
-    await pumpBillPage(tester);
-    await openRegistryWithRecord(tester, 'TN14L1112', 8200);
-
-    await tester.tap(find.text('TN14L1112'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const Key('vehicle_tare_edit_button')));
-    await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byKey(const Key('auto_tare_weight_field')),
-      '9999',
-    );
-    await tester.pumpAndSettle();
-
-    await tester.tap(find.text('Cancel'));
-    await tester.pumpAndSettle();
-
-    expect(find.byType(AutoTareDialog), findsNothing);
-    expect(billBloc.state.vehicleTareRecords.single.tareKg, 8200);
-  });
+      // Tare weight in bill form is populated with the record tare weight ('8200')
+      expect(find.text('8200'), findsOneWidget);
+      expect(billBloc.state.tareWeightKg, 8200);
+    },
+  );
 
   testWidgets(
     'F3 applies the saved auto tare to the bill and captures the current time',

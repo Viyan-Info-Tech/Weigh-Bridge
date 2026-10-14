@@ -262,11 +262,7 @@ class SaveVehicleTare extends BillEvent {
   final double tareKg;
   final Completer<VehicleTareRecord>? completer;
 
-  const SaveVehicleTare(
-    this.vehicleNumber,
-    this.tareKg, {
-    this.completer,
-  });
+  const SaveVehicleTare(this.vehicleNumber, this.tareKg, {this.completer});
 
   @override
   List<Object?> get props => [vehicleNumber, tareKg];
@@ -282,10 +278,7 @@ class DeleteVehicleTare extends BillEvent {
   final String vehicleNumber;
   final Completer<void>? completer;
 
-  const DeleteVehicleTare(
-    this.vehicleNumber, {
-    this.completer,
-  });
+  const DeleteVehicleTare(this.vehicleNumber, {this.completer});
 
   @override
   List<Object?> get props => [vehicleNumber];

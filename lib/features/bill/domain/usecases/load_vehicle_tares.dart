@@ -7,6 +7,5 @@ class LoadVehicleTaresUseCase {
 
   LoadVehicleTaresUseCase(this._repository);
 
-  Future<List<VehicleTareRecord>> call() =>
-      _repository.loadVehicleTares();
+  Future<List<VehicleTareRecord>> call() => _repository.loadVehicleTares();
 }

@@ -87,47 +87,46 @@ void main() {
     });
   });
 
-  test('fresh vehicle_tare_records table stores one tare per vehicle',
-      () async {
-    await withDatabase((db) async {
-      final cols = await db
-          .customSelect(
-            "SELECT name FROM pragma_table_info('vehicle_tare_records')",
-          )
-          .get();
-      final names = cols.map((r) => r.data['name'] as String).toSet();
-      expect(
-        names,
-        containsAll(<String>[
-          'vehicle_number',
-          'tare_kg',
-          'created_at',
-          'updated_at',
-        ]),
-      );
+  test(
+    'fresh vehicle_tare_records table stores one tare per vehicle',
+    () async {
+      await withDatabase((db) async {
+        final cols = await db
+            .customSelect(
+              "SELECT name FROM pragma_table_info('vehicle_tare_records')",
+            )
+            .get();
+        final names = cols.map((r) => r.data['name'] as String).toSet();
+        expect(
+          names,
+          containsAll(<String>[
+            'vehicle_number',
+            'tare_kg',
+            'created_at',
+            'updated_at',
+          ]),
+        );
 
-      final record = await db.vehicleTareRecordsDao.upsert(
-        vehicleNumber: 'TN14L1112',
-        tareKg: 8200,
-      );
-      expect(record.vehicleNumber, 'TN14L1112');
-      expect(record.tareKg, 8200);
+        final record = await db.vehicleTareRecordsDao.upsert(
+          vehicleNumber: 'TN14L1112',
+          tareKg: 8200,
+        );
+        expect(record.vehicleNumber, 'TN14L1112');
+        expect(record.tareKg, 8200);
 
-      final updated = await db.vehicleTareRecordsDao.upsert(
-        vehicleNumber: 'TN14L1112',
-        tareKg: 8300,
-      );
-      expect(updated.tareKg, 8300);
-      final rows = await db.vehicleTareRecordsDao.getAllOrdered();
-      expect(rows, hasLength(1));
+        final updated = await db.vehicleTareRecordsDao.upsert(
+          vehicleNumber: 'TN14L1112',
+          tareKg: 8300,
+        );
+        expect(updated.tareKg, 8300);
+        final rows = await db.vehicleTareRecordsDao.getAllOrdered();
+        expect(rows, hasLength(1));
 
-      await db.vehicleTareRecordsDao.deleteByVehicleNumber('TN14L1112');
-      expect(
-        await db.vehicleTareRecordsDao.getAllOrdered(),
-        isEmpty,
-      );
-    });
-  });
+        await db.vehicleTareRecordsDao.deleteByVehicleNumber('TN14L1112');
+        expect(await db.vehicleTareRecordsDao.getAllOrdered(), isEmpty);
+      });
+    },
+  );
 
   test(
     'fresh app_settings table has no show_material or show_party columns',

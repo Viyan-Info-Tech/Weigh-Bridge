@@ -38,8 +38,15 @@ void main() {
   }
 
   group('BillLocalDataSource', () {
-    test('saveWeighment persists every field', () async {
-      final id = await source.saveWeighment(buildEntity());
+    test('saveWeighment persists every field including capture timestamps', () async {
+      final grossTime = DateTime(2026, 10, 14, 14, 11);
+      final tareTime = DateTime(2026, 10, 14, 14, 15);
+      final id = await source.saveWeighment(
+        buildEntity().copyWith(
+          grossCapturedAt: grossTime,
+          tareCapturedAt: tareTime,
+        ),
+      );
       final stored = await db.billDao.getWeighmentById(id);
       expect(stored, isNotNull);
       expect(stored!.billNumber, 'WB-00001');
@@ -47,6 +54,13 @@ void main() {
       expect(stored.firstWeightKg, 20000);
       expect(stored.secondWeightKg, 5000);
       expect(stored.weightUnit, 'ton');
+      expect(stored.grossCapturedAt, grossTime);
+      expect(stored.tareCapturedAt, tareTime);
+
+      final entity = await source.getWeighmentById(id);
+      expect(entity, isNotNull);
+      expect(entity!.grossCapturedAt, grossTime);
+      expect(entity.tareCapturedAt, tareTime);
     });
 
     test('getRecentBills and by-id lookups map entities', () async {

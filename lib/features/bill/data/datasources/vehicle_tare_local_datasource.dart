@@ -29,19 +29,26 @@ class VehicleTareLocalDataSource {
     return _toEntity(row);
   }
 
-  Future<VehicleTareRecord> updateVehicleTare({required int id, required String vehicleNumber, required double tareKg}) async {
+  Future<VehicleTareRecord> updateVehicleTare({
+    required int id,
+    required String vehicleNumber,
+    required double tareKg,
+  }) async {
     final normalized = vehicleNumber.trim().toUpperCase();
     if (normalized.isEmpty) throw ArgumentError('Vehicle number is required.');
-    if (!tareKg.isFinite || tareKg <= 0) throw ArgumentError('Tare weight must be greater than zero.');
-    return _toEntity(await _database.vehicleTareRecordsDao.updateById(
-      id: id, vehicleNumber: normalized, tareKg: tareKg,
-    ));
+    if (!tareKg.isFinite || tareKg <= 0)
+      throw ArgumentError('Tare weight must be greater than zero.');
+    return _toEntity(
+      await _database.vehicleTareRecordsDao.updateById(
+        id: id,
+        vehicleNumber: normalized,
+        tareKg: tareKg,
+      ),
+    );
   }
 
   Future<void> deleteVehicleTare(String vehicleNumber) async {
-    await _database.vehicleTareRecordsDao.deleteByVehicleNumber(
-      vehicleNumber,
-    );
+    await _database.vehicleTareRecordsDao.deleteByVehicleNumber(vehicleNumber);
   }
 
   VehicleTareRecord _toEntity(dynamic row) {

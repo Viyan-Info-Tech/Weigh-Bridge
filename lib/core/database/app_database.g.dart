@@ -653,6 +653,30 @@ class $WeighmentsTable extends Weighments
     requiredDuringInsert: false,
     defaultValue: const Constant('ton'),
   );
+  static const VerificationMeta _grossCapturedAtMeta = const VerificationMeta(
+    'grossCapturedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> grossCapturedAt =
+      GeneratedColumn<DateTime>(
+        'gross_captured_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
+  static const VerificationMeta _tareCapturedAtMeta = const VerificationMeta(
+    'tareCapturedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> tareCapturedAt =
+      GeneratedColumn<DateTime>(
+        'tare_captured_at',
+        aliasedName,
+        true,
+        type: DriftSqlType.dateTime,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -692,6 +716,8 @@ class $WeighmentsTable extends Weighments
     remarks,
     mobileNumber,
     weightUnit,
+    grossCapturedAt,
+    tareCapturedAt,
     createdAt,
     updatedAt,
   ];
@@ -812,6 +838,24 @@ class $WeighmentsTable extends Weighments
         weightUnit.isAcceptableOrUnknown(data['weight_unit']!, _weightUnitMeta),
       );
     }
+    if (data.containsKey('gross_captured_at')) {
+      context.handle(
+        _grossCapturedAtMeta,
+        grossCapturedAt.isAcceptableOrUnknown(
+          data['gross_captured_at']!,
+          _grossCapturedAtMeta,
+        ),
+      );
+    }
+    if (data.containsKey('tare_captured_at')) {
+      context.handle(
+        _tareCapturedAtMeta,
+        tareCapturedAt.isAcceptableOrUnknown(
+          data['tare_captured_at']!,
+          _tareCapturedAtMeta,
+        ),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -885,6 +929,14 @@ class $WeighmentsTable extends Weighments
         DriftSqlType.string,
         data['${effectivePrefix}weight_unit'],
       )!,
+      grossCapturedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}gross_captured_at'],
+      ),
+      tareCapturedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}tare_captured_at'],
+      ),
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -916,6 +968,8 @@ class Weighment extends DataClass implements Insertable<Weighment> {
   final String? remarks;
   final String? mobileNumber;
   final String weightUnit;
+  final DateTime? grossCapturedAt;
+  final DateTime? tareCapturedAt;
   final DateTime createdAt;
   final DateTime updatedAt;
   const Weighment({
@@ -932,6 +986,8 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     this.remarks,
     this.mobileNumber,
     required this.weightUnit,
+    this.grossCapturedAt,
+    this.tareCapturedAt,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -965,6 +1021,12 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       map['mobile_number'] = Variable<String>(mobileNumber);
     }
     map['weight_unit'] = Variable<String>(weightUnit);
+    if (!nullToAbsent || grossCapturedAt != null) {
+      map['gross_captured_at'] = Variable<DateTime>(grossCapturedAt);
+    }
+    if (!nullToAbsent || tareCapturedAt != null) {
+      map['tare_captured_at'] = Variable<DateTime>(tareCapturedAt);
+    }
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -999,6 +1061,12 @@ class Weighment extends DataClass implements Insertable<Weighment> {
           ? const Value.absent()
           : Value(mobileNumber),
       weightUnit: Value(weightUnit),
+      grossCapturedAt: grossCapturedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(grossCapturedAt),
+      tareCapturedAt: tareCapturedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(tareCapturedAt),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -1023,6 +1091,8 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       remarks: serializer.fromJson<String?>(json['remarks']),
       mobileNumber: serializer.fromJson<String?>(json['mobileNumber']),
       weightUnit: serializer.fromJson<String>(json['weightUnit']),
+      grossCapturedAt: serializer.fromJson<DateTime?>(json['grossCapturedAt']),
+      tareCapturedAt: serializer.fromJson<DateTime?>(json['tareCapturedAt']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -1044,6 +1114,8 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       'remarks': serializer.toJson<String?>(remarks),
       'mobileNumber': serializer.toJson<String?>(mobileNumber),
       'weightUnit': serializer.toJson<String>(weightUnit),
+      'grossCapturedAt': serializer.toJson<DateTime?>(grossCapturedAt),
+      'tareCapturedAt': serializer.toJson<DateTime?>(tareCapturedAt),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -1063,6 +1135,8 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     Value<String?> remarks = const Value.absent(),
     Value<String?> mobileNumber = const Value.absent(),
     String? weightUnit,
+    Value<DateTime?> grossCapturedAt = const Value.absent(),
+    Value<DateTime?> tareCapturedAt = const Value.absent(),
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => Weighment(
@@ -1083,6 +1157,12 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     remarks: remarks.present ? remarks.value : this.remarks,
     mobileNumber: mobileNumber.present ? mobileNumber.value : this.mobileNumber,
     weightUnit: weightUnit ?? this.weightUnit,
+    grossCapturedAt: grossCapturedAt.present
+        ? grossCapturedAt.value
+        : this.grossCapturedAt,
+    tareCapturedAt: tareCapturedAt.present
+        ? tareCapturedAt.value
+        : this.tareCapturedAt,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -1121,6 +1201,12 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       weightUnit: data.weightUnit.present
           ? data.weightUnit.value
           : this.weightUnit,
+      grossCapturedAt: data.grossCapturedAt.present
+          ? data.grossCapturedAt.value
+          : this.grossCapturedAt,
+      tareCapturedAt: data.tareCapturedAt.present
+          ? data.tareCapturedAt.value
+          : this.tareCapturedAt,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -1142,6 +1228,8 @@ class Weighment extends DataClass implements Insertable<Weighment> {
           ..write('remarks: $remarks, ')
           ..write('mobileNumber: $mobileNumber, ')
           ..write('weightUnit: $weightUnit, ')
+          ..write('grossCapturedAt: $grossCapturedAt, ')
+          ..write('tareCapturedAt: $tareCapturedAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -1163,6 +1251,8 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     remarks,
     mobileNumber,
     weightUnit,
+    grossCapturedAt,
+    tareCapturedAt,
     createdAt,
     updatedAt,
   );
@@ -1183,6 +1273,8 @@ class Weighment extends DataClass implements Insertable<Weighment> {
           other.remarks == this.remarks &&
           other.mobileNumber == this.mobileNumber &&
           other.weightUnit == this.weightUnit &&
+          other.grossCapturedAt == this.grossCapturedAt &&
+          other.tareCapturedAt == this.tareCapturedAt &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -1201,6 +1293,8 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
   final Value<String?> remarks;
   final Value<String?> mobileNumber;
   final Value<String> weightUnit;
+  final Value<DateTime?> grossCapturedAt;
+  final Value<DateTime?> tareCapturedAt;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   const WeighmentsCompanion({
@@ -1217,6 +1311,8 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     this.remarks = const Value.absent(),
     this.mobileNumber = const Value.absent(),
     this.weightUnit = const Value.absent(),
+    this.grossCapturedAt = const Value.absent(),
+    this.tareCapturedAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
@@ -1234,6 +1330,8 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     this.remarks = const Value.absent(),
     this.mobileNumber = const Value.absent(),
     this.weightUnit = const Value.absent(),
+    this.grossCapturedAt = const Value.absent(),
+    this.tareCapturedAt = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
   }) : billNumber = Value(billNumber),
@@ -1253,6 +1351,8 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     Expression<String>? remarks,
     Expression<String>? mobileNumber,
     Expression<String>? weightUnit,
+    Expression<DateTime>? grossCapturedAt,
+    Expression<DateTime>? tareCapturedAt,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
   }) {
@@ -1270,6 +1370,8 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
       if (remarks != null) 'remarks': remarks,
       if (mobileNumber != null) 'mobile_number': mobileNumber,
       if (weightUnit != null) 'weight_unit': weightUnit,
+      if (grossCapturedAt != null) 'gross_captured_at': grossCapturedAt,
+      if (tareCapturedAt != null) 'tare_captured_at': tareCapturedAt,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
@@ -1289,6 +1391,8 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     Value<String?>? remarks,
     Value<String?>? mobileNumber,
     Value<String>? weightUnit,
+    Value<DateTime?>? grossCapturedAt,
+    Value<DateTime?>? tareCapturedAt,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
   }) {
@@ -1306,6 +1410,8 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
       remarks: remarks ?? this.remarks,
       mobileNumber: mobileNumber ?? this.mobileNumber,
       weightUnit: weightUnit ?? this.weightUnit,
+      grossCapturedAt: grossCapturedAt ?? this.grossCapturedAt,
+      tareCapturedAt: tareCapturedAt ?? this.tareCapturedAt,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -1353,6 +1459,12 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     if (weightUnit.present) {
       map['weight_unit'] = Variable<String>(weightUnit.value);
     }
+    if (grossCapturedAt.present) {
+      map['gross_captured_at'] = Variable<DateTime>(grossCapturedAt.value);
+    }
+    if (tareCapturedAt.present) {
+      map['tare_captured_at'] = Variable<DateTime>(tareCapturedAt.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -1378,6 +1490,8 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
           ..write('remarks: $remarks, ')
           ..write('mobileNumber: $mobileNumber, ')
           ..write('weightUnit: $weightUnit, ')
+          ..write('grossCapturedAt: $grossCapturedAt, ')
+          ..write('tareCapturedAt: $tareCapturedAt, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -4301,6 +4415,8 @@ typedef $$WeighmentsTableCreateCompanionBuilder =
       Value<String?> remarks,
       Value<String?> mobileNumber,
       Value<String> weightUnit,
+      Value<DateTime?> grossCapturedAt,
+      Value<DateTime?> tareCapturedAt,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
     });
@@ -4319,6 +4435,8 @@ typedef $$WeighmentsTableUpdateCompanionBuilder =
       Value<String?> remarks,
       Value<String?> mobileNumber,
       Value<String> weightUnit,
+      Value<DateTime?> grossCapturedAt,
+      Value<DateTime?> tareCapturedAt,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
     });
@@ -4394,6 +4512,16 @@ class $$WeighmentsTableFilterComposer
 
   ColumnFilters<String> get weightUnit => $composableBuilder(
     column: $table.weightUnit,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get grossCapturedAt => $composableBuilder(
+    column: $table.grossCapturedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get tareCapturedAt => $composableBuilder(
+    column: $table.tareCapturedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4482,6 +4610,16 @@ class $$WeighmentsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get grossCapturedAt => $composableBuilder(
+    column: $table.grossCapturedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get tareCapturedAt => $composableBuilder(
+    column: $table.tareCapturedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -4561,6 +4699,16 @@ class $$WeighmentsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<DateTime> get grossCapturedAt => $composableBuilder(
+    column: $table.grossCapturedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get tareCapturedAt => $composableBuilder(
+    column: $table.tareCapturedAt,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -4612,6 +4760,8 @@ class $$WeighmentsTableTableManager
                 Value<String?> remarks = const Value.absent(),
                 Value<String?> mobileNumber = const Value.absent(),
                 Value<String> weightUnit = const Value.absent(),
+                Value<DateTime?> grossCapturedAt = const Value.absent(),
+                Value<DateTime?> tareCapturedAt = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => WeighmentsCompanion(
@@ -4628,6 +4778,8 @@ class $$WeighmentsTableTableManager
                 remarks: remarks,
                 mobileNumber: mobileNumber,
                 weightUnit: weightUnit,
+                grossCapturedAt: grossCapturedAt,
+                tareCapturedAt: tareCapturedAt,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),
@@ -4646,6 +4798,8 @@ class $$WeighmentsTableTableManager
                 Value<String?> remarks = const Value.absent(),
                 Value<String?> mobileNumber = const Value.absent(),
                 Value<String> weightUnit = const Value.absent(),
+                Value<DateTime?> grossCapturedAt = const Value.absent(),
+                Value<DateTime?> tareCapturedAt = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => WeighmentsCompanion.insert(
@@ -4662,6 +4816,8 @@ class $$WeighmentsTableTableManager
                 remarks: remarks,
                 mobileNumber: mobileNumber,
                 weightUnit: weightUnit,
+                grossCapturedAt: grossCapturedAt,
+                tareCapturedAt: tareCapturedAt,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
               ),

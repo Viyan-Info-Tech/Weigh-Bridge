@@ -42,17 +42,19 @@ class AutoTareDialog extends StatefulWidget {
 
   /// Persists one vehicle tare record. Receives the normalized vehicle
   /// number and kilograms, resolves with the stored record.
-  final Future<VehicleTareRecord> Function(
-    String vehicleNumber,
-    double tareKg,
-  )
+  final Future<VehicleTareRecord> Function(String vehicleNumber, double tareKg)
   onAdd;
 
   /// Removes the tare record for [vehicleNumber]. Used when an edit renames
   /// a vehicle: the renamed record is saved as new, the old row is removed.
   final Future<void> Function(String vehicleNumber) onDelete;
   final ValueChanged<VehicleTareRecord> onSelect;
-  final Future<VehicleTareRecord> Function(int id, String vehicleNumber, double tareKg) onUpdate;
+  final Future<VehicleTareRecord> Function(
+    int id,
+    String vehicleNumber,
+    double tareKg,
+  )
+  onUpdate;
 
   static Future<void> show(
     BuildContext context, {
@@ -69,7 +71,12 @@ class AutoTareDialog extends StatefulWidget {
     onAdd,
     required Future<void> Function(String vehicleNumber) onDelete,
     required ValueChanged<VehicleTareRecord> onSelect,
-    required Future<VehicleTareRecord> Function(int id, String vehicleNumber, double tareKg) onUpdate,
+    required Future<VehicleTareRecord> Function(
+      int id,
+      String vehicleNumber,
+      double tareKg,
+    )
+    onUpdate,
     DateTime? date,
   }) {
     return showDialog<void>(
@@ -117,6 +124,7 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
   String? _hintMessage;
   late DateTime _currentTime;
   Timer? _timeTimer;
+  Timer? _singleTapTimer;
 
   bool get _isTon => widget.weightUnit.trim().toLowerCase() == 'ton';
 
@@ -161,6 +169,7 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
 
   @override
   void dispose() {
+    _singleTapTimer?.cancel();
     _timeTimer?.cancel();
     _vehicleController.dispose();
     _weightController.dispose();
@@ -175,11 +184,10 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
     return _isTon ? value * 1000 : value;
   }
 
-  String _normalizedVehicle() =>
-      _vehicleController.text.trim().toUpperCase().replaceAll(
-        RegExp(r'\s+'),
-        ' ',
-      );
+  String _normalizedVehicle() => _vehicleController.text
+      .trim()
+      .toUpperCase()
+      .replaceAll(RegExp(r'\s+'), ' ');
 
   bool get _isEditing => _editingVehicle != null;
 
@@ -190,48 +198,15 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
     return null;
   }
 
-  /// Selects a table row. Retargets an in-progress edit to the new row.
-  void _selectRecord(String vehicleNumber) {
+  /// Opens the edit UI for the selected record and prefills its values.
+  void _editRecord(VehicleTareRecord record) {
     if (_isBusy) return;
-    final record = _findRecord(vehicleNumber);
-    if (record == null) return;
+    _singleTapTimer?.cancel();
+    _singleTapTimer = null;
     setState(() {
-      _selectedVehicle = record.vehicleNumber;
-      _hintMessage = null;
-      if (_editingVehicle != null) {
-        _editingVehicle = record.vehicleNumber;
-        _vehicleController.text = record.vehicleNumber;
-        _weightController.text = _formatKg(record.tareKg);
-        _errorMessage = null;
-      }
-    });
-    widget.onSelect(record);
-  }
-
-  void _editRecord(String vehicleNumber) {
-    _selectRecord(vehicleNumber);
-    _editPressed();
-  }
-
-  /// Header Edit button: loads the selected record into the entry form.
-  void _editPressed() {
-    if (_isBusy) return;
-    if (_records.isEmpty) {
-      setState(() => _hintMessage = 'No vehicle tare records to edit yet.');
-      return;
-    }
-    final selected = _selectedVehicle;
-    final record = selected == null ? null : _findRecord(selected);
-    if (record == null) {
-      setState(
-        () => _hintMessage = 'Select a record from the table to edit it.',
-      );
-      return;
-    }
-    setState(() {
+      _showEntryForm = true;
       _editingVehicle = record.vehicleNumber;
       _selectedVehicle = record.vehicleNumber;
-      _showEntryForm = true;
       _errorMessage = null;
       _hintMessage = null;
       _vehicleController.text = record.vehicleNumber;
@@ -242,11 +217,34 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
     });
   }
 
+  /// Single-click handler: slightly delayed to allow double-click to cancel it.
+  void _onRecordTap(VehicleTareRecord record) {
+    if (_isBusy) return;
+    setState(() {
+      _selectedVehicle = record.vehicleNumber;
+    });
+    _singleTapTimer?.cancel();
+    _singleTapTimer = Timer(const Duration(milliseconds: 250), () {
+      if (!mounted) return;
+      widget.onSelect(record);
+    });
+  }
+
+  /// Double-click handler: cancels the delayed single click and opens edit UI.
+  void _onRecordDoubleTap(VehicleTareRecord record) {
+    if (_isBusy) return;
+    _singleTapTimer?.cancel();
+    _singleTapTimer = null;
+    _editRecord(record);
+  }
+
   /// Discards an in-progress edit (or a new-entry draft) without persisting.
   /// Restores the table to its stored values and returns to viewing mode.
   /// The popup stays open so Add continues to work independently.
   void _cancelEditPressed() {
     if (_isBusy) return;
+    _singleTapTimer?.cancel();
+    _singleTapTimer = null;
     setState(() {
       _showEntryForm = false;
       _editingVehicle = null;
@@ -262,6 +260,8 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
   /// edit, when one is active.
   Future<void> _addPressed() async {
     if (_isBusy) return;
+    _singleTapTimer?.cancel();
+    _singleTapTimer = null;
     if (!_showEntryForm) {
       setState(() {
         _showEntryForm = true;
@@ -286,9 +286,14 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
     });
 
     try {
+      final originalRecord = editingOriginal != null
+          ? _findRecord(editingOriginal)
+          : null;
       final saved = editingOriginal != null
           ? await widget.onUpdate(
-              _findRecord(editingOriginal)!.id!, vehicleNumber, tareKg,
+              originalRecord?.id ?? 0,
+              vehicleNumber,
+              tareKg,
             )
           : await widget.onAdd(vehicleNumber, tareKg);
       if (!mounted) return;
@@ -356,10 +361,7 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
                   decoration: const BoxDecoration(
                     color: Color(0xFFF8FAFC),
                     border: Border(
-                      bottom: BorderSide(
-                        color: Color(0xFFF1F5F9),
-                        width: 1.2,
-                      ),
+                      bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1.2),
                     ),
                   ),
                   child: Row(
@@ -419,47 +421,6 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
                               ),
                             ),
                           ],
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      // Edit button: loads the selected record for editing.
-                      Material(
-                        color: Colors.transparent,
-                        child: Tooltip(
-                          message: 'Edit selected record',
-                          child: InkWell(
-                            key: const Key('vehicle_tare_edit_button'),
-                            onTap: _isBusy || _records.isEmpty
-                                ? null
-                                : _editPressed,
-                            borderRadius: BorderRadius.circular(20),
-                            hoverColor: const Color(0xFFE2E8F0),
-                            child: Container(
-                              width: 36,
-                              height: 36,
-                              alignment: Alignment.center,
-                              decoration: BoxDecoration(
-                                color: _isEditing
-                                    ? const Color(0xFFEFF6FF)
-                                    : Colors.white,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: _isEditing
-                                      ? const Color(0xFF0D53FC)
-                                      : const Color(0xFFE2E8F0),
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.edit_outlined,
-                                size: 18,
-                                color: _records.isEmpty
-                                    ? const Color(0xFFCBD5E1)
-                                    : _isEditing
-                                    ? const Color(0xFF0D53FC)
-                                    : const Color(0xFF475569),
-                              ),
-                            ),
-                          ),
                         ),
                       ),
                     ],
@@ -578,7 +539,10 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
                                 key: const Key('vehicle_tare_cancel_button'),
                                 onPressed: _isBusy
                                     ? null
-                                    : () => Navigator.of(context).pop(),
+                                    : () {
+                                        _singleTapTimer?.cancel();
+                                        Navigator.of(context).pop();
+                                      },
                                 style: OutlinedButton.styleFrom(
                                   foregroundColor: const Color(0xFF64748B),
                                   side: const BorderSide(
@@ -701,10 +665,7 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
             padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(
               children: [
-                SizedBox(
-                  width: 52,
-                  child: Text('SL NO', style: headerStyle),
-                ),
+                SizedBox(width: 52, child: Text('SL NO', style: headerStyle)),
                 Expanded(child: Text('VEHICLE NO', style: headerStyle)),
                 SizedBox(
                   width: 130,
@@ -772,13 +733,11 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       child: Material(
-        color: isSelected
-            ? const Color(0xFFEFF6FF)
-            : Colors.transparent,
+        color: isSelected ? const Color(0xFFEFF6FF) : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
         child: InkWell(
-          onTap: _isBusy ? null : () => _selectRecord(record.vehicleNumber),
-          onDoubleTap: _isBusy ? null : () => _editRecord(record.vehicleNumber),
+          onTap: _isBusy ? null : () => _onRecordTap(record),
+          onDoubleTap: _isBusy ? null : () => _onRecordDoubleTap(record),
           borderRadius: BorderRadius.circular(8),
           hoverColor: const Color(0xFFF1F5F9),
           child: Container(

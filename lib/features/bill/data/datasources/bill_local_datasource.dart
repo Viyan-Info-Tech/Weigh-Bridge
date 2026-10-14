@@ -34,6 +34,8 @@ class BillLocalDataSource {
       secondWeightKg: Value(weighment.secondWeightKg),
       secondWeightType: Value(weighment.secondWeightType),
       netWeightKg: Value(weighment.netWeightKg),
+      grossCapturedAt: Value(weighment.grossCapturedAt),
+      tareCapturedAt: Value(weighment.tareCapturedAt),
       material: Value(weighment.material),
       description: Value(weighment.description),
       remarks: Value(weighment.remarks),
@@ -59,6 +61,8 @@ class BillLocalDataSource {
         secondWeightKg: Value(weighment.secondWeightKg),
         secondWeightType: Value(weighment.secondWeightType),
         netWeightKg: Value(weighment.netWeightKg),
+        grossCapturedAt: Value(weighment.grossCapturedAt),
+        tareCapturedAt: Value(weighment.tareCapturedAt),
         material: Value(weighment.material),
         description: Value(weighment.description),
         remarks: Value(weighment.remarks),
@@ -141,6 +145,8 @@ class BillLocalDataSource {
       secondWeightKg: secondWeight,
       secondWeightType: secondType,
       netWeightKg: (record.netWeightKg as num?)?.toDouble(),
+      grossCapturedAt: _readOptionalDateTime(record, 'grossCapturedAt'),
+      tareCapturedAt: _readOptionalDateTime(record, 'tareCapturedAt'),
       material: _readOptionalString(record, 'material'),
       description: _readOptionalString(record, 'description'),
       remarks: record.remarks as String?,
@@ -163,6 +169,23 @@ class BillLocalDataSource {
         return (value.material as String?);
       }
       return (value.description as String?);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Reads a nullable DateTime column that may not exist on databases created
+  /// before the grossCapturedAt/tareCapturedAt migration (schema 32).
+  DateTime? _readOptionalDateTime(dynamic record, String name) {
+    try {
+      final value = (record as dynamic);
+      if (name == 'grossCapturedAt') {
+        return (value.grossCapturedAt as DateTime?);
+      }
+      if (name == 'tareCapturedAt') {
+        return (value.tareCapturedAt as DateTime?);
+      }
+      return null;
     } catch (_) {
       return null;
     }

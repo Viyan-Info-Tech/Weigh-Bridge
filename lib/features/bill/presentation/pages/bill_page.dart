@@ -316,22 +316,6 @@ class BillPageState extends State<BillPage> {
   Future<void> _applyAutoTareToBill() async {
     final bloc = context.read<BillBloc>();
     if (!bloc.state.hasAutoTare) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Auto Tare is not configured. Enter today\'s Auto Tare to apply it.',
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            backgroundColor: Color(0xFF0D3B82),
-            behavior: SnackBarBehavior.floating,
-            duration: Duration(seconds: 3),
-          ),
-        );
       await _openAutoTareDialog();
       return;
     }
@@ -347,10 +331,8 @@ class BillPageState extends State<BillPage> {
     _isAutoTareDialogOpen = true;
     final bloc = context.read<BillBloc>();
     try {
-      // Load the registry first so the popup table shows fresh data.
-      final loadCompleter = Completer<void>();
-      bloc.add(LoadVehicleTares(completer: loadCompleter));
-      await loadCompleter.future;
+      // Refresh the registry records in background while opening the dialog
+      bloc.add(const LoadVehicleTares());
       if (!mounted) return;
       await AutoTareDialog.show(
         context,
@@ -363,38 +345,38 @@ class BillPageState extends State<BillPage> {
         onAdd: (vehicleNumber, tareKg) {
           final completer = Completer<VehicleTareRecord>();
           bloc.add(
-            SaveVehicleTare(
-              vehicleNumber,
-              tareKg,
-              completer: completer,
-            ),
+            SaveVehicleTare(vehicleNumber, tareKg, completer: completer),
           );
           return completer.future;
         },
         onDelete: (vehicleNumber) {
           final completer = Completer<void>();
-          bloc.add(
-            DeleteVehicleTare(
-              vehicleNumber,
-              completer: completer,
-            ),
-          );
+          bloc.add(DeleteVehicleTare(vehicleNumber, completer: completer));
           return completer.future;
         },
         onSelect: (record) {
+          if (!mounted) return;
+
           final isTon = bloc.state.weightUnit.toLowerCase() == 'ton';
-          _vehicleNumberController.text = record.vehicleNumber;
+
           _tareWeightController.text = isTon
               ? (record.tareKg / 1000).toStringAsFixed(3)
               : record.tareKg.toStringAsFixed(0);
-          bloc.add(VehicleNumberChanged(record.vehicleNumber));
+
           bloc.add(TareWeightChanged(_tareWeightController.text));
+
+          Navigator.of(context, rootNavigator: true).pop();
         },
         onUpdate: (id, vehicleNumber, tareKg) async {
           final repo = bloc.vehicleTareRepository;
-          if (repo is! VehicleTareEditableRepository) throw Exception('Vehicle tare storage is unavailable.');
-          final saved = await repo.updateVehicleTare(
-            id: id, vehicleNumber: vehicleNumber, tareKg: tareKg,
+          if (repo is! VehicleTareEditableRepository) {
+            throw Exception('Vehicle tare storage is unavailable.');
+          }
+          final editableRepo = repo as VehicleTareEditableRepository;
+          final saved = await editableRepo.updateVehicleTare(
+            id: id,
+            vehicleNumber: vehicleNumber,
+            tareKg: tareKg,
           );
           final loadCompleter = Completer<void>();
           bloc.add(LoadVehicleTares(completer: loadCompleter));

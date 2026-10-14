@@ -35,7 +35,7 @@ class BillFormSerialNoDisplay extends StatelessWidget {
   }
 }
 
-/// 2. NET WEIGHT Display (blue dedicated display).
+/// 2. NET WEIGHT Display (dedicated blue numeric display).
 class BillFormNetWeightDisplay extends StatelessWidget {
   const BillFormNetWeightDisplay({
     super.key,
@@ -63,9 +63,9 @@ class BillFormNetWeightDisplay extends StatelessWidget {
     return Container(
       height: 46,
       decoration: BoxDecoration(
-        color: const Color(0xFFEFF6FF),
+        color: const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: const Color(0xFF93C5FD), width: 1.0),
+        border: Border.all(color: const Color(0xFFCBD5E1), width: 1.0),
       ),
       child: Row(
         children: [
@@ -73,17 +73,17 @@ class BillFormNetWeightDisplay extends StatelessWidget {
             width: 44,
             height: 46,
             decoration: const BoxDecoration(
-              color: Color(0xFFDBEAFE),
+              color: Color(0xFFE2E8F0),
               borderRadius: BorderRadius.horizontal(left: Radius.circular(5)),
               border: Border(
-                right: BorderSide(color: Color(0xFF93C5FD), width: 1.0),
+                right: BorderSide(color: Color(0xFFCBD5E1), width: 1.0),
               ),
             ),
             alignment: Alignment.center,
             child: const Icon(
               Icons.scale_rounded,
               size: 20,
-              color: Color(0xFF0284C7),
+              color: Color(0xFF64748B),
             ),
           ),
           Expanded(
@@ -91,11 +91,13 @@ class BillFormNetWeightDisplay extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(
                 netDisplay,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'PlusJakartaSans',
                   fontSize: 16,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF0C4A6E),
+                  fontWeight: FontWeight.w600,
+                  color: hasCompleteWeight && netWeightKg > 0
+                      ? const Color(0xFF0284C7)
+                      : const Color(0xFF0F172A),
                 ),
               ),
             ),
@@ -105,10 +107,10 @@ class BillFormNetWeightDisplay extends StatelessWidget {
             height: 46,
             alignment: Alignment.center,
             decoration: const BoxDecoration(
-              color: Color(0xFFDBEAFE),
+              color: Color(0xFFF1F5F9),
               borderRadius: BorderRadius.horizontal(right: Radius.circular(5)),
               border: Border(
-                left: BorderSide(color: Color(0xFF93C5FD), width: 1.0),
+                left: BorderSide(color: Color(0xFFCBD5E1), width: 1.0),
               ),
             ),
             child: Text(
@@ -117,7 +119,7 @@ class BillFormNetWeightDisplay extends StatelessWidget {
                 fontFamily: 'PlusJakartaSans',
                 fontSize: 13.5,
                 fontWeight: FontWeight.w800,
-                color: Color(0xFF0C4A6E),
+                color: Color(0xFF334155),
               ),
             ),
           ),

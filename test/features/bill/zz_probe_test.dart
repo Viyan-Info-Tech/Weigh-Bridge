@@ -3,10 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:weighbridge/features/bill/domain/entities/vehicle_tare_record.dart';
+import 'package:weighbridge/features/bill/domain/entities/weighment.dart';
 import 'package:weighbridge/features/bill/domain/repositories/vehicle_tare_repository.dart';
 import 'package:weighbridge/features/bill/domain/usecases/save_bill.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_bloc.dart';
-import 'package:weighbridge/features/bill/presentation/bloc/bill_event.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_state.dart';
 import 'package:weighbridge/features/bill/presentation/pages/bill_page.dart';
 import 'package:weighbridge/features/bill/presentation/widgets/auto_tare_dialog.dart';
@@ -27,11 +27,15 @@ class ProbeVehicleTareRepository implements VehicleTareRepository {
   Future<VehicleTareRecord> saveVehicleTare({
     required String vehicleNumber,
     required double tareKg,
-  }) async =>
-      VehicleTareRecord(vehicleNumber: vehicleNumber, tareKg: tareKg);
+  }) async => VehicleTareRecord(vehicleNumber: vehicleNumber, tareKg: tareKg);
+
+  @override
+  Future<void> deleteVehicleTare(String vehicleNumber) async {}
 }
 
 void main() {
+  setUpAll(() => registerFallbackValue(DateTime(2026, 9, 12)));
+
   testWidgets('probe dialog open', (tester) async {
     tester.view.physicalSize = const Size(1400, 900);
     tester.view.devicePixelRatio = 1.0;
@@ -45,10 +49,10 @@ void main() {
     final generateBillNumberUseCase = MockGenerateBillNumberUseCase();
     when(
       () => loadRecentBillsUseCase(),
-    ).thenAnswer((_) => Future.value([]));
+    ).thenAnswer((_) => Future.value(<Weighment>[]));
     when(
       () => loadRecentBillsUseCase(date: any(named: 'date')),
-    ).thenAnswer((_) => Future.value([]));
+    ).thenAnswer((_) => Future.value(<Weighment>[]));
     when(
       () => generateBillNumberUseCase(),
     ).thenAnswer((_) => Future.value('WB-00002'));

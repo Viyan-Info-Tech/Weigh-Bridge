@@ -181,7 +181,7 @@ class WeighmentReceiptTemplate extends StatelessWidget {
                 ),
               if (data.hasRemarks)
                 _buildFieldRow(
-                  'CONTAINER No',
+                  'CONTAINER NO',
                   data.bill.remarks!,
                   labelWidth: labelWidth,
                   labelStyle: fieldLabelStyle,

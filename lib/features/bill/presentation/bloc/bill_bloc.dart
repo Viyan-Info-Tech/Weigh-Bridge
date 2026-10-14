@@ -746,6 +746,13 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
         ? (state.grossWeightKg - state.tareWeightKg).abs()
         : null;
 
+    final grossCapturedAt = state.grossWeightKg > 0
+        ? (state.grossCapturedAt ?? createdAt)
+        : null;
+    final tareCapturedAt = state.tareWeightKg > 0
+        ? (state.tareCapturedAt ?? createdAt)
+        : null;
+
     final weighment = Weighment(
       id: 0,
       // Placeholder only: the serial number is allocated by the database
@@ -758,6 +765,8 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
       secondWeightKg: secondWeightKg,
       secondWeightType: secondWeightType,
       netWeightKg: netWeight,
+      grossCapturedAt: grossCapturedAt,
+      tareCapturedAt: tareCapturedAt,
       material: state.materialText.trim().isNotEmpty
           ? state.materialText.trim()
           : null,
@@ -786,6 +795,8 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
       secondWeightKg: weighment.secondWeightKg,
       secondWeightType: weighment.secondWeightType,
       netWeightKg: weighment.explicitNetWeightKg,
+      grossCapturedAt: weighment.grossCapturedAt,
+      tareCapturedAt: weighment.tareCapturedAt,
       material: weighment.material,
       description: weighment.description,
       remarks: weighment.remarks,

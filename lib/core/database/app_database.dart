@@ -44,7 +44,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 31;
+  int get schemaVersion => 32;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -1011,6 +1011,24 @@ class AppDatabase extends _$AppDatabase {
         // table, so no existing rows are touched; every weighment, bill,
         // and settings row is preserved untouched.
         await m.createTable(vehicleTareRecords);
+      }
+      if (from < 32) {
+        // Dedicated weight capture timestamps for Gross and Tare weights.
+        // Nullable ADD COLUMNs so every existing weighment row is preserved;
+        // new bills persist actual capture times, old bills fall back to
+        // createdAt/updatedAt.
+        final weighmentColumns = await customSelect(
+          "PRAGMA table_info('weighments')",
+        ).get();
+        final weighmentNames = weighmentColumns
+            .map((c) => c.read<String>('name'))
+            .toSet();
+        if (!weighmentNames.contains('gross_captured_at')) {
+          await m.addColumn(weighments, weighments.grossCapturedAt);
+        }
+        if (!weighmentNames.contains('tare_captured_at')) {
+          await m.addColumn(weighments, weighments.tareCapturedAt);
+        }
       }
     },
   );

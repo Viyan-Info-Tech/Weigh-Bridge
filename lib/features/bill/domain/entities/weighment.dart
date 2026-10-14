@@ -9,6 +9,8 @@ class Weighment extends Equatable {
   final double? secondWeightKg;
   final String? secondWeightType;
   final double? explicitNetWeightKg;
+  final DateTime? explicitGrossCapturedAt;
+  final DateTime? explicitTareCapturedAt;
   final String? material;
   final String? description;
   final String? remarks;
@@ -28,6 +30,8 @@ class Weighment extends Equatable {
     double? grossWeightKg,
     double? tareWeightKg,
     double? netWeightKg,
+    DateTime? grossCapturedAt,
+    DateTime? tareCapturedAt,
     this.material,
     this.description,
     this.remarks,
@@ -40,7 +44,9 @@ class Weighment extends Equatable {
            ((firstWeightType == 'TARE' || firstWeightType == 'tare')
                ? (tareWeightKg ?? 0)
                : (grossWeightKg ?? 0)),
-       explicitNetWeightKg = netWeightKg;
+       explicitNetWeightKg = netWeightKg,
+       explicitGrossCapturedAt = grossCapturedAt,
+       explicitTareCapturedAt = tareCapturedAt;
 
   bool get isCompleted => isCompletedForWeights(grossWeightKg, tareWeightKg);
 
@@ -99,6 +105,7 @@ class Weighment extends Equatable {
   }
 
   DateTime? get grossCapturedAt {
+    if (explicitGrossCapturedAt != null) return explicitGrossCapturedAt;
     final type = firstWeightType.toUpperCase();
     if (type == 'GROSS') {
       return firstWeightKg > 0 ? createdAt : null;
@@ -109,6 +116,7 @@ class Weighment extends Equatable {
   }
 
   DateTime? get tareCapturedAt {
+    if (explicitTareCapturedAt != null) return explicitTareCapturedAt;
     final type = firstWeightType.toUpperCase();
     if (type == 'TARE') {
       return firstWeightKg > 0 ? createdAt : null;
@@ -116,6 +124,46 @@ class Weighment extends Equatable {
       return (secondWeightKg != null && secondWeightKg! > 0) ? updatedAt : null;
     }
     return (secondWeightKg != null && secondWeightKg! > 0) ? updatedAt : null;
+  }
+
+  Weighment copyWith({
+    int? id,
+    String? billNumber,
+    String? vehicleNumber,
+    double? firstWeightKg,
+    String? firstWeightType,
+    double? secondWeightKg,
+    String? secondWeightType,
+    double? netWeightKg,
+    DateTime? grossCapturedAt,
+    DateTime? tareCapturedAt,
+    String? material,
+    String? description,
+    String? remarks,
+    String? mobileNumber,
+    String? weightUnit,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return Weighment(
+      id: id ?? this.id,
+      billNumber: billNumber ?? this.billNumber,
+      vehicleNumber: vehicleNumber ?? this.vehicleNumber,
+      firstWeightKg: firstWeightKg ?? this.firstWeightKg,
+      firstWeightType: firstWeightType ?? this.firstWeightType,
+      secondWeightKg: secondWeightKg ?? this.secondWeightKg,
+      secondWeightType: secondWeightType ?? this.secondWeightType,
+      netWeightKg: netWeightKg ?? this.explicitNetWeightKg,
+      grossCapturedAt: grossCapturedAt ?? this.grossCapturedAt,
+      tareCapturedAt: tareCapturedAt ?? this.tareCapturedAt,
+      material: material ?? this.material,
+      description: description ?? this.description,
+      remarks: remarks ?? this.remarks,
+      mobileNumber: mobileNumber ?? this.mobileNumber,
+      weightUnit: weightUnit ?? this.weightUnit,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
   }
 
   @override
@@ -128,8 +176,11 @@ class Weighment extends Equatable {
     secondWeightKg,
     secondWeightType,
     explicitNetWeightKg,
+    explicitGrossCapturedAt,
+    explicitTareCapturedAt,
     material,
     description,
+    remarks,
     mobileNumber,
     weightUnit,
     createdAt,

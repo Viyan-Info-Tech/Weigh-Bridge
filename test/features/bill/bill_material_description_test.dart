@@ -21,52 +21,55 @@ void main() {
     registerFallbackValue(FakeWeighment());
   });
 
-  test('ClearBillRequested clears vehicle, material, description and weights', () async {
-    final mockSave = MockSaveBillUseCase();
-    final mockLoad = MockLoadRecentBillsUseCase();
-    final mockGen = MockGenerateBillNumberUseCase();
-    when(
-      () => mockLoad.call(date: any(named: 'date')),
-    ).thenAnswer((_) async => <Weighment>[]);
-    when(() => mockGen.call()).thenAnswer((_) async => 'WB-00002');
+  test(
+    'ClearBillRequested clears vehicle, material, description and weights',
+    () async {
+      final mockSave = MockSaveBillUseCase();
+      final mockLoad = MockLoadRecentBillsUseCase();
+      final mockGen = MockGenerateBillNumberUseCase();
+      when(
+        () => mockLoad.call(date: any(named: 'date')),
+      ).thenAnswer((_) async => <Weighment>[]);
+      when(() => mockGen.call()).thenAnswer((_) async => 'WB-00002');
 
-    final bloc = BillBloc(
-      saveBillUseCase: mockSave,
-      loadRecentBillsUseCase: mockLoad,
-      generateBillNumberUseCase: mockGen,
-    );
-    bloc.add(const LoadBillScreen());
-    await bloc.stream.firstWhere((s) => s.status == BillScreenStatus.loaded);
+      final bloc = BillBloc(
+        saveBillUseCase: mockSave,
+        loadRecentBillsUseCase: mockLoad,
+        generateBillNumberUseCase: mockGen,
+      );
+      bloc.add(const LoadBillScreen());
+      await bloc.stream.firstWhere((s) => s.status == BillScreenStatus.loaded);
 
-    bloc.add(const VehicleNumberChanged('TN32AB1234'));
-    bloc.add(const MaterialChanged('Sand'));
-    bloc.add(const DescriptionChanged('For site A'));
-    bloc.add(const RemarksChanged('CONT-01'));
-    await bloc.stream.firstWhere(
-      (s) =>
-          s.vehicleNumber == 'TN32AB1234' &&
-          s.materialText == 'Sand' &&
-          s.descriptionText == 'For site A' &&
-          s.remarksText == 'CONT-01',
-    );
+      bloc.add(const VehicleNumberChanged('TN32AB1234'));
+      bloc.add(const MaterialChanged('Sand'));
+      bloc.add(const DescriptionChanged('For site A'));
+      bloc.add(const RemarksChanged('CONT-01'));
+      await bloc.stream.firstWhere(
+        (s) =>
+            s.vehicleNumber == 'TN32AB1234' &&
+            s.materialText == 'Sand' &&
+            s.descriptionText == 'For site A' &&
+            s.remarksText == 'CONT-01',
+      );
 
-    bloc.add(const ClearBillRequested());
-    await bloc.stream.firstWhere(
-      (s) =>
-          s.vehicleNumber.isEmpty &&
-          s.materialText.isEmpty &&
-          s.descriptionText.isEmpty &&
-          s.remarksText.isEmpty,
-    );
+      bloc.add(const ClearBillRequested());
+      await bloc.stream.firstWhere(
+        (s) =>
+            s.vehicleNumber.isEmpty &&
+            s.materialText.isEmpty &&
+            s.descriptionText.isEmpty &&
+            s.remarksText.isEmpty,
+      );
 
-    expect(bloc.state.vehicleNumber, isEmpty);
-    expect(bloc.state.materialText, isEmpty);
-    expect(bloc.state.descriptionText, isEmpty);
-    expect(bloc.state.remarksText, isEmpty);
-    expect(bloc.state.grossWeightKg, 0);
-    expect(bloc.state.tareWeightKg, 0);
-    await bloc.close();
-  });
+      expect(bloc.state.vehicleNumber, isEmpty);
+      expect(bloc.state.materialText, isEmpty);
+      expect(bloc.state.descriptionText, isEmpty);
+      expect(bloc.state.remarksText, isEmpty);
+      expect(bloc.state.grossWeightKg, 0);
+      expect(bloc.state.tareWeightKg, 0);
+      await bloc.close();
+    },
+  );
 
   test('MaterialChanged and DescriptionChanged update state', () async {
     final mockSave = MockSaveBillUseCase();

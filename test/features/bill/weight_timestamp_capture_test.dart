@@ -17,6 +17,18 @@ class MockGenerateBillNumberUseCase extends Mock
     implements GenerateBillNumberUseCase {}
 
 void main() {
+  setUpAll(() {
+    registerFallbackValue(
+      Weighment(
+        id: 0,
+        billNumber: '',
+        vehicleNumber: '',
+        createdAt: DateTime.now(),
+        updatedAt: DateTime.now(),
+      ),
+    );
+  });
+
   group('Weighment timestamp mapping', () {
     final t1 = DateTime(2026, 10, 1, 10, 45);
     final t2 = DateTime(2026, 10, 1, 10, 52);
@@ -342,5 +354,31 @@ void main() {
         expect(bloc.state.grossCapturedAt, isNotNull);
       },
     );
+
+    test('SaveAndPrintBillRequested forwards captured timestamps to saved weighment and printReceiptBill', () async {
+      final grossTime = DateTime(2026, 10, 14, 14, 11);
+      final tareTime = DateTime(2026, 10, 14, 14, 15);
+
+      Weighment? passedWeighment;
+      when(() => mockSaveBillUseCase.withNewBillNumber(any())).thenAnswer((inv) async {
+        passedWeighment = inv.positionalArguments[0] as Weighment;
+        return (id: 42, billNumber: 'WB-00042');
+      });
+
+      bloc.add(const VehicleNumberChanged('TN01AA1111'));
+      bloc.add(GrossWeightCommitted('45000', capturedAt: grossTime));
+      bloc.add(TareWeightCommitted('15000', capturedAt: tareTime));
+      await pumpEventQueue();
+
+      bloc.add(const SaveAndPrintBillRequested());
+      await pumpEventQueue();
+
+      expect(passedWeighment, isNotNull);
+      expect(passedWeighment!.grossCapturedAt, grossTime);
+      expect(passedWeighment!.tareCapturedAt, tareTime);
+      expect(bloc.state.printReceiptBill, isNotNull);
+      expect(bloc.state.printReceiptBill!.grossCapturedAt, grossTime);
+      expect(bloc.state.printReceiptBill!.tareCapturedAt, tareTime);
+    });
   });
 }

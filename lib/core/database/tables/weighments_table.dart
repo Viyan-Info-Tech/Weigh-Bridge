@@ -12,12 +12,15 @@ class Weighments extends Table {
       text().withLength(min: 1, max: 20).nullable()();
   RealColumn get netWeightKg => real().nullable()();
   TextColumn get material => text().withLength(min: 0, max: 100).nullable()();
-  TextColumn get description => text().withLength(min: 0, max: 500).nullable()();
+  TextColumn get description =>
+      text().withLength(min: 0, max: 500).nullable()();
   TextColumn get remarks => text().withLength(min: 0, max: 500).nullable()();
   TextColumn get mobileNumber =>
       text().withLength(min: 0, max: 20).nullable()();
   TextColumn get weightUnit =>
       text().withLength(min: 1, max: 10).withDefault(const Constant('ton'))();
+  DateTimeColumn get grossCapturedAt => dateTime().nullable()();
+  DateTimeColumn get tareCapturedAt => dateTime().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
 }

@@ -92,60 +92,66 @@ void main() {
   }
 
   group('Vehicle tare registry (bloc)', () {
-    test('LoadVehicleTares populates state and completes the completer',
-        () async {
-      final bloc = await createLoadedBloc();
-      await vehicleTareRepository.saveVehicleTare(
-        vehicleNumber: 'TN14L1112',
-        tareKg: 8200,
-      );
+    test(
+      'LoadVehicleTares populates state and completes the completer',
+      () async {
+        final bloc = await createLoadedBloc();
+        await vehicleTareRepository.saveVehicleTare(
+          vehicleNumber: 'TN14L1112',
+          tareKg: 8200,
+        );
 
-      final completer = Completer<void>();
-      bloc.add(LoadVehicleTares(completer: completer));
-      await completer.future.timeout(const Duration(seconds: 5));
+        final completer = Completer<void>();
+        bloc.add(LoadVehicleTares(completer: completer));
+        await completer.future.timeout(const Duration(seconds: 5));
 
-      expect(
-        bloc.state.vehicleTareRecords.map((r) => r.vehicleNumber),
-        ['TN14L1112'],
-      );
-      expect(bloc.state.vehicleTareRecords.single.tareKg, 8200);
-      await bloc.close();
-    });
+        expect(bloc.state.vehicleTareRecords.map((r) => r.vehicleNumber), [
+          'TN14L1112',
+        ]);
+        expect(bloc.state.vehicleTareRecords.single.tareKg, 8200);
+        await bloc.close();
+      },
+    );
 
-    test('SaveVehicleTare persists, refreshes state and completes with record',
-        () async {
-      final bloc = await createLoadedBloc();
+    test(
+      'SaveVehicleTare persists, refreshes state and completes with record',
+      () async {
+        final bloc = await createLoadedBloc();
 
-      final completer = Completer<VehicleTareRecord>();
-      bloc.add(SaveVehicleTare('tn21aw4924', 7850, completer: completer));
-      final saved = await completer.future.timeout(const Duration(seconds: 5));
-
-      expect(saved.vehicleNumber, 'TN21AW4924');
-      expect(saved.tareKg, 7850);
-      expect(
-        bloc.state.vehicleTareRecords.map((r) => r.vehicleNumber),
-        ['TN21AW4924'],
-      );
-      await bloc.close();
-    });
-
-    test('re-adding a vehicle updates its tare instead of duplicating',
-        () async {
-      final bloc = await createLoadedBloc();
-
-      Future<VehicleTareRecord> save(String vehicle, double tare) {
         final completer = Completer<VehicleTareRecord>();
-        bloc.add(SaveVehicleTare(vehicle, tare, completer: completer));
-        return completer.future;
-      }
+        bloc.add(SaveVehicleTare('tn21aw4924', 7850, completer: completer));
+        final saved = await completer.future.timeout(
+          const Duration(seconds: 5),
+        );
 
-      await save('TN14L1112', 8200);
-      await save('TN14L1112', 8300);
+        expect(saved.vehicleNumber, 'TN21AW4924');
+        expect(saved.tareKg, 7850);
+        expect(bloc.state.vehicleTareRecords.map((r) => r.vehicleNumber), [
+          'TN21AW4924',
+        ]);
+        await bloc.close();
+      },
+    );
 
-      expect(bloc.state.vehicleTareRecords, hasLength(1));
-      expect(bloc.state.vehicleTareRecords.single.tareKg, 8300);
-      await bloc.close();
-    });
+    test(
+      're-adding a vehicle updates its tare instead of duplicating',
+      () async {
+        final bloc = await createLoadedBloc();
+
+        Future<VehicleTareRecord> save(String vehicle, double tare) {
+          final completer = Completer<VehicleTareRecord>();
+          bloc.add(SaveVehicleTare(vehicle, tare, completer: completer));
+          return completer.future;
+        }
+
+        await save('TN14L1112', 8200);
+        await save('TN14L1112', 8300);
+
+        expect(bloc.state.vehicleTareRecords, hasLength(1));
+        expect(bloc.state.vehicleTareRecords.single.tareKg, 8300);
+        await bloc.close();
+      },
+    );
 
     test('invalid tare completes the completer with an error', () async {
       final bloc = await createLoadedBloc();
@@ -175,10 +181,9 @@ void main() {
       bloc.add(DeleteVehicleTare('TN14L1112', completer: completer));
       await completer.future.timeout(const Duration(seconds: 5));
 
-      expect(
-        bloc.state.vehicleTareRecords.map((r) => r.vehicleNumber),
-        ['TN21AW4924'],
-      );
+      expect(bloc.state.vehicleTareRecords.map((r) => r.vehicleNumber), [
+        'TN21AW4924',
+      ]);
       await bloc.close();
     });
 
