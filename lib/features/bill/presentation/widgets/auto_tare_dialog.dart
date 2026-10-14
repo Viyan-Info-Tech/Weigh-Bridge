@@ -25,6 +25,8 @@ class AutoTareDialog extends StatefulWidget {
     required this.weightUnit,
     required this.onAdd,
     required this.onDelete,
+    required this.onSelect,
+    required this.onUpdate,
     this.date,
   });
 
@@ -49,6 +51,8 @@ class AutoTareDialog extends StatefulWidget {
   /// Removes the tare record for [vehicleNumber]. Used when an edit renames
   /// a vehicle: the renamed record is saved as new, the old row is removed.
   final Future<void> Function(String vehicleNumber) onDelete;
+  final ValueChanged<VehicleTareRecord> onSelect;
+  final Future<VehicleTareRecord> Function(int id, String vehicleNumber, double tareKg) onUpdate;
 
   static Future<void> show(
     BuildContext context, {
@@ -64,6 +68,8 @@ class AutoTareDialog extends StatefulWidget {
     )
     onAdd,
     required Future<void> Function(String vehicleNumber) onDelete,
+    required ValueChanged<VehicleTareRecord> onSelect,
+    required Future<VehicleTareRecord> Function(int id, String vehicleNumber, double tareKg) onUpdate,
     DateTime? date,
   }) {
     return showDialog<void>(
@@ -79,6 +85,8 @@ class AutoTareDialog extends StatefulWidget {
         weightUnit: weightUnit,
         onAdd: onAdd,
         onDelete: onDelete,
+        onSelect: onSelect,
+        onUpdate: onUpdate,
         date: date,
       ),
     );
@@ -197,6 +205,12 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
         _errorMessage = null;
       }
     });
+    widget.onSelect(record);
+  }
+
+  void _editRecord(String vehicleNumber) {
+    _selectRecord(vehicleNumber);
+    _editPressed();
   }
 
   /// Header Edit button: loads the selected record into the entry form.
@@ -225,6 +239,21 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _vehicleFocusNode.requestFocus();
+    });
+  }
+
+  /// Discards an in-progress edit (or a new-entry draft) without persisting.
+  /// Restores the table to its stored values and returns to viewing mode.
+  /// The popup stays open so Add continues to work independently.
+  void _cancelEditPressed() {
+    if (_isBusy) return;
+    setState(() {
+      _showEntryForm = false;
+      _editingVehicle = null;
+      _errorMessage = null;
+      _hintMessage = null;
+      _vehicleController.clear();
+      _weightController.clear();
     });
   }
 
@@ -257,12 +286,11 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
     });
 
     try {
-      final saved = await widget.onAdd(vehicleNumber, tareKg);
-      if (editingOriginal != null &&
-          editingOriginal != saved.vehicleNumber) {
-        // The vehicle itself was renamed: persist the new row, drop the old.
-        await widget.onDelete(editingOriginal);
-      }
+      final saved = editingOriginal != null
+          ? await widget.onUpdate(
+              _findRecord(editingOriginal)!.id!, vehicleNumber, tareKg,
+            )
+          : await widget.onAdd(vehicleNumber, tareKg);
       if (!mounted) return;
       setState(() {
         _records.removeWhere(
@@ -609,19 +637,21 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
                                                 ),
                                           ),
                                         )
-                                      : const Row(
+                                      : Row(
                                           mainAxisAlignment:
                                               MainAxisAlignment.center,
                                           children: [
                                             Icon(
-                                              Icons.add_rounded,
+                                              _isEditing
+                                                  ? Icons.check_rounded
+                                                  : Icons.add_rounded,
                                               size: 18,
                                               color: Colors.white,
                                             ),
-                                            SizedBox(width: 8),
+                                            const SizedBox(width: 8),
                                             Text(
-                                              'Add',
-                                              style: TextStyle(
+                                              _isEditing ? 'Save' : 'Add',
+                                              style: const TextStyle(
                                                 fontFamily: 'PlusJakartaSans',
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w800,
@@ -748,6 +778,7 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
         borderRadius: BorderRadius.circular(8),
         child: InkWell(
           onTap: _isBusy ? null : () => _selectRecord(record.vehicleNumber),
+          onDoubleTap: _isBusy ? null : () => _editRecord(record.vehicleNumber),
           borderRadius: BorderRadius.circular(8),
           hoverColor: const Color(0xFFF1F5F9),
           child: Container(
@@ -791,20 +822,46 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
   }
 
   /// Entry form for one new vehicle tare record, revealed by Add.
-  /// In edit mode it is prefilled with the selected record's values.
+  /// In edit mode it is prefilled with the selected record's values and
+  /// offers an explicit Discard control that restores the stored values.
   Widget _buildEntryForm(String unitLabel) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          _isEditing ? 'EDIT VEHICLE TARE' : 'NEW VEHICLE TARE',
-          style: const TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            fontSize: 11.5,
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.6,
-            color: Color(0xFF475569),
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              _isEditing ? 'EDIT VEHICLE TARE' : 'NEW VEHICLE TARE',
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 11.5,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.6,
+                color: Color(0xFF475569),
+              ),
+            ),
+            if (_isEditing)
+              TextButton(
+                key: const Key('vehicle_tare_cancel_edit_button'),
+                onPressed: _isBusy ? null : _cancelEditPressed,
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF64748B),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  textStyle: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                child: const Text('Cancel'),
+              ),
+          ],
         ),
         const SizedBox(height: 7),
         TextFormField(

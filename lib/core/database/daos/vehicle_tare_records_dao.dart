@@ -64,4 +64,25 @@ class VehicleTareRecordsDao extends DatabaseAccessor<AppDatabase>
     )..where((t) => t.id.equals(id))).getSingle();
     return inserted;
   }
+
+  Future<VehicleTareRecord> updateById({
+    required int id,
+    required String vehicleNumber,
+    required double tareKg,
+  }) async {
+    final normalized = vehicleNumber.trim().toUpperCase();
+    final duplicate = await getByVehicleNumber(normalized);
+    if (duplicate != null && duplicate.id != id) {
+      throw ArgumentError('A tare record for $normalized already exists.');
+    }
+    await (update(vehicleTareRecords)..where((t) => t.id.equals(id))).write(
+      VehicleTareRecordsCompanion(
+        vehicleNumber: Value(normalized),
+        tareKg: Value(tareKg),
+        updatedAt: Value(DateTime.now()),
+      ),
+    );
+    return (select(vehicleTareRecords)..where((t) => t.id.equals(id)))
+        .getSingle();
+  }
 }

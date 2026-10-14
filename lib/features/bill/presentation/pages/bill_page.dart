@@ -9,6 +9,7 @@ import '../bloc/bill_bloc.dart';
 import '../bloc/bill_event.dart';
 import '../bloc/bill_state.dart';
 import '../../domain/entities/vehicle_tare_record.dart';
+import '../../domain/repositories/vehicle_tare_repository.dart';
 import '../widgets/live_weight_banner.dart';
 import '../widgets/auto_tare_dialog.dart';
 import '../widgets/auto_tare_indicator.dart';
@@ -379,6 +380,26 @@ class BillPageState extends State<BillPage> {
             ),
           );
           return completer.future;
+        },
+        onSelect: (record) {
+          final isTon = bloc.state.weightUnit.toLowerCase() == 'ton';
+          _vehicleNumberController.text = record.vehicleNumber;
+          _tareWeightController.text = isTon
+              ? (record.tareKg / 1000).toStringAsFixed(3)
+              : record.tareKg.toStringAsFixed(0);
+          bloc.add(VehicleNumberChanged(record.vehicleNumber));
+          bloc.add(TareWeightChanged(_tareWeightController.text));
+        },
+        onUpdate: (id, vehicleNumber, tareKg) async {
+          final repo = bloc.vehicleTareRepository;
+          if (repo is! VehicleTareEditableRepository) throw Exception('Vehicle tare storage is unavailable.');
+          final saved = await repo.updateVehicleTare(
+            id: id, vehicleNumber: vehicleNumber, tareKg: tareKg,
+          );
+          final loadCompleter = Completer<void>();
+          bloc.add(LoadVehicleTares(completer: loadCompleter));
+          await loadCompleter.future;
+          return saved;
         },
       );
     } finally {

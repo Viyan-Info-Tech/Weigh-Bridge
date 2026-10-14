@@ -13,6 +13,11 @@ abstract class VehicleTareRepository {
     required double tareKg,
   });
 
+
   /// Removes the tare record for [vehicleNumber], if one exists.
   Future<void> deleteVehicleTare(String vehicleNumber);
+}
+
+abstract interface class VehicleTareEditableRepository {
+  Future<VehicleTareRecord> updateVehicleTare({required int id, required String vehicleNumber, required double tareKg});
 }
