@@ -7,9 +7,6 @@ import '../bloc/settings_event.dart';
 import '../bloc/settings_state.dart';
 import '../../../../features/bill/domain/entities/weighment.dart';
 import '../../../../features/bill/domain/repositories/bill_repository.dart';
-import '../../../../features/customer/domain/entities/customer.dart';
-import '../../../../features/customer/domain/repositories/customer_repository.dart';
-import '../../../../features/material/domain/repositories/material_item_repository.dart';
 import '../widgets/bill_numbering_card.dart';
 import '../widgets/business_information_card.dart';
 import '../widgets/footer_settings_card.dart';
@@ -60,8 +57,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
   bool _showSerialNumber = true;
   bool _showVehicleNumber = true;
-  bool _showMaterial = true;
-  bool _showCustomer = true;
   bool _showGrossWeight = true;
   bool _showTareWeight = true;
   bool _showNetWeight = true;
@@ -73,8 +68,6 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _isInitialized = false;
 
   Weighment? _latestWeighment;
-  Customer? _latestCustomer;
-  String? _materialName;
   bool _isLoadingWeighment = true;
 
   @override
@@ -91,24 +84,12 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _loadLatestWeighment() async {
     try {
       BillRepository? billRepository;
-      CustomerRepository? customerRepository;
-      MaterialItemRepository? materialRepository;
 
       try {
         billRepository = context.read<BillRepository>();
       } catch (_) {}
 
-      try {
-        customerRepository = context.read<CustomerRepository>();
-      } catch (_) {}
-
-      try {
-        materialRepository = context.read<MaterialItemRepository>();
-      } catch (_) {}
-
-      if (billRepository == null ||
-          customerRepository == null ||
-          materialRepository == null) {
+      if (billRepository == null) {
         if (mounted) {
           setState(() => _isLoadingWeighment = false);
         }
@@ -129,26 +110,10 @@ class _SettingsPageState extends State<SettingsPage> {
       }
 
       final weighment = weighments.first;
-      Customer? resolvedCustomer;
-      String? resolvedMaterialName;
-
-      if (weighment.customerId > 0) {
-        resolvedCustomer = await customerRepository.getCustomerById(
-          weighment.customerId,
-        );
-      }
-
-      final materialId = weighment.materialId;
-      if (materialId != null && materialId > 0) {
-        final material = await materialRepository.getMaterialById(materialId);
-        resolvedMaterialName = material?.name;
-      }
 
       if (mounted) {
         setState(() {
           _latestWeighment = weighment;
-          _latestCustomer = resolvedCustomer;
-          _materialName = resolvedMaterialName;
           _isLoadingWeighment = false;
         });
       }
@@ -196,8 +161,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
     _showSerialNumber = settings.showSerialNumber;
     _showVehicleNumber = settings.showVehicleNumber;
-    _showMaterial = settings.showMaterial;
-    _showCustomer = settings.showCustomer;
     _showGrossWeight = settings.showGrossWeight;
     _showTareWeight = settings.showTareWeight;
     _showNetWeight = settings.showNetWeight;
@@ -318,8 +281,6 @@ class _SettingsPageState extends State<SettingsPage> {
 
       _showSerialNumber = true;
       _showVehicleNumber = true;
-      _showMaterial = true;
-      _showCustomer = true;
       _showGrossWeight = true;
       _showTareWeight = true;
       _showNetWeight = true;
@@ -332,8 +293,6 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() {
       _showSerialNumber = select;
       _showVehicleNumber = select;
-      _showMaterial = select;
-      _showCustomer = select;
       _showGrossWeight = select;
       _showTareWeight = select;
       _showNetWeight = select;
@@ -414,8 +373,6 @@ class _SettingsPageState extends State<SettingsPage> {
           : _receiptTitleController.text.trim(),
       showSerialNumber: _showSerialNumber,
       showVehicleNumber: _showVehicleNumber,
-      showMaterial: _showMaterial,
-      showCustomer: _showCustomer,
       showGrossWeight: _showGrossWeight,
       showTareWeight: _showTareWeight,
       showNetWeight: _showNetWeight,
@@ -471,8 +428,6 @@ class _SettingsPageState extends State<SettingsPage> {
           : _receiptTitleController.text.trim(),
       showSerialNumber: _showSerialNumber,
       showVehicleNumber: _showVehicleNumber,
-      showMaterial: _showMaterial,
-      showCustomer: _showCustomer,
       showGrossWeight: _showGrossWeight,
       showTareWeight: _showTareWeight,
       showNetWeight: _showNetWeight,
@@ -492,10 +447,6 @@ class _SettingsPageState extends State<SettingsPage> {
           _showSerialNumber = value;
         case 'vehicleNumber':
           _showVehicleNumber = value;
-        case 'material':
-          _showMaterial = value;
-        case 'customer':
-          _showCustomer = value;
         case 'grossWeight':
           _showGrossWeight = value;
         case 'tareWeight':
@@ -627,8 +578,6 @@ class _SettingsPageState extends State<SettingsPage> {
                             isEditing: _isEditing,
                             showSerialNumber: _showSerialNumber,
                             showVehicleNumber: _showVehicleNumber,
-                            showMaterial: _showMaterial,
-                            showCustomer: _showCustomer,
                             showGrossWeight: _showGrossWeight,
                             showTareWeight: _showTareWeight,
                             showNetWeight: _showNetWeight,
@@ -686,16 +635,12 @@ class _SettingsPageState extends State<SettingsPage> {
                                     settings: settings,
                                     showSerialNumber: _showSerialNumber,
                                     showVehicleNumber: _showVehicleNumber,
-                                    showMaterial: _showMaterial,
-                                    showCustomer: _showCustomer,
                                     showGrossWeight: _showGrossWeight,
                                     showTareWeight: _showTareWeight,
                                     showNetWeight: _showNetWeight,
                                     showRemarks: _showRemarks,
                                     showFooterNote: _showFooterNote,
                                     latestWeighment: _latestWeighment,
-                                    customer: _latestCustomer,
-                                    materialName: _materialName,
                                     isLoadingWeighment: _isLoadingWeighment,
                                   ),
                                 ),
@@ -721,16 +666,12 @@ class _SettingsPageState extends State<SettingsPage> {
                               settings: settings,
                               showSerialNumber: _showSerialNumber,
                               showVehicleNumber: _showVehicleNumber,
-                              showMaterial: _showMaterial,
-                              showCustomer: _showCustomer,
                               showGrossWeight: _showGrossWeight,
                               showTareWeight: _showTareWeight,
                               showNetWeight: _showNetWeight,
                               showRemarks: _showRemarks,
                               showFooterNote: _showFooterNote,
                               latestWeighment: _latestWeighment,
-                              customer: _latestCustomer,
-                              materialName: _materialName,
                               isLoadingWeighment: _isLoadingWeighment,
                             ),
                             const SizedBox(height: 24),

@@ -13,9 +13,7 @@ void main() {
     return Weighment(
       id: 1,
       billNumber: 'WB-00001',
-      customerId: 1,
       vehicleNumber: 'TN31AB1234',
-      materialId: 1,
       firstWeightKg: firstWeightKg,
       firstWeightType: firstWeightType,
       secondWeightKg: secondWeightKg,
@@ -38,9 +36,7 @@ void main() {
         final w = Weighment(
           id: 1,
           billNumber: 'WB-00001',
-          customerId: 1,
           vehicleNumber: 'TN31AB1234',
-          materialId: 1,
           firstWeightType: 'TARE',
           tareWeightKg: 5000,
           createdAt: base,

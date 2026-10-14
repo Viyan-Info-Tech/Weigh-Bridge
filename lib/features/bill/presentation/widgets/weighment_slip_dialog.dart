@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart' hide Material;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:weighbridge/app/app.dart' show showAppSnackBar;
-import '../../../customer/domain/entities/customer.dart';
 import '../../../settings/domain/entities/billing_settings.dart';
 import '../../../settings/presentation/bloc/settings_bloc.dart';
 import '../../../../core/printing/print_service.dart';
@@ -17,16 +16,12 @@ import 'weighment_receipt_template.dart';
 /// the action bar and the print pipeline.
 class WeighmentSlipDialog extends StatefulWidget {
   final Weighment bill;
-  final Customer? customer;
-  final String materialName;
   final BillingSettings? settings;
   final PrintService printService;
 
   const WeighmentSlipDialog({
     super.key,
     required this.bill,
-    this.customer,
-    required this.materialName,
     this.settings,
     this.printService = const PrintService(),
   });
@@ -57,8 +52,6 @@ class _WeighmentSlipDialogState extends State<WeighmentSlipDialog> {
       final pdfBytes = await const WeighmentTicketPdfGenerator()
           .generateTicketPdf(
             bill: widget.bill,
-            customer: widget.customer,
-            materialName: widget.materialName,
             settings: _resolveActiveSettings(),
           );
       final printed = await widget.printService.printPdf(
@@ -95,8 +88,6 @@ class _WeighmentSlipDialogState extends State<WeighmentSlipDialog> {
   Widget build(BuildContext context) {
     final receiptData = WeighmentReceiptData(
       bill: widget.bill,
-      customer: widget.customer,
-      materialName: widget.materialName,
       settings: _resolveActiveSettings(),
     );
 

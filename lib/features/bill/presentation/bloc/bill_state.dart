@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-import '../../../customer/domain/entities/customer.dart';
-import '../../../material/domain/entities/material_item.dart';
+import '../../domain/entities/vehicle_tare_record.dart';
 import '../../domain/entities/weighment.dart';
 
 enum BillScreenStatus {
@@ -18,22 +17,24 @@ class BillState extends Equatable {
   final BillScreenStatus status;
   final String? errorMessage;
 
-  final List<Customer> customers;
-  final List<MaterialItem> materials;
   final List<Weighment> recentBills;
   final DateTime? billsDate;
   final DateTime? billsStartDate;
   final DateTime? billsEndDate;
 
-  final Customer? selectedCustomer;
   final String vehicleNumber;
-  final MaterialItem? selectedMaterial;
 
   final String mobileNumber;
 
   final String grossWeightText;
   final String tareWeightText;
   final String remarksText;
+
+  /// Free-text Material typed on the weighment form (TL redesign).
+  final String materialText;
+
+  /// Free-text Description typed on the weighment form (TL redesign).
+  final String descriptionText;
 
   final double grossWeightKg;
   final double tareWeightKg;
@@ -65,27 +66,27 @@ class BillState extends Equatable {
   final DateTime? autoTareDate;
   final DateTime? autoTareSavedAt;
 
+  /// Per-vehicle tare registry shown in the Auto Tare popup. Never cleared
+  /// by form resets: it is reference data, not the in-progress weighment.
+  final List<VehicleTareRecord> vehicleTareRecords;
+
   final Weighment? printReceiptBill;
-  final Customer? printReceiptCustomer;
-  final String? printReceiptMaterialName;
   final Map<String, String> fieldErrors;
 
   const BillState({
     this.status = BillScreenStatus.initial,
     this.errorMessage,
-    this.customers = const [],
-    this.materials = const [],
     this.recentBills = const [],
     this.billsDate,
     this.billsStartDate,
     this.billsEndDate,
-    this.selectedCustomer,
     this.vehicleNumber = '',
-    this.selectedMaterial,
     this.mobileNumber = '',
     this.grossWeightText = '',
     this.tareWeightText = '',
     this.remarksText = '',
+    this.materialText = '',
+    this.descriptionText = '',
     this.grossWeightKg = 0,
     this.tareWeightKg = 0,
     this.netWeightKg = 0,
@@ -104,9 +105,8 @@ class BillState extends Equatable {
     this.autoTareKg = 0,
     this.autoTareDate,
     this.autoTareSavedAt,
+    this.vehicleTareRecords = const [],
     this.printReceiptBill,
-    this.printReceiptCustomer,
-    this.printReceiptMaterialName,
     this.fieldErrors = const {},
   });
 
@@ -115,28 +115,17 @@ class BillState extends Equatable {
 
   /// A weight counts as captured only once it is a usable positive number.
   /// NaN and negatives are rejected by validation and must not be read as
-  /// "present" here, or a tare-only bill could be mistaken for a full one.
+  /// "present" here.
   bool get hasGrossWeight => grossWeightKg.isFinite && grossWeightKg > 0;
   bool get hasTareWeight => tareWeightKg.isFinite && tareWeightKg > 0;
 
   /// True when the truck has been weighed empty and will not return for a gross.
   ///
   /// Derived from the captured weights rather than from the GROSS/TARE toggle,
-  /// because the toggle only says which weight is being captured *right now*;
-  /// what makes a bill tare-only is that no gross exists for it.
+  /// because the toggle only says which weight is being captured *right now*.
   bool get isTareOnly => hasTareWeight && !hasGrossWeight;
 
-  /// Central rule for the transaction requirements: a tare-only weighment has
-  /// no net weight and so nothing to price against a material. Everything else
-  /// (a full two-weight weighment, or a single gross) must name one.
-  ///
-  /// The form, the validation and the save path all read this one getter so the
-  /// requirement can never disagree with itself.
-  bool get requiresMaterial => !isTareOnly;
-
   String? get vehicleNumberError => fieldErrors['vehicleNumber'];
-  String? get materialError => fieldErrors['material'];
-  String? get customerError => fieldErrors['customer'];
   String? get weightError => fieldErrors['weight'] ?? weightValidationError;
   String? get mobileError => fieldErrors['mobile'];
   bool get hasFieldErrors => fieldErrors.isNotEmpty;
@@ -162,22 +151,18 @@ class BillState extends Equatable {
     bool clearError = false,
     Map<String, String>? fieldErrors,
     bool clearFieldErrors = false,
-    List<Customer>? customers,
-    List<MaterialItem>? materials,
     List<Weighment>? recentBills,
     DateTime? billsDate,
     DateTime? billsStartDate,
     DateTime? billsEndDate,
     bool clearDateRange = false,
-    Customer? selectedCustomer,
-    bool clearCustomer = false,
     String? vehicleNumber,
-    MaterialItem? selectedMaterial,
-    bool clearMaterial = false,
     String? mobileNumber,
     String? grossWeightText,
     String? tareWeightText,
     String? remarksText,
+    String? materialText,
+    String? descriptionText,
     double? grossWeightKg,
     double? tareWeightKg,
     double? netWeightKg,
@@ -201,33 +186,26 @@ class BillState extends Equatable {
     DateTime? autoTareDate,
     DateTime? autoTareSavedAt,
     bool clearAutoTare = false,
+    List<VehicleTareRecord>? vehicleTareRecords,
     Weighment? printReceiptBill,
-    Customer? printReceiptCustomer,
-    String? printReceiptMaterialName,
     bool clearPrintReceipt = false,
   }) {
     return BillState(
       status: status ?? this.status,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
-      customers: customers ?? this.customers,
-      materials: materials ?? this.materials,
       recentBills: recentBills ?? this.recentBills,
       billsDate: billsDate ?? this.billsDate,
       billsStartDate: clearDateRange
           ? null
           : (billsStartDate ?? this.billsStartDate),
       billsEndDate: clearDateRange ? null : (billsEndDate ?? this.billsEndDate),
-      selectedCustomer: clearCustomer
-          ? null
-          : (selectedCustomer ?? this.selectedCustomer),
       vehicleNumber: vehicleNumber ?? this.vehicleNumber,
-      selectedMaterial: clearMaterial
-          ? null
-          : (selectedMaterial ?? this.selectedMaterial),
       mobileNumber: mobileNumber ?? this.mobileNumber,
       grossWeightText: grossWeightText ?? this.grossWeightText,
       tareWeightText: tareWeightText ?? this.tareWeightText,
       remarksText: remarksText ?? this.remarksText,
+      materialText: materialText ?? this.materialText,
+      descriptionText: descriptionText ?? this.descriptionText,
       grossWeightKg: grossWeightKg ?? this.grossWeightKg,
       tareWeightKg: tareWeightKg ?? this.tareWeightKg,
       netWeightKg: netWeightKg ?? this.netWeightKg,
@@ -256,15 +234,10 @@ class BillState extends Equatable {
       autoTareSavedAt: clearAutoTare
           ? null
           : (autoTareSavedAt ?? this.autoTareSavedAt),
+      vehicleTareRecords: vehicleTareRecords ?? this.vehicleTareRecords,
       printReceiptBill: clearPrintReceipt
           ? null
           : (printReceiptBill ?? this.printReceiptBill),
-      printReceiptCustomer: clearPrintReceipt
-          ? null
-          : (printReceiptCustomer ?? this.printReceiptCustomer),
-      printReceiptMaterialName: clearPrintReceipt
-          ? null
-          : (printReceiptMaterialName ?? this.printReceiptMaterialName),
       fieldErrors: clearFieldErrors
           ? const {}
           : (fieldErrors ?? this.fieldErrors),
@@ -275,19 +248,17 @@ class BillState extends Equatable {
   List<Object?> get props => [
     status,
     errorMessage,
-    customers,
-    materials,
     recentBills,
     billsDate,
     billsStartDate,
     billsEndDate,
-    selectedCustomer,
     vehicleNumber,
-    selectedMaterial,
     mobileNumber,
     grossWeightText,
     tareWeightText,
     remarksText,
+    materialText,
+    descriptionText,
     grossWeightKg,
     tareWeightKg,
     netWeightKg,
@@ -306,9 +277,8 @@ class BillState extends Equatable {
     autoTareKg,
     autoTareDate,
     autoTareSavedAt,
+    vehicleTareRecords,
     printReceiptBill,
-    printReceiptCustomer,
-    printReceiptMaterialName,
     fieldErrors,
   ];
 }

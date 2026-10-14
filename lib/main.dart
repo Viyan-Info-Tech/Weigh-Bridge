@@ -23,8 +23,6 @@ void main() async {
           value: injection.adminPasswordService,
         ),
         RepositoryProvider.value(value: injection.billRepository),
-        RepositoryProvider.value(value: injection.customerRepository),
-        RepositoryProvider.value(value: injection.materialRepository),
         RepositoryProvider<ScaleService>.value(value: injection.scaleService),
         RepositoryProvider<PrintService>.value(value: const PrintService()),
         RepositoryProvider<LicenseService>.value(
@@ -35,8 +33,6 @@ void main() async {
         providers: [
           BlocProvider.value(value: injection.authBloc),
           BlocProvider.value(value: injection.billBloc),
-          BlocProvider.value(value: injection.customerBloc),
-          BlocProvider.value(value: injection.materialBloc),
           BlocProvider.value(value: injection.settingsBloc),
           BlocProvider.value(value: injection.reportBloc),
           BlocProvider<AppStatusCubit>(

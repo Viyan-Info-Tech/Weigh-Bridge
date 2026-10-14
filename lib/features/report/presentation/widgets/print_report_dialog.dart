@@ -14,9 +14,7 @@ class PrintReportDialog extends StatefulWidget {
   final List<WeighmentReportItem> records;
   final ReportSummary summary;
   final ReportFilter filter;
-  final String customerLabel;
   final String vehicleLabel;
-  final String materialLabel;
   final String weightUnit;
   final ScaffoldMessengerState scaffoldMessenger;
   final PrintService printService;
@@ -26,9 +24,7 @@ class PrintReportDialog extends StatefulWidget {
     required this.records,
     required this.summary,
     required this.filter,
-    this.customerLabel = 'All Customers',
     this.vehicleLabel = 'All Vehicles',
-    this.materialLabel = 'All Materials',
     this.weightUnit = 'kg',
     required this.scaffoldMessenger,
     this.printService = const PrintService(),
@@ -39,9 +35,7 @@ class PrintReportDialog extends StatefulWidget {
     required List<WeighmentReportItem> records,
     required ReportSummary summary,
     required ReportFilter filter,
-    String customerLabel = 'All Customers',
     String vehicleLabel = 'All Vehicles',
-    String materialLabel = 'All Materials',
     String weightUnit = 'kg',
   }) {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
@@ -51,9 +45,7 @@ class PrintReportDialog extends StatefulWidget {
         records: records,
         summary: summary,
         filter: filter,
-        customerLabel: customerLabel,
         vehicleLabel: vehicleLabel,
-        materialLabel: materialLabel,
         weightUnit: weightUnit,
         scaffoldMessenger: scaffoldMessenger,
       ),
@@ -99,9 +91,7 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
         address: settings?.address,
         phone: settings?.phoneNumber,
         gstin: settings?.gstin,
-        customerLabel: widget.customerLabel,
         vehicleLabel: widget.vehicleLabel,
-        materialLabel: widget.materialLabel,
         weightUnit: widget.weightUnit,
       );
 
@@ -320,8 +310,6 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
                                   children: [
                                     _metaRow('Period', filterDateLabel),
                                     const SizedBox(height: 4),
-                                    _metaRow('Customer', widget.customerLabel),
-                                    const SizedBox(height: 4),
                                     _metaRow('Vehicle', widget.vehicleLabel),
                                   ],
                                 ),
@@ -329,8 +317,6 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     _metaRow('Generated', printDateTime),
-                                    const SizedBox(height: 4),
-                                    _metaRow('Material', widget.materialLabel),
                                     const SizedBox(height: 4),
                                     _metaRow('Status', statusLabel),
                                   ],
@@ -359,12 +345,10 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
                               0: FlexColumnWidth(1.2), // Bill
                               1: FlexColumnWidth(1.5), // Date & Time
                               2: FlexColumnWidth(1.3), // Vehicle
-                              3: FlexColumnWidth(1.5), // Customer
-                              4: FlexColumnWidth(1.2), // Material
-                              5: FlexColumnWidth(1.2), // Gross
-                              6: FlexColumnWidth(1.2), // Tare
-                              7: FlexColumnWidth(1.2), // Net
-                              8: FlexColumnWidth(1.1), // Status
+                              3: FlexColumnWidth(1.2), // Gross
+                              4: FlexColumnWidth(1.2), // Tare
+                              5: FlexColumnWidth(1.2), // Net
+                              6: FlexColumnWidth(1.1), // Status
                             },
                             children: [
                               // Table Header
@@ -376,8 +360,6 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
                                   _cell('BILL NO', isHeader: true),
                                   _cell('DATE & TIME', isHeader: true),
                                   _cell('VEHICLE', isHeader: true),
-                                  _cell('CUSTOMER', isHeader: true),
-                                  _cell('MATERIAL', isHeader: true),
                                   _cell(
                                     'GROSS',
                                     isHeader: true,
@@ -409,8 +391,6 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
                                       '${dateFormat.format(r.createdAt)} ${timeFormat.format(r.createdAt)}',
                                     ),
                                     _cell(r.vehicleNumber),
-                                    _cell(r.customerName),
-                                    _cell(r.materialName),
                                     _cell(
                                       _formatWeight(
                                         r.grossWeightKg,

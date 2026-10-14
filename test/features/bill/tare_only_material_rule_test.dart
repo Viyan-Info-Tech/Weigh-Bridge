@@ -6,14 +6,6 @@ import 'package:weighbridge/features/bill/domain/usecases/save_bill.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_bloc.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_event.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_state.dart';
-import 'package:weighbridge/features/customer/domain/entities/customer.dart';
-import 'package:weighbridge/features/customer/domain/repositories/customer_repository.dart';
-import 'package:weighbridge/features/material/domain/entities/material_item.dart';
-import 'package:weighbridge/features/material/domain/repositories/material_item_repository.dart';
-
-class MockCustomerRepository extends Mock implements CustomerRepository {}
-
-class MockMaterialRepository extends Mock implements MaterialItemRepository {}
 
 class MockSaveBillUseCase extends Mock implements SaveBillUseCase {}
 
@@ -23,12 +15,10 @@ class MockLoadRecentBillsUseCase extends Mock
 class MockGenerateBillNumberUseCase extends Mock
     implements GenerateBillNumberUseCase {}
 
-/// A tare-only weighment has no net weight and therefore nothing to price
-/// against a material, so the material must not be demanded. Every other shape
-/// of bill must still name one.
+/// No customer or material is ever required: the Customer and Material modules
+/// were removed, so tare-only AND gross weighments save with only
+/// vehicle + weight (+ optional mobile).
 void main() {
-  late MockCustomerRepository mockCustomerRepo;
-  late MockMaterialRepository mockMaterialRepo;
   late MockSaveBillUseCase mockSaveBill;
   late MockLoadRecentBillsUseCase mockLoadRecent;
   late MockGenerateBillNumberUseCase mockGenerateBillNumber;
@@ -37,27 +27,7 @@ void main() {
   /// inspected rather than just the emitted validation state.
   late List<Weighment> saved;
 
-  final testCustomer = Customer(
-    id: 1,
-    customerCode: 'C001',
-    name: 'Test Customer',
-    isActive: true,
-    createdAt: DateTime(2026, 10, 1),
-    updatedAt: DateTime(2026, 10, 1),
-  );
-
-  final testMaterial = MaterialItem(
-    id: 7,
-    code: 'M001',
-    name: 'Sand',
-    isActive: true,
-    createdAt: DateTime(2026, 10, 1),
-    updatedAt: DateTime(2026, 10, 1),
-  );
-
   BillBloc createBloc() => BillBloc(
-    customerRepository: mockCustomerRepo,
-    materialRepository: mockMaterialRepo,
     saveBillUseCase: mockSaveBill,
     loadRecentBillsUseCase: mockLoadRecent,
     generateBillNumberUseCase: mockGenerateBillNumber,
@@ -68,9 +38,7 @@ void main() {
       Weighment(
         id: 0,
         billNumber: 'WB-00000',
-        customerId: 0,
         vehicleNumber: 'TN09AB1234',
-        materialId: 0,
         createdAt: DateTime(2026),
         updatedAt: DateTime(2026),
       ),
@@ -79,18 +47,10 @@ void main() {
 
   setUp(() {
     saved = <Weighment>[];
-    mockCustomerRepo = MockCustomerRepository();
-    mockMaterialRepo = MockMaterialRepository();
     mockSaveBill = MockSaveBillUseCase();
     mockLoadRecent = MockLoadRecentBillsUseCase();
     mockGenerateBillNumber = MockGenerateBillNumberUseCase();
 
-    when(
-      () => mockCustomerRepo.getAllActiveCustomers(),
-    ).thenAnswer((_) async => [testCustomer]);
-    when(
-      () => mockMaterialRepo.getMaterialsByStatus(isActive: true),
-    ).thenAnswer((_) async => [testMaterial]);
     when(
       () => mockLoadRecent.call(date: any(named: 'date')),
     ).thenAnswer((_) async => <Weighment>[]);
@@ -103,8 +63,8 @@ void main() {
     });
   });
 
-  /// A tare-only form: customer and truck filled, a tare captured,
-  /// no gross, and deliberately no material.
+  /// A tare-only form: truck filled, a tare captured, no gross,
+  /// and no customer/material (none exist anymore).
   BillState tareOnlyForm() =>
       const BillState(
         status: BillScreenStatus.loaded,
@@ -114,12 +74,11 @@ void main() {
         currentBillNumber: 'WB-00001',
         weightUnit: 'kg',
       ).copyWith(
-        selectedCustomer: testCustomer,
         firstWeightType: 'TARE',
         tareCapturedAt: DateTime(2026, 10, 1, 10, 45),
       );
 
-  /// A gross-only form with no material, for the cases that must still fail.
+  /// A gross-only form with no customer/material.
   BillState grossOnlyForm() =>
       const BillState(
         status: BillScreenStatus.loaded,
@@ -129,58 +88,48 @@ void main() {
         currentBillNumber: 'WB-00001',
         weightUnit: 'kg',
       ).copyWith(
-        selectedCustomer: testCustomer,
         firstWeightType: 'GROSS',
         grossCapturedAt: DateTime(2026, 10, 1, 10, 45),
       );
 
-  group('BillState.requiresMaterial', () {
-    test('is false only for a tare-only weighment', () {
+  group('BillState.isTareOnly', () {
+    test('is true only for a tare-only weighment', () {
       expect(tareOnlyForm().isTareOnly, isTrue);
-      expect(tareOnlyForm().requiresMaterial, isFalse);
     });
 
-    test('is true for a gross-only weighment', () {
+    test('is false for a gross-only weighment', () {
       expect(grossOnlyForm().isTareOnly, isFalse);
-      expect(grossOnlyForm().requiresMaterial, isTrue);
     });
 
-    test('is true when both weights are present', () {
+    test('is false when both weights are present', () {
       final state = tareOnlyForm().copyWith(grossWeightKg: 8000);
       expect(state.isTareOnly, isFalse);
-      expect(state.requiresMaterial, isTrue);
     });
 
-    test('is true when no weight has been captured yet', () {
+    test('is false when no weight has been captured yet', () {
       final state = tareOnlyForm().copyWith(tareWeightKg: 0);
       expect(state.isTareOnly, isFalse);
-      expect(state.requiresMaterial, isTrue);
     });
 
     test('treats NaN and negative weights as not captured', () {
-      // A NaN must never read as "present", or a broken tare entry would be
-      // mistaken for a tare-only bill and skip the material requirement.
       final nanState = tareOnlyForm().copyWith(tareWeightKg: double.nan);
       expect(nanState.hasTareWeight, isFalse);
       expect(nanState.isTareOnly, isFalse);
-      expect(nanState.requiresMaterial, isTrue);
 
       final negative = tareOnlyForm().copyWith(tareWeightKg: -10);
       expect(negative.hasTareWeight, isFalse);
       expect(negative.isTareOnly, isFalse);
-      expect(negative.requiresMaterial, isTrue);
     });
   });
 
-  group('Saving a tare-only weighment without a material', () {
+  group('Saving without any customer/material', () {
     blocTest<BillBloc, BillState>(
-      'is accepted and persists a null materialId',
+      'tare-only weighment is accepted and persists',
       build: createBloc,
       seed: tareOnlyForm,
       act: (bloc) => bloc.add(const SaveBillRequested()),
       verify: (_) {
         expect(saved, hasLength(1), reason: 'the save must not be rejected');
-        expect(saved.single.materialId, isNull);
         expect(saved.single.firstWeightType, 'TARE');
         expect(saved.single.secondWeightKg, isNull);
         expect(saved.single.netWeightKg, isNull);
@@ -188,35 +137,18 @@ void main() {
     );
 
     blocTest<BillBloc, BillState>(
-      'still persists the material when one was chosen',
-      build: createBloc,
-      seed: () => tareOnlyForm().copyWith(selectedMaterial: testMaterial),
-      act: (bloc) => bloc.add(const SaveBillRequested()),
-      verify: (_) {
-        expect(saved, hasLength(1));
-        expect(saved.single.materialId, testMaterial.id);
-      },
-    );
-  });
-
-  group('Material is still required whenever a net weight exists', () {
-    blocTest<BillBloc, BillState>(
-      'gross-only weighment still reports the material error',
+      'gross-only weighment is accepted without any customer/material',
       build: createBloc,
       seed: grossOnlyForm,
       act: (bloc) => bloc.add(const SaveBillRequested()),
-      expect: () => [
-        isA<BillState>().having(
-          (s) => s.materialError,
-          'materialError',
-          'Material code is required.',
-        ),
-      ],
-      verify: (_) => verifyNever(() => mockSaveBill.withNewBillNumber(any())),
+      verify: (_) {
+        expect(saved, hasLength(1), reason: 'the save must not be rejected');
+        expect(saved.single.firstWeightType, 'GROSS');
+      },
     );
 
     blocTest<BillBloc, BillState>(
-      'a fully weighted weighment still reports the material error',
+      'a fully weighted weighment saves without customer/material errors',
       build: createBloc,
       seed: () => tareOnlyForm().copyWith(
         grossWeightKg: 8000,
@@ -224,18 +156,17 @@ void main() {
         grossCapturedAt: DateTime(2026, 10, 1, 9),
       ),
       act: (bloc) => bloc.add(const SaveBillRequested()),
-      expect: () => [
-        isA<BillState>().having(
-          (s) => s.materialError,
-          'materialError',
-          'Material code is required.',
-        ),
-      ],
-      verify: (_) => verifyNever(() => mockSaveBill.withNewBillNumber(any())),
+      verify: (bloc) {
+        expect(saved, hasLength(1));
+        expect(bloc.state.hasFieldErrors, isFalse);
+        expect(bloc.state.weightError, isNull);
+        expect(bloc.state.vehicleNumberError, isNull);
+        expect(bloc.state.mobileError, isNull);
+      },
     );
 
     blocTest<BillBloc, BillState>(
-      'a weighment with no captured weight still needs a material',
+      'validation has no material/customer errors for any shape',
       build: createBloc,
       seed: () => tareOnlyForm().copyWith(
         tareWeightKg: 0,
@@ -244,14 +175,13 @@ void main() {
         firstWeightType: null,
       ),
       act: (bloc) => bloc.add(const SaveBillRequested()),
-      expect: () => [
-        isA<BillState>().having(
-          (s) => s.materialError,
-          'materialError',
-          'Material code is required.',
-        ),
-      ],
-      verify: (_) => verifyNever(() => mockSaveBill.withNewBillNumber(any())),
+      verify: (bloc) {
+        // Only the weight error may appear; there are no material/customer
+        // error getters anymore.
+        expect(bloc.state.weightError, isNotNull);
+        expect(bloc.state.fieldErrors.keys, isNot(contains('material')));
+        expect(bloc.state.fieldErrors.keys, isNot(contains('customer')));
+      },
     );
   });
 }

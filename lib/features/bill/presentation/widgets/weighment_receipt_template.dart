@@ -141,7 +141,7 @@ class WeighmentReceiptTemplate extends StatelessWidget {
               // 3. Metadata fields, colons vertically aligned
               if (data.hasSerialNumber)
                 _buildFieldRow(
-                  'TOKEN NO',
+                  'SERIAL NO',
                   data.bill.billNumber,
                   labelWidth: labelWidth,
                   labelStyle: fieldLabelStyle,
@@ -155,26 +155,26 @@ class WeighmentReceiptTemplate extends StatelessWidget {
                   labelStyle: fieldLabelStyle,
                   valueStyle: fieldValueBoldStyle,
                 ),
-              if (data.hasCustomer)
-                _buildFieldRow(
-                  'DESCRIPTION',
-                  data.customerName,
-                  labelWidth: labelWidth,
-                  labelStyle: fieldLabelStyle,
-                  valueStyle: fieldValueStyle,
-                ),
               if (data.hasMaterial)
                 _buildFieldRow(
-                  'PRODUCT',
-                  data.resolvedMaterialName,
+                  'MATERIAL',
+                  data.materialName,
                   labelWidth: labelWidth,
                   labelStyle: fieldLabelStyle,
                   valueStyle: fieldValueStyle,
                 ),
-              if (data.customerPhone.trim().isNotEmpty)
+              if (data.hasDescription)
+                _buildFieldRow(
+                  'DESCRIPTION',
+                  data.descriptionText,
+                  labelWidth: labelWidth,
+                  labelStyle: fieldLabelStyle,
+                  valueStyle: fieldValueStyle,
+                ),
+              if (data.contactPhone.trim().isNotEmpty)
                 _buildFieldRow(
                   'MOBILE NO',
-                  data.customerPhone,
+                  data.contactPhone,
                   labelWidth: labelWidth,
                   labelStyle: fieldLabelStyle,
                   valueStyle: fieldValueStyle,

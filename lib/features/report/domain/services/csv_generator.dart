@@ -44,7 +44,7 @@ class CsvGenerator {
 
     // Clean, standard CSV Header
     buffer.writeln(
-      'Bill No,Date & Time,Vehicle,Customer,Material,Gross Weight,Tare Weight,Net Weight,Weight Unit,Status',
+      'Bill No,Date & Time,Vehicle,Gross Weight,Tare Weight,Net Weight,Status',
     );
 
     final dateTimeFormat = DateFormat('dd/MM/yyyy hh:mm a');
@@ -76,12 +76,9 @@ class CsvGenerator {
         _escape(item.billNumber),
         _escape(dateTimeStr),
         _escape(item.vehicleNumber),
-        _escape(item.customerName),
-        _escape(item.materialName),
         _escape(grossStr),
         _escape(tareStr),
         _escape(netStr),
-        _escape(unit),
         _escape(statusFormatted),
       ].join(',');
 

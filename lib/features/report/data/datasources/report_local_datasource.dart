@@ -26,13 +26,14 @@ class ReportLocalDataSource {
     int? limit,
     int offset = 0,
   }) async {
-    final query = _buildFilteredQuery(filter)
+    final query = _database.select(_database.weighments)
       ..orderBy([
-        OrderingTerm.desc(_database.weighments.createdAt),
+        (t) => OrderingTerm.desc(t.createdAt),
         // Stable tie-break so paging cannot repeat or skip a row when two
         // weighments share a timestamp.
-        OrderingTerm.desc(_database.weighments.id),
+        (t) => OrderingTerm.desc(t.id),
       ]);
+    _applyWhere(query, filter);
 
     if (limit != null) {
       query.limit(limit, offset: offset);
@@ -48,8 +49,8 @@ class ReportLocalDataSource {
   /// exist, so it must reflect the whole result set rather than the page.
   Future<int> countReportRecords(ReportFilter filter) async {
     final countColumn = _database.weighments.id.count();
-    final query = _database.selectOnly(_database.weighments).join([..._joins]);
-    _applyWhere(query, filter);
+    final query = _database.selectOnly(_database.weighments);
+    _applyWhereOnly(query, filter);
     query.addColumns([countColumn]);
 
     final row = await query.getSingle();
@@ -60,12 +61,12 @@ class ReportLocalDataSource {
   ///
   /// The summary bar must describe the whole filtered result, not just the page
   /// on screen, so it cannot be derived from [getReportRecords]. Only the three
-  /// weight columns and the amount are selected, and the derivation delegates to
+  /// weight columns are selected, and the derivation delegates to
   /// the same pure functions the table rows use, so the totals cannot drift from
   /// what the report displays for the same weighment.
   Future<ReportSummary> summarizeReportRecords(ReportFilter filter) async {
-    final query = _database.selectOnly(_database.weighments).join([..._joins]);
-    _applyWhere(query, filter);
+    final query = _database.selectOnly(_database.weighments);
+    _applyWhereOnly(query, filter);
     query.addColumns([
       _database.weighments.firstWeightKg,
       _database.weighments.firstWeightType,
@@ -113,31 +114,38 @@ class ReportLocalDataSource {
     );
   }
 
-  /// The joins every report query needs: customer and material names for
-  /// display and for search.
-  List<Join> get _joins => [
-    leftOuterJoin(
-      _database.customers,
-      _database.customers.id.equalsExp(_database.weighments.customerId),
-    ),
-    leftOuterJoin(
-      _database.materials,
-      _database.materials.id.equalsExp(_database.weighments.materialId),
-    ),
-  ];
-
-  JoinedSelectStatement<HasResultSet, dynamic> _buildFilteredQuery(
+  void _applyWhere(
+    SimpleSelectStatement<$WeighmentsTable, Weighment> query,
     ReportFilter filter,
   ) {
-    final query = _database.select(_database.weighments).join([..._joins]);
-    _applyWhere(query, filter);
-    return query;
+    query.where(
+      (w) =>
+          w.createdAt.isBiggerOrEqualValue(filter.effectiveStartDate) &
+          w.createdAt.isSmallerOrEqualValue(filter.effectiveEndDate),
+    );
+
+    final vehicleQuery = filter.vehicleNumber.trim();
+    if (vehicleQuery.isNotEmpty) {
+      query.where(
+        (w) => w.vehicleNumber.lower().like(
+          '%${_escapeLike(vehicleQuery)}%',
+          escapeChar: _likeEscapeChar,
+        ),
+      );
+    }
+
+    final search = filter.searchQuery.trim().toLowerCase();
+    if (search.isNotEmpty) {
+      final pattern = '%${_escapeLike(search)}%';
+      query.where(
+        (w) =>
+            w.billNumber.lower().like(pattern, escapeChar: _likeEscapeChar) |
+            w.vehicleNumber.lower().like(pattern, escapeChar: _likeEscapeChar),
+      );
+    }
   }
 
-  /// Applies every predicate of [filter], including the free-text search, as
-  /// SQL. One builder is shared by the page, count and summary queries so they
-  /// can never disagree about what "matching" means.
-  void _applyWhere(
+  void _applyWhereOnly(
     JoinedSelectStatement<HasResultSet, dynamic> query,
     ReportFilter filter,
   ) {
@@ -147,10 +155,6 @@ class ReportLocalDataSource {
       weights.createdAt.isBiggerOrEqualValue(filter.effectiveStartDate) &
           weights.createdAt.isSmallerOrEqualValue(filter.effectiveEndDate),
     );
-
-    if (filter.customerId != null) {
-      query.where(weights.customerId.equals(filter.customerId!));
-    }
 
     final vehicleQuery = filter.vehicleNumber.trim();
     if (vehicleQuery.isNotEmpty) {
@@ -162,10 +166,6 @@ class ReportLocalDataSource {
       );
     }
 
-    if (filter.materialId != null) {
-      query.where(weights.materialId.equals(filter.materialId!));
-    }
-
     final search = filter.searchQuery.trim().toLowerCase();
     if (search.isNotEmpty) {
       final pattern = '%${_escapeLike(search)}%';
@@ -174,41 +174,23 @@ class ReportLocalDataSource {
             weights.vehicleNumber.lower().like(
               pattern,
               escapeChar: _likeEscapeChar,
-            ) |
-            _database.customers.name.lower().like(
-              pattern,
-              escapeChar: _likeEscapeChar,
-            ) |
-            _database.materials.name.lower().like(
-              pattern,
-              escapeChar: _likeEscapeChar,
             ),
       );
     }
   }
 
-  WeighmentReportItem _toReportItem(TypedResult row) {
-    final w = row.readTable(_database.weighments);
-    final customer = row.readTableOrNull(_database.customers);
-    final material = row.readTableOrNull(_database.materials);
-
+  WeighmentReportItem _toReportItem(Weighment row) {
     return WeighmentReportItem(
-      id: w.id,
-      billNumber: w.billNumber,
-      createdAt: w.createdAt,
-      vehicleNumber: w.vehicleNumber,
-      customerId: w.customerId,
-      customerName: customer?.name ?? 'Customer #${w.customerId}',
-      materialId: w.materialId,
-      materialName:
-          material?.name ??
-          (w.materialId == null ? '—' : 'Material #${w.materialId}'),
-      remarks: w.remarks,
-      firstWeightKg: w.firstWeightKg,
-      firstWeightType: w.firstWeightType,
-      secondWeightKg: w.secondWeightKg,
-      secondWeightType: w.secondWeightType,
-      weightUnit: w.weightUnit,
+      id: row.id,
+      billNumber: row.billNumber,
+      createdAt: row.createdAt,
+      vehicleNumber: row.vehicleNumber,
+      remarks: row.remarks,
+      firstWeightKg: row.firstWeightKg,
+      firstWeightType: row.firstWeightType,
+      secondWeightKg: row.secondWeightKg,
+      secondWeightType: row.secondWeightType,
+      weightUnit: row.weightUnit,
     );
   }
 

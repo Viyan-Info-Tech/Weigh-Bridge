@@ -1,9 +1,14 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../domain/entities/vehicle_tare_record.dart';
 import '../../domain/repositories/auto_tare_repository.dart';
+import '../../domain/repositories/vehicle_tare_repository.dart';
 import '../../domain/usecases/delete_auto_tare_for_date.dart';
+import '../../domain/usecases/delete_vehicle_tare.dart';
 import '../../domain/usecases/get_auto_tare_for_date.dart';
+import '../../domain/usecases/load_vehicle_tares.dart';
 import '../../domain/usecases/save_auto_tare_for_date.dart';
+import '../../domain/usecases/save_vehicle_tare.dart';
 import 'bill_event.dart';
 import 'bill_state.dart';
 
@@ -15,6 +20,7 @@ import 'bill_state.dart';
 /// auto tare storage and every request fails fast.
 mixin BillAutoTareHandlers on Bloc<BillEvent, BillState> {
   AutoTareRepository? get autoTareRepository;
+  VehicleTareRepository? get vehicleTareRepository;
 
   /// Recomputes net weight and the weight validation error from the current
   /// gross/tare pair. Supplied by the host bloc.
@@ -122,6 +128,121 @@ mixin BillAutoTareHandlers on Bloc<BillEvent, BillState> {
       failure = e;
       if (emit.isDone) return;
       emit(state.copyWith(errorMessage: 'Failed to delete auto tare: $e'));
+    } finally {
+      final completer = event.completer;
+      if (completer != null && !completer.isCompleted) {
+        if (failure != null) {
+          completer.completeError(failure);
+        } else {
+          completer.complete();
+        }
+      }
+    }
+  }
+
+  /// Loads every stored per-vehicle tare record for the Auto Tare popup.
+  Future<void> handleLoadVehicleTares(
+    LoadVehicleTares event,
+    Emitter<BillState> emit,
+  ) async {
+    final repository = vehicleTareRepository;
+    if (repository == null) {
+      event.completer?.completeError(
+        Exception('Vehicle tare storage is not configured for this build.'),
+      );
+      return;
+    }
+
+    Object? failure;
+    try {
+      final records = await LoadVehicleTaresUseCase(repository)();
+      if (emit.isDone) return;
+      emit(state.copyWith(vehicleTareRecords: records, clearError: true));
+    } catch (e) {
+      failure = e;
+      if (emit.isDone) return;
+      emit(state.copyWith(errorMessage: 'Failed to load vehicle tares: $e'));
+    } finally {
+      final completer = event.completer;
+      if (completer != null && !completer.isCompleted) {
+        if (failure != null) {
+          completer.completeError(failure);
+        } else {
+          completer.complete();
+        }
+      }
+    }
+  }
+
+  /// Persists one per-vehicle tare record. Never creates a weighment or bill.
+  Future<void> handleSaveVehicleTare(
+    SaveVehicleTare event,
+    Emitter<BillState> emit,
+  ) async {
+    final repository = vehicleTareRepository;
+    if (repository == null) {
+      event.completer?.completeError(
+        Exception('Vehicle tare storage is not configured for this build.'),
+      );
+      return;
+    }
+
+    VehicleTareRecord? saved;
+    Object? failure;
+    try {
+      saved = await SaveVehicleTareUseCase(repository)(
+        vehicleNumber: event.vehicleNumber,
+        tareKg: event.tareKg,
+      );
+      if (emit.isDone) return;
+      final records = await LoadVehicleTaresUseCase(repository)();
+      if (emit.isDone) return;
+      emit(state.copyWith(vehicleTareRecords: records, clearError: true));
+    } catch (e) {
+      failure = e;
+      if (emit.isDone) return;
+      emit(state.copyWith(errorMessage: 'Failed to save vehicle tare: $e'));
+    } finally {
+      // Always release the caller: an upsert that changes nothing visible
+      // emits nothing, so waiting on the state stream would hang the dialog.
+      final completer = event.completer;
+      if (completer != null && !completer.isCompleted) {
+        if (failure != null) {
+          completer.completeError(failure);
+        } else if (saved != null) {
+          completer.complete(saved);
+        } else {
+          completer.completeError(Exception('Failed to save vehicle tare.'));
+        }
+      }
+    }
+  }
+
+  /// Removes one per-vehicle tare record and refreshes the registry state.
+  /// Used when a record's vehicle number itself is edited.
+  Future<void> handleDeleteVehicleTare(
+    DeleteVehicleTare event,
+    Emitter<BillState> emit,
+  ) async {
+    final repository = vehicleTareRepository;
+    if (repository == null) {
+      event.completer?.completeError(
+        Exception('Vehicle tare storage is not configured for this build.'),
+      );
+      return;
+    }
+
+    Object? failure;
+    try {
+      await DeleteVehicleTareUseCase(repository)(event.vehicleNumber);
+      if (emit.isDone) return;
+      final records = await LoadVehicleTaresUseCase(repository)();
+      if (emit.isDone) return;
+      emit(state.copyWith(vehicleTareRecords: records, clearError: true));
+    } catch (e) {
+      failure = e;
+      if (emit.isDone) return;
+      emit(state.copyWith(errorMessage: 'Failed to delete vehicle tare: $e'));
     } finally {
       final completer = event.completer;
       if (completer != null && !completer.isCompleted) {

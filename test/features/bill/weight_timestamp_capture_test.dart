@@ -7,12 +7,6 @@ import 'package:weighbridge/features/bill/domain/usecases/save_bill.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_bloc.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_event.dart';
 import 'package:weighbridge/features/bill/presentation/widgets/bill_form_weight_row.dart';
-import 'package:weighbridge/features/customer/domain/repositories/customer_repository.dart';
-import 'package:weighbridge/features/material/domain/repositories/material_item_repository.dart';
-
-class MockCustomerRepository extends Mock implements CustomerRepository {}
-
-class MockMaterialRepository extends Mock implements MaterialItemRepository {}
 
 class MockSaveBillUseCase extends Mock implements SaveBillUseCase {}
 
@@ -31,9 +25,7 @@ void main() {
       final w = Weighment(
         id: 1,
         billNumber: 'WB-100',
-        customerId: 1,
         vehicleNumber: 'TN01AA1111',
-        materialId: 1,
         firstWeightKg: 1223,
         firstWeightType: 'GROSS',
         secondWeightKg: 850,
@@ -52,9 +44,7 @@ void main() {
       final w = Weighment(
         id: 2,
         billNumber: 'WB-101',
-        customerId: 1,
         vehicleNumber: 'TN01AA1111',
-        materialId: 1,
         firstWeightKg: 850,
         firstWeightType: 'TARE',
         secondWeightKg: 1223,
@@ -235,25 +225,15 @@ void main() {
 
   group('BillBloc timestamp capture & immutability', () {
     late BillBloc bloc;
-    late MockCustomerRepository mockCustomerRepo;
-    late MockMaterialRepository mockMaterialRepo;
     late MockSaveBillUseCase mockSaveBillUseCase;
     late MockLoadRecentBillsUseCase mockLoadRecentBillsUseCase;
     late MockGenerateBillNumberUseCase mockGenerateBillNumberUseCase;
 
     setUp(() async {
-      mockCustomerRepo = MockCustomerRepository();
-      mockMaterialRepo = MockMaterialRepository();
       mockSaveBillUseCase = MockSaveBillUseCase();
       mockLoadRecentBillsUseCase = MockLoadRecentBillsUseCase();
       mockGenerateBillNumberUseCase = MockGenerateBillNumberUseCase();
 
-      when(
-        () => mockCustomerRepo.getAllActiveCustomers(),
-      ).thenAnswer((_) async => []);
-      when(
-        () => mockMaterialRepo.getMaterialsByStatus(isActive: true),
-      ).thenAnswer((_) async => []);
       when(
         () => mockGenerateBillNumberUseCase(),
       ).thenAnswer((_) async => 'WB-00001');
@@ -262,8 +242,6 @@ void main() {
       ).thenAnswer((_) async => []);
 
       bloc = BillBloc(
-        customerRepository: mockCustomerRepo,
-        materialRepository: mockMaterialRepo,
         saveBillUseCase: mockSaveBillUseCase,
         loadRecentBillsUseCase: mockLoadRecentBillsUseCase,
         generateBillNumberUseCase: mockGenerateBillNumberUseCase,

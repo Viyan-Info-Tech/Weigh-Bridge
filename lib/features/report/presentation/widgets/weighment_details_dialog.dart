@@ -3,39 +3,27 @@ import 'package:intl/intl.dart';
 
 import '../../../bill/domain/entities/weighment.dart';
 import '../../../bill/presentation/widgets/weighment_slip_dialog.dart';
-import '../../../material/domain/entities/material_item.dart';
-import '../../../customer/domain/entities/customer.dart';
 import '../../domain/entities/weighment_report_item.dart';
 
 class WeighmentDetailsDialog extends StatelessWidget {
   final WeighmentReportItem record;
-  final List<Customer> customers;
-  final List<MaterialItem> materials;
   final String? weightUnit;
 
   const WeighmentDetailsDialog({
     super.key,
     required this.record,
-    this.customers = const [],
-    this.materials = const [],
     this.weightUnit,
   });
 
   static Future<void> show({
     required BuildContext context,
     required WeighmentReportItem record,
-    List<Customer> customers = const [],
-    List<MaterialItem> materials = const [],
     String? weightUnit,
   }) {
     return showDialog<void>(
       context: context,
-      builder: (dialogContext) => WeighmentDetailsDialog(
-        record: record,
-        customers: customers,
-        materials: materials,
-        weightUnit: weightUnit,
-      ),
+      builder: (dialogContext) =>
+          WeighmentDetailsDialog(record: record, weightUnit: weightUnit),
     );
   }
 
@@ -46,9 +34,7 @@ class WeighmentDetailsDialog extends StatelessWidget {
     final billEntity = Weighment(
       id: record.id,
       billNumber: record.billNumber,
-      customerId: record.customerId,
       vehicleNumber: record.vehicleNumber,
-      materialId: record.materialId,
       grossWeightKg: record.grossWeightKg ?? record.firstWeightKg,
       tareWeightKg: record.tareWeightKg,
       netWeightKg: record.netWeightKg,
@@ -60,18 +46,9 @@ class WeighmentDetailsDialog extends StatelessWidget {
       updatedAt: record.createdAt,
     );
 
-    Customer? foundCustomer;
-    try {
-      foundCustomer = customers.firstWhere((c) => c.id == record.customerId);
-    } catch (_) {}
-
     showDialog(
       context: context,
-      builder: (dialogContext) => WeighmentSlipDialog(
-        bill: billEntity,
-        customer: foundCustomer,
-        materialName: record.materialName,
-      ),
+      builder: (dialogContext) => WeighmentSlipDialog(bill: billEntity),
     );
   }
 
@@ -187,12 +164,8 @@ class WeighmentDetailsDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Vehicle, Customer, Material Info
-            _buildInfoGrid([
-              _InfoRow('Vehicle', record.vehicleNumber),
-              _InfoRow('Customer', record.customerName),
-              _InfoRow('Material', record.materialName),
-            ]),
+            // Vehicle Info
+            _buildInfoGrid([_InfoRow('Vehicle', record.vehicleNumber)]),
             const SizedBox(height: 16),
 
             // Weights Section

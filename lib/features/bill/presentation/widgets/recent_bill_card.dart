@@ -6,15 +6,12 @@ import '../../domain/entities/weighment.dart';
 /// A single weighment ticket rendered as a card inside the recent bills
 /// panel.
 ///
-/// The card is presentation only: name lookups are resolved by the parent
-/// panel and handed over as plain strings, and the two actions are surfaced
+/// The card is presentation only: the two actions are surfaced
 /// through callbacks instead of dialogs.
 class RecentBillCard extends StatelessWidget {
   const RecentBillCard({
     super.key,
     required this.bill,
-    required this.customerName,
-    required this.materialName,
     required this.weightUnit,
     required this.isCompact,
     this.onSelected,
@@ -22,8 +19,6 @@ class RecentBillCard extends StatelessWidget {
   });
 
   final Weighment bill;
-  final String customerName;
-  final String materialName;
   final String weightUnit;
   final bool isCompact;
   final VoidCallback? onSelected;
@@ -178,105 +173,41 @@ class RecentBillCard extends StatelessWidget {
             ),
           const SizedBox(height: 10),
 
-          // Compact widths put the customer name on its own line.
-          if (isCompact) ...[
-            Row(
-              children: [
-                Expanded(child: _buildVehiclePlate(vehicleNo)),
-                if (materialName.isNotEmpty) ...[
-                  const SizedBox(width: 6),
-                  Flexible(child: _buildMaterialBadge(materialName)),
-                ],
-              ],
-            ),
-            const SizedBox(height: 5),
-            Text(
-              customerName,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF1E293B),
+          // Row 2: Vehicle Plate
+          Row(
+            children: [
+              // Styled Vehicle Plate
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFFBEB),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: const Color(0xFFFDE68A)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.local_shipping_outlined,
+                      size: 14,
+                      color: Color(0xFFB45309),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      vehicleNo,
+                      style: const TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF92400E),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ] else
-            // Row 2: Vehicle Plate & Customer & Material
-            Row(
-              children: [
-                // Styled Vehicle Plate
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFFBEB),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: const Color(0xFFFDE68A)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.local_shipping_outlined,
-                        size: 14,
-                        color: Color(0xFFB45309),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        vehicleNo,
-                        style: const TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                          color: Color(0xFF92400E),
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    customerName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF1E293B),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 6),
-                Container(
-                  constraints: const BoxConstraints(maxWidth: 120),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                  child: Text(
-                    materialName,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF475569),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            ],
+          ),
           const SizedBox(height: 10),
 
           // Row 3: Weight Values Breakdown Strip
@@ -422,57 +353,4 @@ class RecentBillCard extends StatelessWidget {
           ),
         ),
       );
-
-  Widget _buildVehiclePlate(String vehicleNo) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-    decoration: BoxDecoration(
-      color: const Color(0xFFFFFBEB),
-      borderRadius: BorderRadius.circular(4),
-      border: Border.all(color: const Color(0xFFFDE68A)),
-    ),
-    child: Row(
-      children: [
-        const Icon(
-          Icons.local_shipping_outlined,
-          size: 14,
-          color: Color(0xFFB45309),
-        ),
-        const SizedBox(width: 4),
-        Expanded(
-          child: Text(
-            vehicleNo,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF92400E),
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-
-  Widget _buildMaterialBadge(String materialName) => Container(
-    constraints: const BoxConstraints(maxWidth: 120),
-    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-    decoration: BoxDecoration(
-      color: const Color(0xFFF1F5F9),
-      borderRadius: BorderRadius.circular(4),
-    ),
-    child: Text(
-      materialName,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: const TextStyle(
-        fontFamily: 'PlusJakartaSans',
-        fontSize: 11,
-        fontWeight: FontWeight.w600,
-        color: Color(0xFF475569),
-      ),
-    ),
-  );
 }

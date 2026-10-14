@@ -85,13 +85,7 @@ void main() {
       });
 
       test('increments beyond the highest existing number', () async {
-        final refs = await seedParents(db);
-        await seedWeighment(
-          db,
-          customerId: refs.customerId,
-          materialId: refs.materialId,
-          billNumber: 'WB-00008',
-        );
+        await seedWeighment(db, billNumber: 'WB-00008');
 
         final billNumber = await db.appSettingsDao.generateNextBillNumber(
           prefix: 'WB',

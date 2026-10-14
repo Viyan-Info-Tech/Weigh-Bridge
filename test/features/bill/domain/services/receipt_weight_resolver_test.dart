@@ -16,9 +16,7 @@ void main() {
     return Weighment(
       id: 1,
       billNumber: 'WB-00001',
-      customerId: 1,
       vehicleNumber: 'TN31CM2026',
-      materialId: 1,
       firstWeightKg: firstWeightKg,
       firstWeightType: firstWeightType,
       secondWeightKg: secondWeightKg,

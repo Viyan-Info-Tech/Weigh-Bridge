@@ -8,6 +8,7 @@ import 'bill_shortcuts.dart';
 import '../bloc/bill_bloc.dart';
 import '../bloc/bill_event.dart';
 import '../bloc/bill_state.dart';
+import '../../domain/entities/vehicle_tare_record.dart';
 import '../widgets/live_weight_banner.dart';
 import '../widgets/auto_tare_dialog.dart';
 import '../widgets/auto_tare_indicator.dart';
@@ -38,18 +39,17 @@ class BillPageState extends State<BillPage> {
   late final TextEditingController _grossWeightController;
   late final TextEditingController _tareWeightController;
   late final TextEditingController _remarksController;
+  late final TextEditingController _materialController;
+  late final TextEditingController _descriptionController;
   late final TextEditingController _vehicleNumberController;
 
   /// Controllers and focus nodes shared with the form.
   late final BillFormResources _resources;
 
-  late final FocusNode _customerFocusNode;
   late final FocusNode _vehicleFocusNode;
   late final FocusNode _typeFocusNode;
   late final FocusNode _materialFocusNode;
-  late final FocusNode _materialCodeFocusNode;
-  late final FocusNode _customerCodeFocusNode;
-  late final FocusNode _mobileFocusNode;
+  late final FocusNode _descriptionFocusNode;
   late final FocusNode _remarksFocusNode;
   late final FocusNode _grossWeightFocusNode;
   late final FocusNode _tareWeightFocusNode;
@@ -76,10 +76,8 @@ class BillPageState extends State<BillPage> {
     super.didUpdateWidget(oldWidget);
     if (widget.isActive && !oldWidget.isActive) {
       // This page lives inside an IndexedStack, so it is built once per session
-      // and initState never runs again. Master screens write to the database
-      // through their own blocs, so the lookup lists captured at startup go
-      // stale as soon as a customer or material is edited elsewhere. Re-read
-      // them now that this tab is in front again.
+      // and initState never runs again. Refresh recent bills now that this
+      // tab is in front again.
       context.read<BillBloc>().add(const RefreshBillLookups());
       WidgetsBinding.instance.addPostFrameCallback((_) {
         requestFocus();
@@ -107,15 +105,14 @@ class BillPageState extends State<BillPage> {
     _grossWeightController = TextEditingController();
     _tareWeightController = TextEditingController();
     _remarksController = TextEditingController();
+    _materialController = TextEditingController();
+    _descriptionController = TextEditingController();
     _vehicleNumberController = TextEditingController();
 
-    _customerFocusNode = FocusNode(debugLabel: 'customerFocusNode');
     _vehicleFocusNode = FocusNode(debugLabel: 'vehicleFocusNode');
     _typeFocusNode = FocusNode(debugLabel: 'weightTypeFocusNode');
     _materialFocusNode = FocusNode(debugLabel: 'materialFocusNode');
-    _materialCodeFocusNode = FocusNode(debugLabel: 'materialCodeFocusNode');
-    _customerCodeFocusNode = FocusNode(debugLabel: 'customerCodeFocusNode');
-    _mobileFocusNode = FocusNode(debugLabel: 'mobileFocusNode');
+    _descriptionFocusNode = FocusNode(debugLabel: 'descriptionFocusNode');
     _remarksFocusNode = FocusNode(debugLabel: 'remarksFocusNode');
     _grossWeightFocusNode = FocusNode(debugLabel: 'grossWeightFocusNode');
     _tareWeightFocusNode = FocusNode(debugLabel: 'tareWeightFocusNode');
@@ -124,14 +121,13 @@ class BillPageState extends State<BillPage> {
       grossWeightController: _grossWeightController,
       tareWeightController: _tareWeightController,
       remarksController: _remarksController,
+      materialController: _materialController,
+      descriptionController: _descriptionController,
       vehicleNumberController: _vehicleNumberController,
-      customerFocusNode: _customerFocusNode,
       vehicleFocusNode: _vehicleFocusNode,
       typeFocusNode: _typeFocusNode,
       materialFocusNode: _materialFocusNode,
-      materialCodeFocusNode: _materialCodeFocusNode,
-      customerCodeFocusNode: _customerCodeFocusNode,
-      mobileFocusNode: _mobileFocusNode,
+      descriptionFocusNode: _descriptionFocusNode,
       remarksFocusNode: _remarksFocusNode,
       grossWeightFocusNode: _grossWeightFocusNode,
       tareWeightFocusNode: _tareWeightFocusNode,
@@ -209,15 +205,14 @@ class BillPageState extends State<BillPage> {
     _grossWeightController.dispose();
     _tareWeightController.dispose();
     _remarksController.dispose();
+    _materialController.dispose();
+    _descriptionController.dispose();
     _vehicleNumberController.dispose();
 
-    _customerFocusNode.dispose();
     _vehicleFocusNode.dispose();
     _typeFocusNode.dispose();
     _materialFocusNode.dispose();
-    _materialCodeFocusNode.dispose();
-    _customerCodeFocusNode.dispose();
-    _mobileFocusNode.dispose();
+    _descriptionFocusNode.dispose();
     _remarksFocusNode.dispose();
     _grossWeightFocusNode.dispose();
     _tareWeightFocusNode.dispose();
@@ -229,6 +224,8 @@ class BillPageState extends State<BillPage> {
     _grossWeightController.clear();
     _tareWeightController.clear();
     _remarksController.clear();
+    _materialController.clear();
+    _descriptionController.clear();
     _vehicleNumberController.clear();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -242,6 +239,8 @@ class BillPageState extends State<BillPage> {
     _setControllerText(_tareWeightController, state.tareWeightText);
     _setControllerText(_vehicleNumberController, state.vehicleNumber);
     _setControllerText(_remarksController, state.remarksText);
+    _setControllerText(_materialController, state.materialText);
+    _setControllerText(_descriptionController, state.descriptionText);
   }
 
   void _setControllerText(TextEditingController controller, String text) {
@@ -339,48 +338,52 @@ class BillPageState extends State<BillPage> {
     bloc.add(const ApplyAutoTareToBill());
   }
 
-  /// Opens the "Enter Auto Tare" popup for the day's common tare. Reached by
-  /// tapping the AUTO TARE status control and by pressing F3 while no auto
-  /// tare is configured.
+  /// Opens the Auto Tare popup with the stored per-vehicle tare records.
+  /// Reached by tapping the AUTO TARE status control and by pressing F3
+  /// while no auto tare is configured.
   Future<void> _openAutoTareDialog() async {
     if (_isAutoTareDialogOpen) return;
     _isAutoTareDialogOpen = true;
     final bloc = context.read<BillBloc>();
     try {
+      // Load the registry first so the popup table shows fresh data.
+      final loadCompleter = Completer<void>();
+      bloc.add(LoadVehicleTares(completer: loadCompleter));
+      await loadCompleter.future;
+      if (!mounted) return;
       await AutoTareDialog.show(
         context,
-        currentAutoTareKg: bloc.state.autoTareKg,
-        currentAutoTareSavedAt: bloc.state.autoTareSavedAt,
+        records: bloc.state.vehicleTareRecords,
         liveScaleWeightKg: bloc.state.liveScaleWeightKg,
         isScaleStable: bloc.state.isScaleStable,
         isScaleMotion: bloc.state.isScaleMotion,
         isScaleOverload: bloc.state.isScaleOverload,
         weightUnit: bloc.state.weightUnit,
-        onSave: (tareKg, savedAt) => _runAutoTareWrite(
-          (completer) =>
-              SaveAutoTare(tareKg, savedAt: savedAt, completer: completer),
-        ),
-        onDelete: () => _runAutoTareWrite(
-          (completer) => DeleteAutoTare(completer: completer),
-        ),
+        onAdd: (vehicleNumber, tareKg) {
+          final completer = Completer<VehicleTareRecord>();
+          bloc.add(
+            SaveVehicleTare(
+              vehicleNumber,
+              tareKg,
+              completer: completer,
+            ),
+          );
+          return completer.future;
+        },
+        onDelete: (vehicleNumber) {
+          final completer = Completer<void>();
+          bloc.add(
+            DeleteVehicleTare(
+              vehicleNumber,
+              completer: completer,
+            ),
+          );
+          return completer.future;
+        },
       );
     } finally {
       _isAutoTareDialogOpen = false;
     }
-  }
-
-  /// Dispatches an auto tare write and completes once the bloc handles it.
-  ///
-  /// Waiting on the state stream instead would hang whenever the write
-  /// produces no new state, which is exactly what happens when the saved
-  /// value already matches the stored one.
-  Future<void> _runAutoTareWrite(
-    BillEvent Function(Completer<void>) event,
-  ) async {
-    final bloc = context.read<BillBloc>();
-    final completer = Completer<void>();
-    bloc.add(event(completer));
-    await completer.future;
   }
 
   void _showKeyboardMessage(String message) {
@@ -403,20 +406,12 @@ class BillPageState extends State<BillPage> {
   void focusTareWeightInput() => _focusTareWeightInput();
 
   void _moveWeighmentFocus({required bool forward}) {
-    // Material Code only exists in the keyboard order while a material applies.
-    // For a tare-only weighment it is skipped, matching the Enter order built
-    // by `BillForm`, so Tab and Enter never disagree about where focus goes.
-    final isTareSelected =
-        context.read<BillBloc>().state.selectedWeightType.toUpperCase() ==
-        'TARE';
-
     final nodes = <FocusNode>[
       _vehicleFocusNode,
       _typeFocusNode,
-      if (!isTareSelected) _materialCodeFocusNode,
-      _customerCodeFocusNode,
+      _materialFocusNode,
+      _descriptionFocusNode,
       _remarksFocusNode,
-      _mobileFocusNode,
     ];
     final currentFocus = FocusManager.instance.primaryFocus;
     final currentIndex = currentFocus == null
@@ -451,29 +446,25 @@ class BillPageState extends State<BillPage> {
       if (!mounted) return;
       if (errors.containsKey('vehicleNumber')) {
         _vehicleFocusNode.requestFocus();
-      } else if (errors.containsKey('material')) {
-        _materialCodeFocusNode.requestFocus();
-      } else if (errors.containsKey('customer')) {
-        _customerCodeFocusNode.requestFocus();
       } else if (errors.containsKey('weight')) {
         _grossWeightFocusNode.requestFocus();
-      } else if (errors.containsKey('mobile')) {
-        _mobileFocusNode.requestFocus();
       }
     });
   }
 
   bool _hasUnsavedData(BillState state) {
-    return state.selectedCustomer != null ||
-        state.vehicleNumber.isNotEmpty ||
+    return state.vehicleNumber.isNotEmpty ||
         _vehicleNumberController.text.isNotEmpty ||
-        state.selectedMaterial != null ||
         state.grossWeightKg > 0 ||
         state.tareWeightKg > 0 ||
         state.remarksText.isNotEmpty ||
+        state.materialText.isNotEmpty ||
+        state.descriptionText.isNotEmpty ||
         _grossWeightController.text.isNotEmpty ||
         _tareWeightController.text.isNotEmpty ||
-        _remarksController.text.isNotEmpty;
+        _remarksController.text.isNotEmpty ||
+        _materialController.text.isNotEmpty ||
+        _descriptionController.text.isNotEmpty;
   }
 
   void _onReprintPressed(BuildContext context, BillState state) {
@@ -495,21 +486,11 @@ class BillPageState extends State<BillPage> {
 
     // Show selection dialog or reprint most recent bill
     final latestBill = completedBills.first;
-    final customer = state.customers
-        .where((c) => c.id == latestBill.customerId)
-        .firstOrNull;
-    final material = state.materials
-        .where((m) => m.id == latestBill.materialId)
-        .firstOrNull;
 
     _isReprintDialogOpen = true;
     showDialog(
       context: context,
-      builder: (dialogContext) => WeighmentSlipDialog(
-        bill: latestBill,
-        customer: customer,
-        materialName: material?.name ?? '—',
-      ),
+      builder: (dialogContext) => WeighmentSlipDialog(bill: latestBill),
     ).whenComplete(() {
       _isReprintDialogOpen = false;
     });
@@ -543,6 +524,8 @@ class BillPageState extends State<BillPage> {
           prev.tareWeightText != curr.tareWeightText ||
           prev.vehicleNumber != curr.vehicleNumber ||
           prev.remarksText != curr.remarksText ||
+          prev.materialText != curr.materialText ||
+          prev.descriptionText != curr.descriptionText ||
           prev.autoTareKg != curr.autoTareKg ||
           prev.autoTareDate != curr.autoTareDate ||
           (curr.status == BillScreenStatus.printing &&
@@ -567,16 +550,10 @@ class BillPageState extends State<BillPage> {
             state.printReceiptBill != null) {
           _syncControllersAfterReset();
           final bill = state.printReceiptBill!;
-          final customer = state.printReceiptCustomer;
-          final materialName = state.printReceiptMaterialName ?? 'â€”';
           context.read<BillBloc>().add(const PrintReceiptDismissed());
           showDialog(
             context: context,
-            builder: (dialogContext) => WeighmentSlipDialog(
-              bill: bill,
-              customer: customer,
-              materialName: materialName,
-            ),
+            builder: (dialogContext) => WeighmentSlipDialog(bill: bill),
           );
         }
         if (state.status == BillScreenStatus.saved) {
@@ -679,7 +656,7 @@ class BillPageState extends State<BillPage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              // 1. Hero Weight Display Banner
+                              // 1. Camera feeds + live digital weight display.
                               const LiveWeightBanner(),
 
                               // Auto tare status; tapping it opens the
@@ -700,7 +677,7 @@ class BillPageState extends State<BillPage> {
 
                               const SizedBox(height: 10),
 
-                              // 2. Main 2-Column Form
+                              // 2. Main 2-Section Form (details + displays)
                               Expanded(child: _buildBillForm(state)),
 
                               const SizedBox(height: 10),
@@ -722,8 +699,6 @@ class BillPageState extends State<BillPage> {
                             billsDate: state.effectiveBillsDate,
                             billsStartDate: state.billsStartDate,
                             billsEndDate: state.billsEndDate,
-                            customers: state.customers,
-                            materials: state.materials,
                             weightUnit: state.weightUnit,
                             onDateChanged: (date) {
                               context.read<BillBloc>().add(
@@ -842,8 +817,6 @@ class BillPageState extends State<BillPage> {
       billsDate: state.effectiveBillsDate,
       billsStartDate: state.billsStartDate,
       billsEndDate: state.billsEndDate,
-      customers: state.customers,
-      materials: state.materials,
       weightUnit: state.weightUnit,
       onDateChanged: (date) {
         context.read<BillBloc>().add(LoadRecentBills(date: date));

@@ -10,9 +10,7 @@ void main() {
       const filter = ReportFilter();
       expect(filter.datePreset, DateRangePreset.today);
       expect(filter.searchQuery, '');
-      expect(filter.customerId, isNull);
       expect(filter.vehicleNumber, '');
-      expect(filter.materialId, isNull);
     });
   });
 
@@ -91,23 +89,21 @@ void main() {
       datePreset: DateRangePreset.custom,
       customStartDate: DateTime(2026, 9, 1),
       customEndDate: DateTime(2026, 9, 13),
-      customerId: 5,
       vehicleNumber: 'KA01AB2345',
-      materialId: 2,
       searchQuery: 'TN',
     );
 
     test('updates individual fields', () {
       final updated = filter.copyWith(searchQuery: 'KA');
       expect(updated.searchQuery, 'KA');
-      expect(updated.customerId, 5);
+      expect(updated.vehicleNumber, 'KA01AB2345');
       expect(updated.datePreset, DateRangePreset.custom);
     });
 
-    test('clears relational filters with clear flags', () {
-      final cleared = filter.copyWith(clearCustomer: true, clearMaterial: true);
-      expect(cleared.customerId, isNull);
-      expect(cleared.materialId, isNull);
+    test('updates vehicle filter', () {
+      final updated = filter.copyWith(vehicleNumber: 'TN31');
+      expect(updated.vehicleNumber, 'TN31');
+      expect(updated.searchQuery, 'TN');
     });
 
     test('clears custom dates with clearCustomDates', () {

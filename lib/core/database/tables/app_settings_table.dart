@@ -34,9 +34,6 @@ class AppSettings extends Table {
   BoolColumn get showTime => boolean().withDefault(const Constant(true))();
   BoolColumn get showVehicleNumber =>
       boolean().withDefault(const Constant(true))();
-  BoolColumn get showMaterial => boolean().withDefault(const Constant(true))();
-  BoolColumn get showCustomer =>
-      boolean().named('show_party').withDefault(const Constant(true))();
   BoolColumn get showGrossWeight =>
       boolean().withDefault(const Constant(true))();
   BoolColumn get showTareWeight =>

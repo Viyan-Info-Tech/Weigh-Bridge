@@ -355,10 +355,6 @@ class _SearchableDropdownState<T extends Object>
   String _getEmptyMessage() {
     final query = _textController.text.trim();
     if (widget.items.isEmpty) {
-      final labelLower = widget.label.toLowerCase();
-      if (labelLower.contains('customer')) return 'No customers found';
-      if (labelLower.contains('vehicle')) return 'No vehicles found';
-      if (labelLower.contains('material')) return 'No materials found';
       return 'No items found';
     }
     if (query.isNotEmpty) {

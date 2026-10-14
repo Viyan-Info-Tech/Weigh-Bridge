@@ -142,9 +142,7 @@ void main() {
     return Weighment(
       id: 1,
       billNumber: 'WB-00042',
-      customerId: 20,
       vehicleNumber: 'TN31CM2026',
-      materialId: 30,
       firstWeightKg: firstWeightKg,
       firstWeightType: firstWeightType,
       secondWeightKg: secondWeightKg,
@@ -160,8 +158,6 @@ void main() {
   Future<String> decodeTicket(Weighment bill) async {
     final bytes = await generator.generateTicketPdf(
       bill: bill,
-      customer: null,
-      materialName: 'Cement',
       settings: settings,
       printedAt: printedAt,
     );
@@ -205,7 +201,6 @@ void main() {
         expect(text, contains('VIYAN WEIGHBRIDGE'));
         expect(text, contains('WEIGHMENT RECEIPT'));
         expect(text, contains('TN31CM2026'));
-        expect(text, contains('Cement'));
 
         // Missing weights must render as dashes, never as zero or a
         // fabricated net weight.

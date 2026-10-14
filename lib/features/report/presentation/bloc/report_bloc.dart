@@ -1,7 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../material/domain/repositories/material_item_repository.dart';
-import '../../../customer/domain/repositories/customer_repository.dart';
 import '../../../settings/domain/repositories/settings_repository.dart';
 import '../../domain/entities/report_filter.dart';
 import '../../domain/repositories/report_repository.dart';
@@ -11,29 +9,21 @@ import 'report_state.dart';
 
 class ReportBloc extends Bloc<ReportEvent, ReportState> {
   final ReportRepository _reportRepository;
-  final CustomerRepository _customerRepository;
-  final MaterialItemRepository _materialRepository;
   final ExportReportUseCase _exportReportUseCase;
   final SettingsRepository? _settingsRepository;
 
   ReportBloc({
     required ReportRepository reportRepository,
-    required CustomerRepository customerRepository,
-    required MaterialItemRepository materialRepository,
     required ExportReportUseCase exportReportUseCase,
     SettingsRepository? settingsRepository,
   }) : _reportRepository = reportRepository,
-       _customerRepository = customerRepository,
-       _materialRepository = materialRepository,
        _exportReportUseCase = exportReportUseCase,
        _settingsRepository = settingsRepository,
        super(const ReportState()) {
     on<LoadReportInitial>(_onLoadReportInitial);
     on<ReportFilterPresetChanged>(_onFilterPresetChanged);
     on<ReportCustomDateChanged>(_onCustomDateChanged);
-    on<ReportCustomerFilterChanged>(_onCustomerFilterChanged);
     on<ReportVehicleFilterChanged>(_onVehicleFilterChanged);
-    on<ReportMaterialFilterChanged>(_onMaterialFilterChanged);
     on<ReportSearchQueryChanged>(_onSearchQueryChanged);
     on<ApplyReportFilters>(_onApplyReportFilters);
     on<ResetReportFilters>(_onResetReportFilters);
@@ -49,9 +39,6 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
   ) async {
     emit(state.copyWith(status: ReportStatus.loading, clearError: true));
     try {
-      final customers = await _customerRepository.getAllCustomers();
-      final materials = await _materialRepository.getAllMaterials();
-
       final records = await _reportRepository.getReportRecords(
         state.filter,
         limit: state.pageSize,
@@ -67,8 +54,6 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
       emit(
         state.copyWith(
           status: ReportStatus.loaded,
-          customers: customers,
-          materials: materials,
           records: records,
           totalRecords: totalRecords,
           summary: summary,
@@ -117,20 +102,6 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     );
   }
 
-  void _onCustomerFilterChanged(
-    ReportCustomerFilterChanged event,
-    Emitter<ReportState> emit,
-  ) {
-    emit(
-      state.copyWith(
-        filter: state.filter.copyWith(
-          customerId: event.customerId,
-          clearCustomer: event.customerId == null,
-        ),
-      ),
-    );
-  }
-
   void _onVehicleFilterChanged(
     ReportVehicleFilterChanged event,
     Emitter<ReportState> emit,
@@ -138,20 +109,6 @@ class ReportBloc extends Bloc<ReportEvent, ReportState> {
     emit(
       state.copyWith(
         filter: state.filter.copyWith(vehicleNumber: event.vehicleNumber),
-      ),
-    );
-  }
-
-  void _onMaterialFilterChanged(
-    ReportMaterialFilterChanged event,
-    Emitter<ReportState> emit,
-  ) {
-    emit(
-      state.copyWith(
-        filter: state.filter.copyWith(
-          materialId: event.materialId,
-          clearMaterial: event.materialId == null,
-        ),
       ),
     );
   }

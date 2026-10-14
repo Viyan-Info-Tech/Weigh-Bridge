@@ -2,10 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:weighbridge/features/material/domain/entities/material_item.dart';
-import 'package:weighbridge/features/material/domain/repositories/material_item_repository.dart';
-import 'package:weighbridge/features/customer/domain/entities/customer.dart';
-import 'package:weighbridge/features/customer/domain/repositories/customer_repository.dart';
 import 'package:weighbridge/features/report/domain/entities/report_filter.dart';
 import 'package:weighbridge/features/report/domain/entities/report_summary.dart';
 import 'package:weighbridge/features/report/domain/entities/weighment_report_item.dart';
@@ -16,10 +12,6 @@ import 'package:weighbridge/features/report/presentation/bloc/report_bloc.dart';
 import 'package:weighbridge/features/report/presentation/pages/report_page.dart';
 
 class MockReportRepository extends Mock implements ReportRepository {}
-
-class MockCustomerRepository extends Mock implements CustomerRepository {}
-
-class MockMaterialRepository extends Mock implements MaterialItemRepository {}
 
 class MockFileSaveService extends Mock implements FileSaveService {}
 
@@ -34,10 +26,6 @@ void main() {
       billNumber: 'WB-2026-000001',
       createdAt: DateTime(2026, 9, 18, 10, 30),
       vehicleNumber: 'TN31CM20260789A',
-      customerId: 1,
-      customerName: 'ACME Traders Private Limited',
-      materialId: 1,
-      materialName: 'Portland Pozzolana Cement',
       firstWeightKg: 25000,
       secondWeightKg: 6500,
     ),
@@ -46,28 +34,13 @@ void main() {
       billNumber: 'WB-2026-000002',
       createdAt: DateTime(2026, 9, 18, 12, 45),
       vehicleNumber: 'KA01AB1234',
-      customerId: 1,
-      customerName: 'Second Customer',
-      materialId: 1,
-      materialName: 'Cement',
-      firstWeightKg: 22000,
+      firstWeightKg: 0,
     ),
   ];
 
   ReportBloc createReportBloc(MockReportRepository reportRepo) {
-    final customerRepo = MockCustomerRepository();
-    when(
-      () => customerRepo.getAllCustomers(),
-    ).thenAnswer((_) async => const <Customer>[]);
-    final materialRepo = MockMaterialRepository();
-    when(
-      () => materialRepo.getAllMaterials(),
-    ).thenAnswer((_) async => const <MaterialItem>[]);
-
     return ReportBloc(
       reportRepository: reportRepo,
-      customerRepository: customerRepo,
-      materialRepository: materialRepo,
       exportReportUseCase: ExportReportUseCase(
         reportRepository: reportRepo,
         fileSaveService: MockFileSaveService(),

@@ -38,10 +38,6 @@ void main() {
       billNumber: 'WB-00001',
       createdAt: DateTime(2026, 9, 18, 10, 30),
       vehicleNumber: 'TN31CM2026',
-      customerId: 1,
-      customerName: 'Test Customer',
-      materialId: 1,
-      materialName: 'Cement',
       firstWeightKg: 20000,
       secondWeightKg: 5000,
       weightUnit: 'ton',
@@ -68,8 +64,6 @@ void main() {
     print('Extracted text length: ${text.length}');
     print('Contains WB-00001: ${text.contains('WB-00001')}');
     print('Contains Test Company: ${text.contains('Test Company')}');
-    print('Contains Cement: ${text.contains('Cement')}');
-    print('Contains Test Customer: ${text.contains('Test Customer')}');
     print('Contains TN31CM2026: ${text.contains('TN31CM2026')}');
     print('Contains WEIGHMENT REPORT: ${text.contains('WEIGHMENT REPORT')}');
     print('Contains CONFIDENTIAL: ${text.contains('CONFIDENTIAL')}');

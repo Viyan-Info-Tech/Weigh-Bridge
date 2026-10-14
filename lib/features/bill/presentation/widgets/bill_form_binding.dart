@@ -16,14 +16,13 @@ class BillFormResources {
     required this.grossWeightController,
     required this.tareWeightController,
     required this.remarksController,
+    required this.materialController,
+    required this.descriptionController,
     required this.vehicleNumberController,
-    required this.customerFocusNode,
     required this.vehicleFocusNode,
     required this.typeFocusNode,
     required this.materialFocusNode,
-    required this.materialCodeFocusNode,
-    required this.customerCodeFocusNode,
-    required this.mobileFocusNode,
+    required this.descriptionFocusNode,
     required this.remarksFocusNode,
     required this.grossWeightFocusNode,
     required this.tareWeightFocusNode,
@@ -32,15 +31,14 @@ class BillFormResources {
   final TextEditingController grossWeightController;
   final TextEditingController tareWeightController;
   final TextEditingController remarksController;
+  final TextEditingController materialController;
+  final TextEditingController descriptionController;
   final TextEditingController vehicleNumberController;
 
-  final FocusNode customerFocusNode;
   final FocusNode vehicleFocusNode;
   final FocusNode typeFocusNode;
   final FocusNode materialFocusNode;
-  final FocusNode materialCodeFocusNode;
-  final FocusNode customerCodeFocusNode;
-  final FocusNode mobileFocusNode;
+  final FocusNode descriptionFocusNode;
   final FocusNode remarksFocusNode;
   final FocusNode grossWeightFocusNode;
   final FocusNode tareWeightFocusNode;
@@ -69,15 +67,14 @@ class BillFormBinding extends StatelessWidget {
     return BillForm(
       key: ValueKey(state.formResetRevision),
       billNumber: state.currentBillNumber,
-      mobileNumber: state.mobileNumber,
-      customers: state.customers,
-      materials: state.materials,
-      selectedCustomer: state.selectedCustomer,
+      materialText: state.materialText,
+      descriptionText: state.descriptionText,
       vehicleNumber: state.vehicleNumber,
-      selectedMaterial: state.selectedMaterial,
       grossWeightController: r.grossWeightController,
       tareWeightController: r.tareWeightController,
       remarksController: r.remarksController,
+      materialController: r.materialController,
+      descriptionController: r.descriptionController,
       vehicleNumberController: r.vehicleNumberController,
       grossWeightKg: state.grossWeightKg,
       tareWeightKg: state.tareWeightKg,
@@ -92,22 +89,17 @@ class BillFormBinding extends StatelessWidget {
       tareCapturedAt: state.tareCapturedAt,
       selectedType: state.selectedWeightType,
       onTypeChanged: (type) => bloc.add(WeightTypeSelected(type)),
-      customerFocusNode: r.customerFocusNode,
       vehicleFocusNode: r.vehicleFocusNode,
       typeFocusNode: r.typeFocusNode,
       materialFocusNode: r.materialFocusNode,
-      materialCodeFocusNode: r.materialCodeFocusNode,
-      customerCodeFocusNode: r.customerCodeFocusNode,
-      mobileFocusNode: r.mobileFocusNode,
+      descriptionFocusNode: r.descriptionFocusNode,
       remarksFocusNode: r.remarksFocusNode,
       grossWeightFocusNode: r.grossWeightFocusNode,
       tareWeightFocusNode: r.tareWeightFocusNode,
-      onCustomerChanged: (customer) => bloc.add(CustomerSelected(customer)),
-      onCustomerCodeSubmitted: (code) => bloc.findCustomerByCode(code),
       onVehicleNumberChanged: (vehicleNumber) =>
           bloc.add(VehicleNumberChanged(vehicleNumber)),
-      onMaterialChanged: (material) => bloc.add(MaterialSelected(material)),
-      onMaterialCodeSubmitted: (code) => bloc.findMaterialByCode(code),
+      onMaterialChanged: (v) => bloc.add(MaterialChanged(v)),
+      onDescriptionChanged: (v) => bloc.add(DescriptionChanged(v)),
       onGrossWeightChanged: (v) => bloc.add(GrossWeightChanged(v)),
       onTareWeightChanged: (v) => bloc.add(TareWeightChanged(v)),
       onGrossWeightCommitted: (v) => bloc.add(GrossWeightCommitted(v)),
@@ -116,12 +108,8 @@ class BillFormBinding extends StatelessWidget {
       onTareCapturedAtChanged: (v) => bloc.add(TareCapturedAtChanged(v)),
       onRemarksChanged: (v) => bloc.add(RemarksChanged(v)),
       onWeightUnitChanged: (v) => bloc.add(WeightUnitChanged(v)),
-      onMobileNumberChanged: (v) => bloc.add(MobileNumberChanged(v)),
       vehicleNumberError: state.vehicleNumberError,
-      materialError: state.materialError,
-      customerError: state.customerError,
       weightError: state.weightError,
-      mobileError: state.mobileError,
     );
   }
 }

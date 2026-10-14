@@ -1,0 +1,18 @@
+import '../entities/vehicle_tare_record.dart';
+
+abstract class VehicleTareRepository {
+  /// Every stored vehicle tare record, ordered by vehicle number.
+  Future<List<VehicleTareRecord>> loadVehicleTares();
+
+  /// Inserts a new vehicle tare or updates the tare of an existing vehicle.
+  ///
+  /// Throws [ArgumentError] when the vehicle number is blank or the tare is
+  /// not a finite positive weight.
+  Future<VehicleTareRecord> saveVehicleTare({
+    required String vehicleNumber,
+    required double tareKg,
+  });
+
+  /// Removes the tare record for [vehicleNumber], if one exists.
+  Future<void> deleteVehicleTare(String vehicleNumber);
+}

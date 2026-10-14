@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../../../../features/bill/domain/entities/weighment.dart';
 import '../../../../features/bill/domain/services/weighment_receipt_data.dart';
 import '../../../../features/bill/presentation/widgets/weighment_receipt_template.dart';
-import '../../../../features/customer/domain/entities/customer.dart';
 import '../../../../features/settings/domain/entities/billing_settings.dart';
 
 /// A card wrapper that displays the live receipt preview.
@@ -21,16 +20,12 @@ class ReceiptPreviewCard extends StatelessWidget {
     required this.settings,
     required this.showSerialNumber,
     required this.showVehicleNumber,
-    required this.showMaterial,
-    required this.showCustomer,
     required this.showGrossWeight,
     required this.showTareWeight,
     required this.showNetWeight,
     required this.showRemarks,
     required this.showFooterNote,
     required this.latestWeighment,
-    required this.customer,
-    required this.materialName,
     required this.isLoadingWeighment,
   });
 
@@ -38,22 +33,17 @@ class ReceiptPreviewCard extends StatelessWidget {
 
   final bool showSerialNumber;
   final bool showVehicleNumber;
-  final bool showMaterial;
-  final bool showCustomer;
   final bool showGrossWeight;
   final bool showTareWeight;
   final bool showNetWeight;
   final bool showRemarks;
   final bool showFooterNote;
   final Weighment? latestWeighment;
-  final Customer? customer;
-  final String? materialName;
   final bool isLoadingWeighment;
 
   static final Weighment _sampleBill = Weighment(
     id: 0,
     billNumber: 'WB-00037',
-    customerId: 0,
     vehicleNumber: 'TN56VD5677',
     firstWeightKg: 200000,
     firstWeightType: 'GROSS',
@@ -63,15 +53,6 @@ class ReceiptPreviewCard extends StatelessWidget {
     remarks: '',
     createdAt: DateTime(2026, 10, 7, 19, 40),
     updatedAt: DateTime(2026, 10, 7, 19, 40),
-  );
-
-  static final Customer _sampleCustomer = Customer(
-    id: 0,
-    name: 'Viyaninfo',
-    mobile: '6381812437',
-    isActive: true,
-    createdAt: DateTime(2026, 10, 7),
-    updatedAt: DateTime(2026, 10, 7),
   );
 
   @override
@@ -184,17 +165,9 @@ class ReceiptPreviewCard extends StatelessWidget {
 
   Widget _buildSlip(bool hasLogo) {
     final bill = latestWeighment ?? _sampleBill;
-    final activeCustomer =
-        customer ?? (latestWeighment == null ? _sampleCustomer : null);
-    final activeMaterialName =
-        (materialName != null && materialName!.isNotEmpty)
-        ? materialName!
-        : (latestWeighment == null ? 'Sand' : '');
 
     final receiptData = WeighmentReceiptData(
       bill: bill,
-      customer: activeCustomer,
-      materialName: activeMaterialName,
       settings: settings,
       forPreview: true,
     );

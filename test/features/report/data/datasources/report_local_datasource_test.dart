@@ -8,8 +8,6 @@ import '../../../../support/test_database.dart';
 void main() {
   late AppDatabase db;
   late ReportLocalDataSource source;
-  late SeededRefs refs;
-  late int customer2;
 
   final todayNoon = DateTime.now();
   final todayMorning = DateTime.now().subtract(const Duration(hours: 6));
@@ -17,27 +15,22 @@ void main() {
   setUp(() async {
     db = createInMemoryDatabase();
     source = ReportLocalDataSource(db);
-    refs = await seedParents(db);
 
     await seedWeighment(
       db,
-      customerId: refs.customerId,
-      materialId: refs.materialId,
       billNumber: 'WB-00001',
+      vehicleNumber: 'TN31SEED01',
       firstWeightKg: 20000,
       secondWeightKg: 5000,
       createdAt: todayMorning,
     );
     await seedWeighment(
       db,
-      customerId: refs.customerId,
-      materialId: refs.materialId,
       billNumber: 'WB-00002',
+      vehicleNumber: 'TN31SEED02',
       firstWeightKg: 30000,
       createdAt: todayNoon,
     );
-
-    customer2 = await seedCustomer(db, name: 'Second Customer');
   });
 
   tearDown(() async {
@@ -45,16 +38,11 @@ void main() {
   });
 
   group('ReportLocalDataSource.getReportRecords', () {
-    test(
-      'returns all today records ordered newest first with joined names',
-      () async {
-        final records = await source.getReportRecords(const ReportFilter());
-        expect(records.map((r) => r.billNumber), ['WB-00002', 'WB-00001']);
-        expect(records.first.customerName, 'Seed Customer');
-        expect(records.first.vehicleNumber, 'TN31SEED01');
-        expect(records.first.materialName, 'Cement');
-      },
-    );
+    test('returns all today records ordered newest first', () async {
+      final records = await source.getReportRecords(const ReportFilter());
+      expect(records.map((r) => r.billNumber), ['WB-00002', 'WB-00001']);
+      expect(records.first.vehicleNumber, 'TN31SEED02');
+    });
 
     test('excludes records outside the date preset', () async {
       final records = await source.getReportRecords(
@@ -63,22 +51,25 @@ void main() {
       expect(records, isEmpty);
     });
 
-    test('filters by customer', () async {
-      final records = await source.getReportRecords(
-        ReportFilter(datePreset: DateRangePreset.today, customerId: customer2),
-      );
-      expect(records, isEmpty);
-
-      final forSeed = await source.getReportRecords(
-        ReportFilter(
+    test('filters by vehicle number', () async {
+      final none = await source.getReportRecords(
+        const ReportFilter(
           datePreset: DateRangePreset.today,
-          customerId: refs.customerId,
+          vehicleNumber: 'KA01ZZ9999',
         ),
       );
-      expect(forSeed.length, 2);
+      expect(none, isEmpty);
+
+      final forSeed = await source.getReportRecords(
+        const ReportFilter(
+          datePreset: DateRangePreset.today,
+          vehicleNumber: 'TN31SEED01',
+        ),
+      );
+      expect(forSeed.map((r) => r.billNumber), ['WB-00001']);
     });
 
-    test('searches by bill number, vehicle, customer and material', () async {
+    test('searches by bill number and vehicle only', () async {
       final byBill = await source.getReportRecords(
         const ReportFilter(
           datePreset: DateRangePreset.today,
@@ -95,22 +86,6 @@ void main() {
       );
       expect(byVehicle.length, 2);
 
-      final byCustomer = await source.getReportRecords(
-        const ReportFilter(
-          datePreset: DateRangePreset.today,
-          searchQuery: 'seed customer',
-        ),
-      );
-      expect(byCustomer.length, 2);
-
-      final byMaterial = await source.getReportRecords(
-        const ReportFilter(
-          datePreset: DateRangePreset.today,
-          searchQuery: 'cement',
-        ),
-      );
-      expect(byMaterial.length, 2);
-
       final none = await source.getReportRecords(
         const ReportFilter(
           datePreset: DateRangePreset.today,
@@ -118,22 +93,6 @@ void main() {
         ),
       );
       expect(none, isEmpty);
-    });
-
-    test('falls back to ids for missing parent records', () async {
-      await seedWeighment(
-        db,
-        customerId: 9999,
-        materialId: 8888,
-        billNumber: 'WB-00003',
-        firstWeightKg: 1000,
-        createdAt: DateTime.now(),
-      );
-
-      final records = await source.getReportRecords(const ReportFilter());
-      final orphan = records.firstWhere((r) => r.billNumber == 'WB-00003');
-      expect(orphan.customerName, 'Customer #9999');
-      expect(orphan.materialName, 'Material #8888');
     });
 
     test('maps weights and completion onto report items', () async {
@@ -161,16 +120,10 @@ void main() {
     });
 
     test('still finds substrings containing an escaped wildcard', () async {
-      final materialId = await seedMaterial(
-        db,
-        code: 'pct',
-        name: '50% Grade Cement',
-      );
       await seedWeighment(
         db,
-        customerId: refs.customerId,
-        materialId: materialId,
         billNumber: 'WB-00004',
+        vehicleNumber: 'TN50%01',
         firstWeightKg: 1000,
         createdAt: todayNoon,
       );
@@ -227,8 +180,6 @@ void main() {
       for (final billNumber in ['WB-10001', 'WB-10003']) {
         await seedWeighment(
           db,
-          customerId: refs.customerId,
-          materialId: refs.materialId,
           billNumber: billNumber,
           firstWeightKg: 1,
           createdAt: stamp,
@@ -276,9 +227,9 @@ void main() {
       expect(await source.countReportRecords(const ReportFilter()), 2);
       expect(
         await source.countReportRecords(
-          ReportFilter(
+          const ReportFilter(
             datePreset: DateRangePreset.today,
-            customerId: customer2,
+            vehicleNumber: 'KA01ZZ9999',
           ),
         ),
         0,
@@ -339,12 +290,10 @@ void main() {
     });
 
     test('handles TARE-first weighments the same way the table does', () async {
-      final tareFirstId = await seedCustomer(db, name: 'Tare First Co');
       await seedWeighment(
         db,
-        customerId: tareFirstId,
-        materialId: refs.materialId,
         billNumber: 'WB-20001',
+        vehicleNumber: 'TN31TARE01',
         firstWeightKg: 5000,
         firstWeightType: 'TARE',
         secondWeightKg: 20000,

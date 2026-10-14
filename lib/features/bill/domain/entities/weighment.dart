@@ -3,17 +3,14 @@ import 'package:equatable/equatable.dart';
 class Weighment extends Equatable {
   final int id;
   final String billNumber;
-  final int customerId;
   final String vehicleNumber;
-
-  /// Null only for a tare-only weighment, which has no net weight and so no
-  /// material to price against.
-  final int? materialId;
   final double firstWeightKg;
   final String firstWeightType;
   final double? secondWeightKg;
   final String? secondWeightType;
   final double? explicitNetWeightKg;
+  final String? material;
+  final String? description;
   final String? remarks;
   final String? mobileNumber;
   final String weightUnit;
@@ -23,9 +20,7 @@ class Weighment extends Equatable {
   const Weighment({
     required this.id,
     required this.billNumber,
-    required this.customerId,
     required this.vehicleNumber,
-    this.materialId,
     double? firstWeightKg,
     this.firstWeightType = 'GROSS',
     this.secondWeightKg,
@@ -33,6 +28,8 @@ class Weighment extends Equatable {
     double? grossWeightKg,
     double? tareWeightKg,
     double? netWeightKg,
+    this.material,
+    this.description,
     this.remarks,
     this.mobileNumber,
     this.weightUnit = 'ton',
@@ -125,14 +122,14 @@ class Weighment extends Equatable {
   List<Object?> get props => [
     id,
     billNumber,
-    customerId,
     vehicleNumber,
-    materialId,
     firstWeightKg,
     firstWeightType,
     secondWeightKg,
     secondWeightType,
     explicitNetWeightKg,
+    material,
+    description,
     mobileNumber,
     weightUnit,
     createdAt,

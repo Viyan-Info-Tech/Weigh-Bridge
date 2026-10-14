@@ -6,14 +6,6 @@ import 'package:weighbridge/features/bill/domain/usecases/save_bill.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_bloc.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_event.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_state.dart';
-import 'package:weighbridge/features/customer/domain/entities/customer.dart';
-import 'package:weighbridge/features/customer/domain/repositories/customer_repository.dart';
-import 'package:weighbridge/features/material/domain/entities/material_item.dart';
-import 'package:weighbridge/features/material/domain/repositories/material_item_repository.dart';
-
-class MockCustomerRepository extends Mock implements CustomerRepository {}
-
-class MockMaterialRepository extends Mock implements MaterialItemRepository {}
 
 class MockSaveBillUseCase extends Mock implements SaveBillUseCase {}
 
@@ -36,28 +28,9 @@ class FakeWeighment extends Fake implements Weighment {}
 /// The Auto Tare itself keeps its own reference timestamp; only the bill's
 /// billing time is decoupled from it.
 void main() {
-  late MockCustomerRepository mockCustomerRepo;
-  late MockMaterialRepository mockMaterialRepo;
   late MockSaveBillUseCase mockSaveBill;
   late MockLoadRecentBillsUseCase mockLoadRecent;
   late MockGenerateBillNumberUseCase mockGenerateBillNumber;
-
-  final testCustomer = Customer(
-    id: 1,
-    customerCode: 'C001',
-    name: 'Test Customer',
-    isActive: true,
-    createdAt: DateTime(2026, 10, 1),
-    updatedAt: DateTime(2026, 10, 1),
-  );
-  final testMaterial = MaterialItem(
-    id: 1,
-    code: 'M001',
-    name: 'Sand',
-    isActive: true,
-    createdAt: DateTime(2026, 10, 1),
-    updatedAt: DateTime(2026, 10, 1),
-  );
 
   /// The moment the day's Auto Tare was configured. Fixed for the whole day.
   final autoTareConfiguredAt = DateTime(2026, 10, 1, 14, 43);
@@ -70,8 +43,6 @@ void main() {
 
   BillBloc createBloc() {
     return BillBloc(
-      customerRepository: mockCustomerRepo,
-      materialRepository: mockMaterialRepo,
       saveBillUseCase: mockSaveBill,
       loadRecentBillsUseCase: mockLoadRecent,
       generateBillNumberUseCase: mockGenerateBillNumber,
@@ -80,18 +51,10 @@ void main() {
 
   setUp(() {
     saved.clear();
-    mockCustomerRepo = MockCustomerRepository();
-    mockMaterialRepo = MockMaterialRepository();
     mockSaveBill = MockSaveBillUseCase();
     mockLoadRecent = MockLoadRecentBillsUseCase();
     mockGenerateBillNumber = MockGenerateBillNumberUseCase();
 
-    when(
-      () => mockCustomerRepo.getAllActiveCustomers(),
-    ).thenAnswer((_) async => [testCustomer]);
-    when(
-      () => mockMaterialRepo.getMaterialsByStatus(isActive: true),
-    ).thenAnswer((_) async => [testMaterial]);
     when(
       () => mockLoadRecent.call(date: any(named: 'date')),
     ).thenAnswer((_) async => []);
@@ -117,8 +80,6 @@ void main() {
       weightUnit: 'kg',
       currentBillNumber: 'WB-00001',
     ).copyWith(
-      selectedCustomer: testCustomer,
-      selectedMaterial: testMaterial,
       firstWeightType: 'TARE',
       autoTareKg: 2000,
       autoTareDate: DateTime(2026, 10, 1),

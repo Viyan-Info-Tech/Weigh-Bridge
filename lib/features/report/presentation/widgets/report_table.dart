@@ -18,7 +18,7 @@ class ReportTable extends StatelessWidget {
   final ScrollController hScrollController;
   final ReportState state;
 
-  static const double _minTableWidth = 1200;
+  static const double _minTableWidth = 1000;
   static const double _minTableChromeHeight = 83;
 
   String _formatWeight(double? kg, String unit) {
@@ -215,8 +215,6 @@ class _TableHeader extends StatelessWidget {
           Expanded(flex: 11, child: _HeaderCell('BILL NO')),
           Expanded(flex: 13, child: _HeaderCell('DATE & TIME')),
           Expanded(flex: 11, child: _HeaderCell('VEHICLE')),
-          Expanded(flex: 13, child: _HeaderCell('CUSTOMER')),
-          Expanded(flex: 11, child: _HeaderCell('MATERIAL')),
           Expanded(
             flex: 12,
             child: _HeaderCell('GROSS WEIGHT', align: TextAlign.right),
@@ -350,8 +348,6 @@ class _TableRow extends StatelessWidget {
         WeighmentDetailsDialog.show(
           context: context,
           record: item,
-          customers: state.customers,
-          materials: state.materials,
           weightUnit: state.weightUnit,
         );
       },
@@ -411,32 +407,6 @@ class _TableRow extends StatelessWidget {
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF1E293B),
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            // Customer
-            Expanded(
-              flex: 13,
-              child: Text(
-                item.customerName,
-                style: const TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 12,
-                  color: Color(0xFF334155),
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            // Material
-            Expanded(
-              flex: 11,
-              child: Text(
-                item.materialName,
-                style: const TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 12,
-                  color: Color(0xFF334155),
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -558,8 +528,6 @@ class _TableRow extends StatelessWidget {
                     WeighmentDetailsDialog.show(
                       context: context,
                       record: item,
-                      customers: state.customers,
-                      materials: state.materials,
                       weightUnit: state.weightUnit,
                     );
                   },

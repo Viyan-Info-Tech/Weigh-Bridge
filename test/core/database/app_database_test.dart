@@ -9,20 +9,21 @@ import 'package:weighbridge/core/database/app_database.dart';
 import '../../support/test_database.dart';
 
 void main() {
-  test('schema version is 28', () {
+  test('schema version is 31', () {
     final db = createInMemoryDatabase();
     addTearDown(db.close);
-    expect(db.schemaVersion, 28);
+    expect(db.schemaVersion, 31);
   });
 
   test('onCreate creates all application tables', () async {
     await withDatabase((db) async {
       final tables = [
         'users',
-        'customers',
-        'materials',
         'weighments',
         'app_settings',
+        'scale_settings',
+        'auto_tare_settings',
+        'vehicle_tare_records',
         'admin_credentials',
       ];
       for (final table in tables) {
@@ -41,21 +42,111 @@ void main() {
     });
   });
 
-  test('onCreate does not create vehicle tables', () async {
+  test(
+    'onCreate does not create customer, material or vehicle tables',
+    () async {
+      await withDatabase((db) async {
+        for (final table in [
+          'customers',
+          'materials',
+          'vehicles',
+          'vehicle_types',
+          'parties',
+        ]) {
+          final rows = await db
+              .customSelect(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name = ?",
+                variables: [Variable.withString(table)],
+              )
+              .get();
+          expect(rows, isEmpty, reason: 'table $table must not exist');
+        }
+      });
+    },
+  );
+
+  test('fresh weighments table has no customer or material columns', () async {
     await withDatabase((db) async {
-      for (final table in ['vehicles', 'vehicle_types']) {
-        final rows = await db
-            .customSelect(
-              "SELECT name FROM sqlite_master WHERE type='table' AND name = ?",
-              variables: [Variable.withString(table)],
-            )
-            .get();
-        expect(rows, isEmpty, reason: 'table $table must not exist');
-      }
+      final cols = await db
+          .customSelect("SELECT name FROM pragma_table_info('weighments')")
+          .get();
+      final names = cols.map((r) => r.data['name'] as String).toSet();
+      expect(names, isNot(contains('customer_id')));
+      expect(names, isNot(contains('material_id')));
+      expect(names, isNot(contains('party_id')));
+      expect(
+        names,
+        containsAll(<String>[
+          'bill_number',
+          'vehicle_number',
+          'first_weight_kg',
+          'mobile_number',
+          'weight_unit',
+        ]),
+      );
     });
   });
 
-  test('onCreate creates the weighments report query indexes', () async {
+  test('fresh vehicle_tare_records table stores one tare per vehicle',
+      () async {
+    await withDatabase((db) async {
+      final cols = await db
+          .customSelect(
+            "SELECT name FROM pragma_table_info('vehicle_tare_records')",
+          )
+          .get();
+      final names = cols.map((r) => r.data['name'] as String).toSet();
+      expect(
+        names,
+        containsAll(<String>[
+          'vehicle_number',
+          'tare_kg',
+          'created_at',
+          'updated_at',
+        ]),
+      );
+
+      final record = await db.vehicleTareRecordsDao.upsert(
+        vehicleNumber: 'TN14L1112',
+        tareKg: 8200,
+      );
+      expect(record.vehicleNumber, 'TN14L1112');
+      expect(record.tareKg, 8200);
+
+      final updated = await db.vehicleTareRecordsDao.upsert(
+        vehicleNumber: 'TN14L1112',
+        tareKg: 8300,
+      );
+      expect(updated.tareKg, 8300);
+      final rows = await db.vehicleTareRecordsDao.getAllOrdered();
+      expect(rows, hasLength(1));
+
+      await db.vehicleTareRecordsDao.deleteByVehicleNumber('TN14L1112');
+      expect(
+        await db.vehicleTareRecordsDao.getAllOrdered(),
+        isEmpty,
+      );
+    });
+  });
+
+  test(
+    'fresh app_settings table has no show_material or show_party columns',
+    () async {
+      await withDatabase((db) async {
+        final cols = await db
+            .customSelect("SELECT name FROM pragma_table_info('app_settings')")
+            .get();
+        final names = cols.map((r) => r.data['name'] as String).toSet();
+        expect(names, isNot(contains('show_material')));
+        expect(names, isNot(contains('show_party')));
+        expect(names, isNot(contains('show_vehicle_type')));
+        expect(names, contains('show_vehicle_number'));
+        expect(names, contains('show_remarks'));
+      });
+    },
+  );
+
+  test('onCreate creates the weighments report query index', () async {
     await withDatabase((db) async {
       final rows = await db
           .customSelect(
@@ -64,63 +155,131 @@ void main() {
           )
           .get();
       final names = rows.map((r) => r.read<String>('name')).toSet();
-      expect(
-        names,
-        containsAll(<String>[
-          'idx_weighments_created_at',
-          'idx_weighments_customer_created',
-          'idx_weighments_material_created',
-        ]),
+      expect(names, contains('idx_weighments_created_at'));
+      expect(names, isNot(contains('idx_weighments_customer_created')));
+      expect(names, isNot(contains('idx_weighments_material_created')));
+    });
+  });
+
+  test(
+    'upgrading from v23 keeps only the created_at weighment index',
+    () async {
+      // A file-backed database is required: the migration only replays on a
+      // fresh connection, and an already-open in-memory executor would be
+      // reused instead of reopened. The database is built in the genuine v23
+      // shape (customer/material relationships still present), because the
+      // v25/v26/v29 rebuild steps copy those columns forward.
+      final dir = await Directory.systemTemp.createTemp('weighbridge_idx');
+      addTearDown(() => dir.delete(recursive: true));
+      final file = File(p.join(dir.path, 'v23.sqlite'));
+
+      final seed = NativeDatabase(file);
+      await seed.ensureOpen(_StubExecutorUser(23));
+      final now = DateTime(2026, 10, 1).millisecondsSinceEpoch;
+      await seed.runCustom(
+        'CREATE TABLE customers ('
+        'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+        'name TEXT NOT NULL, customer_code TEXT, '
+        'is_active INTEGER NOT NULL DEFAULT 1, '
+        'created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)',
       );
-    });
-  });
+      await seed.runCustom(
+        'CREATE TABLE materials ('
+        'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+        'name TEXT NOT NULL, code TEXT NOT NULL DEFAULT \'\', '
+        'is_active INTEGER NOT NULL DEFAULT 1, '
+        'created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)',
+      );
+      await seed.runCustom(
+        'CREATE TABLE weighments ('
+        'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+        'bill_number TEXT NOT NULL UNIQUE, '
+        'customer_id INTEGER NOT NULL REFERENCES customers(id), '
+        'vehicle_number TEXT NOT NULL, '
+        'material_id INTEGER NOT NULL REFERENCES materials(id), '
+        'payment_mode TEXT NOT NULL, '
+        'first_weight_kg REAL NOT NULL, '
+        'first_weight_type TEXT NOT NULL DEFAULT \'GROSS\', '
+        'second_weight_kg REAL, second_weight_type TEXT, net_weight_kg REAL, '
+        'vehicle_charge REAL NOT NULL DEFAULT 0, '
+        'amount REAL NOT NULL DEFAULT 0, remarks TEXT, '
+        'weight_unit TEXT NOT NULL DEFAULT \'ton\', '
+        'created_at INTEGER NOT NULL DEFAULT (strftime(\'%s\',\'now\')), '
+        'updated_at INTEGER NOT NULL DEFAULT (strftime(\'%s\',\'now\')))',
+      );
+      await seed.runCustom(
+        'CREATE TABLE app_settings ('
+        'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+        'weight_unit TEXT NOT NULL DEFAULT \'ton\', '
+        'bill_prefix TEXT NOT NULL DEFAULT \'WB\', '
+        'bill_starting_number INTEGER NOT NULL DEFAULT 1, '
+        'bill_number_digits INTEGER NOT NULL DEFAULT 5, '
+        'business_name TEXT NOT NULL DEFAULT \'VIYAN WEIGHBRIDGE\', '
+        'business_subtitle TEXT, service_text TEXT, address TEXT, '
+        'phone_number TEXT, email TEXT, gstin TEXT, logo_path TEXT, '
+        'receipt_title TEXT NOT NULL DEFAULT \'WEIGHMENT RECEIPT\', '
+        'show_serial_number INTEGER NOT NULL DEFAULT 1, '
+        'show_date INTEGER NOT NULL DEFAULT 1, '
+        'show_time INTEGER NOT NULL DEFAULT 1, '
+        'show_vehicle_number INTEGER NOT NULL DEFAULT 1, '
+        'show_material INTEGER NOT NULL DEFAULT 1, '
+        'show_party INTEGER NOT NULL DEFAULT 1, '
+        'show_gross_weight INTEGER NOT NULL DEFAULT 1, '
+        'show_tare_weight INTEGER NOT NULL DEFAULT 1, '
+        'show_net_weight INTEGER NOT NULL DEFAULT 1, '
+        'show_amount INTEGER NOT NULL DEFAULT 1, '
+        'show_payment_mode INTEGER NOT NULL DEFAULT 1, '
+        'show_cash_received INTEGER NOT NULL DEFAULT 1, '
+        'show_remarks INTEGER NOT NULL DEFAULT 1, '
+        'show_footer_note INTEGER NOT NULL DEFAULT 1, '
+        'footer_note TEXT, updated_at INTEGER NOT NULL)',
+      );
+      await seed.runCustom(
+        'INSERT INTO customers (id, name, customer_code, is_active, '
+        'created_at, updated_at) VALUES (1, \'Acme\', \'C-001\', 1, ?, ?)',
+        [now, now],
+      );
+      await seed.runCustom(
+        'INSERT INTO materials (id, name, code, is_active, created_at, '
+        'updated_at) VALUES (1, \'Cement\', \'M-1\', 1, ?, ?)',
+        [now, now],
+      );
+      await seed.runCustom(
+        'INSERT INTO weighments (bill_number, customer_id, vehicle_number, '
+        'material_id, payment_mode, first_weight_kg, weight_unit, created_at, '
+        'updated_at) VALUES (\'WB-00001\', 1, \'MH12AB1234\', 1, \'cash\', '
+        '5000.0, \'kg\', ?, ?)',
+        [now, now],
+      );
+      await seed.runCustom('PRAGMA user_version = 23');
+      await seed.close();
 
-  test('upgrading from v23 adds the weighments report query indexes', () async {
-    // A file-backed database is required: the migration only replays on a
-    // fresh connection, and an already-open in-memory executor would be
-    // reused instead of reopened.
-    final dir = await Directory.systemTemp.createTemp('weighbridge_idx');
-    final file = File(p.join(dir.path, 'v23.sqlite'));
+      final migrated = AppDatabase.forTesting(NativeDatabase(file));
+      addTearDown(migrated.close);
+      await migrated.customSelect('SELECT 1').get();
 
-    final first = AppDatabase.forTesting(NativeDatabase(file));
-    await first.customSelect('SELECT 1').get();
+      // The pre-existing row survives the full 23 -> 29 upgrade chain.
+      final kept = await migrated.billDao.getWeighmentByBillNumber('WB-00001');
+      expect(kept, isNotNull);
+      expect(kept!.vehicleNumber, 'MH12AB1234');
 
-    // Rewind to look like a v23 database, which had no report indexes.
-    await first.customStatement(
-      'DROP INDEX IF EXISTS idx_weighments_created_at',
-    );
-    await first.customStatement(
-      'DROP INDEX IF EXISTS idx_weighments_customer_created',
-    );
-    await first.customStatement(
-      'DROP INDEX IF EXISTS idx_weighments_material_created',
-    );
-    await first.customStatement('PRAGMA user_version = 23');
-    await first.close();
+      final rows = await migrated
+          .customSelect(
+            "SELECT name FROM sqlite_master WHERE type='index' "
+            "AND tbl_name='weighments'",
+          )
+          .get();
+      final names = rows.map((r) => r.read<String>('name')).toSet();
+      expect(names, contains('idx_weighments_created_at'));
+      // The customer/material modules were removed in v29, so their indexes
+      // must never come back.
+      expect(names, isNot(contains('idx_weighments_customer_created')));
+      expect(names, isNot(contains('idx_weighments_material_created')));
 
-    final migrated = AppDatabase.forTesting(NativeDatabase(file));
-    addTearDown(() async {
-      await migrated.close();
-      await dir.delete(recursive: true);
-    });
-    await migrated.customSelect('SELECT 1').get();
-
-    final rows = await migrated
-        .customSelect(
-          "SELECT name FROM sqlite_master WHERE type='index' "
-          "AND tbl_name='weighments'",
-        )
-        .get();
-    final names = rows.map((r) => r.read<String>('name')).toSet();
-    expect(
-      names,
-      containsAll(<String>[
-        'idx_weighments_created_at',
-        'idx_weighments_customer_created',
-        'idx_weighments_material_created',
-      ]),
-    );
-  });
+      final version = await migrated.customSelect('PRAGMA user_version').get();
+      expect(version.single.data['user_version'], migrated.schemaVersion);
+    },
+  );
 
   test('weighments date range query uses the created_at index', () async {
     await withDatabase((db) async {
@@ -138,24 +297,6 @@ void main() {
     });
   });
 
-  test(
-    'weighments customer-filtered query avoids a temp b-tree sort',
-    () async {
-      await withDatabase((db) async {
-        final rows = await db
-            .customSelect(
-              'EXPLAIN QUERY PLAN SELECT id FROM weighments '
-              'WHERE customer_id = 1 AND created_at >= 1 AND created_at <= 2 '
-              'ORDER BY created_at DESC',
-            )
-            .get();
-        final detail = rows.map((r) => r.read<String>('detail')).join(' ');
-        expect(detail, contains('idx_weighments_customer_created'));
-        expect(detail, isNot(contains('TEMP B-TREE')));
-      });
-    },
-  );
-
   test('database user_version is set to the schema version', () async {
     await withDatabase((db) async {
       final rows = await db.customSelect('PRAGMA user_version').get();
@@ -163,13 +304,10 @@ void main() {
     });
   });
 
-  test('can insert parents and a weighment referencing them', () async {
+  test('can insert a weighment without customer or material', () async {
     await withDatabase((db) async {
-      final refs = await seedParents(db);
       final id = await seedWeighment(
         db,
-        customerId: refs.customerId,
-        materialId: refs.materialId,
         billNumber: 'WB-00001',
         firstWeightKg: 20000,
         secondWeightKg: 5000,
@@ -185,20 +323,9 @@ void main() {
 
   test('bill_number unique constraint rejects duplicates', () async {
     await withDatabase((db) async {
-      final refs = await seedParents(db);
-      await seedWeighment(
-        db,
-        customerId: refs.customerId,
-        materialId: refs.materialId,
-        billNumber: 'WB-00001',
-      );
+      await seedWeighment(db, billNumber: 'WB-00001');
       expect(
-        () => seedWeighment(
-          db,
-          customerId: refs.customerId,
-          materialId: refs.materialId,
-          billNumber: 'WB-00001',
-        ),
+        () => seedWeighment(db, billNumber: 'WB-00001'),
         throwsA(isA<Exception>()),
       );
     });
@@ -398,73 +525,76 @@ CREATE TABLE app_settings (
       return NativeDatabase(file);
     }
 
-    test('backfills vehicle_number and drops vehicle tables', () async {
-      final sqlite = await createV14Database();
-      final db = AppDatabase.forTesting(sqlite);
-      addTearDown(db.close);
+    test(
+      'backfills vehicle_number and drops removed-module tables/columns',
+      () async {
+        final sqlite = await createV14Database();
+        final db = AppDatabase.forTesting(sqlite);
+        addTearDown(db.close);
 
-      final migrated = await db.billDao.getWeighmentByBillNumber('WB-00001');
-      expect(migrated, isNotNull);
-      expect(migrated!.vehicleNumber, 'MH12AB1234');
+        final migrated = await db.billDao.getWeighmentByBillNumber('WB-00001');
+        expect(migrated, isNotNull);
+        expect(migrated!.vehicleNumber, 'MH12AB1234');
 
-      final orphan = await db.billDao.getWeighmentByBillNumber('WB-00002');
-      expect(orphan!.vehicleNumber, 'VEHICLE #99');
+        final orphan = await db.billDao.getWeighmentByBillNumber('WB-00002');
+        expect(orphan!.vehicleNumber, 'VEHICLE #99');
 
-      for (final table in ['vehicles', 'vehicle_types']) {
-        final rows = await db
-            .customSelect(
-              "SELECT name FROM sqlite_master WHERE type='table' AND name = ?",
-              variables: [Variable.withString(table)],
-            )
+        for (final table in [
+          'vehicles',
+          'vehicle_types',
+          'customers',
+          'materials',
+          'parties',
+        ]) {
+          final rows = await db
+              .customSelect(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name = ?",
+                variables: [Variable.withString(table)],
+              )
+              .get();
+          expect(rows, isEmpty, reason: 'table $table should be dropped');
+        }
+
+        final cols = await db
+            .customSelect("SELECT name FROM pragma_table_info('weighments')")
             .get();
-        expect(rows, isEmpty, reason: 'table $table should be dropped');
-      }
+        final names = cols.map((r) => r.data['name'] as String).toSet();
+        expect(names, isNot(contains('vehicle_id')));
+        expect(names, isNot(contains('customer_id')));
+        expect(names, isNot(contains('material_id')));
+        expect(names, isNot(contains('party_id')));
+        expect(names, contains('vehicle_number'));
 
-      final cols = await db
-          .customSelect("SELECT name FROM pragma_table_info('weighments')")
-          .get();
-      expect(cols.map((r) => r.data['name']), isNot(contains('vehicle_id')));
-      expect(cols.map((r) => r.data['name']), contains('vehicle_number'));
+        final settingsCols = await db
+            .customSelect("SELECT name FROM pragma_table_info('app_settings')")
+            .get();
+        final settingsNames = settingsCols
+            .map((r) => r.data['name'] as String)
+            .toSet();
+        expect(settingsNames, isNot(contains('show_vehicle_type')));
+        expect(settingsNames, isNot(contains('show_material')));
+        expect(settingsNames, isNot(contains('show_party')));
 
-      final settingsCols = await db
-          .customSelect("SELECT name FROM pragma_table_info('app_settings')")
-          .get();
-      expect(
-        settingsCols.map((r) => r.data['name']),
-        isNot(contains('show_vehicle_type')),
-      );
+        final settings = await db.appSettingsDao.getSettings();
+        expect(settings.showVehicleNumber, isFalse);
 
-      final settings = await db.appSettingsDao.getSettings();
-      expect(settings.showVehicleNumber, isFalse);
-
-      final materialCols = await db
-          .customSelect("SELECT name FROM pragma_table_info('materials')")
-          .get();
-      expect(
-        materialCols.map((r) => r.data['name']),
-        isNot(contains('category')),
-      );
-      expect(materialCols.map((r) => r.data['name']), contains('code'));
-
-      final materials = await db.materialDao.getAllMaterials();
-      expect(materials.single.name, 'Cement');
-      expect(materials.single.code, '1'); // backfilled from the row id
-
-      final version = await db.customSelect('PRAGMA user_version').get();
-      expect(version.single.data['user_version'], db.schemaVersion);
-    });
+        final version = await db.customSelect('PRAGMA user_version').get();
+        expect(version.single.data['user_version'], db.schemaVersion);
+      },
+    );
   });
 
-  group('v24 -> v25 migration', () {
-    /// Builds a real v24 database on disk: `material_id` is still NOT NULL and
-    /// the weighments indexes exist, exactly as a shipped install would have.
-    Future<NativeDatabase> createV24Database(
+  group('v28 -> v29 migration', () {
+    /// Builds a real v28 database on disk: weighments still carry
+    /// `customer_id`/`material_id`, the customers/materials masters exist, and
+    /// app_settings still has the `show_material`/`show_party` toggles.
+    Future<NativeDatabase> createV28Database(
       Directory dir,
       String fileName,
     ) async {
       final file = File(p.join(dir.path, fileName));
       final sqlite = NativeDatabase(file);
-      await sqlite.ensureOpen(_StubExecutorUser(24));
+      await sqlite.ensureOpen(_StubExecutorUser(28));
       final now = DateTime(2026, 10, 1).millisecondsSinceEpoch;
 
       await sqlite.runCustom(
@@ -479,27 +609,49 @@ CREATE TABLE app_settings (
         'CREATE TABLE materials ('
         'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
         'name TEXT NOT NULL, code TEXT NOT NULL DEFAULT \'\', '
-        'category TEXT, unit TEXT NOT NULL DEFAULT \'ton\', '
         'is_active INTEGER NOT NULL DEFAULT 1, '
         'created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)',
       );
-      // The v24 shape: material_id is NOT NULL.
+      // The v28 shape: customer_id NOT NULL, material_id nullable, plus the
+      // mobile_number column from v27/v28.
       await sqlite.runCustom(
         'CREATE TABLE weighments ('
         'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
         'bill_number TEXT NOT NULL UNIQUE, '
         'customer_id INTEGER NOT NULL REFERENCES customers(id), '
         'vehicle_number TEXT NOT NULL, '
-        'material_id INTEGER NOT NULL REFERENCES materials(id), '
-        'payment_mode TEXT NOT NULL, '
+        'material_id INTEGER REFERENCES materials(id), '
         'first_weight_kg REAL NOT NULL, '
         'first_weight_type TEXT NOT NULL DEFAULT \'GROSS\', '
         'second_weight_kg REAL, second_weight_type TEXT, net_weight_kg REAL, '
-        'vehicle_charge REAL NOT NULL DEFAULT 0, '
-        'amount REAL NOT NULL DEFAULT 0, remarks TEXT, '
+        'remarks TEXT, mobile_number TEXT, '
         'weight_unit TEXT NOT NULL DEFAULT \'ton\', '
         'created_at INTEGER NOT NULL DEFAULT (strftime(\'%s\',\'now\')), '
         'updated_at INTEGER NOT NULL DEFAULT (strftime(\'%s\',\'now\')))',
+      );
+      await sqlite.runCustom(
+        'CREATE TABLE app_settings ('
+        'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+        'weight_unit TEXT NOT NULL DEFAULT \'ton\', '
+        'bill_prefix TEXT NOT NULL DEFAULT \'WB\', '
+        'bill_starting_number INTEGER NOT NULL DEFAULT 1, '
+        'bill_number_digits INTEGER NOT NULL DEFAULT 5, '
+        'business_name TEXT NOT NULL DEFAULT \'VIYAN WEIGHBRIDGE\', '
+        'business_subtitle TEXT, service_text TEXT, address TEXT, '
+        'phone_number TEXT, email TEXT, gstin TEXT, logo_path TEXT, '
+        'receipt_title TEXT NOT NULL DEFAULT \'WEIGHMENT RECEIPT\', '
+        'show_serial_number INTEGER NOT NULL DEFAULT 1, '
+        'show_date INTEGER NOT NULL DEFAULT 1, '
+        'show_time INTEGER NOT NULL DEFAULT 1, '
+        'show_vehicle_number INTEGER NOT NULL DEFAULT 1, '
+        'show_material INTEGER NOT NULL DEFAULT 1, '
+        'show_party INTEGER NOT NULL DEFAULT 1, '
+        'show_gross_weight INTEGER NOT NULL DEFAULT 1, '
+        'show_tare_weight INTEGER NOT NULL DEFAULT 1, '
+        'show_net_weight INTEGER NOT NULL DEFAULT 1, '
+        'show_remarks INTEGER NOT NULL DEFAULT 1, '
+        'show_footer_note INTEGER NOT NULL DEFAULT 1, '
+        'footer_note TEXT, updated_at INTEGER NOT NULL)',
       );
       await sqlite.runCustom(
         'INSERT INTO customers (id, name, customer_code, is_active, '
@@ -513,12 +665,26 @@ CREATE TABLE app_settings (
       );
       await sqlite.runCustom(
         'INSERT INTO weighments (id, bill_number, customer_id, '
-        'vehicle_number, material_id, payment_mode, first_weight_kg, '
-        'first_weight_type, second_weight_kg, net_weight_kg, vehicle_charge, '
-        'amount, weight_unit, created_at, updated_at) '
-        'VALUES (1, \'WB-00001\', 1, \'MH12AB1234\', 1, \'cash\', 5000.0, '
-        '\'GROSS\', 2000.0, 3000.0, 100, 300, \'kg\', ?, ?)',
+        'vehicle_number, material_id, first_weight_kg, '
+        'first_weight_type, second_weight_kg, net_weight_kg, remarks, '
+        'mobile_number, weight_unit, created_at, updated_at) '
+        'VALUES (1, \'WB-00001\', 1, \'MH12AB1234\', 1, 5000.0, '
+        '\'GROSS\', 2000.0, 3000.0, \'keep me\', \'6381812437\', \'kg\', ?, ?)',
         [now, now],
+      );
+      await sqlite.runCustom(
+        'INSERT INTO weighments (id, bill_number, customer_id, '
+        'vehicle_number, material_id, first_weight_kg, '
+        'first_weight_type, weight_unit, created_at, updated_at) '
+        'VALUES (2, \'WB-00002\', 1, \'MH12AB5678\', NULL, 4200.0, '
+        '\'TARE\', \'kg\', ?, ?)',
+        [now, now],
+      );
+      await sqlite.runCustom(
+        'INSERT INTO app_settings (id, business_name, show_material, '
+        'show_party, show_vehicle_number, updated_at) '
+        'VALUES (1, \'Acme Weighbridge\', 0, 0, 1, ?)',
+        [now],
       );
       await sqlite.runCustom(
         'CREATE INDEX IF NOT EXISTS idx_weighments_created_at '
@@ -532,76 +698,83 @@ CREATE TABLE app_settings (
         'CREATE INDEX IF NOT EXISTS idx_weighments_material_created '
         'ON weighments(material_id, created_at DESC)',
       );
-      await sqlite.runCustom('PRAGMA user_version = 24');
+      await sqlite.runCustom('PRAGMA user_version = 28');
       await sqlite.close();
 
       return NativeDatabase(file);
     }
 
     test(
-      'preserves existing weighments and allows a null material_id',
+      'preserves weighment rows while dropping removed-module columns/tables',
       () async {
-        final dir = await Directory.systemTemp.createTemp('wb_v25');
+        final dir = await Directory.systemTemp.createTemp('wb_v29');
         addTearDown(() => dir.delete(recursive: true));
 
-        final db = AppDatabase.forTesting(await createV24Database(dir, 'a.db'));
+        final db = AppDatabase.forTesting(await createV28Database(dir, 'a.db'));
         addTearDown(db.close);
 
-        // The pre-existing row survives the table rebuild untouched.
+        // Both pre-existing rows survive the table rebuild with their
+        // vehicle + weight data intact.
         final kept = await db.billDao.getWeighmentByBillNumber('WB-00001');
         expect(kept, isNotNull);
-        expect(kept!.materialId, 1);
-        expect(kept.vehicleNumber, 'MH12AB1234');
+        expect(kept!.vehicleNumber, 'MH12AB1234');
         expect(kept.firstWeightKg, 5000.0);
         expect(kept.secondWeightKg, 2000.0);
         expect(kept.netWeightKg, 3000.0);
-        expect(kept.mobileNumber, isNull);
+        expect(kept.remarks, 'keep me');
+        expect(kept.mobileNumber, '6381812437');
 
-        // material_id is nullable now.
+        final tareOnly = await db.billDao.getWeighmentByBillNumber('WB-00002');
+        expect(tareOnly, isNotNull);
+        expect(tareOnly!.vehicleNumber, 'MH12AB5678');
+        expect(tareOnly.firstWeightType, 'TARE');
+
+        // The relationship columns are gone.
         final cols = await db
             .customSelect("SELECT * FROM pragma_table_info('weighments')")
             .get();
-        final materialId = cols.firstWhere(
-          (r) => r.data['name'] == 'material_id',
-        );
-        expect(materialId.data['notnull'], 0);
-        final mobileNumber = cols.firstWhere(
-          (r) => r.data['name'] == 'mobile_number',
-        );
-        expect(mobileNumber.data['notnull'], 0);
+        final names = cols.map((r) => r.data['name'] as String).toSet();
+        expect(names, isNot(contains('customer_id')));
+        expect(names, isNot(contains('material_id')));
+        expect(names, contains('mobile_number'));
+        expect(names, contains('remarks'));
 
-        // And a tare-only weighment can now be stored without one.
-        await db.billDao.insertWeighment(
-          WeighmentsCompanion.insert(
-            billNumber: 'WB-00002',
-            customerId: 1,
-            vehicleNumber: 'MH12AB5678',
-            firstWeightKg: 4200,
-            firstWeightType: const Value('TARE'),
-            weightUnit: const Value('kg'),
-          ),
-        );
-        final tareOnly = await db.billDao.getWeighmentByBillNumber('WB-00002');
-        expect(tareOnly, isNotNull);
-        expect(tareOnly!.materialId, isNull);
-        expect(tareOnly.firstWeightType, 'TARE');
-        expect(tareOnly.mobileNumber, isNull);
+        // The master tables are gone.
+        for (final table in ['customers', 'materials']) {
+          final rows = await db
+              .customSelect(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name = ?",
+                variables: [Variable.withString(table)],
+              )
+              .get();
+          expect(rows, isEmpty, reason: 'table $table should be dropped');
+        }
 
+        // The receipt toggles for the removed modules are gone, while the
+        // remaining settings values are preserved.
+        final settingsCols = await db
+            .customSelect("SELECT name FROM pragma_table_info('app_settings')")
+            .get();
+        final settingsNames = settingsCols
+            .map((r) => r.data['name'] as String)
+            .toSet();
+        expect(settingsNames, isNot(contains('show_material')));
+        expect(settingsNames, isNot(contains('show_party')));
+        final settings = await db.appSettingsDao.getSettings();
+        expect(settings.businessName, 'Acme Weighbridge');
+        expect(settings.showVehicleNumber, isTrue);
+
+        // New weighments save without any customer/material reference.
         await db.billDao.insertWeighment(
           WeighmentsCompanion.insert(
             billNumber: 'WB-00003',
-            customerId: 1,
             vehicleNumber: 'MH12AB9012',
-            materialId: const Value(1),
             firstWeightKg: 10000,
-            mobileNumber: const Value('6381812437'),
             weightUnit: const Value('kg'),
           ),
         );
-        final withMobile = await db.billDao.getWeighmentByBillNumber(
-          'WB-00003',
-        );
-        expect(withMobile?.mobileNumber, '6381812437');
+        final fresh = await db.billDao.getWeighmentByBillNumber('WB-00003');
+        expect(fresh, isNotNull);
 
         final version = await db.customSelect('PRAGMA user_version').get();
         expect(version.single.data['user_version'], db.schemaVersion);
@@ -611,10 +784,10 @@ CREATE TABLE app_settings (
     test(
       'recreates the unique bill_number constraint after the rebuild',
       () async {
-        final dir = await Directory.systemTemp.createTemp('wb_v25_idx');
+        final dir = await Directory.systemTemp.createTemp('wb_v29_idx');
         addTearDown(() => dir.delete(recursive: true));
 
-        final db = AppDatabase.forTesting(await createV24Database(dir, 'b.db'));
+        final db = AppDatabase.forTesting(await createV28Database(dir, 'b.db'));
         addTearDown(db.close);
 
         // Dropping and renaming the table discards its indexes, so a duplicate
@@ -623,9 +796,7 @@ CREATE TABLE app_settings (
           db.billDao.insertWeighment(
             WeighmentsCompanion.insert(
               billNumber: 'WB-00001',
-              customerId: 1,
               vehicleNumber: 'MH12AB9999',
-              materialId: const Value(1),
               firstWeightKg: 100,
             ),
           ),
@@ -634,11 +805,11 @@ CREATE TABLE app_settings (
       },
     );
 
-    test('recreates the query indexes after the rebuild', () async {
-      final dir = await Directory.systemTemp.createTemp('wb_v25_query_idx');
+    test('keeps only the created_at query index after the rebuild', () async {
+      final dir = await Directory.systemTemp.createTemp('wb_v29_query_idx');
       addTearDown(() => dir.delete(recursive: true));
 
-      final db = AppDatabase.forTesting(await createV24Database(dir, 'c.db'));
+      final db = AppDatabase.forTesting(await createV28Database(dir, 'c.db'));
       addTearDown(db.close);
 
       final indexes = await db
@@ -647,10 +818,10 @@ CREATE TABLE app_settings (
             "AND tbl_name='weighments'",
           )
           .get();
-      final names = indexes.map((r) => r.data['name'] as String);
+      final names = indexes.map((r) => r.data['name'] as String).toSet();
       expect(names, contains('idx_weighments_created_at'));
-      expect(names, contains('idx_weighments_customer_created'));
-      expect(names, contains('idx_weighments_material_created'));
+      expect(names, isNot(contains('idx_weighments_customer_created')));
+      expect(names, isNot(contains('idx_weighments_material_created')));
     });
   });
 }

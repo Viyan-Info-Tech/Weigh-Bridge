@@ -28,8 +28,6 @@ void main() {
       id: 1,
       billNumber: 'WB-00001',
       vehicleNumber: 'TN31CM2026',
-      customerId: 20,
-      materialId: 30,
       grossWeightKg: 100000.0,
       tareWeightKg: 20000.0,
       netWeightKg: 80000.0,
@@ -47,11 +45,8 @@ void main() {
             child: ElevatedButton(
               onPressed: () => showDialog(
                 context: context,
-                builder: (_) => WeighmentSlipDialog(
-                  bill: bill,
-                  materialName: 'Sand',
-                  printService: printService,
-                ),
+                builder: (_) =>
+                    WeighmentSlipDialog(bill: bill, printService: printService),
               ),
               child: const Text('Open'),
             ),

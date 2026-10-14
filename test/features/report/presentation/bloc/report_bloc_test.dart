@@ -2,10 +2,6 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
-import 'package:weighbridge/features/customer/domain/entities/customer.dart';
-import 'package:weighbridge/features/customer/domain/repositories/customer_repository.dart';
-import 'package:weighbridge/features/material/domain/entities/material_item.dart';
-import 'package:weighbridge/features/material/domain/repositories/material_item_repository.dart';
 import 'package:weighbridge/features/report/domain/entities/report_filter.dart';
 import 'package:weighbridge/features/report/domain/entities/report_summary.dart';
 import 'package:weighbridge/features/report/domain/entities/weighment_report_item.dart';
@@ -17,10 +13,6 @@ import 'package:weighbridge/features/report/presentation/bloc/report_event.dart'
 import 'package:weighbridge/features/report/presentation/bloc/report_state.dart';
 
 class MockReportRepository extends Mock implements ReportRepository {}
-
-class MockCustomerRepository extends Mock implements CustomerRepository {}
-
-class MockMaterialRepository extends Mock implements MaterialItemRepository {}
 
 class MockFileSaveService extends Mock implements FileSaveService {}
 
@@ -39,10 +31,6 @@ void main() {
     billNumber: 'WB-${id.toString().padLeft(5, '0')}',
     createdAt: created,
     vehicleNumber: 'TN31TEST$id',
-    customerId: 1,
-    customerName: 'Customer',
-    materialId: 1,
-    materialName: 'Cement',
     firstWeightKg: 20000,
     firstWeightType: 'GROSS',
     secondWeightKg: 5000,
@@ -83,19 +71,8 @@ void main() {
   }
 
   ReportBloc buildBloc() {
-    final customerRepo = MockCustomerRepository();
-    when(
-      () => customerRepo.getAllCustomers(),
-    ).thenAnswer((_) async => const <Customer>[]);
-    final materialRepo = MockMaterialRepository();
-    when(
-      () => materialRepo.getAllMaterials(),
-    ).thenAnswer((_) async => const <MaterialItem>[]);
-
     return ReportBloc(
       reportRepository: reportRepo,
-      customerRepository: customerRepo,
-      materialRepository: materialRepo,
       exportReportUseCase: ExportReportUseCase(
         reportRepository: reportRepo,
         fileSaveService: MockFileSaveService(),

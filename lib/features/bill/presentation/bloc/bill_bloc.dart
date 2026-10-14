@@ -1,15 +1,10 @@
-import 'dart:async';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../customer/domain/entities/customer.dart';
-import '../../../customer/domain/repositories/customer_repository.dart';
-import '../../../material/domain/entities/material_item.dart';
-import '../../../material/domain/repositories/material_item_repository.dart';
 import '../../domain/entities/weighment.dart';
 import '../../domain/entities/auto_tare_entry.dart';
 import '../../domain/usecases/save_bill.dart';
 import '../../domain/repositories/auto_tare_repository.dart';
+import '../../domain/repositories/vehicle_tare_repository.dart';
 import '../../domain/usecases/get_auto_tare_for_date.dart';
 import '../../../settings/domain/repositories/settings_repository.dart';
 import 'bill_auto_tare_handlers.dart';
@@ -17,31 +12,12 @@ import 'bill_event.dart';
 import 'bill_state.dart';
 
 class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
-  final CustomerRepository _customerRepository;
-
-  CustomerRepository get customerRepository => _customerRepository;
-
-  final MaterialItemRepository _materialRepository;
-
-  MaterialItemRepository get materialRepository => _materialRepository;
-
-  Future<Customer?> findCustomerByCode(String code) async {
-    final customer = await _customerRepository.getCustomerByCode(code.trim());
-    if (customer == null || !customer.isActive) return null;
-    return customer;
-  }
-
-  Future<MaterialItem?> findMaterialByCode(String code) async {
-    final material = await _materialRepository.getMaterialByCode(code.trim());
-    if (material == null || !material.isActive) return null;
-    return material;
-  }
-
   final SaveBillUseCase _saveBillUseCase;
   final LoadRecentBillsUseCase _loadRecentBillsUseCase;
   final GenerateBillNumberUseCase _generateBillNumberUseCase;
   final SettingsRepository? _settingsRepository;
   final AutoTareRepository? _autoTareRepository;
+  final VehicleTareRepository? _vehicleTareRepository;
 
   /// The form as it stood immediately after the last successful save.
   ///
@@ -71,40 +47,40 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     final saved = _formJustSaved;
     if (saved == null) return false;
     return saved.vehicleNumber == state.vehicleNumber &&
-        saved.selectedCustomer == state.selectedCustomer &&
-        saved.selectedMaterial == state.selectedMaterial &&
         saved.grossWeightKg == state.grossWeightKg &&
         saved.tareWeightKg == state.tareWeightKg &&
-        saved.firstWeightType == state.firstWeightType;
+        saved.firstWeightType == state.firstWeightType &&
+        saved.materialText == state.materialText &&
+        saved.descriptionText == state.descriptionText &&
+        saved.remarksText == state.remarksText;
   }
 
   @override
   AutoTareRepository? get autoTareRepository => _autoTareRepository;
 
   @override
+  VehicleTareRepository? get vehicleTareRepository => _vehicleTareRepository;
+
+  @override
   void recalculateWeights(Emitter<BillState> emit) => _recalculate(emit);
 
   BillBloc({
-    required CustomerRepository customerRepository,
-    required MaterialItemRepository materialRepository,
     required SaveBillUseCase saveBillUseCase,
     required LoadRecentBillsUseCase loadRecentBillsUseCase,
     required GenerateBillNumberUseCase generateBillNumberUseCase,
     SettingsRepository? settingsRepository,
     AutoTareRepository? autoTareRepository,
-  }) : _customerRepository = customerRepository,
-       _materialRepository = materialRepository,
-       _saveBillUseCase = saveBillUseCase,
+    VehicleTareRepository? vehicleTareRepository,
+  }) : _saveBillUseCase = saveBillUseCase,
        _loadRecentBillsUseCase = loadRecentBillsUseCase,
        _generateBillNumberUseCase = generateBillNumberUseCase,
        _settingsRepository = settingsRepository,
        _autoTareRepository = autoTareRepository,
+       _vehicleTareRepository = vehicleTareRepository,
        super(const BillState()) {
     on<LoadBillScreen>(_onLoadBillScreen);
     on<RefreshBillLookups>(_onRefreshBillLookups);
-    on<CustomerSelected>(_onCustomerSelected);
     on<VehicleNumberChanged>(_onVehicleNumberChanged);
-    on<MaterialSelected>(_onMaterialSelected);
     on<GrossWeightChanged>(_onGrossWeightChanged);
     on<TareWeightChanged>(_onTareWeightChanged);
     on<GrossWeightCommitted>(_onGrossWeightCommitted);
@@ -112,6 +88,8 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     on<GrossCapturedAtChanged>(_onGrossCapturedAtChanged);
     on<TareCapturedAtChanged>(_onTareCapturedAtChanged);
     on<RemarksChanged>(_onRemarksChanged);
+    on<MaterialChanged>(_onMaterialChanged);
+    on<DescriptionChanged>(_onDescriptionChanged);
     on<WeightUnitChanged>(_onWeightUnitChanged);
     // Saves run one at a time. The default concurrent transformer would let a
     // double tap on SAVE (or F5 plus a click) run two inserts against the same
@@ -124,10 +102,6 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     on<PrintReceiptDismissed>(_onPrintReceiptDismissed);
     on<ClearBillRequested>(_onClearBillRequested, transformer: _sequential());
     on<LoadRecentBills>(_onLoadRecentBills);
-    on<CustomerQuickAddRequested>(_onCustomerQuickAdd);
-    on<MaterialQuickAddRequested>(_onMaterialQuickAdd);
-    on<MaterialCreatedToState>(_onMaterialCreatedToState);
-    on<CustomerCreatedToState>(_onCustomerCreatedToState);
     on<CaptureLiveWeight>(_onCaptureLiveWeight);
     on<LiveScaleWeightUpdated>(_onLiveScaleWeightUpdated);
     on<WeightTypeSelected>(_onWeightTypeSelected);
@@ -136,6 +110,9 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     on<SaveAutoTare>(handleSaveAutoTare);
     on<DeleteAutoTare>(handleDeleteAutoTare);
     on<ApplyAutoTareToBill>(handleApplyAutoTareToBill);
+    on<LoadVehicleTares>(handleLoadVehicleTares);
+    on<SaveVehicleTare>(handleSaveVehicleTare);
+    on<DeleteVehicleTare>(handleDeleteVehicleTare);
   }
 
   /// Processes one event at a time for handlers that must not overlap.
@@ -150,12 +127,6 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     emit(state.copyWith(status: BillScreenStatus.loading, clearError: true));
 
     try {
-      final customers = await _customerRepository.getAllActiveCustomers();
-      if (emit.isDone) return;
-      final materials = await _materialRepository.getMaterialsByStatus(
-        isActive: true,
-      );
-      if (emit.isDone) return;
       final billsDate = _dayOnly(DateTime.now());
       final recentBills = await _loadRecentBillsUseCase(date: billsDate);
       if (emit.isDone) return;
@@ -181,8 +152,6 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
       emit(
         state.copyWith(
           status: BillScreenStatus.loaded,
-          customers: customers,
-          materials: materials,
           recentBills: recentBills,
           billsDate: billsDate,
           currentBillNumber: billNumber,
@@ -204,71 +173,20 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     }
   }
 
-  /// Re-reads the lookup lists from the database so edits made on the master
-  /// screens are visible here.
-  ///
-  /// Deliberately narrow: it touches only [BillState.customers],
-  /// [BillState.materials] and the selected lookup entities. The bill number,
-  /// captured weights, auto tare and recent-bill list are deliberately left
-  /// alone so that switching to a master screen and back cannot disturb a
-  /// weighment the operator is halfway through.
+  /// Refreshes the bill number and recent bills without touching anything
+  /// the operator has already entered on the form.
   Future<void> _onRefreshBillLookups(
     RefreshBillLookups event,
     Emitter<BillState> emit,
   ) async {
     try {
-      final customers = await _customerRepository.getAllActiveCustomers();
+      final bills = await _loadBillsFor(state.effectiveBillsDate);
       if (emit.isDone) return;
-      final materials = await _materialRepository.getMaterialsByStatus(
-        isActive: true,
-      );
-      if (emit.isDone) return;
-
-      // Keep the already-selected entity pointing at the current row. The
-      // operator's mobile number stays as typed, because that field is theirs
-      // to edit; only the customer record behind the selection is refreshed.
-      Customer? refreshedSelection;
-      for (final customer in customers) {
-        if (customer.id == state.selectedCustomer?.id) {
-          refreshedSelection = customer;
-          break;
-        }
-      }
-
-      MaterialItem? refreshedMaterial;
-      for (final material in materials) {
-        if (material.id == state.selectedMaterial?.id) {
-          refreshedMaterial = material;
-          break;
-        }
-      }
-
-      emit(
-        state.copyWith(
-          customers: customers,
-          materials: materials,
-          selectedCustomer: refreshedSelection,
-          selectedMaterial: refreshedMaterial,
-        ),
-      );
+      emit(state.copyWith(recentBills: bills));
     } catch (_) {
-      // A failed refresh must not disturb the form: the operator keeps a
-      // usable, if slightly older, list, and the next tab switch retries.
+      // A failed refresh must not disturb the form.
       return;
     }
-  }
-
-  void _onCustomerSelected(CustomerSelected event, Emitter<BillState> emit) {
-    final updatedErrors = Map<String, String>.from(state.fieldErrors)
-      ..remove('customer');
-    updatedErrors.remove('mobile');
-    emit(
-      state.copyWith(
-        selectedCustomer: event.customer,
-        fieldErrors: updatedErrors,
-        clearError: true,
-      ),
-    );
   }
 
   void _onMobileNumberChanged(
@@ -301,18 +219,6 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     emit(
       state.copyWith(
         vehicleNumber: event.vehicleNumber.trim().toUpperCase(),
-        fieldErrors: updatedErrors,
-        clearError: true,
-      ),
-    );
-  }
-
-  void _onMaterialSelected(MaterialSelected event, Emitter<BillState> emit) {
-    final updatedErrors = Map<String, String>.from(state.fieldErrors)
-      ..remove('material');
-    emit(
-      state.copyWith(
-        selectedMaterial: event.material,
         fieldErrors: updatedErrors,
         clearError: true,
       ),
@@ -491,6 +397,17 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     emit(state.copyWith(remarksText: event.value));
   }
 
+  void _onMaterialChanged(MaterialChanged event, Emitter<BillState> emit) {
+    emit(state.copyWith(materialText: event.value));
+  }
+
+  void _onDescriptionChanged(
+    DescriptionChanged event,
+    Emitter<BillState> emit,
+  ) {
+    emit(state.copyWith(descriptionText: event.value));
+  }
+
   void _onWeightUnitChanged(WeightUnitChanged event, Emitter<BillState> emit) {
     final oldUnit = _normalizeUnit(state.weightUnit);
     final newUnit = _normalizeUnit(event.value);
@@ -587,8 +504,6 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     if (event.type.toLowerCase() == 'gross') {
       // The day's auto tare is a copy source only: it fills an empty tare
       // field for this bill. Bills saved earlier keep their own tare value.
-      // Its reference timestamp is kept on the tare field; the bill's own
-      // billing time is stamped separately when the bill is saved.
       final autoTareKg = state.hasAutoTare ? state.autoTareKg : 0.0;
       final shouldApplyAutoTare =
           autoTareKg > 0 &&
@@ -651,7 +566,6 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
 
   /// Validates all fields in a defined order before saving.
   ///
-  /// Validates all fields in a defined order before saving.
   /// Returns a map of field errors (field key -> error message).
   Map<String, String> _validateAll() {
     final errors = <String, String>{};
@@ -662,19 +576,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
       errors['vehicleNumber'] = 'Truck number is required.';
     }
 
-    // ── 2. Material ───────────────────────────────────────────
-    // A tare-only weighment has no net weight and so no material. See
-    // BillState.requiresMaterial, which the form also reads.
-    if (state.requiresMaterial && state.selectedMaterial == null) {
-      errors['material'] = 'Material code is required.';
-    }
-
-    // ── 3. Customer ───────────────────────────────────────────
-    if (state.selectedCustomer == null) {
-      errors['customer'] = 'Customer code is required.';
-    }
-
-    // ── 4. Weight presence ────────────────────────────────────
+    // ── 2. Weight presence ────────────────────────────────────
     final hasGross = state.grossWeightKg.isFinite && state.grossWeightKg > 0;
     final hasTare = state.tareWeightKg.isFinite && state.tareWeightKg > 0;
     if (!hasGross && !hasTare) {
@@ -699,7 +601,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
           'Tare weight timestamp is missing. Re-enter the tare weight.';
     }
 
-    // ── 6. Mobile number (optional) ───────────────────────────
+    // ── 3. Mobile number (optional) ───────────────────────────
     final mobile = state.mobileNumber.trim();
     if (mobile.isNotEmpty) {
       if (!RegExp(r'^\d+$').hasMatch(mobile)) {
@@ -775,7 +677,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     );
 
     try {
-      final savedData = await _insertNewBill(emit);
+      final savedBill = await _insertNewBill(emit);
       if (emit.isDone) return;
       final bills = await _loadBillsFor(state.effectiveBillsDate);
       if (emit.isDone) return;
@@ -783,9 +685,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
         state.copyWith(
           status: BillScreenStatus.printing,
           recentBills: bills,
-          printReceiptBill: savedData.bill,
-          printReceiptCustomer: savedData.customer,
-          printReceiptMaterialName: savedData.materialName,
+          printReceiptBill: savedBill,
         ),
       );
       _formJustSaved = state;
@@ -814,11 +714,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
   /// There is deliberately no update path: a saved bill is an immutable
   /// historical record and is never edited in place. Every save allocates a
   /// fresh serial number inside the database insert transaction.
-  Future<({Weighment bill, Customer? customer, String materialName})>
-  _insertNewBill(Emitter<BillState> emit) async {
-    final savedCustomer = state.selectedCustomer;
-    final savedMaterialName = state.selectedMaterial?.name ?? '—';
-
+  Future<Weighment> _insertNewBill(Emitter<BillState> emit) async {
     // Persist the first captured weight and leave the second absent until
     // the truck returns for its other weighing.
     final firstWeightType =
@@ -856,18 +752,20 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
       // inside the insert transaction. The value stored on the returned row is
       // authoritative and replaces this immediately below.
       billNumber: state.currentBillNumber,
-      customerId: state.selectedCustomer!.id,
       vehicleNumber: state.vehicleNumber.trim().toUpperCase(),
-      materialId: state.selectedMaterial?.id,
       firstWeightKg: firstWeightKg,
       firstWeightType: firstWeightType,
       secondWeightKg: secondWeightKg,
       secondWeightType: secondWeightType,
       netWeightKg: netWeight,
+      material: state.materialText.trim().isNotEmpty
+          ? state.materialText.trim()
+          : null,
+      description: state.descriptionText.trim().isNotEmpty
+          ? state.descriptionText.trim()
+          : null,
       remarks: state.remarksText.isNotEmpty ? state.remarksText : null,
-      mobileNumber: state.mobileNumber.trim().isEmpty
-          ? null
-          : state.mobileNumber.trim(),
+      mobileNumber: null,
       weightUnit: state.weightUnit,
       createdAt: createdAt,
       updatedAt: updatedAt,
@@ -882,14 +780,14 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     final savedWeighment = Weighment(
       id: result.id,
       billNumber: result.billNumber,
-      customerId: weighment.customerId,
       vehicleNumber: weighment.vehicleNumber,
-      materialId: weighment.materialId,
       firstWeightKg: weighment.firstWeightKg,
       firstWeightType: weighment.firstWeightType,
       secondWeightKg: weighment.secondWeightKg,
       secondWeightType: weighment.secondWeightType,
       netWeightKg: weighment.explicitNetWeightKg,
+      material: weighment.material,
+      description: weighment.description,
       remarks: weighment.remarks,
       mobileNumber: weighment.mobileNumber,
       weightUnit: weighment.weightUnit,
@@ -905,11 +803,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     }
     _resetForm(emit, nextBillNumber: nextBillNumber, weightUnit: unit);
 
-    return (
-      bill: savedWeighment,
-      customer: savedCustomer,
-      materialName: savedMaterialName,
-    );
+    return savedWeighment;
   }
 
   Future<void> _onClearBillRequested(
@@ -933,13 +827,13 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
   }) {
     emit(
       state.copyWith(
-        clearCustomer: true,
         vehicleNumber: '',
-        clearMaterial: true,
         clearFirstWeightType: true,
         grossWeightText: '',
         tareWeightText: '',
         remarksText: '',
+        materialText: '',
+        descriptionText: '',
         mobileNumber: '',
         grossWeightKg: 0,
         tareWeightKg: 0,
@@ -997,190 +891,5 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
 
   Future<List<Weighment>> _loadBillsFor(DateTime date) {
     return _loadRecentBillsUseCase(date: _dayOnly(date));
-  }
-
-  Future<void> _onCustomerQuickAdd(
-    CustomerQuickAddRequested event,
-    Emitter<BillState> emit,
-  ) async {
-    try {
-      final existingCustomers = await _customerRepository.searchCustomers(
-        event.name,
-      );
-      if (emit.isDone) return;
-      final exactMatch = existingCustomers.where(
-        (c) => c.name.toLowerCase() == event.name.toLowerCase(),
-      );
-      if (exactMatch.isNotEmpty) {
-        emit(
-          state.copyWith(
-            errorMessage: 'Customer with this name already exists',
-          ),
-        );
-        return;
-      }
-
-      final newId = await _customerRepository.createCustomer(
-        name: event.name,
-        customerCode: 'Q${DateTime.now().microsecondsSinceEpoch}',
-        contactPerson: event.contactPerson,
-      );
-      if (emit.isDone) return;
-
-      final customers = await _customerRepository.getAllActiveCustomers();
-      if (emit.isDone) return;
-      final newCustomer = customers.firstWhere((c) => c.id == newId);
-
-      emit(
-        state.copyWith(
-          customers: customers,
-          selectedCustomer: newCustomer,
-          clearError: true,
-        ),
-      );
-    } catch (e) {
-      if (emit.isDone) return;
-      emit(
-        state.copyWith(
-          errorMessage: 'Failed to create customer: ${e.toString()}',
-        ),
-      );
-    }
-  }
-
-  Future<MaterialItem> quickAddMaterial(String code, String name) async {
-    final completer = Completer<MaterialItem?>();
-    add(
-      MaterialQuickAddRequested(code: code, name: name, completer: completer),
-    );
-    final result = await completer.future;
-    if (result == null) {
-      throw Exception('Failed to create material');
-    }
-    return result;
-  }
-
-  Future<MaterialItem> createMaterial(String code, String name) =>
-      quickAddMaterial(code, name);
-
-  Future<Customer> createCustomer(String name, String contactPerson) async {
-    final existing = await _customerRepository.searchCustomers(name);
-    if (existing.any((c) => c.name.toLowerCase() == name.toLowerCase())) {
-      throw Exception('Customer with this name already exists');
-    }
-    final newId = await _customerRepository.createCustomer(
-      name: name,
-      customerCode: 'Q${DateTime.now().microsecondsSinceEpoch}',
-      contactPerson: contactPerson,
-    );
-    final refreshed = await _customerRepository.getAllActiveCustomers();
-    final created = refreshed.firstWhere((c) => c.id == newId);
-    add(CustomerCreatedToState(customers: refreshed, selected: created));
-    return created;
-  }
-
-  Future<void> _onMaterialQuickAdd(
-    MaterialQuickAddRequested event,
-    Emitter<BillState> emit,
-  ) async {
-    final trimmedCode = event.code.trim();
-    final trimmedName = event.name.trim();
-    if (trimmedName.isEmpty) {
-      const errorMsg = 'Material name is required';
-      emit(state.copyWith(errorMessage: errorMsg));
-      if (event.completer != null && !event.completer!.isCompleted) {
-        event.completer!.completeError(Exception(errorMsg));
-      }
-      return;
-    }
-    if (trimmedCode.isEmpty) {
-      const errorMsg = 'Material code is required';
-      emit(state.copyWith(errorMessage: errorMsg));
-      if (event.completer != null && !event.completer!.isCompleted) {
-        event.completer!.completeError(Exception(errorMsg));
-      }
-      return;
-    }
-
-    try {
-      final duplicate = await _materialRepository.getMaterialByCode(
-        trimmedCode,
-      );
-      if (emit.isDone) return;
-
-      if (duplicate != null) {
-        final errorMsg = duplicate.isActive
-            ? 'Material with code "${duplicate.code}" already exists'
-            : 'Material "${duplicate.name}" already exists but is deactivated';
-        emit(state.copyWith(errorMessage: errorMsg));
-        if (event.completer != null && !event.completer!.isCompleted) {
-          event.completer!.completeError(Exception(errorMsg));
-        }
-        return;
-      }
-
-      final newId = await _materialRepository.createMaterial(
-        code: trimmedCode,
-        name: trimmedName,
-      );
-      if (emit.isDone) return;
-
-      final created = await _materialRepository.getMaterialById(newId);
-      if (created == null) {
-        throw Exception('Failed to retrieve newly created material');
-      }
-
-      final updatedMaterials = [
-        ...state.materials.where((m) => m.id != newId),
-        created,
-      ];
-
-      emit(
-        state.copyWith(
-          materials: updatedMaterials,
-          selectedMaterial: created,
-          clearError: true,
-        ),
-      );
-
-      if (event.completer != null && !event.completer!.isCompleted) {
-        event.completer!.complete(created);
-      }
-    } catch (e) {
-      final errorMsg = e.toString().replaceAll('Exception: ', '');
-      if (emit.isDone) return;
-      emit(
-        state.copyWith(errorMessage: 'Failed to create material: $errorMsg'),
-      );
-      if (event.completer != null && !event.completer!.isCompleted) {
-        event.completer!.completeError(Exception(errorMsg));
-      }
-    }
-  }
-
-  void _onMaterialCreatedToState(
-    MaterialCreatedToState event,
-    Emitter<BillState> emit,
-  ) {
-    emit(
-      state.copyWith(
-        materials: event.materials,
-        selectedMaterial: event.selected,
-        clearError: true,
-      ),
-    );
-  }
-
-  void _onCustomerCreatedToState(
-    CustomerCreatedToState event,
-    Emitter<BillState> emit,
-  ) {
-    emit(
-      state.copyWith(
-        customers: event.customers,
-        selectedCustomer: event.selected,
-        clearError: true,
-      ),
-    );
   }
 }

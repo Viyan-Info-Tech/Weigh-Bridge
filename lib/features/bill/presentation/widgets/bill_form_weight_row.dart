@@ -2,6 +2,61 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
+/// Accent palette for a weight display row.
+///
+/// Gross renders green, tare red and net blue so the three dedicated
+/// displays on the weighment screen are instantly distinguishable while
+/// keeping the same box + date/time-chip structure.
+class WeightRowAccent {
+  const WeightRowAccent({
+    required this.border,
+    required this.background,
+    required this.iconBackground,
+    required this.iconColor,
+    required this.textColor,
+    required this.unitBackground,
+    required this.unitColor,
+  });
+
+  final Color border;
+  final Color background;
+  final Color iconBackground;
+  final Color iconColor;
+  final Color textColor;
+  final Color unitBackground;
+  final Color unitColor;
+
+  static const WeightRowAccent green = WeightRowAccent(
+    border: Color(0xFF86EFAC),
+    background: Color(0xFFF0FDF4),
+    iconBackground: Color(0xFFDCFCE7),
+    iconColor: Color(0xFF16A34A),
+    textColor: Color(0xFF15803D),
+    unitBackground: Color(0xFFDCFCE7),
+    unitColor: Color(0xFF166534),
+  );
+
+  static const WeightRowAccent red = WeightRowAccent(
+    border: Color(0xFFFCA5A5),
+    background: Color(0xFFFEF2F2),
+    iconBackground: Color(0xFFFEE2E2),
+    iconColor: Color(0xFFDC2626),
+    textColor: Color(0xFFB91C1C),
+    unitBackground: Color(0xFFFEE2E2),
+    unitColor: Color(0xFF991B1B),
+  );
+
+  static const WeightRowAccent blue = WeightRowAccent(
+    border: Color(0xFF93C5FD),
+    background: Color(0xFFEFF6FF),
+    iconBackground: Color(0xFFDBEAFE),
+    iconColor: Color(0xFF0284C7),
+    textColor: Color(0xFF0C4A6E),
+    unitBackground: Color(0xFFDBEAFE),
+    unitColor: Color(0xFF0C4A6E),
+  );
+}
+
 class BillFormWeightRow extends StatelessWidget {
   const BillFormWeightRow({
     super.key,
@@ -19,6 +74,7 @@ class BillFormWeightRow extends StatelessWidget {
     required this.onWeightChanged,
     this.onWeightCommitted,
     this.onSubmittedNext,
+    this.accent = WeightRowAccent.green,
   });
 
   final TextEditingController controller;
@@ -35,6 +91,7 @@ class BillFormWeightRow extends StatelessWidget {
   final ValueChanged<String> onWeightChanged;
   final ValueChanged<String>? onWeightCommitted;
   final VoidCallback? onSubmittedNext;
+  final WeightRowAccent accent;
 
   @override
   Widget build(BuildContext context) {
@@ -73,6 +130,7 @@ class BillFormWeightRow extends StatelessWidget {
           onChanged: onWeightChanged,
           onCommitted: onWeightCommitted,
           onSubmittedNext: onSubmittedNext,
+          accent: accent,
         ),
 
         const SizedBox(height: 7),
@@ -146,18 +204,10 @@ class BillFormWeightRow extends StatelessWidget {
     required bool isCaptured,
     required VoidCallback onTap,
   }) {
-    final borderColor = isCaptured
-        ? const Color(0xFFBBF7D0)
-        : const Color(0xFFCBD5E1);
-    final bgColor = isCaptured
-        ? const Color(0xFFF0FDF4)
-        : const Color(0xFFF8FAFC);
-    final iconColor = isCaptured
-        ? const Color(0xFF16A34A)
-        : const Color(0xFF475569);
-    final textColor = isCaptured
-        ? const Color(0xFF15803D)
-        : const Color(0xFF0F172A);
+    final borderColor = isCaptured ? accent.border : const Color(0xFFCBD5E1);
+    final bgColor = isCaptured ? accent.background : const Color(0xFFF8FAFC);
+    final iconColor = isCaptured ? accent.iconColor : const Color(0xFF475569);
+    final textColor = isCaptured ? accent.textColor : const Color(0xFF0F172A);
 
     return Tooltip(
       message: tooltip,
@@ -168,7 +218,7 @@ class BillFormWeightRow extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(6),
           hoverColor: isCaptured
-              ? const Color(0xFFDCFCE7).withValues(alpha: 0.5)
+              ? accent.iconBackground.withValues(alpha: 0.5)
               : const Color(0xFFEFF6FF),
           child: Ink(
             height: 34,
@@ -220,6 +270,7 @@ class _EditableWeightBox extends StatefulWidget {
     required this.onChanged,
     this.onCommitted,
     this.onSubmittedNext,
+    this.accent = WeightRowAccent.green,
   });
 
   final TextEditingController controller;
@@ -232,6 +283,7 @@ class _EditableWeightBox extends StatefulWidget {
   final ValueChanged<String> onChanged;
   final ValueChanged<String>? onCommitted;
   final VoidCallback? onSubmittedNext;
+  final WeightRowAccent accent;
 
   @override
   State<_EditableWeightBox> createState() => _EditableWeightBoxState();
@@ -313,14 +365,14 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
         : _editing
         ? const Color(0xFF3B82F6)
         : widget.isCaptured
-        ? const Color(0xFF86EFAC)
+        ? widget.accent.border
         : const Color(0xFFCBD5E1);
     final backgroundColor = widget.hasError
         ? const Color(0xFFFEF2F2)
         : _editing
         ? const Color(0xFFEFF6FF)
         : widget.isCaptured
-        ? const Color(0xFFF0FDF4)
+        ? widget.accent.background
         : const Color(0xFFF8FAFC);
 
     return Tooltip(
@@ -356,7 +408,7 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                           : _editing
                           ? const Color(0xFFDBEAFE)
                           : widget.isCaptured
-                          ? const Color(0xFFDCFCE7)
+                          ? widget.accent.iconBackground
                           : const Color(0xFFE2E8F0),
                       borderRadius: const BorderRadius.horizontal(
                         left: Radius.circular(5),
@@ -372,7 +424,7 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                           : _editing
                           ? const Color(0xFF2563EB)
                           : widget.isCaptured
-                          ? const Color(0xFF16A34A)
+                          ? widget.accent.iconColor
                           : const Color(0xFF64748B),
                     ),
                   ),
@@ -406,7 +458,7 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                             fontSize: 16,
                             fontWeight: FontWeight.w800,
                             color: widget.isCaptured
-                                ? const Color(0xFF15803D)
+                                ? widget.accent.textColor
                                 : const Color(0xFF0F172A),
                           ),
                           border: InputBorder.none,
@@ -418,7 +470,7 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
                           color: widget.isCaptured
-                              ? const Color(0xFF15803D)
+                              ? widget.accent.textColor
                               : const Color(0xFF0F172A),
                         ),
                       ),
@@ -430,7 +482,7 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: widget.isCaptured
-                          ? const Color(0xFFDCFCE7).withValues(alpha: 0.6)
+                          ? widget.accent.unitBackground.withValues(alpha: 0.6)
                           : const Color(0xFFF1F5F9),
                       borderRadius: const BorderRadius.horizontal(
                         right: Radius.circular(5),
@@ -444,7 +496,7 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                         fontSize: 13.5,
                         fontWeight: FontWeight.w800,
                         color: widget.isCaptured
-                            ? const Color(0xFF166534)
+                            ? widget.accent.unitColor
                             : const Color(0xFF334155),
                       ),
                     ),

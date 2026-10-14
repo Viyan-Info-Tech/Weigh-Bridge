@@ -101,18 +101,10 @@ void main() {
     });
 
     test('changing auto tare leaves already saved bills untouched', () async {
-      final customerId = await db.customerDao.insertCustomer(
-        CustomersCompanion.insert(name: 'Auto Tare Customer'),
-      );
-      final materialId = await db.materialDao.insertMaterial(
-        MaterialsCompanion.insert(code: 'AT-1', name: 'Cement'),
-      );
       await db.billDao.insertWeighment(
         WeighmentsCompanion.insert(
           billNumber: 'WB-00014',
-          customerId: customerId,
           vehicleNumber: 'TN32AT0014',
-          materialId: Value(materialId),
           firstWeightKg: 20000,
           firstWeightType: const Value('GROSS'),
           secondWeightKg: const Value(8000),

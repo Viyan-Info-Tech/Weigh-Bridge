@@ -13,9 +13,7 @@ void main() {
   final weighment = Weighment(
     id: 0,
     billNumber: 'WB-00001',
-    customerId: 1,
     vehicleNumber: 'TN31AB1234',
-    materialId: 2,
     grossWeightKg: 20000,
     tareWeightKg: 5000,
     createdAt: DateTime(2026, 9, 21, 10, 30),

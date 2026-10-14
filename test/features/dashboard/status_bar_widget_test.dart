@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:weighbridge/core/security/admin_password_service.dart';
 import 'package:weighbridge/features/auth/domain/entities/user.dart';
 import 'package:weighbridge/features/auth/domain/usecases/get_current_user.dart';
 import 'package:weighbridge/features/auth/domain/usecases/is_authenticated.dart';
@@ -12,22 +13,7 @@ import 'package:weighbridge/features/auth/presentation/bloc/auth_bloc.dart';
 import 'package:weighbridge/features/bill/domain/entities/weighment.dart';
 import 'package:weighbridge/features/bill/domain/usecases/save_bill.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_bloc.dart';
-import 'package:weighbridge/features/customer/domain/entities/customer.dart';
-import 'package:weighbridge/features/customer/domain/repositories/customer_repository.dart';
-import 'package:weighbridge/features/customer/domain/usecases/create_customer.dart';
-import 'package:weighbridge/features/customer/domain/usecases/deactivate_customer.dart';
-import 'package:weighbridge/features/customer/domain/usecases/delete_customer.dart';
-import 'package:weighbridge/features/customer/domain/usecases/load_customers.dart';
-import 'package:weighbridge/features/customer/domain/usecases/search_customers.dart';
-import 'package:weighbridge/features/customer/domain/usecases/update_customer.dart';
-import 'package:weighbridge/features/customer/presentation/bloc/customer_bloc.dart';
 import 'package:weighbridge/features/dashboard/presentation/pages/home_page.dart';
-import 'package:weighbridge/features/material/domain/entities/material_item.dart';
-import 'package:weighbridge/features/material/domain/repositories/material_item_repository.dart';
-import 'package:weighbridge/features/material/domain/usecases/create_material.dart';
-import 'package:weighbridge/features/material/domain/usecases/delete_material.dart';
-import 'package:weighbridge/features/material/domain/usecases/load_materials.dart';
-import 'package:weighbridge/features/material/presentation/bloc/material_bloc.dart';
 import 'package:weighbridge/features/report/domain/entities/report_filter.dart';
 import 'package:weighbridge/features/report/domain/entities/report_summary.dart';
 import 'package:weighbridge/features/report/domain/entities/weighment_report_item.dart';
@@ -53,10 +39,6 @@ class MockGetCurrentUserUseCase extends Mock implements GetCurrentUserUseCase {}
 class MockIsAuthenticatedUseCase extends Mock
     implements IsAuthenticatedUseCase {}
 
-class MockCustomerRepository extends Mock implements CustomerRepository {}
-
-class MockMaterialRepository extends Mock implements MaterialItemRepository {}
-
 class MockSaveBillUseCase extends Mock implements SaveBillUseCase {}
 
 class MockLoadRecentBillsUseCase extends Mock
@@ -65,22 +47,6 @@ class MockLoadRecentBillsUseCase extends Mock
 class MockGenerateBillNumberUseCase extends Mock
     implements GenerateBillNumberUseCase {}
 
-class MockCreateCustomerUseCase extends Mock implements CreateCustomerUseCase {}
-
-class MockUpdateCustomerUseCase extends Mock implements UpdateCustomerUseCase {}
-
-class MockDeactivateCustomerUseCase extends Mock
-    implements DeactivateCustomerUseCase {}
-
-class MockDeleteCustomerUseCase extends Mock implements DeleteCustomerUseCase {}
-
-class MockSearchCustomersUseCase extends Mock
-    implements SearchCustomersUseCase {}
-
-class MockCreateMaterialUseCase extends Mock implements CreateMaterialUseCase {}
-
-class MockDeleteMaterialUseCase extends Mock implements DeleteMaterialUseCase {}
-
 class MockGetSettingsUseCase extends Mock implements GetSettingsUseCase {}
 
 class MockUpdateSettingsUseCase extends Mock implements UpdateSettingsUseCase {}
@@ -88,6 +54,8 @@ class MockUpdateSettingsUseCase extends Mock implements UpdateSettingsUseCase {}
 class MockReportRepository extends Mock implements ReportRepository {}
 
 class MockExportReportUseCase extends Mock implements ExportReportUseCase {}
+
+class MockAdminPasswordService extends Mock implements AdminPasswordService {}
 
 void main() {
   late FakeScaleService scaleService;
@@ -122,48 +90,19 @@ void main() {
     final getCurrentUserUseCase = MockGetCurrentUserUseCase();
     final isAuthenticatedUseCase = MockIsAuthenticatedUseCase();
     final logoutUseCase = MockLogoutUseCase();
-    final customerRepository = MockCustomerRepository();
-    final materialRepository = MockMaterialRepository();
     final saveBillUseCase = MockSaveBillUseCase();
     final loadRecentBillsUseCase = MockLoadRecentBillsUseCase();
     final generateBillNumberUseCase = MockGenerateBillNumberUseCase();
-    final createCustomerUseCase = MockCreateCustomerUseCase();
-    final updateCustomerUseCase = MockUpdateCustomerUseCase();
-    final deactivateCustomerUseCase = MockDeactivateCustomerUseCase();
-    final deleteCustomerUseCase = MockDeleteCustomerUseCase();
-    final searchCustomersUseCase = MockSearchCustomersUseCase();
-    final createMaterialUseCase = MockCreateMaterialUseCase();
-    final deleteMaterialUseCase = MockDeleteMaterialUseCase();
     final getSettingsUseCase = MockGetSettingsUseCase();
     final updateSettingsUseCase = MockUpdateSettingsUseCase();
     final reportRepository = MockReportRepository();
     final exportReportUseCase = MockExportReportUseCase();
+    final adminPasswordService = MockAdminPasswordService();
 
     when(() => getCurrentUserUseCase()).thenAnswer((_) async => Right(user));
     when(
       () => isAuthenticatedUseCase(),
     ).thenAnswer((_) async => const Right(true));
-    when(
-      () => customerRepository.getAllActiveCustomers(),
-    ).thenAnswer((_) async => <Customer>[]);
-    when(
-      () => customerRepository.getAllCustomers(),
-    ).thenAnswer((_) async => <Customer>[]);
-    when(
-      () => customerRepository.totalCustomerCount(),
-    ).thenAnswer((_) async => 0);
-    when(
-      () => customerRepository.activeCustomerCount(),
-    ).thenAnswer((_) async => 0);
-    when(
-      () => customerRepository.inactiveCustomerCount(),
-    ).thenAnswer((_) async => 0);
-    when(
-      () => materialRepository.getMaterialsByStatus(isActive: true),
-    ).thenAnswer((_) async => <MaterialItem>[]);
-    when(
-      () => materialRepository.getAllMaterials(),
-    ).thenAnswer((_) async => <MaterialItem>[]);
     when(() => loadRecentBillsUseCase()).thenAnswer((_) async => <Weighment>[]);
     when(
       () => loadRecentBillsUseCase(date: any(named: 'date')),
@@ -186,6 +125,9 @@ void main() {
     when(() => exportReportUseCase(any())).thenAnswer(
       (_) async => ExportReportResult.success('report.csv', 'report.csv'),
     );
+    when(
+      () => adminPasswordService.verify(any()),
+    ).thenAnswer((_) async => true);
 
     final authBloc = AuthBloc(
       loginUseCase: loginUseCase,
@@ -194,26 +136,9 @@ void main() {
       isAuthenticatedUseCase: isAuthenticatedUseCase,
     );
     final billBloc = BillBloc(
-      customerRepository: customerRepository,
-      materialRepository: materialRepository,
       saveBillUseCase: saveBillUseCase,
       loadRecentBillsUseCase: loadRecentBillsUseCase,
       generateBillNumberUseCase: generateBillNumberUseCase,
-    );
-    final customerBloc = CustomerBloc(
-      loadCustomersUseCase: LoadCustomersUseCase(customerRepository),
-      createCustomerUseCase: createCustomerUseCase,
-      updateCustomerUseCase: updateCustomerUseCase,
-      deactivateCustomerUseCase: deactivateCustomerUseCase,
-      deleteCustomerUseCase: deleteCustomerUseCase,
-      searchCustomersUseCase: searchCustomersUseCase,
-      customerRepository: customerRepository,
-    );
-    final materialBloc = MaterialBloc(
-      loadMaterialsUseCase: LoadMaterialsUseCase(materialRepository),
-      createMaterialUseCase: createMaterialUseCase,
-      deleteMaterialUseCase: deleteMaterialUseCase,
-      materialRepository: materialRepository,
     );
     final settingsBloc = SettingsBloc(
       getSettingsUseCase: getSettingsUseCase,
@@ -221,22 +146,21 @@ void main() {
     );
     final reportBloc = ReportBloc(
       reportRepository: reportRepository,
-      customerRepository: customerRepository,
-      materialRepository: materialRepository,
       exportReportUseCase: exportReportUseCase,
     );
 
     return wrapWithStatusProviders(
-      MultiBlocProvider(
-        providers: [
-          BlocProvider<AuthBloc>.value(value: authBloc),
-          BlocProvider<BillBloc>.value(value: billBloc),
-          BlocProvider<CustomerBloc>.value(value: customerBloc),
-          BlocProvider<MaterialBloc>.value(value: materialBloc),
-          BlocProvider<SettingsBloc>.value(value: settingsBloc),
-          BlocProvider<ReportBloc>.value(value: reportBloc),
-        ],
-        child: const MaterialApp(home: HomePage()),
+      RepositoryProvider<AdminPasswordService>.value(
+        value: adminPasswordService,
+        child: MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthBloc>.value(value: authBloc),
+            BlocProvider<BillBloc>.value(value: billBloc),
+            BlocProvider<SettingsBloc>.value(value: settingsBloc),
+            BlocProvider<ReportBloc>.value(value: reportBloc),
+          ],
+          child: const MaterialApp(home: HomePage()),
+        ),
       ),
       scaleService: scaleService,
       database: database,

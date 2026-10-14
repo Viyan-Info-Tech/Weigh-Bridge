@@ -6,40 +6,36 @@ import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
 import 'daos/user_dao.dart';
-import 'daos/customer_dao.dart';
-import 'daos/material_dao.dart';
 import 'daos/bill_dao.dart';
 import 'daos/app_settings_dao.dart';
 import 'daos/scale_settings_dao.dart';
 import 'daos/auto_tare_settings_dao.dart';
+import 'daos/vehicle_tare_records_dao.dart';
 import 'tables/users_table.dart';
-import 'tables/customers_table.dart';
-import 'tables/materials_table.dart';
 import 'tables/weighments_table.dart';
 import 'tables/app_settings_table.dart';
 import 'tables/scale_settings_table.dart';
 import 'tables/auto_tare_settings_table.dart';
+import 'tables/vehicle_tare_records_table.dart';
 
 part 'app_database.g.dart';
 
 @DriftDatabase(
   tables: [
     Users,
-    Customers,
-    Materials,
     Weighments,
     AppSettings,
     ScaleSettings,
     AutoTareSettings,
+    VehicleTareRecords,
   ],
   daos: [
     UserDao,
-    CustomerDao,
-    MaterialDao,
     BillDao,
     AppSettingsDao,
     ScaleSettingsDao,
     AutoTareSettingsDao,
+    VehicleTareRecordsDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -48,19 +44,13 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 28;
+  int get schemaVersion => 31;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
       await _createAdminCredentialsTable();
-      await customStatement(
-        'CREATE UNIQUE INDEX materials_name_unique ON materials (lower(trim(name)))',
-      );
-      await customStatement(
-        'CREATE UNIQUE INDEX customers_name_unique ON customers (lower(trim(name)))',
-      );
       await _createWeighmentQueryIndexes();
     },
     onUpgrade: (m, from, to) async {
@@ -538,10 +528,27 @@ class AppDatabase extends _$AppDatabase {
       }
 
       if (from < 16) {
-        // Rename the "parties" domain to "customers". The customers table
-        // keeps the same schema as parties; every row is carried over and
-        // the party_id foreign key on weighments becomes customer_id.
-        await m.createTable(customers);
+        // Historical rename of the "parties" domain to "customers".
+        // The customers table is dropped again in the from < 29 step, which
+        // removes the Customer module entirely; this raw statement keeps
+        // very old databases (v15 and below) upgradeable without needing
+        // the deleted Drift table class.
+        await customStatement('''
+              CREATE TABLE IF NOT EXISTS customers (
+                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                contact_person TEXT,
+                mobile TEXT,
+                email TEXT,
+                address TEXT,
+                gst_number TEXT,
+                city TEXT,
+                state TEXT,
+                is_active INTEGER NOT NULL DEFAULT 1,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL
+              )
+            ''');
         await customStatement(
           "INSERT INTO customers (id, name, contact_person, mobile, email, address, "
           "gst_number, city, state, is_active, created_at, updated_at) "
@@ -861,39 +868,162 @@ class AppDatabase extends _$AppDatabase {
           await _createWeighmentQueryIndexes();
         }
       }
+
+      if (from < 29) {
+        // Complete removal of the Customer and Material modules. Weighment
+        // rows are preserved; only the customer/material relationships and
+        // their master tables are dropped. Historical customer/material names
+        // are intentionally not carried over: the new workflow is
+        // vehicle + weights only, and bills/receipts/reports no longer
+        // display either concept.
+        await customStatement(
+          'DROP INDEX IF EXISTS idx_weighments_customer_created',
+        );
+        await customStatement(
+          'DROP INDEX IF EXISTS idx_weighments_material_created',
+        );
+        await customStatement(
+          'DROP INDEX IF EXISTS customers_customer_code_unique',
+        );
+        await customStatement('DROP INDEX IF EXISTS materials_name_unique');
+        await customStatement('DROP INDEX IF EXISTS customers_name_unique');
+
+        await customStatement('''
+              CREATE TABLE weighments_new (
+                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                bill_number TEXT NOT NULL UNIQUE,
+                vehicle_number TEXT NOT NULL,
+                first_weight_kg REAL NOT NULL,
+                first_weight_type TEXT NOT NULL DEFAULT 'GROSS',
+                second_weight_kg REAL,
+                second_weight_type TEXT,
+                net_weight_kg REAL,
+                remarks TEXT,
+                mobile_number TEXT,
+                weight_unit TEXT NOT NULL DEFAULT 'ton',
+                created_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000),
+                updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
+              )
+            ''');
+        await customStatement(
+          'INSERT INTO weighments_new (id, bill_number, vehicle_number, '
+          'first_weight_kg, first_weight_type, second_weight_kg, '
+          'second_weight_type, net_weight_kg, remarks, mobile_number, '
+          'weight_unit, created_at, updated_at) '
+          'SELECT id, bill_number, vehicle_number, first_weight_kg, '
+          'first_weight_type, second_weight_kg, second_weight_type, '
+          'net_weight_kg, remarks, NULLIF(mobile_number, \'\'), weight_unit, '
+          'created_at, updated_at FROM weighments',
+        );
+        await customStatement('DROP TABLE weighments');
+        await customStatement(
+          'ALTER TABLE weighments_new RENAME TO weighments',
+        );
+        await customStatement(
+          'CREATE UNIQUE INDEX IF NOT EXISTS weighments_bill_number '
+          'ON weighments(bill_number)',
+        );
+        await _createWeighmentQueryIndexes();
+
+        await customStatement('DROP TABLE IF EXISTS customers');
+        await customStatement('DROP TABLE IF EXISTS materials');
+
+        // Receipt visibility toggles for the removed modules.
+        final settingsColumns = await customSelect(
+          "PRAGMA table_info('app_settings')",
+        ).get();
+        final settingsNames = settingsColumns
+            .map((c) => c.read<String>('name'))
+            .toSet();
+        if (settingsNames.contains('show_material') ||
+            settingsNames.contains('show_party')) {
+          await customStatement('''
+                CREATE TABLE app_settings_new (
+                  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                  weight_unit TEXT NOT NULL DEFAULT 'ton',
+                  bill_prefix TEXT NOT NULL DEFAULT 'WB',
+                  bill_starting_number INTEGER NOT NULL DEFAULT 1,
+                  bill_number_digits INTEGER NOT NULL DEFAULT 5,
+                  business_name TEXT NOT NULL DEFAULT 'VIYAN WEIGHBRIDGE',
+                  business_subtitle TEXT,
+                  service_text TEXT,
+                  address TEXT,
+                  phone_number TEXT,
+                  email TEXT,
+                  gstin TEXT,
+                  logo_path TEXT,
+                  receipt_title TEXT NOT NULL DEFAULT 'WEIGHMENT RECEIPT',
+                  show_serial_number INTEGER NOT NULL DEFAULT 1,
+                  show_date INTEGER NOT NULL DEFAULT 1,
+                  show_time INTEGER NOT NULL DEFAULT 1,
+                  show_vehicle_number INTEGER NOT NULL DEFAULT 1,
+                  show_gross_weight INTEGER NOT NULL DEFAULT 1,
+                  show_tare_weight INTEGER NOT NULL DEFAULT 1,
+                  show_net_weight INTEGER NOT NULL DEFAULT 1,
+                  show_remarks INTEGER NOT NULL DEFAULT 1,
+                  show_footer_note INTEGER NOT NULL DEFAULT 1,
+                  footer_note TEXT,
+                  updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
+                )
+              ''');
+          await customStatement(
+            'INSERT INTO app_settings_new (id, weight_unit, bill_prefix, '
+            'bill_starting_number, bill_number_digits, business_name, '
+            'business_subtitle, service_text, address, phone_number, '
+            'email, gstin, logo_path, receipt_title, show_serial_number, '
+            'show_date, show_time, show_vehicle_number, show_gross_weight, '
+            'show_tare_weight, show_net_weight, show_remarks, '
+            'show_footer_note, footer_note, updated_at) '
+            'SELECT id, weight_unit, bill_prefix, bill_starting_number, '
+            'bill_number_digits, business_name, business_subtitle, '
+            'service_text, address, phone_number, email, gstin, logo_path, '
+            'receipt_title, show_serial_number, show_date, show_time, '
+            'show_vehicle_number, show_gross_weight, show_tare_weight, '
+            'show_net_weight, show_remarks, show_footer_note, footer_note, '
+            'updated_at FROM app_settings',
+          );
+          await customStatement('DROP TABLE app_settings');
+          await customStatement(
+            'ALTER TABLE app_settings_new RENAME TO app_settings',
+          );
+        }
+      }
+      if (from < 30) {
+        // Free-text Material + Description on the weighment record (TL
+        // redesign). Nullable ADD COLUMNs so every existing weighment/bill
+        // row is preserved; new bills store the typed values, old bills
+        // simply read back NULL (shown as empty / omitted on tickets).
+        final weighmentColumns = await customSelect(
+          "PRAGMA table_info('weighments')",
+        ).get();
+        final weighmentNames = weighmentColumns
+            .map((c) => c.read<String>('name'))
+            .toSet();
+        if (!weighmentNames.contains('material')) {
+          await m.addColumn(weighments, weighments.material);
+        }
+        if (!weighmentNames.contains('description')) {
+          await m.addColumn(weighments, weighments.description);
+        }
+      }
+      if (from < 31) {
+        // Per-vehicle tare registry for the Auto Tare popup. A brand-new
+        // table, so no existing rows are touched; every weighment, bill,
+        // and settings row is preserved untouched.
+        await m.createTable(vehicleTareRecords);
+      }
     },
   );
 
-  /// Creates the weighments indexes used by the bill list and report queries.
+  /// Creates the weighments index used by the bill list and report queries.
   ///
-  /// These are declared as raw statements rather than table annotations
-  /// because the composite column order depends on how the filters combine,
-  /// and because every upgrade step below 24 rebuilds the weighments table,
-  /// which silently drops drift-generated indexes.
-  ///
-  /// `created_at` is the primary report workload, so it leads on its own and
-  /// trails the customer and material composites; that ordering lets SQLite
-  /// satisfy both the range filter and the `ORDER BY created_at DESC` from the
-  /// index without a temp b-tree sort.
-  ///
-  /// No index is added for `vehicle_number` or `payment_mode`: the report
-  /// filters them with `LIKE '%..%'` and `lower(..) = ..`, neither of which
-  /// SQLite can satisfy from a b-tree index.
+  /// Only `created_at` is indexed: the remaining report filters use
+  /// `LIKE '%..%'`, which SQLite cannot satisfy from a b-tree index.
   Future<void> _createWeighmentQueryIndexes() async {
-    await batch((batch) {
-      batch.customStatement(
-        'CREATE INDEX IF NOT EXISTS idx_weighments_created_at '
-        'ON weighments(created_at DESC)',
-      );
-      batch.customStatement(
-        'CREATE INDEX IF NOT EXISTS idx_weighments_customer_created '
-        'ON weighments(customer_id, created_at DESC)',
-      );
-      batch.customStatement(
-        'CREATE INDEX IF NOT EXISTS idx_weighments_material_created '
-        'ON weighments(material_id, created_at DESC)',
-      );
-    });
+    await customStatement(
+      'CREATE INDEX IF NOT EXISTS idx_weighments_created_at '
+      'ON weighments(created_at DESC)',
+    );
   }
 
   Future<void> _createAdminCredentialsTable() => customStatement('''

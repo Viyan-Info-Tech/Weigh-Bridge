@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart' hide Material;
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,14 +8,6 @@ import 'package:weighbridge/features/bill/domain/usecases/save_bill.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_bloc.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_state.dart';
 import 'package:weighbridge/features/bill/presentation/pages/bill_page.dart';
-import 'package:weighbridge/features/customer/domain/entities/customer.dart';
-import 'package:weighbridge/features/customer/domain/repositories/customer_repository.dart';
-import 'package:weighbridge/features/material/domain/entities/material_item.dart';
-import 'package:weighbridge/features/material/domain/repositories/material_item_repository.dart';
-
-class MockCustomerRepository extends Mock implements CustomerRepository {}
-
-class MockMaterialRepository extends Mock implements MaterialItemRepository {}
 
 class MockSaveBillUseCase extends Mock implements SaveBillUseCase {}
 
@@ -34,26 +26,16 @@ void main() {
   late BillBloc billBloc;
 
   setUp(() {
-    final customerRepo = MockCustomerRepository();
-    final materialRepo = MockMaterialRepository();
     final save = MockSaveBillUseCase();
     final recent = MockLoadRecentBillsUseCase();
     final gen = MockGenerateBillNumberUseCase();
 
-    when(
-      () => customerRepo.getAllActiveCustomers(),
-    ).thenAnswer((_) async => <Customer>[]);
-    when(
-      () => materialRepo.getMaterialsByStatus(isActive: true),
-    ).thenAnswer((_) async => <MaterialItem>[]);
     when(
       () => recent.call(date: any(named: 'date')),
     ).thenAnswer((_) async => <Weighment>[]);
     when(gen.call).thenAnswer((_) async => 'WB-00001');
 
     billBloc = BillBloc(
-      customerRepository: customerRepo,
-      materialRepository: materialRepo,
       saveBillUseCase: save,
       loadRecentBillsUseCase: recent,
       generateBillNumberUseCase: gen,

@@ -5,8 +5,6 @@ class FieldVisibilitySection extends StatelessWidget {
     super.key,
     required this.showSerialNumber,
     required this.showVehicleNumber,
-    required this.showMaterial,
-    required this.showCustomer,
     required this.showGrossWeight,
     required this.showTareWeight,
     required this.showNetWeight,
@@ -20,8 +18,6 @@ class FieldVisibilitySection extends StatelessWidget {
 
   final bool showSerialNumber;
   final bool showVehicleNumber;
-  final bool showMaterial;
-  final bool showCustomer;
   final bool showGrossWeight;
   final bool showTareWeight;
   final bool showNetWeight;
@@ -69,16 +65,6 @@ class FieldVisibilitySection extends StatelessWidget {
                 'Vehicle Number',
                 showVehicleNumber,
                 (v) => onToggle('vehicleNumber', v),
-              ),
-              _buildToggleChip(
-                'Material',
-                showMaterial,
-                (v) => onToggle('material', v),
-              ),
-              _buildToggleChip(
-                'Customer',
-                showCustomer,
-                (v) => onToggle('customer', v),
               ),
               _buildToggleChip(
                 'Gross Weight',

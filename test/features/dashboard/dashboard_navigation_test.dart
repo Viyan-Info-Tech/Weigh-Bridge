@@ -1,8 +1,10 @@
 import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:weighbridge/core/security/admin_password_service.dart';
 import 'package:weighbridge/features/auth/domain/entities/user.dart';
 import 'package:weighbridge/features/auth/domain/usecases/get_current_user.dart';
 import 'package:weighbridge/features/auth/domain/usecases/is_authenticated.dart';
@@ -15,21 +17,6 @@ import 'package:weighbridge/features/bill/domain/entities/weighment.dart';
 import 'package:weighbridge/features/bill/domain/usecases/save_bill.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_bloc.dart';
 import 'package:weighbridge/features/dashboard/presentation/pages/home_page.dart';
-import 'package:weighbridge/features/material/domain/entities/material_item.dart';
-import 'package:weighbridge/features/material/domain/repositories/material_item_repository.dart';
-import 'package:weighbridge/features/material/domain/usecases/create_material.dart';
-import 'package:weighbridge/features/material/domain/usecases/delete_material.dart';
-import 'package:weighbridge/features/material/domain/usecases/load_materials.dart';
-import 'package:weighbridge/features/material/presentation/bloc/material_bloc.dart';
-import 'package:weighbridge/features/customer/domain/entities/customer.dart';
-import 'package:weighbridge/features/customer/domain/repositories/customer_repository.dart';
-import 'package:weighbridge/features/customer/domain/usecases/create_customer.dart';
-import 'package:weighbridge/features/customer/domain/usecases/deactivate_customer.dart';
-import 'package:weighbridge/features/customer/domain/usecases/delete_customer.dart';
-import 'package:weighbridge/features/customer/domain/usecases/load_customers.dart';
-import 'package:weighbridge/features/customer/domain/usecases/search_customers.dart';
-import 'package:weighbridge/features/customer/domain/usecases/update_customer.dart';
-import 'package:weighbridge/features/customer/presentation/bloc/customer_bloc.dart';
 import 'package:weighbridge/features/report/domain/entities/report_filter.dart';
 import 'package:weighbridge/features/report/domain/entities/report_summary.dart';
 import 'package:weighbridge/features/report/domain/entities/weighment_report_item.dart';
@@ -51,10 +38,6 @@ class MockGetCurrentUserUseCase extends Mock implements GetCurrentUserUseCase {}
 class MockIsAuthenticatedUseCase extends Mock
     implements IsAuthenticatedUseCase {}
 
-class MockCustomerRepository extends Mock implements CustomerRepository {}
-
-class MockMaterialRepository extends Mock implements MaterialItemRepository {}
-
 class MockSaveBillUseCase extends Mock implements SaveBillUseCase {}
 
 class MockLoadRecentBillsUseCase extends Mock
@@ -62,22 +45,6 @@ class MockLoadRecentBillsUseCase extends Mock
 
 class MockGenerateBillNumberUseCase extends Mock
     implements GenerateBillNumberUseCase {}
-
-class MockCreateCustomerUseCase extends Mock implements CreateCustomerUseCase {}
-
-class MockUpdateCustomerUseCase extends Mock implements UpdateCustomerUseCase {}
-
-class MockDeactivateCustomerUseCase extends Mock
-    implements DeactivateCustomerUseCase {}
-
-class MockDeleteCustomerUseCase extends Mock implements DeleteCustomerUseCase {}
-
-class MockSearchCustomersUseCase extends Mock
-    implements SearchCustomersUseCase {}
-
-class MockCreateMaterialUseCase extends Mock implements CreateMaterialUseCase {}
-
-class MockDeleteMaterialUseCase extends Mock implements DeleteMaterialUseCase {}
 
 class MockGetSettingsUseCase extends Mock implements GetSettingsUseCase {}
 
@@ -87,14 +54,15 @@ class MockReportRepository extends Mock implements ReportRepository {}
 
 class MockExportReportUseCase extends Mock implements ExportReportUseCase {}
 
+class MockAdminPasswordService extends Mock implements AdminPasswordService {}
+
 void main() {
   late AuthBloc authBloc;
   late BillBloc billBloc;
-  late CustomerBloc customerBloc;
-  late MaterialBloc materialBloc;
   late SettingsBloc settingsBloc;
   late ReportBloc reportBloc;
   late MockLogoutUseCase logoutUseCase;
+  late MockAdminPasswordService adminPasswordService;
 
   final user = User(
     id: 1,
@@ -117,60 +85,25 @@ void main() {
     final getCurrentUserUseCase = MockGetCurrentUserUseCase();
     final isAuthenticatedUseCase = MockIsAuthenticatedUseCase();
     logoutUseCase = MockLogoutUseCase();
-    final customerRepository = MockCustomerRepository();
-    final materialRepository = MockMaterialRepository();
     final saveBillUseCase = MockSaveBillUseCase();
     final loadRecentBillsUseCase = MockLoadRecentBillsUseCase();
     final generateBillNumberUseCase = MockGenerateBillNumberUseCase();
-    final createCustomerUseCase = MockCreateCustomerUseCase();
-    final updateCustomerUseCase = MockUpdateCustomerUseCase();
-    final deactivateCustomerUseCase = MockDeactivateCustomerUseCase();
-    final deleteCustomerUseCase = MockDeleteCustomerUseCase();
-    final searchCustomersUseCase = MockSearchCustomersUseCase();
-    final createMaterialUseCase = MockCreateMaterialUseCase();
-    final deleteMaterialUseCase = MockDeleteMaterialUseCase();
     final getSettingsUseCase = MockGetSettingsUseCase();
     final updateSettingsUseCase = MockUpdateSettingsUseCase();
     final reportRepository = MockReportRepository();
     final exportReportUseCase = MockExportReportUseCase();
+    adminPasswordService = MockAdminPasswordService();
 
     when(() => getCurrentUserUseCase()).thenAnswer((_) async => Right(user));
     when(
       () => isAuthenticatedUseCase(),
     ).thenAnswer((_) async => const Right(true));
-    when(
-      () => customerRepository.getAllActiveCustomers(),
-    ).thenAnswer((_) async => <Customer>[]);
-    when(
-      () => customerRepository.getAllCustomers(),
-    ).thenAnswer((_) async => <Customer>[]);
-    when(
-      () => customerRepository.totalCustomerCount(),
-    ).thenAnswer((_) async => 0);
-    when(
-      () => customerRepository.activeCustomerCount(),
-    ).thenAnswer((_) async => 0);
-    when(
-      () => customerRepository.inactiveCustomerCount(),
-    ).thenAnswer((_) async => 0);
-    when(
-      () => materialRepository.getMaterialsByStatus(isActive: true),
-    ).thenAnswer((_) async => <MaterialItem>[]);
-    when(
-      () => materialRepository.getAllMaterials(),
-    ).thenAnswer((_) async => <MaterialItem>[]);
     when(() => loadRecentBillsUseCase()).thenAnswer((_) async => <Weighment>[]);
     when(
       () => loadRecentBillsUseCase(date: any(named: 'date')),
     ).thenAnswer((_) async => <Weighment>[]);
     when(() => generateBillNumberUseCase()).thenAnswer((_) async => 'WB-00001');
     when(() => getSettingsUseCase()).thenAnswer((_) async => settings);
-    when(
-      () => customerRepository.getAllCustomers(),
-    ).thenAnswer((_) async => <Customer>[]);
-    when(
-      () => materialRepository.getAllMaterials(),
-    ).thenAnswer((_) async => <MaterialItem>[]);
     when(
       () => reportRepository.getReportRecords(
         any(),
@@ -187,6 +120,9 @@ void main() {
     when(() => exportReportUseCase(any())).thenAnswer(
       (_) async => ExportReportResult.success('report.csv', 'report.csv'),
     );
+    when(
+      () => adminPasswordService.verify(any()),
+    ).thenAnswer((_) async => true);
 
     authBloc = AuthBloc(
       loginUseCase: loginUseCase,
@@ -195,26 +131,9 @@ void main() {
       isAuthenticatedUseCase: isAuthenticatedUseCase,
     );
     billBloc = BillBloc(
-      customerRepository: customerRepository,
-      materialRepository: materialRepository,
       saveBillUseCase: saveBillUseCase,
       loadRecentBillsUseCase: loadRecentBillsUseCase,
       generateBillNumberUseCase: generateBillNumberUseCase,
-    );
-    customerBloc = CustomerBloc(
-      loadCustomersUseCase: LoadCustomersUseCase(customerRepository),
-      createCustomerUseCase: createCustomerUseCase,
-      updateCustomerUseCase: updateCustomerUseCase,
-      deactivateCustomerUseCase: deactivateCustomerUseCase,
-      deleteCustomerUseCase: deleteCustomerUseCase,
-      searchCustomersUseCase: searchCustomersUseCase,
-      customerRepository: customerRepository,
-    );
-    materialBloc = MaterialBloc(
-      loadMaterialsUseCase: LoadMaterialsUseCase(materialRepository),
-      createMaterialUseCase: createMaterialUseCase,
-      deleteMaterialUseCase: deleteMaterialUseCase,
-      materialRepository: materialRepository,
     );
     settingsBloc = SettingsBloc(
       getSettingsUseCase: getSettingsUseCase,
@@ -222,8 +141,6 @@ void main() {
     );
     reportBloc = ReportBloc(
       reportRepository: reportRepository,
-      customerRepository: customerRepository,
-      materialRepository: materialRepository,
       exportReportUseCase: exportReportUseCase,
     );
   });
@@ -231,24 +148,23 @@ void main() {
   tearDown(() {
     authBloc.close();
     billBloc.close();
-    customerBloc.close();
-    materialBloc.close();
     settingsBloc.close();
     reportBloc.close();
   });
 
   Widget createHomePageUnderTest() {
     return wrapWithStatusProviders(
-      MultiBlocProvider(
-        providers: [
-          BlocProvider<AuthBloc>.value(value: authBloc),
-          BlocProvider<BillBloc>.value(value: billBloc),
-          BlocProvider<CustomerBloc>.value(value: customerBloc),
-          BlocProvider<MaterialBloc>.value(value: materialBloc),
-          BlocProvider<SettingsBloc>.value(value: settingsBloc),
-          BlocProvider<ReportBloc>.value(value: reportBloc),
-        ],
-        child: const MaterialApp(home: HomePage()),
+      RepositoryProvider<AdminPasswordService>.value(
+        value: adminPasswordService,
+        child: MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthBloc>.value(value: authBloc),
+            BlocProvider<BillBloc>.value(value: billBloc),
+            BlocProvider<SettingsBloc>.value(value: settingsBloc),
+            BlocProvider<ReportBloc>.value(value: reportBloc),
+          ],
+          child: const MaterialApp(home: HomePage()),
+        ),
       ),
     );
   }
@@ -256,8 +172,10 @@ void main() {
   /// HomePage runs a 1-second live-clock timer that calls setState on every
   /// tick (home_page.dart), so pumpAndSettle can never settle. Pump bounded
   /// durations to advance navigation transitions and async bloc state
-  /// deterministically instead.
+  /// deterministically instead. Three frames cover the 280 ms drawer
+  /// slide/fade plus the rebuild that unmounts it on close.
   Future<void> pumpFrames(WidgetTester tester) async {
+    await tester.pump(const Duration(milliseconds: 250));
     await tester.pump(const Duration(milliseconds: 250));
     await tester.pump(const Duration(milliseconds: 250));
   }
@@ -285,36 +203,127 @@ void main() {
     await pumpFrames(tester);
   }
 
+  /// Opens the navigation drawer via the header toggle.
+  Future<void> openNavMenu(WidgetTester tester) async {
+    await tester.tap(find.byKey(const Key('nav_menu_toggle')));
+    await pumpFrames(tester);
+    expect(find.byKey(const Key('nav_drawer')), findsOneWidget);
+  }
+
+  /// Taps a nav item guarded by the administrator password gate and unlocks
+  /// it with the stubbed [AdminPasswordService].
+  Future<void> tapGuardedTab(WidgetTester tester, String label) async {
+    await openNavMenu(tester);
+    await tester.tap(find.text(label));
+    await pumpFrames(tester);
+    expect(find.text('Administrator Access'), findsOneWidget);
+    await tester.enterText(find.byType(TextField).first, '123');
+    await tester.tap(find.text('Unlock'));
+    await pumpFrames(tester);
+  }
+
+  testWidgets('drawer is hidden at startup and opens from the left edge', (
+    tester,
+  ) async {
+    await pumpHomePage(tester);
+
+    // Hidden by default; only the header toggle is visible.
+    expect(find.byKey(const Key('nav_drawer')), findsNothing);
+    expect(find.byKey(const Key('nav_menu_toggle')), findsOneWidget);
+
+    await openNavMenu(tester);
+    expect(find.text('Weighment'), findsOneWidget);
+    expect(find.text('Reports'), findsOneWidget);
+    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('Exit'), findsOneWidget);
+
+    // Full-height panel docked to the left window edge.
+    final drawerTopLeft = tester.getTopLeft(
+      find.byKey(const Key('nav_drawer')),
+    );
+    expect(drawerTopLeft.dx, 0);
+    expect(tester.getSize(find.byKey(const Key('nav_drawer'))).width, 300);
+    // The rest of the application is dimmed behind it.
+    expect(find.byKey(const Key('nav_drawer_scrim')), findsOneWidget);
+
+    // Drawer header shows the logo and application name instead of the old
+    // NAVIGATION heading.
+    expect(find.text('NAVIGATION'), findsNothing);
+    expect(
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is RichText &&
+            widget.text.toPlainText().contains('VIYAN WEIGHBRIDGE'),
+      ),
+      findsWidgets,
+    );
+
+    // The header toggle is covered by the scrim while open, so dismiss by
+    // tapping outside instead.
+    await tester.tapAt(const Offset(700, 500));
+    await pumpFrames(tester);
+    expect(find.byKey(const Key('nav_drawer')), findsNothing);
+  });
+
+  testWidgets('tapping outside the menu closes it without navigating', (
+    tester,
+  ) async {
+    await pumpHomePage(tester);
+    await openNavMenu(tester);
+
+    // Tap the content area below the header (outside the drawer).
+    await tester.tapAt(const Offset(700, 500));
+    await pumpFrames(tester);
+    expect(find.byKey(const Key('nav_drawer')), findsNothing);
+    // Still on the weighment screen.
+    expect(find.text('WEIGHT'), findsOneWidget);
+  });
+
+  testWidgets('Escape closes the drawer without clearing the weighment form', (
+    tester,
+  ) async {
+    await pumpHomePage(tester);
+
+    // Type a vehicle number so a form clear would be observable.
+    await tester.enterText(
+      find.byKey(const Key('bill_vehicle_number_field')),
+      'TN32AB1234',
+    );
+    await pumpFrames(tester);
+    expect(billBloc.state.vehicleNumber, 'TN32AB1234');
+
+    await openNavMenu(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await pumpFrames(tester);
+
+    expect(find.byKey(const Key('nav_drawer')), findsNothing);
+    // The weighment form must be untouched: Escape closed the drawer instead
+    // of reaching the bill page's cancel shortcut.
+    expect(billBloc.state.vehicleNumber, 'TN32AB1234');
+  });
+
   testWidgets('switches from weighment to each dashboard module', (
     tester,
   ) async {
     await pumpHomePage(tester);
 
-    await tester.tap(find.text('Settings'));
-    await pumpFrames(tester);
-    expect(find.text('Settings'), findsWidgets);
-
-    await tester.tap(find.text('Customers'));
-    await pumpFrames(tester);
-    expect(find.text('Customers'), findsWidgets);
-
-    await tester.tap(find.text('Materials'));
-    await pumpFrames(tester);
-    expect(find.text('Materials'), findsWidgets);
-
-    await tester.tap(find.text('Reports'));
-    await pumpFrames(tester);
+    // IndexedStack order: [BillPage, ReportPage, SettingsPage, AboutPage].
+    await tapGuardedTab(tester, 'Reports');
     expect(find.text('REPORTS'), findsOneWidget);
 
+    await openNavMenu(tester);
     await tester.tap(find.text('Weighment'));
     await pumpFrames(tester);
     expect(find.text('WEIGHT'), findsOneWidget);
+
+    await tapGuardedTab(tester, 'Settings');
+    expect(find.text('Settings'), findsWidgets);
   });
 
   testWidgets('opens About from the version link', (tester) async {
     await pumpHomePage(tester);
 
-    await tester.tap(find.text('Viyan Weighbridge v1.0.0'));
+    await tester.tap(find.text('v0.0.1'));
     await pumpFrames(tester);
 
     expect(find.text('About ViyanInfo'), findsOneWidget);
@@ -327,6 +336,7 @@ void main() {
     when(() => logoutUseCase()).thenAnswer((_) async => const Right(null));
     await pumpHomePage(tester);
 
+    await openNavMenu(tester);
     await tester.tap(find.text('Exit'));
     await pumpFrames(tester);
     expect(find.text('Exit Application'), findsOneWidget);
@@ -345,6 +355,7 @@ void main() {
     when(() => logoutUseCase()).thenAnswer((_) async => const Right(null));
     await pumpHomePage(tester);
 
+    await openNavMenu(tester);
     await tester.tap(find.text('Exit'));
     await pumpFrames(tester);
     final emission = authBloc.stream.firstWhere(

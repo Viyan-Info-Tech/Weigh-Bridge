@@ -28,12 +28,12 @@ class ViyanWeighbridgeLogo extends StatelessWidget {
         boxShadow: withGlow
             ? [
                 BoxShadow(
-                  color: const Color(0xFF00F5FF).withValues(alpha: 0.35),
+                  color: const Color(0xFFFF6B00).withValues(alpha: 0.35),
                   blurRadius: size * 0.25,
                   offset: const Offset(0, 2),
                 ),
                 BoxShadow(
-                  color: const Color(0xFF0D3B82).withValues(alpha: 0.3),
+                  color: const Color(0xFFC2410C).withValues(alpha: 0.3),
                   blurRadius: size * 0.4,
                   offset: const Offset(0, 4),
                 ),
@@ -48,7 +48,7 @@ class ViyanWeighbridgeLogo extends StatelessWidget {
           errorBuilder: (context, error, stackTrace) => CustomPaint(
             size: Size(size, size),
             painter: _ViyanVLogoPainter(
-              color: tintColor ?? const Color(0xFF00F5FF),
+              color: tintColor ?? const Color(0xFFFF6B00),
             ),
           ),
         ),
@@ -86,7 +86,7 @@ class _ViyanVLogoPainter extends CustomPainter {
     final h = size.height;
 
     // Dark rounded squircle background
-    final bgPaint = Paint()..color = const Color(0xFF07111E);
+    final bgPaint = Paint()..color = const Color(0xFF160E08);
     final bgRect = RRect.fromRectAndRadius(
       Rect.fromLTWH(0, 0, w, h),
       Radius.circular(w * 0.22),
@@ -95,7 +95,7 @@ class _ViyanVLogoPainter extends CustomPainter {
 
     // Border
     final borderPaint = Paint()
-      ..color = const Color(0xFF00F5FF).withValues(alpha: 0.4)
+      ..color = const Color(0xFFFF6B00).withValues(alpha: 0.4)
       ..style = PaintingStyle.stroke
       ..strokeWidth = w * 0.03;
     canvas.drawRRect(bgRect, borderPaint);
@@ -113,7 +113,7 @@ class _ViyanVLogoPainter extends CustomPainter {
 
     // Inner glow
     final glowPaint = Paint()
-      ..color = const Color(0xFF00F5FF).withValues(alpha: 0.6)
+      ..color = const Color(0xFFFF6B00).withValues(alpha: 0.6)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4.0);
     canvas.drawPath(outerVPath, glowPaint);
 
@@ -122,7 +122,7 @@ class _ViyanVLogoPainter extends CustomPainter {
       ..shader = const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [Color(0xFFE2E8F0), Color(0xFF00F5FF), Color(0xFF0D3B82)],
+        colors: [Color(0xFFFED7AA), Color(0xFFFF6B00), Color(0xFF9A3412)],
       ).createShader(Rect.fromLTWH(0, 0, w, h));
     canvas.drawPath(outerVPath, vPaint);
 
@@ -137,7 +137,7 @@ class _ViyanVLogoPainter extends CustomPainter {
       ..close();
 
     final chevronPaint = Paint()
-      ..color = const Color(0xFF00F5FF)
+      ..color = const Color(0xFFFF6B00)
       ..style = PaintingStyle.fill;
     canvas.drawPath(innerChevron, chevronPaint);
   }

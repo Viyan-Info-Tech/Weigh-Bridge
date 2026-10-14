@@ -13,8 +13,6 @@ void main() {
     int id = 1,
     DateTime? createdAt,
     String vehicleNumber = 'TN31CM2026',
-    String customerName = 'ACME Traders',
-    String materialName = 'Cement',
     double firstWeightKg = 20000,
     String firstWeightType = 'GROSS',
     double? secondWeightKg = 5000,
@@ -25,10 +23,6 @@ void main() {
       billNumber: billNumber,
       createdAt: createdAt ?? DateTime(2026, 9, 18, 10, 30),
       vehicleNumber: vehicleNumber,
-      customerId: 1,
-      customerName: customerName,
-      materialId: 1,
-      materialName: materialName,
       firstWeightKg: firstWeightKg,
       firstWeightType: firstWeightType,
       secondWeightKg: secondWeightKg,
@@ -69,10 +63,42 @@ void main() {
       expect(
         lines.first,
         contains(
-          'Bill No,Date & Time,Vehicle,Customer,Material,Gross Weight,'
-          'Tare Weight,Net Weight,Weight Unit,Status',
+          'Bill No,Date & Time,Vehicle,Gross Weight,'
+          'Tare Weight,Net Weight,Status',
         ),
       );
+      expect(csv, isNot(contains('Weight Unit')));
+      expect(csv, isNot(contains('Customer')));
+      expect(csv, isNot(contains('Material')));
+    });
+
+    test('header and rows contain no Weight Unit column and align correctly', () {
+      final csv = generator.generateCsvString([
+        item(billNumber: 'WB-001', firstWeightKg: 20000, secondWeightKg: 5000),
+      ]);
+      expect(csv, isNot(contains('Weight Unit')));
+
+      final lines = csv.trim().split('\n');
+      final headerColumns =
+          lines.first.replaceFirst('\uFEFF', '').split(',');
+      expect(headerColumns, [
+        'Bill No',
+        'Date & Time',
+        'Vehicle',
+        'Gross Weight',
+        'Tare Weight',
+        'Net Weight',
+        'Status',
+      ]);
+
+      final row = lines[1];
+      expect(row, isNot(contains('Weight Unit')));
+      expect(row, contains('WB-001'));
+      expect(row, contains('TN31CM2026'));
+      expect(row, contains('20.000 ton'));
+      expect(row, contains('5.000 ton'));
+      expect(row, contains('15.000 ton,Completed'));
+      expect(row.endsWith('Completed'), isTrue);
     });
 
     test('converts ton-based weights to tons with 3 decimals', () {
@@ -96,6 +122,14 @@ void main() {
       expect(csv, contains('20000 kg'));
       expect(csv, contains('5000 kg'));
       expect(csv, contains('15000 kg'));
+    });
+
+    test('includes vehicle number without customer/material columns', () {
+      final csv = generator.generateCsvString([
+        item(billNumber: 'WB-001', vehicleNumber: 'TN31CM2026'),
+      ]);
+      expect(csv, contains('TN31CM2026'));
+      expect(csv, contains('WB-001'));
     });
 
     test('leaves missing weights empty', () {
@@ -127,9 +161,9 @@ void main() {
 
     test('quotes fields containing commas or quotes', () {
       final csv = generator.generateCsvString([
-        item(billNumber: 'WB-003', customerName: 'Kumar, Sons & "Co"'),
+        item(billNumber: 'WB-003', vehicleNumber: 'TN31, "X"'),
       ]);
-      expect(csv, contains('"Kumar, Sons & ""Co"""'));
+      expect(csv, contains('"TN31, ""X"""'));
     });
   });
 

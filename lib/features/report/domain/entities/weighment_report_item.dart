@@ -6,10 +6,6 @@ class WeighmentReportItem extends Equatable {
   final String billNumber;
   final DateTime createdAt;
   final String vehicleNumber;
-  final int customerId;
-  final String customerName;
-  final int? materialId;
-  final String materialName;
   final String? remarks;
   final double firstWeightKg;
   final String firstWeightType;
@@ -22,10 +18,6 @@ class WeighmentReportItem extends Equatable {
     required this.billNumber,
     required this.createdAt,
     required this.vehicleNumber,
-    required this.customerId,
-    required this.customerName,
-    this.materialId,
-    required this.materialName,
     this.remarks,
     required this.firstWeightKg,
     this.firstWeightType = 'GROSS',
@@ -105,10 +97,6 @@ class WeighmentReportItem extends Equatable {
     billNumber,
     createdAt,
     vehicleNumber,
-    customerId,
-    customerName,
-    materialId,
-    materialName,
     remarks,
     firstWeightKg,
     firstWeightType,

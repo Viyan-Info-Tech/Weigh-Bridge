@@ -22,18 +22,14 @@ class ReportFilter extends Equatable {
   final DateRangePreset datePreset;
   final DateTime? customStartDate;
   final DateTime? customEndDate;
-  final int? customerId;
   final String vehicleNumber;
-  final int? materialId;
   final String searchQuery;
 
   const ReportFilter({
     this.datePreset = DateRangePreset.today,
     this.customStartDate,
     this.customEndDate,
-    this.customerId,
     this.vehicleNumber = '',
-    this.materialId,
     this.searchQuery = '',
   });
 
@@ -115,12 +111,8 @@ class ReportFilter extends Equatable {
     DateRangePreset? datePreset,
     DateTime? customStartDate,
     DateTime? customEndDate,
-    int? customerId,
     String? vehicleNumber,
-    int? materialId,
     String? searchQuery,
-    bool clearCustomer = false,
-    bool clearMaterial = false,
     bool clearCustomDates = false,
   }) {
     return ReportFilter(
@@ -131,9 +123,7 @@ class ReportFilter extends Equatable {
       customEndDate: clearCustomDates
           ? null
           : (customEndDate ?? this.customEndDate),
-      customerId: clearCustomer ? null : (customerId ?? this.customerId),
       vehicleNumber: vehicleNumber ?? this.vehicleNumber,
-      materialId: clearMaterial ? null : (materialId ?? this.materialId),
       searchQuery: searchQuery ?? this.searchQuery,
     );
   }
@@ -143,9 +133,7 @@ class ReportFilter extends Equatable {
     datePreset,
     customStartDate,
     customEndDate,
-    customerId,
     vehicleNumber,
-    materialId,
     searchQuery,
   ];
 }

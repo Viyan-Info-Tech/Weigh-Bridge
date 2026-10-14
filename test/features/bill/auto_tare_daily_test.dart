@@ -7,12 +7,6 @@ import 'package:weighbridge/features/bill/domain/repositories/auto_tare_reposito
 import 'package:weighbridge/features/bill/domain/usecases/save_bill.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_bloc.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_event.dart';
-import 'package:weighbridge/features/customer/domain/repositories/customer_repository.dart';
-import 'package:weighbridge/features/material/domain/repositories/material_item_repository.dart';
-
-class MockCustomerRepository extends Mock implements CustomerRepository {}
-
-class MockMaterialRepository extends Mock implements MaterialItemRepository {}
 
 class MockSaveBillUseCase extends Mock implements SaveBillUseCase {}
 
@@ -81,8 +75,6 @@ class _ThrowingAutoTareRepository implements AutoTareRepository {
 }
 
 void main() {
-  late MockCustomerRepository mockCustomerRepo;
-  late MockMaterialRepository mockMaterialRepo;
   late MockSaveBillUseCase mockSaveBillUseCase;
   late MockLoadRecentBillsUseCase mockLoadRecentBillsUseCase;
   late MockGenerateBillNumberUseCase mockGenerateBillNumberUseCase;
@@ -92,19 +84,11 @@ void main() {
   final today = DateTime.now();
 
   setUp(() {
-    mockCustomerRepo = MockCustomerRepository();
-    mockMaterialRepo = MockMaterialRepository();
     mockSaveBillUseCase = MockSaveBillUseCase();
     mockLoadRecentBillsUseCase = MockLoadRecentBillsUseCase();
     mockGenerateBillNumberUseCase = MockGenerateBillNumberUseCase();
     autoTareRepository = FakeAutoTareRepository();
 
-    when(
-      () => mockCustomerRepo.getAllActiveCustomers(),
-    ).thenAnswer((_) async => []);
-    when(
-      () => mockMaterialRepo.getMaterialsByStatus(isActive: true),
-    ).thenAnswer((_) async => []);
     when(
       () => mockLoadRecentBillsUseCase(date: any(named: 'date')),
     ).thenAnswer((_) async => []);
@@ -113,8 +97,6 @@ void main() {
     ).thenAnswer((_) async => 'WB-00001');
 
     bloc = BillBloc(
-      customerRepository: mockCustomerRepo,
-      materialRepository: mockMaterialRepo,
       saveBillUseCase: mockSaveBillUseCase,
       loadRecentBillsUseCase: mockLoadRecentBillsUseCase,
       generateBillNumberUseCase: mockGenerateBillNumberUseCase,
@@ -170,8 +152,6 @@ void main() {
     test('the completer reports a failing write to the caller', () async {
       final failing = _ThrowingAutoTareRepository();
       final failingBloc = BillBloc(
-        customerRepository: mockCustomerRepo,
-        materialRepository: mockMaterialRepo,
         saveBillUseCase: mockSaveBillUseCase,
         loadRecentBillsUseCase: mockLoadRecentBillsUseCase,
         generateBillNumberUseCase: mockGenerateBillNumberUseCase,

@@ -1,33 +1,11 @@
-import 'package:flutter/material.dart' hide Material;
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weighbridge/features/bill/presentation/widgets/bill_form.dart';
-import 'package:weighbridge/features/customer/domain/entities/customer.dart';
-import 'package:weighbridge/features/material/domain/entities/material_item.dart';
 
 void main() {
-  final testCustomer = Customer(
-    id: 1,
-    name: 'UltraTech Cement',
-    mobile: '9876543210',
-    isActive: true,
-    createdAt: DateTime(2026),
-    updatedAt: DateTime(2026),
-  );
-
-  final testMaterial = MaterialItem(
-    id: 1,
-    name: 'River Sand',
-    code: 'M-001',
-    isActive: true,
-    createdAt: DateTime(2026),
-    updatedAt: DateTime(2026),
-  );
-
   Widget buildTestForm({
     required Size containerSize,
     String? vehicleNumberError,
-    String? materialError,
-    String? customerError,
     String? weightError,
   }) {
     return MaterialApp(
@@ -38,28 +16,24 @@ void main() {
             height: containerSize.height,
             child: BillForm(
               billNumber: 'WB-00001',
-              customers: [testCustomer],
-              materials: [testMaterial],
-              selectedCustomer: null,
-              selectedMaterial: null,
               grossWeightController: TextEditingController(),
               tareWeightController: TextEditingController(),
               remarksController: TextEditingController(),
+              materialController: TextEditingController(),
+              descriptionController: TextEditingController(),
               vehicleNumberController: TextEditingController(),
               grossWeightKg: 0,
               tareWeightKg: 0,
               netWeightKg: 0,
               weightUnit: 'Kg',
               selectedType: 'Gross',
-              onCustomerChanged: (_) {},
               onVehicleNumberChanged: (_) {},
               onMaterialChanged: (_) {},
+              onDescriptionChanged: (_) {},
               onGrossWeightChanged: (_) {},
               onTareWeightChanged: (_) {},
               onRemarksChanged: (_) {},
               vehicleNumberError: vehicleNumberError,
-              materialError: materialError,
-              customerError: customerError,
               weightError: weightError,
             ),
           ),
@@ -83,8 +57,6 @@ void main() {
           buildTestForm(
             containerSize: const Size(963.0, 485.4),
             vehicleNumberError: 'Truck number is required.',
-            materialError: 'Material code is required.',
-            customerError: 'Customer code is required.',
             weightError:
                 'Enter or capture at least one weight (Gross or Tare).',
           ),
@@ -93,8 +65,6 @@ void main() {
 
         expect(tester.takeException(), isNull);
         expect(find.text('Truck number is required.'), findsOneWidget);
-        expect(find.text('Material code is required.'), findsOneWidget);
-        expect(find.text('Customer code is required.'), findsOneWidget);
       },
     );
 
@@ -135,8 +105,6 @@ void main() {
           buildTestForm(
             containerSize: const Size(1100.0, 380.0),
             vehicleNumberError: 'Truck number is required.',
-            materialError: 'Material code is required.',
-            customerError: 'Customer code is required.',
             weightError:
                 'Enter or capture at least one weight (Gross or Tare).',
           ),

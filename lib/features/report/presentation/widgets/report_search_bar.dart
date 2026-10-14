@@ -42,7 +42,7 @@ class ReportSearchBar extends StatelessWidget {
                 color: Color(0xFF0F172A),
               ),
               decoration: InputDecoration(
-                hintText: 'Search bill number, vehicle, customer, material...',
+                hintText: 'Search bill number or vehicle...',
                 hintStyle: const TextStyle(
                   fontFamily: 'PlusJakartaSans',
                   fontSize: 12.5,
@@ -79,21 +79,9 @@ class ReportSearchBar extends StatelessWidget {
         // Print Report button
         OutlinedButton.icon(
           onPressed: () {
-            final customerLabel =
-                state.customers
-                    .where((c) => c.id == state.filter.customerId)
-                    .map((c) => c.name)
-                    .firstOrNull ??
-                'All Customers';
             final vehicleLabel = state.filter.vehicleNumber.trim().isEmpty
                 ? 'All Vehicles'
                 : state.filter.vehicleNumber;
-            final materialLabel =
-                state.materials
-                    .where((m) => m.id == state.filter.materialId)
-                    .map((m) => m.name)
-                    .firstOrNull ??
-                'All Materials';
 
             PrintReportDialog.show(
               context: context,
@@ -101,9 +89,7 @@ class ReportSearchBar extends StatelessWidget {
               summary: state.summary,
               filter: state.filter,
               weightUnit: state.weightUnit,
-              customerLabel: customerLabel,
               vehicleLabel: vehicleLabel,
-              materialLabel: materialLabel,
             );
           },
           icon: const Icon(Icons.print_outlined, size: 16),

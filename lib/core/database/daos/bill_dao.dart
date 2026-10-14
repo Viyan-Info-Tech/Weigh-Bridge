@@ -191,7 +191,6 @@ class BillDao extends DatabaseAccessor<AppDatabase> with _$BillDaoMixin {
   Future<List<Weighment>> searchBills({
     String? billNumber,
     String? vehicleNumber,
-    String? customerName,
     DateTime? startDate,
     DateTime? endDate,
     int limit = 50,

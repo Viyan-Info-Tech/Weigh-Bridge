@@ -234,17 +234,6 @@ class AdminPasswordCard extends StatelessWidget {
               final isTwoCols = constraints.maxWidth > 520;
               final items = [
                 const _ProtectedItem(
-                  icon: Icons.people_alt_outlined,
-                  title: 'Customers Directory',
-                  subtitle: 'Creating, editing, or removing customer accounts',
-                ),
-                const _ProtectedItem(
-                  icon: Icons.inventory_2_outlined,
-                  title: 'Materials Catalog',
-                  subtitle:
-                      'Altering materials, units, and base classifications',
-                ),
-                const _ProtectedItem(
                   icon: Icons.bar_chart_rounded,
                   title: 'Reports & Export',
                   subtitle: 'Viewing weighment records, slips, and exports',
@@ -279,9 +268,9 @@ class AdminPasswordCard extends StatelessWidget {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Expanded(child: items[2]),
+                      Expanded(child: items[0]),
                       const SizedBox(width: 10),
-                      Expanded(child: items[3]),
+                      Expanded(child: items[1]),
                     ],
                   ),
                 ],

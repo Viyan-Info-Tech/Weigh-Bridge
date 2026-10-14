@@ -9,12 +9,10 @@ import '../../../../support/test_database.dart';
 void main() {
   late AppDatabase db;
   late BillLocalDataSource source;
-  late SeededRefs refs;
 
   setUp(() async {
     db = createInMemoryDatabase();
     source = BillLocalDataSource(db);
-    refs = await seedParents(db);
   });
 
   tearDown(() async {
@@ -30,9 +28,7 @@ void main() {
     return Weighment(
       id: 0,
       billNumber: billNumber,
-      customerId: refs.customerId,
       vehicleNumber: 'TN31SEED01',
-      materialId: refs.materialId,
       firstWeightKg: firstWeightKg,
       secondWeightKg: secondWeightKg,
       netWeightKg: netWeightKg,
@@ -47,9 +43,7 @@ void main() {
       final stored = await db.billDao.getWeighmentById(id);
       expect(stored, isNotNull);
       expect(stored!.billNumber, 'WB-00001');
-      expect(stored.customerId, refs.customerId);
       expect(stored.vehicleNumber, 'TN31SEED01');
-      expect(stored.materialId, refs.materialId);
       expect(stored.firstWeightKg, 20000);
       expect(stored.secondWeightKg, 5000);
       expect(stored.weightUnit, 'ton');
@@ -102,8 +96,6 @@ void main() {
     test('self-heals legacy zero-first-weight rows into TARE', () async {
       final id = await seedWeighment(
         db,
-        customerId: refs.customerId,
-        materialId: refs.materialId,
         billNumber: 'WB-00001',
         firstWeightKg: 0,
         secondWeightKg: 5000,

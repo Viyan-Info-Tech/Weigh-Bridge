@@ -6,11 +6,9 @@ import '../../../support/test_database.dart';
 
 void main() {
   late AppDatabase db;
-  late SeededRefs refs;
 
   setUp(() async {
     db = createInMemoryDatabase();
-    refs = await seedParents(db);
   });
 
   tearDown(() async {
@@ -25,8 +23,6 @@ void main() {
   }) {
     return seedWeighment(
       db,
-      customerId: refs.customerId,
-      materialId: refs.materialId,
       billNumber: billNumber,
       firstWeightKg: firstWeightKg,
       secondWeightKg: secondWeightKg,
@@ -50,9 +46,7 @@ void main() {
       await insert('WB-00001');
       final w = await db.billDao.getWeighmentByBillNumber('WB-00001');
       expect(w, isNotNull);
-      expect(w!.customerId, refs.customerId);
-      expect(w.vehicleNumber, 'TN31SEED01');
-      expect(w.materialId, refs.materialId);
+      expect(w!.vehicleNumber, 'TN31SEED01');
     });
 
     test(
@@ -156,9 +150,7 @@ void main() {
     WeighmentsCompanion buildRow(String billNumber) {
       return WeighmentsCompanion.insert(
         billNumber: billNumber,
-        customerId: refs.customerId,
         vehicleNumber: 'TN31SEED01',
-        materialId: Value(refs.materialId),
         firstWeightKg: 20000,
       );
     }

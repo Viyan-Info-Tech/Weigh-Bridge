@@ -1,6 +1,5 @@
 import 'package:intl/intl.dart';
 
-import '../../../customer/domain/entities/customer.dart';
 import '../../../settings/domain/entities/billing_settings.dart';
 import '../entities/weighment.dart';
 import 'receipt_weight_resolver.dart';
@@ -16,8 +15,6 @@ class WeighmentReceiptData {
   WeighmentReceiptData({
     required this.bill,
     required this.settings,
-    this.customer,
-    required this.materialName,
     DateTime? printedAt,
     this.forPreview = false,
   }) : printedAt = printedAt ?? DateTime.now() {
@@ -25,8 +22,6 @@ class WeighmentReceiptData {
   }
 
   final Weighment bill;
-  final Customer? customer;
-  final String materialName;
   final BillingSettings settings;
   final bool forPreview;
 
@@ -52,10 +47,6 @@ class WeighmentReceiptData {
 
   bool get hasVehicleNumber => settings.showVehicleNumber;
 
-  bool get hasMaterial => settings.showMaterial;
-
-  bool get hasCustomer => settings.showCustomer;
-
   bool get hasGrossWeight => forPreview
       ? settings.showGrossWeight &&
             (weights.grossKg != null && weights.grossKg! > 0)
@@ -80,6 +71,12 @@ class WeighmentReceiptData {
       settings.showRemarks &&
       bill.remarks != null &&
       bill.remarks!.trim().isNotEmpty;
+
+  bool get hasMaterial =>
+      bill.material != null && bill.material!.trim().isNotEmpty;
+
+  bool get hasDescription =>
+      bill.description != null && bill.description!.trim().isNotEmpty;
 
   bool get hasFooterNote => settings.showFooterNote;
 
@@ -122,11 +119,17 @@ class WeighmentReceiptData {
   String get vehicleNumber =>
       bill.vehicleNumber.isEmpty ? '--' : bill.vehicleNumber;
 
-  String get customerName => customer?.name ?? '--';
+  String get materialName =>
+      (bill.material == null || bill.material!.trim().isEmpty)
+      ? '--'
+      : bill.material!.trim();
 
-  String get customerPhone => bill.mobileNumber ?? '';
+  String get descriptionText =>
+      (bill.description == null || bill.description!.trim().isEmpty)
+      ? '--'
+      : bill.description!.trim();
 
-  String get resolvedMaterialName => materialName.isEmpty ? '--' : materialName;
+  String get contactPhone => bill.mobileNumber ?? '';
 
   // ---------------------------------------------------------------------------
   // Weights

@@ -2,8 +2,7 @@ import 'dart:async';
 
 import 'package:equatable/equatable.dart';
 
-import '../../../customer/domain/entities/customer.dart';
-import '../../../material/domain/entities/material_item.dart';
+import '../../domain/entities/vehicle_tare_record.dart';
 
 abstract class BillEvent extends Equatable {
   const BillEvent();
@@ -16,23 +15,14 @@ class LoadBillScreen extends BillEvent {
   const LoadBillScreen();
 }
 
-/// Reloads the lookup lists (customers, materials) without touching anything
+/// Reloads lookup-independent screen data without touching anything
 /// the operator has already entered on the form.
 ///
 /// The bill screen is kept alive by an [IndexedStack], so it is built once per
-/// session and `initState` never runs again. Master screens own their own blocs
-/// and write straight to the database, so without this the dropdowns would keep
-/// serving the snapshot taken at startup for the rest of the session.
+/// session. This event refreshes the bill number and recent bills while
+/// leaving the in-progress weighment alone.
 class RefreshBillLookups extends BillEvent {
   const RefreshBillLookups();
-}
-
-class CustomerSelected extends BillEvent {
-  final Customer customer;
-  const CustomerSelected(this.customer);
-
-  @override
-  List<Object?> get props => [customer];
 }
 
 class VehicleNumberChanged extends BillEvent {
@@ -41,14 +31,6 @@ class VehicleNumberChanged extends BillEvent {
 
   @override
   List<Object?> get props => [vehicleNumber];
-}
-
-class MaterialSelected extends BillEvent {
-  final MaterialItem material;
-  const MaterialSelected(this.material);
-
-  @override
-  List<Object?> get props => [material];
 }
 
 class GrossWeightChanged extends BillEvent {
@@ -70,6 +52,24 @@ class TareWeightChanged extends BillEvent {
 class RemarksChanged extends BillEvent {
   final String value;
   const RemarksChanged(this.value);
+
+  @override
+  List<Object?> get props => [value];
+}
+
+/// Free-text Material typed on the weighment form.
+class MaterialChanged extends BillEvent {
+  final String value;
+  const MaterialChanged(this.value);
+
+  @override
+  List<Object?> get props => [value];
+}
+
+/// Free-text Description typed on the weighment form.
+class DescriptionChanged extends BillEvent {
+  final String value;
+  const DescriptionChanged(this.value);
 
   @override
   List<Object?> get props => [value];
@@ -107,54 +107,6 @@ class LoadRecentBills extends BillEvent {
 
   @override
   List<Object?> get props => [date, startDate, endDate];
-}
-
-class CustomerQuickAddRequested extends BillEvent {
-  final String name;
-  final String? contactPerson;
-  const CustomerQuickAddRequested({required this.name, this.contactPerson});
-
-  @override
-  List<Object?> get props => [name, contactPerson];
-}
-
-class MaterialQuickAddRequested extends BillEvent {
-  final String code;
-  final String name;
-  final Completer<MaterialItem?>? completer;
-
-  const MaterialQuickAddRequested({
-    required this.code,
-    required this.name,
-    this.completer,
-  });
-
-  @override
-  List<Object?> get props => [code, name];
-}
-
-class MaterialCreatedToState extends BillEvent {
-  final List<MaterialItem> materials;
-  final MaterialItem selected;
-  const MaterialCreatedToState({
-    required this.materials,
-    required this.selected,
-  });
-
-  @override
-  List<Object?> get props => [materials, selected];
-}
-
-class CustomerCreatedToState extends BillEvent {
-  final List<Customer> customers;
-  final Customer selected;
-  const CustomerCreatedToState({
-    required this.customers,
-    required this.selected,
-  });
-
-  @override
-  List<Object?> get props => [customers, selected];
 }
 
 class CaptureLiveWeight extends BillEvent {
@@ -280,4 +232,61 @@ class ApplyAutoTareToBill extends BillEvent {
 
   @override
   List<Object?> get props => [];
+}
+
+/// Loads every stored per-vehicle tare record for the Auto Tare popup table.
+///
+/// [completer] lets the caller await the load. It is completed in all cases,
+///
+/// Event equality ignores [completer] so identical loads are never treated
+/// as distinct by bloc transformers.
+class LoadVehicleTares extends BillEvent {
+  final Completer<void>? completer;
+
+  const LoadVehicleTares({this.completer});
+
+  @override
+  List<Object?> get props => [];
+}
+
+/// Persists one per-vehicle tare record from the Auto Tare popup.
+///
+/// Re-adding a vehicle updates its tare instead of duplicating the row.
+/// This never creates a weighment or a bill.
+///
+/// [completer] lets the caller await the write. It is completed in all cases,
+/// including when the resulting state is identical to the current one, which
+/// emits nothing on the state stream.
+class SaveVehicleTare extends BillEvent {
+  final String vehicleNumber;
+  final double tareKg;
+  final Completer<VehicleTareRecord>? completer;
+
+  const SaveVehicleTare(
+    this.vehicleNumber,
+    this.tareKg, {
+    this.completer,
+  });
+
+  @override
+  List<Object?> get props => [vehicleNumber, tareKg];
+}
+
+/// Removes one per-vehicle tare record.
+///
+/// Used when a record's vehicle number itself is edited: the renamed record
+/// is saved as new and the old row is removed. Never touches weighments.
+///
+/// [completer] lets the caller await the write and is completed in all cases.
+class DeleteVehicleTare extends BillEvent {
+  final String vehicleNumber;
+  final Completer<void>? completer;
+
+  const DeleteVehicleTare(
+    this.vehicleNumber, {
+    this.completer,
+  });
+
+  @override
+  List<Object?> get props => [vehicleNumber];
 }

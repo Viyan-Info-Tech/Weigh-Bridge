@@ -32,15 +32,6 @@ class ReportCustomDateChanged extends ReportEvent {
   List<Object?> get props => [startDate, endDate];
 }
 
-class ReportCustomerFilterChanged extends ReportEvent {
-  final int? customerId;
-
-  const ReportCustomerFilterChanged(this.customerId);
-
-  @override
-  List<Object?> get props => [customerId];
-}
-
 class ReportVehicleFilterChanged extends ReportEvent {
   final String vehicleNumber;
 
@@ -48,15 +39,6 @@ class ReportVehicleFilterChanged extends ReportEvent {
 
   @override
   List<Object?> get props => [vehicleNumber];
-}
-
-class ReportMaterialFilterChanged extends ReportEvent {
-  final int? materialId;
-
-  const ReportMaterialFilterChanged(this.materialId);
-
-  @override
-  List<Object?> get props => [materialId];
 }
 
 class ReportSearchQueryChanged extends ReportEvent {

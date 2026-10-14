@@ -3,11 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:weighbridge/core/database/app_database.dart'
-    hide Weighment, Customer;
+import 'package:weighbridge/core/database/app_database.dart' hide Weighment;
 import 'package:weighbridge/features/bill/domain/entities/weighment.dart';
 import 'package:weighbridge/features/bill/presentation/widgets/weighment_slip_dialog.dart';
-import 'package:weighbridge/features/customer/domain/entities/customer.dart';
 import 'package:weighbridge/features/settings/data/datasources/settings_local_datasource.dart';
 import 'package:weighbridge/features/settings/data/repositories/settings_repository_impl.dart';
 import 'package:weighbridge/features/settings/domain/entities/billing_settings.dart';
@@ -69,8 +67,8 @@ void main() {
 
         // 2. Insert weighment with WB-00001
         await db.customStatement(
-          "INSERT INTO weighments (bill_number, customer_id, vehicle_number, material_id, first_weight_kg) "
-          "VALUES ('WB-00001', 1, 'MH 12 AB 1234', 1, 15000)",
+          "INSERT INTO weighments (bill_number, vehicle_number, first_weight_kg) "
+          "VALUES ('WB-00001', 'MH 12 AB 1234', 15000)",
         );
 
         final next2 = await db.appSettingsDao.generateNextBillNumber(
@@ -90,8 +88,8 @@ void main() {
 
         // 4. Insert INV-000100 and verify increment to INV-000101
         await db.customStatement(
-          "INSERT INTO weighments (bill_number, customer_id, vehicle_number, material_id, first_weight_kg) "
-          "VALUES ('INV-000100', 1, 'MH 12 AB 1234', 1, 15000)",
+          "INSERT INTO weighments (bill_number, vehicle_number, first_weight_kg) "
+          "VALUES ('INV-000100', 'MH 12 AB 1234', 15000)",
         );
 
         final invNext2 = await db.appSettingsDao.generateNextBillNumber(
@@ -201,21 +199,11 @@ void main() {
     final testBill = Weighment(
       id: 1,
       billNumber: 'WB-00001',
-      customerId: 1,
       vehicleNumber: 'MH 12 AB 1234',
-      materialId: 1,
       grossWeightKg: 25000,
       tareWeightKg: 10000,
       netWeightKg: 15000,
       remarks: 'Customer special order',
-      createdAt: now,
-      updatedAt: now,
-    );
-
-    final testCustomer = Customer(
-      id: 1,
-      name: 'UltraTech Cement',
-      mobile: '9876543210',
       createdAt: now,
       updatedAt: now,
     );
@@ -234,7 +222,6 @@ void main() {
           businessName: 'CUSTOM INDUSTRIAL WEIGHBRIDGE',
           receiptTitle: 'OFFICIAL WEIGH SLIP',
           showRemarks: false, // Hidden!
-          showCustomer: false, // Hidden!
           footerNote: 'Mandatory verification before gate exit.',
           updatedAt: now,
         );
@@ -244,8 +231,6 @@ void main() {
             home: Scaffold(
               body: WeighmentSlipDialog(
                 bill: testBill,
-                customer: testCustomer,
-                materialName: 'River Sand',
                 settings: customSettings,
               ),
             ),
@@ -259,11 +244,9 @@ void main() {
 
         // Hidden fields are omitted
         expect(find.text('Customer special order'), findsNothing);
-        expect(find.text('UltraTech Cement'), findsNothing);
 
         // Visible fields are present
         expect(find.text('MH 12 AB 1234'), findsOneWidget);
-        expect(find.text('River Sand'), findsOneWidget);
         expect(
           find.text('Note: Mandatory verification before gate exit.'),
           findsOneWidget,

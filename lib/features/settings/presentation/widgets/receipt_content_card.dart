@@ -10,8 +10,6 @@ class ReceiptContentCard extends StatelessWidget {
     required this.isEditing,
     required this.showSerialNumber,
     required this.showVehicleNumber,
-    required this.showMaterial,
-    required this.showCustomer,
     required this.showGrossWeight,
     required this.showTareWeight,
     required this.showNetWeight,
@@ -27,8 +25,6 @@ class ReceiptContentCard extends StatelessWidget {
   final bool isEditing;
   final bool showSerialNumber;
   final bool showVehicleNumber;
-  final bool showMaterial;
-  final bool showCustomer;
   final bool showGrossWeight;
   final bool showTareWeight;
   final bool showNetWeight;
@@ -122,8 +118,6 @@ class ReceiptContentCard extends StatelessWidget {
           FieldVisibilitySection(
             showSerialNumber: showSerialNumber,
             showVehicleNumber: showVehicleNumber,
-            showMaterial: showMaterial,
-            showCustomer: showCustomer,
             showGrossWeight: showGrossWeight,
             showTareWeight: showTareWeight,
             showNetWeight: showNetWeight,

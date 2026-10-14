@@ -1,28 +1,8 @@
-import 'package:flutter/material.dart' hide Material;
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weighbridge/features/bill/presentation/widgets/bill_form.dart';
-import 'package:weighbridge/features/customer/domain/entities/customer.dart';
-import 'package:weighbridge/features/material/domain/entities/material_item.dart';
 
 void main() {
-  final testCustomer = Customer(
-    id: 1,
-    name: 'UltraTech Cement',
-    mobile: '9876543210',
-    isActive: true,
-    createdAt: DateTime(2026),
-    updatedAt: DateTime(2026),
-  );
-
-  final testMaterial = MaterialItem(
-    id: 1,
-    name: 'River Sand',
-    code: 'M-001',
-    isActive: true,
-    createdAt: DateTime(2026),
-    updatedAt: DateTime(2026),
-  );
-
   group('BillForm Weight Capture & Read-Only Display Tests', () {
     testWidgets(
       'renders GROSS and TARE type selectors and read-only captured boxes',
@@ -44,13 +24,11 @@ void main() {
                   builder: (context, setState) {
                     return BillForm(
                       billNumber: 'WB-00001',
-                      customers: [testCustomer],
-                      materials: [testMaterial],
-                      selectedCustomer: testCustomer,
-                      selectedMaterial: testMaterial,
                       grossWeightController: TextEditingController(),
                       tareWeightController: TextEditingController(),
                       remarksController: TextEditingController(),
+                      materialController: TextEditingController(),
+                      descriptionController: TextEditingController(),
                       grossWeightKg: 25500.0,
                       tareWeightKg: 10200.0,
                       netWeightKg: 15300.0,
@@ -59,9 +37,9 @@ void main() {
                       onTypeChanged: (type) {
                         setState(() => selectedType = type);
                       },
-                      onCustomerChanged: (_) {},
                       onVehicleNumberChanged: (_) {},
                       onMaterialChanged: (_) {},
+                      onDescriptionChanged: (_) {},
                       onGrossWeightChanged: (_) {},
                       onTareWeightChanged: (_) {},
                       onRemarksChanged: (_) {},

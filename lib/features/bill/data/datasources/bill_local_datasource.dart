@@ -28,14 +28,14 @@ class BillLocalDataSource {
   WeighmentsCompanion _toCompanion(Weighment weighment, String billNumber) {
     return WeighmentsCompanion.insert(
       billNumber: billNumber,
-      customerId: weighment.customerId,
       vehicleNumber: weighment.vehicleNumber,
-      materialId: Value(weighment.materialId),
       firstWeightKg: weighment.firstWeightKg,
       firstWeightType: Value(weighment.firstWeightType),
       secondWeightKg: Value(weighment.secondWeightKg),
       secondWeightType: Value(weighment.secondWeightType),
       netWeightKg: Value(weighment.netWeightKg),
+      material: Value(weighment.material),
+      description: Value(weighment.description),
       remarks: Value(weighment.remarks),
       mobileNumber: Value(weighment.mobileNumber),
       weightUnit: Value(weighment.weightUnit),
@@ -59,6 +59,8 @@ class BillLocalDataSource {
         secondWeightKg: Value(weighment.secondWeightKg),
         secondWeightType: Value(weighment.secondWeightType),
         netWeightKg: Value(weighment.netWeightKg),
+        material: Value(weighment.material),
+        description: Value(weighment.description),
         remarks: Value(weighment.remarks),
         mobileNumber: Value(weighment.mobileNumber),
         weightUnit: Value(weighment.weightUnit),
@@ -133,19 +135,36 @@ class BillLocalDataSource {
     return Weighment(
       id: record.id,
       billNumber: record.billNumber,
-      customerId: record.customerId,
       vehicleNumber: record.vehicleNumber,
-      materialId: record.materialId,
       firstWeightKg: firstWeight,
       firstWeightType: firstType,
       secondWeightKg: secondWeight,
       secondWeightType: secondType,
       netWeightKg: (record.netWeightKg as num?)?.toDouble(),
+      material: _readOptionalString(record, 'material'),
+      description: _readOptionalString(record, 'description'),
       remarks: record.remarks as String?,
       mobileNumber: record.mobileNumber as String?,
       weightUnit: unit,
       createdAt: record.createdAt as DateTime,
       updatedAt: record.updatedAt as DateTime,
     );
+  }
+
+  /// Reads a nullable string column that may not exist on databases created
+  /// before the Material/Description migration (schema 30).
+  String? _readOptionalString(dynamic record, String name) {
+    try {
+      final value = (record as dynamic);
+      // Drift data classes expose columns as getters; use a dynamic read so
+      // pre-migration rows (or hand-built fakes without the field) yield null
+      // instead of throwing.
+      if (name == 'material') {
+        return (value.material as String?);
+      }
+      return (value.description as String?);
+    } catch (_) {
+      return null;
+    }
   }
 }

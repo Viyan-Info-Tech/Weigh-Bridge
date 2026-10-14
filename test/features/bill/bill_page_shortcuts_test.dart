@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart' hide Material;
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,14 +8,6 @@ import 'package:weighbridge/features/bill/domain/usecases/save_bill.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_bloc.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_state.dart';
 import 'package:weighbridge/features/bill/presentation/pages/bill_page.dart';
-import 'package:weighbridge/features/customer/domain/entities/customer.dart';
-import 'package:weighbridge/features/customer/domain/repositories/customer_repository.dart';
-import 'package:weighbridge/features/material/domain/entities/material_item.dart';
-import 'package:weighbridge/features/material/domain/repositories/material_item_repository.dart';
-
-class MockCustomerRepository extends Mock implements CustomerRepository {}
-
-class MockMaterialRepository extends Mock implements MaterialItemRepository {}
 
 class MockSaveBillUseCase extends Mock implements SaveBillUseCase {}
 
@@ -31,50 +23,15 @@ void main() {
   });
 
   late BillBloc billBloc;
-  late MockCustomerRepository mockCustomerRepo;
-  late MockMaterialRepository mockMaterialRepo;
   late MockSaveBillUseCase mockSaveBillUseCase;
   late MockLoadRecentBillsUseCase mockLoadRecentBillsUseCase;
   late MockGenerateBillNumberUseCase mockGenerateBillNumberUseCase;
 
-  final testCustomer = Customer(
-    id: 1,
-    customerCode: 'C-001',
-    name: 'UltraTech Cement',
-    mobile: '9876543210',
-    isActive: true,
-    createdAt: DateTime(2026),
-    updatedAt: DateTime(2026),
-  );
-
-  final testMaterial = MaterialItem(
-    id: 1,
-    code: 'M-001',
-    name: 'Sand',
-    isActive: true,
-    createdAt: DateTime(2026),
-    updatedAt: DateTime(2026),
-  );
-
   setUp(() {
-    mockCustomerRepo = MockCustomerRepository();
-    mockMaterialRepo = MockMaterialRepository();
     mockSaveBillUseCase = MockSaveBillUseCase();
     mockLoadRecentBillsUseCase = MockLoadRecentBillsUseCase();
     mockGenerateBillNumberUseCase = MockGenerateBillNumberUseCase();
 
-    when(
-      () => mockCustomerRepo.getAllActiveCustomers(),
-    ).thenAnswer((_) => Future.value([testCustomer]));
-    when(
-      () => mockCustomerRepo.getCustomerByCode(any()),
-    ).thenAnswer((_) => Future.value(testCustomer));
-    when(
-      () => mockMaterialRepo.getMaterialsByStatus(isActive: true),
-    ).thenAnswer((_) => Future.value([testMaterial]));
-    when(
-      () => mockMaterialRepo.getMaterialByCode(any()),
-    ).thenAnswer((_) => Future.value(testMaterial));
     when(
       () => mockLoadRecentBillsUseCase(),
     ).thenAnswer((_) => Future.value([]));
@@ -86,8 +43,6 @@ void main() {
     ).thenAnswer((_) => Future.value('WB-00001'));
 
     billBloc = BillBloc(
-      customerRepository: mockCustomerRepo,
-      materialRepository: mockMaterialRepo,
       saveBillUseCase: mockSaveBillUseCase,
       loadRecentBillsUseCase: mockLoadRecentBillsUseCase,
       generateBillNumberUseCase: mockGenerateBillNumberUseCase,
@@ -158,8 +113,6 @@ void main() {
 
       // Expect field errors to appear
       expect(find.text('Truck number is required.'), findsOneWidget);
-      expect(find.text('Material code is required.'), findsOneWidget);
-      expect(find.text('Customer code is required.'), findsOneWidget);
     });
 
     testWidgets(
@@ -248,10 +201,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // F1 workflow validates the truck number before capturing any weight.
-        expect(
-          find.text('Truck number must be exactly 10 characters.'),
-          findsOneWidget,
-        );
+        expect(find.text('Truck number is required.'), findsOneWidget);
         expect(find.text('SAVE'), findsOneWidget);
         expect(find.text('CANCEL'), findsOneWidget);
         expect(find.text('MANUAL TARE'), findsOneWidget);

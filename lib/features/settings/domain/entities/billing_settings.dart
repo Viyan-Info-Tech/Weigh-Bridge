@@ -18,8 +18,6 @@ class BillingSettings extends Equatable {
   final bool showDate;
   final bool showTime;
   final bool showVehicleNumber;
-  final bool showMaterial;
-  final bool showCustomer;
   final bool showGrossWeight;
   final bool showTareWeight;
   final bool showNetWeight;
@@ -46,8 +44,6 @@ class BillingSettings extends Equatable {
     this.showDate = true,
     this.showTime = true,
     this.showVehicleNumber = true,
-    this.showMaterial = true,
-    this.showCustomer = true,
     this.showGrossWeight = true,
     this.showTareWeight = true,
     this.showNetWeight = true,
@@ -87,8 +83,6 @@ class BillingSettings extends Equatable {
     bool? showDate,
     bool? showTime,
     bool? showVehicleNumber,
-    bool? showMaterial,
-    bool? showCustomer,
     bool? showGrossWeight,
     bool? showTareWeight,
     bool? showNetWeight,
@@ -118,8 +112,6 @@ class BillingSettings extends Equatable {
       showDate: showDate ?? this.showDate,
       showTime: showTime ?? this.showTime,
       showVehicleNumber: showVehicleNumber ?? this.showVehicleNumber,
-      showMaterial: showMaterial ?? this.showMaterial,
-      showCustomer: showCustomer ?? this.showCustomer,
       showGrossWeight: showGrossWeight ?? this.showGrossWeight,
       showTareWeight: showTareWeight ?? this.showTareWeight,
       showNetWeight: showNetWeight ?? this.showNetWeight,
@@ -149,8 +141,6 @@ class BillingSettings extends Equatable {
     showDate,
     showTime,
     showVehicleNumber,
-    showMaterial,
-    showCustomer,
     showGrossWeight,
     showTareWeight,
     showNetWeight,

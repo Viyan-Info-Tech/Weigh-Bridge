@@ -24,10 +24,6 @@ void main() {
     billNumber: 'WB-00001',
     createdAt: DateTime(2026, 9, 18, 10, 30),
     vehicleNumber: 'TN31CM2026',
-    customerId: 1,
-    customerName: 'Customer',
-    materialId: 1,
-    materialName: 'Cement',
     firstWeightKg: 20000,
     secondWeightKg: 5000,
   );

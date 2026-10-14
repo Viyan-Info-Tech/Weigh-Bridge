@@ -4,14 +4,6 @@ import 'package:weighbridge/features/bill/domain/entities/weighment.dart';
 import 'package:weighbridge/features/bill/domain/usecases/save_bill.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_bloc.dart';
 import 'package:weighbridge/features/bill/presentation/bloc/bill_event.dart';
-import 'package:weighbridge/features/customer/domain/entities/customer.dart';
-import 'package:weighbridge/features/customer/domain/repositories/customer_repository.dart';
-import 'package:weighbridge/features/material/domain/entities/material_item.dart';
-import 'package:weighbridge/features/material/domain/repositories/material_item_repository.dart';
-
-class MockCustomerRepository extends Mock implements CustomerRepository {}
-
-class MockMaterialRepository extends Mock implements MaterialItemRepository {}
 
 class MockSaveBillUseCase extends Mock implements SaveBillUseCase {}
 
@@ -24,18 +16,13 @@ class MockGenerateBillNumberUseCase extends Mock
 /// A successful save must leave a clean New Bill form behind the receipt.
 ///
 /// The bill itself was correct while the form behind the preview was showing
-/// "Truck number is required", "Material code is required", "Customer code is
-/// required" and "Weighment charge is required" all at once.
-///
-/// Those four messages come straight out of `_validateAll`, so the form was
+/// validation errors from `_validateAll`, so the form was
 /// being validated *after* it had already been reset. One Ctrl+S dispatches
 /// `SaveAndPrintBillRequested` twice, because `BillPage` registers both a raw
 /// `HardwareKeyboard` handler and a `Shortcuts` widget and the two key systems
 /// are independent. The first event saved and reset the form; the second then
 /// validated the empty form.
 void main() {
-  late MockCustomerRepository mockCustomerRepo;
-  late MockMaterialRepository mockMaterialRepo;
   late MockSaveBillUseCase mockSaveBill;
   late MockLoadRecentBillsUseCase mockLoadRecent;
   late MockGenerateBillNumberUseCase mockGenerateBillNumber;
@@ -43,29 +30,12 @@ void main() {
 
   var nextBillNumber = 2;
 
-  final customer = Customer(
-    id: 1,
-    customerCode: 'C001',
-    name: 'Acme',
-    createdAt: DateTime(2026),
-    updatedAt: DateTime(2026),
-  );
-  final material = MaterialItem(
-    id: 7,
-    code: 'M001',
-    name: 'Sand',
-    createdAt: DateTime(2026),
-    updatedAt: DateTime(2026),
-  );
-
   setUpAll(() {
     registerFallbackValue(
       Weighment(
         id: 0,
         billNumber: 'WB-00000',
-        customerId: 0,
         vehicleNumber: 'TN09AB1234',
-        materialId: 0,
         createdAt: DateTime(2026),
         updatedAt: DateTime(2026),
       ),
@@ -74,18 +44,10 @@ void main() {
 
   setUp(() {
     nextBillNumber = 2;
-    mockCustomerRepo = MockCustomerRepository();
-    mockMaterialRepo = MockMaterialRepository();
     mockSaveBill = MockSaveBillUseCase();
     mockLoadRecent = MockLoadRecentBillsUseCase();
     mockGenerateBillNumber = MockGenerateBillNumberUseCase();
 
-    when(
-      () => mockCustomerRepo.getAllActiveCustomers(),
-    ).thenAnswer((_) async => [customer]);
-    when(
-      () => mockMaterialRepo.getMaterialsByStatus(isActive: true),
-    ).thenAnswer((_) async => [material]);
     when(
       () => mockLoadRecent.call(date: any(named: 'date')),
     ).thenAnswer((_) async => <Weighment>[]);
@@ -98,8 +60,6 @@ void main() {
     });
 
     bloc = BillBloc(
-      customerRepository: mockCustomerRepo,
-      materialRepository: mockMaterialRepo,
       saveBillUseCase: mockSaveBill,
       loadRecentBillsUseCase: mockLoadRecent,
       generateBillNumberUseCase: mockGenerateBillNumber,
@@ -119,8 +79,6 @@ void main() {
     bloc.add(const LoadBillScreen());
     await settle();
     bloc.add(VehicleNumberChanged(truck));
-    bloc.add(MaterialSelected(material));
-    bloc.add(CustomerSelected(customer));
     bloc.add(const TareWeightCommitted('2000'));
     await settle();
   }
@@ -136,8 +94,6 @@ void main() {
     expect(bloc.state.hasFieldErrors, isFalse);
     expect(bloc.state.errorMessage, isNull);
     expect(bloc.state.vehicleNumber, isEmpty);
-    expect(bloc.state.selectedCustomer, isNull);
-    expect(bloc.state.selectedMaterial, isNull);
     expect(bloc.state.tareWeightKg, 0);
   });
 
@@ -224,8 +180,7 @@ void main() {
 
     expect(bloc.state.hasFieldErrors, isTrue);
     expect(bloc.state.vehicleNumberError, 'Truck number is required.');
-    expect(bloc.state.materialError, 'Material code is required.');
-    expect(bloc.state.customerError, 'Customer code is required.');
+    expect(bloc.state.weightError, isNotNull);
     verifyNever(() => mockSaveBill.withNewBillNumber(any()));
   });
 }

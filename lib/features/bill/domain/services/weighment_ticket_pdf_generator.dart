@@ -5,7 +5,6 @@ import 'package:pdf/widgets.dart' as pw;
 
 import '../../../settings/domain/entities/billing_settings.dart';
 import '../entities/weighment.dart';
-import '../../../customer/domain/entities/customer.dart';
 import 'receipt_pdf_fonts.dart';
 import 'weighment_receipt_data.dart';
 
@@ -20,7 +19,7 @@ import 'weighment_receipt_data.dart';
 ///   The face comes from [ReceiptPdfFonts], which uses a Unicode-capable
 ///   TrueType font when one is bundled and Courier otherwise.
 /// - Centered company name, address, and contact details.
-/// - Left-aligned metadata fields with aligned colons (TOKEN NO, VEHICLE NO, DESCRIPTION, PRODUCT, CONTAINER NO).
+/// - Left-aligned metadata fields with aligned colons (SERIAL NO, VEHICLE NO, DESCRIPTION, PRODUCT, CONTAINER NO).
 /// - Authentic dashed line separators (`--------------------------------------------------------------------------------`).
 /// - Monospace structured weight table (WEIGHT, DATE, TIME) for GROSS, TARE, and NET.
 /// - Charges, payment mode, driver and authorized signatory signature lines.
@@ -29,15 +28,11 @@ class WeighmentTicketPdfGenerator {
 
   Future<Uint8List> generateTicketPdf({
     required Weighment bill,
-    required Customer? customer,
-    required String materialName,
     required BillingSettings settings,
     DateTime? printedAt,
   }) async {
     final data = WeighmentReceiptData(
       bill: bill,
-      customer: customer,
-      materialName: materialName,
       settings: settings,
       printedAt: printedAt,
     );
@@ -121,15 +116,15 @@ class WeighmentTicketPdfGenerator {
 
               // ── 3. METADATA FIELDS (Aligned Colons) ────
               if (data.hasSerialNumber)
-                _buildFieldRow('TOKEN NO', data.bill.billNumber),
+                _buildFieldRow('SERIAL NO', data.bill.billNumber),
               if (data.hasVehicleNumber)
                 _buildFieldRow('VEHICLE NO', data.vehicleNumber, isBold: true),
-              if (data.hasCustomer)
-                _buildFieldRow('DESCRIPTION', data.customerName),
               if (data.hasMaterial)
-                _buildFieldRow('PRODUCT', data.resolvedMaterialName),
-              if (data.customerPhone.trim().isNotEmpty)
-                _buildFieldRow('MOBILE NO', data.customerPhone),
+                _buildFieldRow('MATERIAL', data.materialName),
+              if (data.hasDescription)
+                _buildFieldRow('DESCRIPTION', data.descriptionText),
+              if (data.contactPhone.trim().isNotEmpty)
+                _buildFieldRow('MOBILE NO', data.contactPhone),
               if (data.hasRemarks)
                 _buildFieldRow('CONTAINER No', data.bill.remarks!),
 

@@ -135,48 +135,6 @@ class ReportFilterBar extends StatelessWidget {
                 const SizedBox(width: 10),
               ],
 
-              // Customer Dropdown
-              Expanded(
-                flex: 2,
-                child: _buildDropdownContainer(
-                  label: 'Customer',
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<int?>(
-                      value: filter.customerId,
-                      isExpanded: true,
-                      icon: const Icon(Icons.arrow_drop_down, size: 20),
-                      style: const TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 13,
-                        color: Color(0xFF0F172A),
-                      ),
-                      onChanged: (val) {
-                        bloc.add(ReportCustomerFilterChanged(val));
-                      },
-                      items: [
-                        const DropdownMenuItem<int?>(
-                          value: null,
-                          child: Text(
-                            'All Customers',
-                            style: TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                        ...state.customers.map(
-                          (c) => DropdownMenuItem<int?>(
-                            value: c.id,
-                            child: Text(
-                              c.name,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-
               // Vehicle Number Filter
               Expanded(
                 flex: 2,
@@ -234,51 +192,6 @@ class ReportFilterBar extends StatelessWidget {
                         },
                       ),
                     ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              // Material Dropdown
-              Expanded(
-                flex: 2,
-                child: _buildDropdownContainer(
-                  label: 'Material',
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<int?>(
-                      value: filter.materialId,
-                      isExpanded: true,
-                      icon: const Icon(Icons.arrow_drop_down, size: 20),
-                      style: const TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 13,
-                        color: Color(0xFF0F172A),
-                      ),
-                      onChanged: (val) {
-                        bloc.add(ReportMaterialFilterChanged(val));
-                      },
-                      items: [
-                        const DropdownMenuItem<int?>(
-                          value: null,
-                          child: Text(
-                            'All Materials',
-                            style: TextStyle(fontWeight: FontWeight.w600),
-                          ),
-                        ),
-                        ...state.materials.map(
-                          (m) => DropdownMenuItem<int?>(
-                            value: m.id,
-                            child: Text(
-                              m.name,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               ),

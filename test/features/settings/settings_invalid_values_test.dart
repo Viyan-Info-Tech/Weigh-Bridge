@@ -106,8 +106,6 @@ void main() {
         showDate: false,
         showTime: false,
         showVehicleNumber: false,
-        showMaterial: false,
-        showCustomer: false,
         showGrossWeight: false,
         showTareWeight: false,
         showNetWeight: false,

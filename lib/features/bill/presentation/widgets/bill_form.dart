@@ -2,33 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../../core/utils/text_formatters.dart';
-import '../../../customer/domain/entities/customer.dart';
-import '../../../material/domain/entities/material_item.dart' as domain;
 import 'bill_form_field_shell.dart';
 import 'bill_form_readonly_fields.dart';
 import 'bill_form_row.dart';
 import 'bill_form_type_selector.dart';
 import 'bill_form_weight_row.dart';
-import 'customer_master_dialog.dart';
-import 'material_master_dialog.dart';
 
 /// Industrial 2-Column Weighment Ticket Form
 /// Designed with premium tactile instrument aesthetics:
 /// - Framed icon prefix badges with soft slate background
-/// - Integrated blue search action buttons for codes
 /// - Clean proportional Weight, Date & Time pickers
 /// - Balanced 2-column layout with subtle dividing rhythm
 class BillForm extends StatefulWidget {
   final String billNumber;
-  final String mobileNumber;
-  final List<Customer> customers;
-  final List<domain.MaterialItem> materials;
-  final Customer? selectedCustomer;
+  final String materialText;
+  final String descriptionText;
   final String vehicleNumber;
-  final domain.MaterialItem? selectedMaterial;
   final TextEditingController grossWeightController;
   final TextEditingController tareWeightController;
   final TextEditingController remarksController;
+  final TextEditingController materialController;
+  final TextEditingController descriptionController;
   final TextEditingController? vehicleNumberController;
   final double grossWeightKg;
   final double tareWeightKg;
@@ -41,23 +35,17 @@ class BillForm extends StatefulWidget {
   final String selectedType;
   final ValueChanged<String>? onTypeChanged;
 
-  final FocusNode? customerFocusNode;
   final FocusNode? vehicleFocusNode;
   final FocusNode? typeFocusNode;
   final FocusNode? materialFocusNode;
-  final FocusNode? materialCodeFocusNode;
-  final FocusNode? customerCodeFocusNode;
-  final FocusNode? mobileFocusNode;
+  final FocusNode? descriptionFocusNode;
   final FocusNode? remarksFocusNode;
   final FocusNode? grossWeightFocusNode;
   final FocusNode? tareWeightFocusNode;
 
-  final ValueChanged<Customer> onCustomerChanged;
   final ValueChanged<String> onVehicleNumberChanged;
-  final ValueChanged<domain.MaterialItem> onMaterialChanged;
-  final Future<Customer?> Function(String code)? onCustomerCodeSubmitted;
-  final Future<domain.MaterialItem?> Function(String code)?
-  onMaterialCodeSubmitted;
+  final ValueChanged<String> onMaterialChanged;
+  final ValueChanged<String> onDescriptionChanged;
   final ValueChanged<String> onGrossWeightChanged;
   final ValueChanged<String> onTareWeightChanged;
   final ValueChanged<String>? onGrossWeightCommitted;
@@ -66,26 +54,21 @@ class BillForm extends StatefulWidget {
   final ValueChanged<DateTime?>? onTareCapturedAtChanged;
   final ValueChanged<String> onRemarksChanged;
   final ValueChanged<String>? onWeightUnitChanged;
-  final ValueChanged<String>? onMobileNumberChanged;
 
   final String? vehicleNumberError;
-  final String? materialError;
-  final String? customerError;
   final String? weightError;
-  final String? mobileError;
 
   const BillForm({
     super.key,
     required this.billNumber,
-    this.mobileNumber = '',
-    required this.customers,
-    required this.materials,
-    this.selectedCustomer,
+    this.materialText = '',
+    this.descriptionText = '',
     this.vehicleNumber = '',
-    this.selectedMaterial,
     required this.grossWeightController,
     required this.tareWeightController,
     required this.remarksController,
+    required this.materialController,
+    required this.descriptionController,
     this.vehicleNumberController,
     this.grossWeightKg = 0,
     this.tareWeightKg = 0,
@@ -97,21 +80,16 @@ class BillForm extends StatefulWidget {
     this.tareCapturedAt,
     this.selectedType = 'Gross',
     this.onTypeChanged,
-    this.customerFocusNode,
     this.vehicleFocusNode,
     this.typeFocusNode,
     this.materialFocusNode,
-    this.materialCodeFocusNode,
-    this.customerCodeFocusNode,
-    this.mobileFocusNode,
+    this.descriptionFocusNode,
     this.remarksFocusNode,
     this.grossWeightFocusNode,
     this.tareWeightFocusNode,
-    required this.onCustomerChanged,
     required this.onVehicleNumberChanged,
     required this.onMaterialChanged,
-    this.onCustomerCodeSubmitted,
-    this.onMaterialCodeSubmitted,
+    required this.onDescriptionChanged,
     required this.onGrossWeightChanged,
     required this.onTareWeightChanged,
     this.onGrossWeightCommitted,
@@ -120,12 +98,8 @@ class BillForm extends StatefulWidget {
     this.onTareCapturedAtChanged,
     required this.onRemarksChanged,
     this.onWeightUnitChanged,
-    this.onMobileNumberChanged,
     this.vehicleNumberError,
-    this.materialError,
-    this.customerError,
     this.weightError,
-    this.mobileError,
   });
 
   @override
@@ -133,13 +107,7 @@ class BillForm extends StatefulWidget {
 }
 
 class _BillFormState extends State<BillForm> {
-  late final TextEditingController _mobileController;
-  late final TextEditingController _materialCodeController;
-  late final TextEditingController _customerCodeController;
   final ScrollController _scrollController = ScrollController();
-
-  String? _localMaterialError;
-  String? _localCustomerError;
 
   String? _selectedType;
   DateTime? _grossDate;
@@ -147,30 +115,9 @@ class _BillFormState extends State<BillForm> {
   DateTime? _tareDate;
   TimeOfDay? _tareTime;
 
-  /// True when the operator is entering a tare-only weighment.
-  ///
-  /// A tare-only weighment has no net weight and therefore nothing to price
-  /// against a material, so the keyboard focus order skips Material Code and
-  /// the Material picker entirely. The fields stay visible and clickable: this
-  /// only governs where Enter and Tab take the operator.
-  ///
-  /// Reads the form's own selection rather than the bloc's so the focus order
-  /// reacts to the GROSS/TARE toggle on the same frame it is pressed. Save-time
-  /// validation stays keyed on the captured weights via
-  /// [BillState.requiresMaterial], which is the stricter of the two.
-  bool get _skipsMaterial {
-    return (_selectedType ?? widget.selectedType).toLowerCase() == 'tare';
-  }
-
   /// Moves focus to the next field in the current keyboard order.
-  ///
-  /// Material Code is bypassed for a tare-only weighment; everything else keeps
-  /// its fixed order.
-  void _focusAfterMaterialStep() {
-    final next = _skipsMaterial
-        ? widget.customerCodeFocusNode
-        : widget.materialCodeFocusNode;
-    next?.requestFocus();
+  void _focusAfterTypeStep() {
+    widget.materialFocusNode?.requestFocus();
   }
 
   Widget _buildFieldError(String? error) {
@@ -214,52 +161,11 @@ class _BillFormState extends State<BillForm> {
       _tareDate = widget.tareCapturedAt!;
       _tareTime = TimeOfDay.fromDateTime(widget.tareCapturedAt!);
     }
-    _mobileController = TextEditingController(text: widget.mobileNumber);
-    _materialCodeController = TextEditingController(
-      text:
-          widget.selectedMaterial != null &&
-              widget.selectedMaterial!.code.isNotEmpty
-          ? widget.selectedMaterial!.code
-          : '',
-    );
-    _customerCodeController = TextEditingController(
-      text: widget.selectedCustomer != null
-          ? widget.selectedCustomer!.customerCode
-          : '',
-    );
   }
 
   @override
   void didUpdateWidget(covariant BillForm oldWidget) {
     super.didUpdateWidget(oldWidget);
-
-    if (widget.selectedMaterial != oldWidget.selectedMaterial) {
-      if (widget.selectedMaterial != null) {
-        _localMaterialError = null;
-      }
-      _materialCodeController.text =
-          widget.selectedMaterial != null &&
-              widget.selectedMaterial!.code.isNotEmpty
-          ? widget.selectedMaterial!.code
-          : '';
-    }
-
-    if (widget.selectedCustomer != oldWidget.selectedCustomer) {
-      if (widget.selectedCustomer != null) {
-        _localCustomerError = null;
-      }
-      _customerCodeController.text = widget.selectedCustomer != null
-          ? widget.selectedCustomer!.customerCode
-          : '';
-    }
-
-    if (widget.mobileNumber != oldWidget.mobileNumber &&
-        _mobileController.text != widget.mobileNumber) {
-      _mobileController.value = TextEditingValue(
-        text: widget.mobileNumber,
-        selection: TextSelection.collapsed(offset: widget.mobileNumber.length),
-      );
-    }
 
     if (widget.selectedType != oldWidget.selectedType) {
       _selectedType = widget.selectedType;
@@ -287,9 +193,6 @@ class _BillFormState extends State<BillForm> {
 
   @override
   void dispose() {
-    _mobileController.dispose();
-    _materialCodeController.dispose();
-    _customerCodeController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
@@ -390,7 +293,7 @@ class _BillFormState extends State<BillForm> {
     );
   }
 
-  /// Left Column Field Rows
+  /// Left Column Field Rows (weighment details).
   Widget _buildLeftColumn(
     bool isGrossEnabled,
     bool isTareEnabled, {
@@ -400,7 +303,14 @@ class _BillFormState extends State<BillForm> {
     return Column(
       children: [
         BillFormRow(
-          label: 'TRUCK NO',
+          label: 'SERIAL NO',
+          labelWidth: labelWidth,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          child: BillFormSerialNoDisplay(billNumber: widget.billNumber),
+        ),
+        SizedBox(height: fieldGap),
+        BillFormRow(
+          label: 'VEHICLE NO',
           labelWidth: labelWidth,
           crossAxisAlignment: CrossAxisAlignment.start,
           child: _buildTruckNoField(),
@@ -414,17 +324,17 @@ class _BillFormState extends State<BillForm> {
         ),
         SizedBox(height: fieldGap),
         BillFormRow(
-          label: 'MATERIAL CODE',
+          label: 'MATERIAL',
           labelWidth: labelWidth,
           crossAxisAlignment: CrossAxisAlignment.start,
-          child: _buildMaterialCodeField(),
+          child: _buildMaterialField(),
         ),
         SizedBox(height: fieldGap),
         BillFormRow(
-          label: 'CUSTOMER CODE',
+          label: 'DESCRIPTION',
           labelWidth: labelWidth,
           crossAxisAlignment: CrossAxisAlignment.start,
-          child: _buildCustomerCodeField(),
+          child: _buildDescriptionField(),
         ),
         SizedBox(height: fieldGap),
         BillFormRow(
@@ -432,13 +342,6 @@ class _BillFormState extends State<BillForm> {
           labelWidth: labelWidth,
           crossAxisAlignment: CrossAxisAlignment.start,
           child: _buildContainerNoField(),
-        ),
-        SizedBox(height: fieldGap),
-        BillFormRow(
-          label: 'MOBILE NO',
-          labelWidth: labelWidth,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          child: _buildMobileNoField(),
         ),
       ],
     );
@@ -552,7 +455,8 @@ class _BillFormState extends State<BillForm> {
     widget.onTareCapturedAtChanged?.call(dt);
   }
 
-  /// Right Column Field Rows
+  /// Right Column: three dedicated weight displays (Gross green,
+  /// Tare red, Net blue), each with its date/time controls below.
   Widget _buildRightColumn(
     bool isGrossEnabled,
     bool isTareEnabled, {
@@ -564,37 +468,6 @@ class _BillFormState extends State<BillForm> {
 
     return Column(
       children: [
-        BillFormRow(
-          label: 'SERIAL NO',
-          labelWidth: labelWidth,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          child: BillFormSerialNoDisplay(billNumber: widget.billNumber),
-        ),
-        SizedBox(height: fieldGap),
-        BillFormRow(
-          label: 'MATERIAL NAME',
-          labelWidth: labelWidth,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          child: BillFormMaterialNameField(
-            materials: widget.materials,
-            selectedMaterial: widget.selectedMaterial,
-            focusNode: widget.materialFocusNode,
-            onChanged: widget.onMaterialChanged,
-          ),
-        ),
-        SizedBox(height: fieldGap),
-        BillFormRow(
-          label: 'CUSTOMER NAME',
-          labelWidth: labelWidth,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          child: BillFormCustomerNameField(
-            customers: widget.customers,
-            selectedCustomer: widget.selectedCustomer,
-            focusNode: widget.customerFocusNode,
-            onChanged: widget.onCustomerChanged,
-          ),
-        ),
-        SizedBox(height: fieldGap),
         BillFormRow(
           label: 'GROSS WEIGHT',
           labelWidth: labelWidth,
@@ -614,6 +487,7 @@ class _BillFormState extends State<BillForm> {
             onWeightChanged: widget.onGrossWeightChanged,
             onWeightCommitted: _commitGrossWeight,
             onSubmittedNext: () => widget.tareWeightFocusNode?.requestFocus(),
+            accent: WeightRowAccent.green,
           ),
         ),
         SizedBox(height: fieldGap),
@@ -639,7 +513,7 @@ class _BillFormState extends State<BillForm> {
                 onSelectTime: _onSelectTareTime,
                 onWeightChanged: widget.onTareWeightChanged,
                 onWeightCommitted: _commitTareWeight,
-                onSubmittedNext: () => widget.remarksFocusNode?.requestFocus(),
+                accent: WeightRowAccent.red,
               ),
               if (effectiveWeightError != null) ...[
                 const SizedBox(height: 6),
@@ -757,7 +631,7 @@ class _BillFormState extends State<BillForm> {
         if (event is! KeyDownEvent) return KeyEventResult.ignored;
         if (event.logicalKey == LogicalKeyboardKey.enter ||
             event.logicalKey == LogicalKeyboardKey.numpadEnter) {
-          _focusAfterMaterialStep();
+          _focusAfterTypeStep();
           return KeyEventResult.handled;
         }
         if (event.logicalKey == LogicalKeyboardKey.arrowLeft ||
@@ -795,223 +669,73 @@ class _BillFormState extends State<BillForm> {
     );
   }
 
-  /// Opens the material master table and applies the row the operator picked.
-  ///
-  /// The legacy weighbridge software resolved MATERIAL CODE through a grid, not
-  /// a dropdown, so this is what the search icon opens. The operator picks a
-  /// row to fill in both the code and the material name.
-  Future<void> _openMaterialMaster() async {
-    if (_skipsMaterial) {
-      // Same rule as typing a code on a tare-only weighment: there is nothing to
-      // price against, so step on instead of opening a picker that cannot
-      // change the outcome.
-      widget.customerCodeFocusNode?.requestFocus();
-      return;
-    }
-
-    final picked = await MaterialMasterDialog.show(
-      context,
-      materials: widget.materials,
-      selectedMaterial: widget.selectedMaterial,
-    );
-    if (!mounted || picked == null) return;
-
-    setState(() => _localMaterialError = null);
-    _materialCodeController.text = picked.code;
-    widget.onMaterialChanged(picked);
-    widget.customerCodeFocusNode?.requestFocus();
-  }
-
-  /// Opens the customer master table and applies the row the operator picked.
-  ///
-  /// Material Code already opened a charge step on selection; this does the
-  /// same so both code fields behave identically regardless of how the party
-  /// was chosen.
-  Future<void> _openCustomerMaster() async {
-    final picked = await CustomerMasterDialog.show(
-      context,
-      customers: widget.customers,
-      selectedCustomer: widget.selectedCustomer,
-    );
-    if (!mounted || picked == null) return;
-
-    setState(() => _localCustomerError = null);
-    _customerCodeController.text = picked.customerCode;
-    widget.onCustomerChanged(picked);
-    widget.remarksFocusNode?.requestFocus();
-  }
-
-  /// 3. MATERIAL CODE
-  Widget _buildMaterialCodeField() {
-    final error = _localMaterialError ?? widget.materialError;
-    final hasError = error != null;
-    final isValid = widget.selectedMaterial != null && !hasError;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        BillFormFieldShell(
-          prefixIcon: Icons.search_rounded,
-          hasError: hasError,
-          isValid: isValid,
-          suffix: BillFormSearchButton(
-            onTap: _openMaterialMaster,
-            tooltip: 'Select Material Code',
-          ),
-          child: TextField(
-            key: const Key('bill_material_code_field'),
-            controller: _materialCodeController,
-            focusNode: widget.materialCodeFocusNode,
-            onChanged: (val) {
-              if (_localMaterialError != null) {
-                setState(() => _localMaterialError = null);
-              }
-            },
-            onSubmitted: _onMaterialCodeSubmitted,
-            style: const TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF0F172A),
-            ),
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 12,
-              ),
-              hintText: 'Select Material Code',
-              hintStyle: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                color: Color(0xFF94A3B8),
-                fontSize: 15,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
+  /// 3. MATERIAL (free-text input, e.g. Sand, Stone, Gravel).
+  Widget _buildMaterialField() {
+    return BillFormFieldShell(
+      prefixIcon: Icons.inventory_2_outlined,
+      child: TextField(
+        key: const Key('bill_material_field'),
+        controller: widget.materialController,
+        focusNode: widget.materialFocusNode,
+        onChanged: widget.onMaterialChanged,
+        onSubmitted: (_) => widget.descriptionFocusNode?.requestFocus(),
+        textCapitalization: TextCapitalization.words,
+        style: const TextStyle(
+          fontFamily: 'PlusJakartaSans',
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF0F172A),
+        ),
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          isDense: true,
+          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          hintText: 'Enter Material Name',
+          hintStyle: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            color: Color(0xFF94A3B8),
+            fontSize: 15,
+            fontWeight: FontWeight.w400,
           ),
         ),
-        _buildFieldError(error),
-      ],
+      ),
     );
   }
 
-  Future<void> _onMaterialCodeSubmitted(String value) async {
-    // Reached on a tare-only weighment when the operator typed a code anyway,
-    // or moved focus here by mouse. There is nothing to price against a
-    // material, so step on instead of failing with "Material code is
-    // required." and stranding the operator in this field.
-    if (_skipsMaterial) {
-      widget.customerCodeFocusNode?.requestFocus();
-      return;
-    }
-
-    final code = value.trim().toUpperCase();
-    if (code.isEmpty) {
-      setState(() => _localMaterialError = 'Material code is required.');
-      return;
-    }
-    final match = widget.onMaterialCodeSubmitted != null
-        ? await widget.onMaterialCodeSubmitted!(code)
-        : widget.materials
-              .where((material) => material.code.toUpperCase() == code)
-              .firstOrNull;
-    if (!mounted) return;
-    if (match == null) {
-      setState(() => _localMaterialError = 'Material code does not exist.');
-      return;
-    }
-    setState(() => _localMaterialError = null);
-    _materialCodeController.text = match.code;
-    widget.onMaterialChanged(match);
-    widget.customerCodeFocusNode?.requestFocus();
-  }
-
-  /// 4. CUSTOMER CODE
-  Widget _buildCustomerCodeField() {
-    final error = _localCustomerError ?? widget.customerError;
-    final hasError = error != null;
-    final isValid = widget.selectedCustomer != null && !hasError;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        BillFormFieldShell(
-          prefixIcon: Icons.domain_rounded,
-          hasError: hasError,
-          isValid: isValid,
-          suffix: BillFormSearchButton(
-            onTap: _openCustomerMaster,
-            tooltip: 'Select Customer Code',
-          ),
-          child: TextField(
-            key: const Key('bill_customer_code_field'),
-            controller: _customerCodeController,
-            focusNode: widget.customerCodeFocusNode,
-            keyboardType: TextInputType.text,
-            onChanged: (val) {
-              if (_localCustomerError != null) {
-                setState(() => _localCustomerError = null);
-              }
-            },
-            onSubmitted: (value) async {
-              final code = value.trim().toUpperCase();
-              if (code.isEmpty) {
-                setState(
-                  () => _localCustomerError = 'Customer code is required.',
-                );
-                return;
-              }
-              final customer = widget.onCustomerCodeSubmitted != null
-                  ? await widget.onCustomerCodeSubmitted!(code)
-                  : widget.customers
-                        .where(
-                          (customer) =>
-                              customer.customerCode.toUpperCase() == code,
-                        )
-                        .firstOrNull;
-              if (!mounted) return;
-              if (customer != null) {
-                setState(() => _localCustomerError = null);
-                widget.onCustomerChanged(customer);
-                widget.remarksFocusNode?.requestFocus();
-              } else {
-                setState(
-                  () => _localCustomerError = 'Customer code does not exist.',
-                );
-              }
-            },
-            style: const TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF0F172A),
-            ),
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 12,
-              ),
-              hintText: 'Type Customer Code',
-              hintStyle: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                color: Color(0xFF94A3B8),
-                fontSize: 15,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
+  /// 4. DESCRIPTION (free-text input).
+  Widget _buildDescriptionField() {
+    return BillFormFieldShell(
+      prefixIcon: Icons.description_outlined,
+      child: TextField(
+        key: const Key('bill_description_field'),
+        controller: widget.descriptionController,
+        focusNode: widget.descriptionFocusNode,
+        onChanged: widget.onDescriptionChanged,
+        onSubmitted: (_) => widget.remarksFocusNode?.requestFocus(),
+        textCapitalization: TextCapitalization.sentences,
+        style: const TextStyle(
+          fontFamily: 'PlusJakartaSans',
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF0F172A),
+        ),
+        decoration: const InputDecoration(
+          border: InputBorder.none,
+          isDense: true,
+          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          hintText: 'Enter Description',
+          hintStyle: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            color: Color(0xFF94A3B8),
+            fontSize: 15,
+            fontWeight: FontWeight.w400,
           ),
         ),
-        _buildFieldError(error),
-      ],
+      ),
     );
   }
 
-  /// 6. CONTAINER NO
+  /// 5. CONTAINER NO
   Widget _buildContainerNoField() {
     return BillFormFieldShell(
       prefixIcon: Icons.view_in_ar_outlined,
@@ -1019,7 +743,7 @@ class _BillFormState extends State<BillForm> {
         controller: widget.remarksController,
         focusNode: widget.remarksFocusNode,
         onChanged: widget.onRemarksChanged,
-        onSubmitted: (_) => widget.mobileFocusNode?.requestFocus(),
+        onSubmitted: (_) => widget.grossWeightFocusNode?.requestFocus(),
         style: const TextStyle(
           fontFamily: 'PlusJakartaSans',
           fontSize: 15,
@@ -1039,66 +763,6 @@ class _BillFormState extends State<BillForm> {
           ),
         ),
       ),
-    );
-  }
-
-  /// 7. MOBILE NO
-  Widget _buildMobileNoField() {
-    final hasError = widget.mobileError != null;
-    final isValid = _mobileController.text.trim().isNotEmpty && !hasError;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        BillFormFieldShell(
-          prefixIcon: Icons.phone_outlined,
-          hasError: hasError,
-          isValid: isValid,
-          child: TextField(
-            controller: _mobileController,
-            focusNode: widget.mobileFocusNode,
-            keyboardType: TextInputType.phone,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            onChanged: (val) {
-              widget.onMobileNumberChanged?.call(val);
-            },
-            onSubmitted: (_) {
-              // The Material picker is the last stop of the row. For a
-              // tare-only weighment it does not apply, so continue to the
-              // customer picker rather than parking focus on a field the
-              // operator cannot use.
-              if (_skipsMaterial) {
-                widget.customerFocusNode?.requestFocus();
-              } else {
-                widget.materialFocusNode?.requestFocus();
-              }
-            },
-            style: const TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF0F172A),
-            ),
-            decoration: const InputDecoration(
-              border: InputBorder.none,
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 12,
-              ),
-              hintText: 'Mobile / Phone No',
-              hintStyle: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                color: Color(0xFF94A3B8),
-                fontSize: 15,
-                fontWeight: FontWeight.w400,
-              ),
-            ),
-          ),
-        ),
-        _buildFieldError(widget.mobileError),
-      ],
     );
   }
 }
