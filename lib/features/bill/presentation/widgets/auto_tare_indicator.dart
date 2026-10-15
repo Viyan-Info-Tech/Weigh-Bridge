@@ -32,15 +32,13 @@ class AutoTareIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final accent = _hasAutoTare
-        ? const Color(0xFF16A34A)
-        : const Color(0xFF94A3B8);
-    final bg = _hasAutoTare ? const Color(0xFFDCFCE7) : const Color(0xFFF1F5F9);
+    const accent = Color(0xFF16A34A);
+    const bg = Color(0xFFDCFCE7);
 
     final valueText = _hasAutoTare
         ? '${_isTon ? (autoTareKg / 1000).toStringAsFixed(3) : NumberFormat('#,##0').format(autoTareKg)} '
               '${_isTon ? 'Ton' : 'Kg'}'
-        : 'Not Set';
+        : 'Active';
 
     final dateText = autoTareDate == null
         ? null
@@ -109,7 +107,7 @@ class AutoTareIndicator extends StatelessWidget {
               Icon(
                 Icons.edit_outlined,
                 size: 12,
-                color: _hasAutoTare ? accent : const Color(0xFF94A3B8),
+                color: accent,
               ),
             ],
           ),

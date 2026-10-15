@@ -8,6 +8,10 @@ void main() {
     double firstWeightKg = 0,
     String firstWeightType = 'GROSS',
     double? secondWeightKg,
+    String? material,
+    String? description,
+    String? containerNo,
+    String? remarks,
   }) {
     return WeighmentReportItem(
       id: 1,
@@ -17,8 +21,42 @@ void main() {
       firstWeightKg: firstWeightKg,
       firstWeightType: firstWeightType,
       secondWeightKg: secondWeightKg,
+      material: material,
+      description: description,
+      containerNo: containerNo,
+      remarks: remarks,
     );
   }
+
+  group('material, description, and containerNo', () {
+    test('stores material, description, and containerNo', () {
+      final item = build(
+        material: 'Sand',
+        description: 'CDM',
+        containerNo: '12',
+      );
+      expect(item.material, 'Sand');
+      expect(item.description, 'CDM');
+      expect(item.containerNo, '12');
+      expect(item.effectiveContainerNo, '12');
+    });
+
+    test('effectiveContainerNo falls back to remarks when containerNo is omitted', () {
+      final item = build(
+        remarks: 'CONT-88',
+      );
+      expect(item.containerNo, 'CONT-88');
+      expect(item.effectiveContainerNo, 'CONT-88');
+    });
+
+    test('preserves null values when not provided', () {
+      final item = build();
+      expect(item.material, isNull);
+      expect(item.description, isNull);
+      expect(item.containerNo, isNull);
+      expect(item.effectiveContainerNo, isNull);
+    });
+  });
 
   group('grossWeightKg / tareWeightKg', () {
     test('GROSS type: first weight is gross, second is tare', () {

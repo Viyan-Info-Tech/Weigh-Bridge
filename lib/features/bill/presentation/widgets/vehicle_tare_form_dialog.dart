@@ -72,6 +72,7 @@ class _VehicleTareFormDialogState extends State<VehicleTareFormDialog> {
   late final TextEditingController _vehicleController;
   late final TextEditingController _weightController;
   late final FocusNode _vehicleFocusNode;
+  late final FocusNode _weightFocusNode;
   bool _isBusy = false;
   String? _errorMessage;
 
@@ -97,10 +98,7 @@ class _VehicleTareFormDialogState extends State<VehicleTareFormDialog> {
     return _isTon ? value * 1000 : value;
   }
 
-  String _normalizedVehicle() => _vehicleController.text
-      .trim()
-      .toUpperCase()
-      .replaceAll(RegExp(r'\s+'), ' ');
+  String _normalizedVehicle() => _vehicleController.text.trim().toUpperCase();
 
   @override
   void initState() {
@@ -111,6 +109,7 @@ class _VehicleTareFormDialogState extends State<VehicleTareFormDialog> {
       text: rec != null ? _formatKg(rec.tareKg) : '',
     );
     _vehicleFocusNode = FocusNode(debugLabel: 'vehicleTareFormVehicleFocusNode');
+    _weightFocusNode = FocusNode(debugLabel: 'vehicleTareFormWeightFocusNode');
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -124,6 +123,7 @@ class _VehicleTareFormDialogState extends State<VehicleTareFormDialog> {
     _vehicleController.dispose();
     _weightController.dispose();
     _vehicleFocusNode.dispose();
+    _weightFocusNode.dispose();
     super.dispose();
   }
 
@@ -293,11 +293,9 @@ class _VehicleTareFormDialogState extends State<VehicleTareFormDialog> {
                           controller: _vehicleController,
                           focusNode: _vehicleFocusNode,
                           enabled: !_isBusy,
+                          textInputAction: TextInputAction.next,
                           textCapitalization: TextCapitalization.characters,
                           inputFormatters: [
-                            FilteringTextInputFormatter.allow(
-                              RegExp(r'[a-zA-Z0-9\s\-/]'),
-                            ),
                             UpperCaseTextFormatter(),
                           ],
                           style: const TextStyle(
@@ -306,6 +304,9 @@ class _VehicleTareFormDialogState extends State<VehicleTareFormDialog> {
                             fontWeight: FontWeight.w700,
                             color: Color(0xFF0F172A),
                           ),
+                          onFieldSubmitted: (_) {
+                            _weightFocusNode.requestFocus();
+                          },
                           decoration: InputDecoration(
                             hintText: 'Enter Vehicle Number (e.g. TN 14 L 1112)',
                             hintStyle: TextStyle(
@@ -436,7 +437,9 @@ class _VehicleTareFormDialogState extends State<VehicleTareFormDialog> {
                         TextFormField(
                           key: const Key('auto_tare_weight_field'),
                           controller: _weightController,
+                          focusNode: _weightFocusNode,
                           enabled: !_isBusy,
+                          textInputAction: TextInputAction.done,
                           keyboardType: const TextInputType.numberWithOptions(
                             decimal: true,
                           ),

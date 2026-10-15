@@ -6,6 +6,9 @@ class WeighmentReportItem extends Equatable {
   final String billNumber;
   final DateTime createdAt;
   final String vehicleNumber;
+  final String? material;
+  final String? description;
+  final String? containerNo;
   final String? remarks;
   final double firstWeightKg;
   final String firstWeightType;
@@ -18,13 +21,19 @@ class WeighmentReportItem extends Equatable {
     required this.billNumber,
     required this.createdAt,
     required this.vehicleNumber,
+    this.material,
+    this.description,
+    String? containerNo,
     this.remarks,
     required this.firstWeightKg,
     this.firstWeightType = 'GROSS',
     this.secondWeightKg,
     this.secondWeightType,
     this.weightUnit = 'kg',
-  });
+  }) : containerNo = containerNo ?? remarks;
+
+  /// Effective container or trailer number, resolving containerNo or remarks.
+  String? get effectiveContainerNo => containerNo ?? remarks;
 
   /// Business Logic for Gross Weight:
   /// If firstWeightType == GROSS -> firstWeight (if > 0)
@@ -97,6 +106,9 @@ class WeighmentReportItem extends Equatable {
     billNumber,
     createdAt,
     vehicleNumber,
+    material,
+    description,
+    containerNo,
     remarks,
     firstWeightKg,
     firstWeightType,

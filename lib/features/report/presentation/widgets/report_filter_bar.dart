@@ -28,6 +28,8 @@ class ReportFilterBar extends StatelessWidget {
   })
   selectCustomDate;
 
+  static const double _controlHeight = 56.0;
+
   @override
   Widget build(BuildContext context) {
     final isCustomDate = filter.datePreset == DateRangePreset.custom;
@@ -47,247 +49,266 @@ class ReportFilterBar extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: const [
-              Icon(Icons.tune_rounded, size: 16, color: Color(0xFF475569)),
-              SizedBox(width: 6),
-              Text(
-                'Filters',
-                style: TextStyle(
-                  fontFamily: 'PlusJakartaSans',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1E293B),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              // Date Range Preset Dropdown
-              Expanded(
-                flex: 2,
-                child: _buildDropdownContainer(
-                  label: 'Date Range',
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<DateRangePreset>(
-                      value: filter.datePreset,
-                      isExpanded: true,
-                      icon: const Icon(Icons.arrow_drop_down, size: 20),
-                      style: const TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 13,
-                        color: Color(0xFF0F172A),
-                        fontWeight: FontWeight.w600,
-                      ),
-                      onChanged: (val) {
-                        if (val != null) {
-                          bloc.add(ReportFilterPresetChanged(val));
-                        }
-                      },
-                      items: DateRangePreset.values
-                          .map(
-                            (preset) => DropdownMenuItem(
-                              value: preset,
-                              child: Text(preset.label),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isNarrow = constraints.maxWidth < 680;
+
+          final dateRangeControl = _buildFieldContainer(
+            label: 'Date Range',
+            child: _buildDropdown(
+              value: filter.datePreset,
+              onChanged: (val) {
+                if (val != null) {
+                  bloc.add(ReportFilterPresetChanged(val));
+                }
+              },
+            ),
+          );
+
+          final vehicleNoControl = _buildFieldContainer(
+            label: 'Vehicle No',
+            child: _buildVehicleTextField(
+              controller: vehicleNumberController,
+              onChanged: (val) {
+                bloc.add(ReportVehicleFilterChanged(val));
+              },
+              onSubmitted: () {
+                bloc.add(const ApplyReportFilters());
+              },
+            ),
+          );
+
+          final actionButtons = _buildActionButtons(
+            context,
+            bloc,
+            vehicleNumberController,
+          );
+
+          if (!isNarrow) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(),
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(child: dateRangeControl),
+                              const SizedBox(width: 12),
+                              Expanded(child: vehicleNoControl),
+                            ],
+                          ),
+                          if (isCustomDate) ...[
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildDateButton(
+                                    label: 'Date From',
+                                    dateText: datePickerFormat.format(
+                                      filter.effectiveStartDate,
+                                    ),
+                                    onTap: () => selectCustomDate(
+                                      context: context,
+                                      isStartDate: true,
+                                      filter: filter,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildDateButton(
+                                    label: 'Date To',
+                                    dateText: datePickerFormat.format(
+                                      filter.effectiveEndDate,
+                                    ),
+                                    onTap: () => selectCustomDate(
+                                      context: context,
+                                      isStartDate: false,
+                                      filter: filter,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          )
-                          .toList(),
+                          ],
+                        ],
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 12),
+                    actionButtons,
+                  ],
                 ),
-              ),
-              const SizedBox(width: 10),
-
-              // If Custom Range, show Date Pickers
-              if (isCustomDate) ...[
-                Expanded(
-                  flex: 2,
-                  child: _buildDateButton(
-                    label: 'Date From',
-                    dateText: datePickerFormat.format(
-                      filter.effectiveStartDate,
-                    ),
-                    onTap: () => selectCustomDate(
-                      context: context,
-                      isStartDate: true,
-                      filter: filter,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  flex: 2,
-                  child: _buildDateButton(
-                    label: 'Date To',
-                    dateText: datePickerFormat.format(filter.effectiveEndDate),
-                    onTap: () => selectCustomDate(
-                      context: context,
-                      isStartDate: false,
-                      filter: filter,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
               ],
+            );
+          }
 
-              // Vehicle Number Filter
-              Expanded(
-                flex: 2,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: const Color(0xFFCBD5E1)),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(
-                        'Vehicle No',
-                        style: TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF64748B),
-                        ),
-                      ),
-                      TextField(
-                        controller: vehicleNumberController,
-                        textInputAction: TextInputAction.search,
-                        textCapitalization: TextCapitalization.characters,
-                        style: const TextStyle(
-                          fontFamily: 'PlusJakartaSans',
-                          fontSize: 13,
-                          color: Color(0xFF0F172A),
-                        ),
-                        decoration: const InputDecoration(
-                          isDense: true,
-                          contentPadding: EdgeInsets.symmetric(
-                            horizontal: 2,
-                            vertical: 5,
-                          ),
-                          border: InputBorder.none,
-                          hintText: 'Enter Vehicle No',
-                          hintStyle: TextStyle(
-                            fontFamily: 'PlusJakartaSans',
-                            fontSize: 12,
-                            color: Color(0xFF94A3B8),
-                          ),
-                        ),
-                        onChanged: (val) {
-                          bloc.add(ReportVehicleFilterChanged(val));
-                        },
-                        onSubmitted: (_) {
-                          bloc.add(const ApplyReportFilters());
-                        },
-                      ),
-                    ],
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildHeader(),
+              const SizedBox(height: 12),
+              dateRangeControl,
+              if (isCustomDate) ...[
+                const SizedBox(height: 10),
+                _buildDateButton(
+                  label: 'Date From',
+                  dateText: datePickerFormat.format(filter.effectiveStartDate),
+                  onTap: () => selectCustomDate(
+                    context: context,
+                    isStartDate: true,
+                    filter: filter,
                   ),
                 ),
-              ),
-              const Spacer(),
-
-              // Apply and Reset Buttons
+                const SizedBox(height: 10),
+                _buildDateButton(
+                  label: 'Date To',
+                  dateText: datePickerFormat.format(filter.effectiveEndDate),
+                  onTap: () => selectCustomDate(
+                    context: context,
+                    isStartDate: false,
+                    filter: filter,
+                  ),
+                ),
+              ],
+              const SizedBox(height: 10),
+              vehicleNoControl,
+              const SizedBox(height: 12),
               Row(
-                children: [
-                  OutlinedButton(
-                    onPressed: () {
-                      vehicleNumberController.clear();
-                      bloc.add(const ResetReportFilters());
-                    },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF64748B),
-                      side: const BorderSide(color: Color(0xFFCBD5E1)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
-                      ),
-                    ),
-                    child: const Text(
-                      'Reset',
-                      style: TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      bloc.add(const ApplyReportFilters());
-                    },
-                    icon: const Icon(Icons.filter_alt_outlined, size: 16),
-                    label: const Text(
-                      'Apply',
-                      style: TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF0284C7),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                      elevation: 0,
-                    ),
-                  ),
-                ],
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [actionButtons],
               ),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildDropdownContainer({
+  Widget _buildHeader() {
+    return const Row(
+      children: [
+        Icon(Icons.tune_rounded, size: 16, color: Color(0xFF475569)),
+        SizedBox(width: 6),
+        Text(
+          'Filters',
+          style: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            fontSize: 13,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF1E293B),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFieldContainer({
     required String label,
     required Widget child,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF8FAFC),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: const Color(0xFFCBD5E1)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 10,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF64748B),
+    return SizedBox(
+      height: _controlHeight,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFFCBD5E1)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 10.5,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF64748B),
+                height: 1.1,
+              ),
             ),
-          ),
-          child,
-        ],
+            const SizedBox(height: 2),
+            child,
+          ],
+        ),
       ),
+    );
+  }
+
+  Widget _buildDropdown({
+    required DateRangePreset value,
+    required ValueChanged<DateRangePreset?> onChanged,
+  }) {
+    return DropdownButtonHideUnderline(
+      child: DropdownButton<DateRangePreset>(
+        value: value,
+        isExpanded: true,
+        isDense: true,
+        icon: const Icon(
+          Icons.arrow_drop_down,
+          size: 20,
+          color: Color(0xFF64748B),
+        ),
+        style: const TextStyle(
+          fontFamily: 'PlusJakartaSans',
+          fontSize: 13,
+          color: Color(0xFF0F172A),
+          fontWeight: FontWeight.w600,
+        ),
+        onChanged: onChanged,
+        items: DateRangePreset.values
+            .map(
+              (preset) => DropdownMenuItem(
+                value: preset,
+                child: Text(
+                  preset.label,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            )
+            .toList(),
+      ),
+    );
+  }
+
+  Widget _buildVehicleTextField({
+    required TextEditingController controller,
+    required ValueChanged<String> onChanged,
+    required VoidCallback onSubmitted,
+  }) {
+    return TextField(
+      controller: controller,
+      textInputAction: TextInputAction.search,
+      textCapitalization: TextCapitalization.characters,
+      style: const TextStyle(
+        fontFamily: 'PlusJakartaSans',
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: Color(0xFF0F172A),
+      ),
+      decoration: const InputDecoration(
+        isDense: true,
+        contentPadding: EdgeInsets.zero,
+        border: InputBorder.none,
+        hintText: 'Enter Vehicle No',
+        hintStyle: TextStyle(
+          fontFamily: 'PlusJakartaSans',
+          fontSize: 13,
+          color: Color(0xFF94A3B8),
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+      onChanged: onChanged,
+      onSubmitted: (_) => onSubmitted(),
     );
   }
 
@@ -298,50 +319,93 @@ class ReportFilterBar extends StatelessWidget {
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(6),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF8FAFC),
-          borderRadius: BorderRadius.circular(6),
-          border: Border.all(color: const Color(0xFFCBD5E1)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
+      borderRadius: BorderRadius.circular(8),
+      child: _buildFieldContainer(
+        label: label,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              label,
+              dateText,
               style: const TextStyle(
                 fontFamily: 'PlusJakartaSans',
-                fontSize: 10,
+                fontSize: 13,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF64748B),
+                color: Color(0xFF0F172A),
               ),
             ),
-            const SizedBox(height: 2),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  dateText,
-                  style: const TextStyle(
-                    fontFamily: 'PlusJakartaSans',
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF0F172A),
-                  ),
-                ),
-                const Icon(
-                  Icons.calendar_today_outlined,
-                  size: 14,
-                  color: Color(0xFF64748B),
-                ),
-              ],
+            const Icon(
+              Icons.calendar_today_outlined,
+              size: 15,
+              color: Color(0xFF64748B),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildActionButtons(
+    BuildContext context,
+    ReportBloc bloc,
+    TextEditingController vehicleNumberController,
+  ) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: _controlHeight,
+          child: OutlinedButton(
+            onPressed: () {
+              vehicleNumberController.clear();
+              bloc.add(const ResetReportFilters());
+            },
+            style: OutlinedButton.styleFrom(
+              foregroundColor: const Color(0xFF64748B),
+              side: const BorderSide(color: Color(0xFFCBD5E1)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+            ),
+            child: const Text(
+              'Reset',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        SizedBox(
+          height: _controlHeight,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              bloc.add(const ApplyReportFilters());
+            },
+            icon: const Icon(Icons.filter_alt_outlined, size: 16),
+            label: const Text(
+              'Apply',
+              style: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF0284C7),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+              elevation: 0,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

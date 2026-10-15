@@ -35,11 +35,13 @@ class WeighmentDetailsDialog extends StatelessWidget {
       id: record.id,
       billNumber: record.billNumber,
       vehicleNumber: record.vehicleNumber,
+      material: record.material,
+      description: record.description,
       grossWeightKg: record.grossWeightKg ?? record.firstWeightKg,
       tareWeightKg: record.tareWeightKg,
       netWeightKg: record.netWeightKg,
       weightUnit: weightUnit ?? record.weightUnit,
-      remarks: record.remarks,
+      remarks: record.effectiveContainerNo ?? record.remarks,
       firstWeightType: record.firstWeightType,
       secondWeightType: record.secondWeightType,
       createdAt: record.createdAt,
@@ -164,8 +166,17 @@ class WeighmentDetailsDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Vehicle Info
-            _buildInfoGrid([_InfoRow('Vehicle', record.vehicleNumber)]),
+            // Vehicle & Material Info
+            _buildInfoGrid([
+              _InfoRow('Vehicle', record.vehicleNumber),
+              if (record.material != null && record.material!.trim().isNotEmpty)
+                _InfoRow('Material', record.material!.trim()),
+              if (record.description != null && record.description!.trim().isNotEmpty)
+                _InfoRow('Description', record.description!.trim()),
+              if (record.effectiveContainerNo != null &&
+                  record.effectiveContainerNo!.trim().isNotEmpty)
+                _InfoRow('Container No', record.effectiveContainerNo!.trim()),
+            ]),
             const SizedBox(height: 16),
 
             // Weights Section

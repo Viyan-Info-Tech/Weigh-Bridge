@@ -200,19 +200,24 @@ class _LicenseActivationScreenState extends State<LicenseActivationScreen> {
           ),
           const SizedBox(height: 4),
           _buildContactRow(
+            icon: Icons.person_rounded,
+            value: 'Rithick Nathan',
+            onTap: () => _copyContactValue('Rithick Nathan'),
+          ),
+          _buildContactRow(
             icon: Icons.phone_outlined,
             value: '+91 6379723465',
             onTap: () => _copyContactValue('+91 6379723465'),
           ),
           _buildContactRow(
             icon: Icons.email_outlined,
-            value: 'viyanninfo@gmail.com',
-            onTap: () => _copyContactValue('viyanninfo@gmail.com'),
+            value: 'viyaninfo@gmail.com',
+            onTap: () => _copyContactValue('viyaninfo@gmail.com'),
           ),
           _buildContactRow(
             icon: Icons.email_outlined,
-            value: 'rithiknathan@gmail.com',
-            onTap: () => _copyContactValue('rithiknathan@gmail.com'),
+            value: 'rithicknathan@gmail.com',
+            onTap: () => _copyContactValue('rithicknathan@gmail.com'),
           ),
           _buildContactRow(
             icon: Icons.language_outlined,

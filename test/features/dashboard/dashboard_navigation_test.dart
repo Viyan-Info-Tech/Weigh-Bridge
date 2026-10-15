@@ -323,7 +323,7 @@ void main() {
   testWidgets('opens About from the version link', (tester) async {
     await pumpHomePage(tester);
 
-    await tester.tap(find.text('v0.0.1'));
+    await tester.tap(find.text('v0.0.2'));
     await pumpFrames(tester);
 
     expect(find.text('About ViyanInfo'), findsOneWidget);

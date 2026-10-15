@@ -18,8 +18,13 @@ class ReportTable extends StatelessWidget {
   final ScrollController hScrollController;
   final ReportState state;
 
-  static const double _minTableWidth = 1000;
+  static const double _minTableWidth = 1260;
   static const double _minTableChromeHeight = 83;
+
+  static String _formatCell(String? value) {
+    if (value == null || value.trim().isEmpty) return '—';
+    return value.trim();
+  }
 
   String _formatWeight(double? kg, String unit) {
     if (kg == null) return '—';
@@ -212,9 +217,12 @@ class _TableHeader extends StatelessWidget {
       ),
       child: Row(
         children: const [
-          Expanded(flex: 11, child: _HeaderCell('BILL NO')),
-          Expanded(flex: 13, child: _HeaderCell('DATE & TIME')),
-          Expanded(flex: 11, child: _HeaderCell('VEHICLE')),
+          Expanded(flex: 10, child: _HeaderCell('BILL NO')),
+          Expanded(flex: 12, child: _HeaderCell('DATE & TIME')),
+          Expanded(flex: 10, child: _HeaderCell('VEHICLE')),
+          Expanded(flex: 10, child: _HeaderCell('MATERIAL')),
+          Expanded(flex: 11, child: _HeaderCell('DESCRIPTION')),
+          Expanded(flex: 10, child: _HeaderCell('CONTAINER NO.')),
           Expanded(
             flex: 12,
             child: _HeaderCell('GROSS WEIGHT', align: TextAlign.right),
@@ -228,7 +236,7 @@ class _TableHeader extends StatelessWidget {
             child: _HeaderCell('NET WEIGHT', align: TextAlign.right),
           ),
           Expanded(
-            flex: 11,
+            flex: 10,
             child: _HeaderCell('STATUS', align: TextAlign.center),
           ),
           Expanded(
@@ -359,7 +367,7 @@ class _TableRow extends StatelessWidget {
           children: [
             // Bill No
             Expanded(
-              flex: 11,
+              flex: 10,
               child: Text(
                 item.billNumber,
                 style: const TextStyle(
@@ -372,7 +380,7 @@ class _TableRow extends StatelessWidget {
             ),
             // Date & Time
             Expanded(
-              flex: 13,
+              flex: 12,
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -399,7 +407,7 @@ class _TableRow extends StatelessWidget {
             ),
             // Vehicle
             Expanded(
-              flex: 11,
+              flex: 10,
               child: Text(
                 item.vehicleNumber,
                 style: const TextStyle(
@@ -407,6 +415,57 @@ class _TableRow extends StatelessWidget {
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   color: Color(0xFF1E293B),
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            // Material
+            Expanded(
+              flex: 10,
+              child: Text(
+                ReportTable._formatCell(item.material),
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: (item.material != null &&
+                          item.material!.trim().isNotEmpty)
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFF94A3B8),
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            // Description
+            Expanded(
+              flex: 11,
+              child: Text(
+                ReportTable._formatCell(item.description),
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: (item.description != null &&
+                          item.description!.trim().isNotEmpty)
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFF94A3B8),
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            // Container No.
+            Expanded(
+              flex: 10,
+              child: Text(
+                ReportTable._formatCell(item.effectiveContainerNo),
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: (item.effectiveContainerNo != null &&
+                          item.effectiveContainerNo!.trim().isNotEmpty)
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFF94A3B8),
                 ),
                 overflow: TextOverflow.ellipsis,
               ),
@@ -467,7 +526,7 @@ class _TableRow extends StatelessWidget {
             ),
             // Status Badge
             Expanded(
-              flex: 11,
+              flex: 10,
               child: Center(
                 child: Container(
                   padding: const EdgeInsets.symmetric(

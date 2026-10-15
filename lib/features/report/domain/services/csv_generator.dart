@@ -44,7 +44,7 @@ class CsvGenerator {
 
     // Clean, standard CSV Header
     buffer.writeln(
-      'Bill No,Date & Time,Vehicle,Gross Weight,Tare Weight,Net Weight,Status',
+      'Bill No,Date & Time,Vehicle,Material,Description,Container No,Gross Weight,Tare Weight,Net Weight,Status',
     );
 
     final dateTimeFormat = DateFormat('dd/MM/yyyy hh:mm a');
@@ -70,12 +70,19 @@ class CsvGenerator {
           : '';
       // Completion follows the weighbridge rule: a bill with at least one
       // captured weight (gross or tare) is Completed; no weight is Incomplete.
-      final statusFormatted = item.isCompleted ? 'Completed' : 'Incomplete';
+      final statusFormatted = item.isCompleted ? 'COMPLETED' : 'INCOMPLETE';
+
+      final materialStr = item.material?.trim() ?? '';
+      final descriptionStr = item.description?.trim() ?? '';
+      final containerNoStr = item.effectiveContainerNo?.trim() ?? '';
 
       final line = [
         _escape(item.billNumber),
         _escape(dateTimeStr),
         _escape(item.vehicleNumber),
+        _escape(materialStr),
+        _escape(descriptionStr),
+        _escape(containerNoStr),
         _escape(grossStr),
         _escape(tareStr),
         _escape(netStr),

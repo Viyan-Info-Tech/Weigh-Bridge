@@ -69,7 +69,18 @@ void main() {
       expect(forSeed.map((r) => r.billNumber), ['WB-00001']);
     });
 
-    test('searches by bill number and vehicle only', () async {
+    test('searches by bill number, vehicle, material, description, and container', () async {
+      await seedWeighment(
+        db,
+        billNumber: 'WB-00003',
+        vehicleNumber: 'TN31SEED03',
+        material: 'Granite',
+        description: 'Blocks',
+        remarks: 'C-999',
+        firstWeightKg: 15000,
+        createdAt: todayMorning,
+      );
+
       final byBill = await source.getReportRecords(
         const ReportFilter(
           datePreset: DateRangePreset.today,
@@ -84,7 +95,31 @@ void main() {
           searchQuery: 'TN31SEED',
         ),
       );
-      expect(byVehicle.length, 2);
+      expect(byVehicle.length, 3);
+
+      final byMaterial = await source.getReportRecords(
+        const ReportFilter(
+          datePreset: DateRangePreset.today,
+          searchQuery: 'Granite',
+        ),
+      );
+      expect(byMaterial.single.billNumber, 'WB-00003');
+
+      final byDescription = await source.getReportRecords(
+        const ReportFilter(
+          datePreset: DateRangePreset.today,
+          searchQuery: 'Blocks',
+        ),
+      );
+      expect(byDescription.single.billNumber, 'WB-00003');
+
+      final byContainer = await source.getReportRecords(
+        const ReportFilter(
+          datePreset: DateRangePreset.today,
+          searchQuery: 'C-999',
+        ),
+      );
+      expect(byContainer.single.billNumber, 'WB-00003');
 
       final none = await source.getReportRecords(
         const ReportFilter(
@@ -95,11 +130,36 @@ void main() {
       expect(none, isEmpty);
     });
 
-    test('maps weights and completion onto report items', () async {
+    test('maps weights, material, description, and container onto report items', () async {
+      await seedWeighment(
+        db,
+        billNumber: 'WB-00007',
+        vehicleNumber: 'TN31PS2002',
+        material: 'Sand',
+        description: 'CDM',
+        remarks: '12',
+        firstWeightKg: 20000,
+        secondWeightKg: 1000,
+        createdAt: todayNoon,
+      );
+
       final records = await source.getReportRecords(const ReportFilter());
+      final item = records.firstWhere((r) => r.billNumber == 'WB-00007');
+      expect(item.material, 'Sand');
+      expect(item.description, 'CDM');
+      expect(item.containerNo, '12');
+      expect(item.effectiveContainerNo, '12');
+      expect(item.grossWeightKg, 20000);
+      expect(item.tareWeightKg, 1000);
+      expect(item.netWeightKg, 19000);
+      expect(item.isCompleted, isTrue);
+
       final first = records.firstWhere((r) => r.billNumber == 'WB-00002');
       expect(first.firstWeightKg, 30000);
       expect(first.grossWeightKg, 30000);
+      expect(first.material, isNull);
+      expect(first.description, isNull);
+      expect(first.containerNo, isNull);
       expect(first.isCompleted, isTrue);
 
       final second = records.firstWhere((r) => r.billNumber == 'WB-00001');

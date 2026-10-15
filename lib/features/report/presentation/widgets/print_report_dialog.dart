@@ -67,6 +67,11 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
     return '${val.toStringAsFixed(dec)} $unit';
   }
 
+  String _formatCell(String? value) {
+    if (value == null || value.trim().isEmpty) return '—';
+    return value.trim();
+  }
+
   Future<void> _handlePrint(SettingsState settingsState) async {
     if (widget.records.isEmpty) {
       widget.scaffoldMessenger.showSnackBar(
@@ -154,7 +159,7 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       backgroundColor: Colors.white,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       child: BlocBuilder<SettingsBloc, SettingsState>(
         builder: (context, settingsState) {
           final settings = settingsState.settings;
@@ -166,7 +171,7 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
           final statusLabel = 'All Statuses';
 
           return Container(
-            width: 950,
+            width: 1080,
             constraints: const BoxConstraints(maxHeight: 740),
             padding: const EdgeInsets.all(24),
             child: Column(
@@ -342,13 +347,16 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
                               width: 0.8,
                             ),
                             columnWidths: const {
-                              0: FlexColumnWidth(1.2), // Bill
-                              1: FlexColumnWidth(1.5), // Date & Time
-                              2: FlexColumnWidth(1.3), // Vehicle
-                              3: FlexColumnWidth(1.2), // Gross
-                              4: FlexColumnWidth(1.2), // Tare
-                              5: FlexColumnWidth(1.2), // Net
-                              6: FlexColumnWidth(1.1), // Status
+                              0: FlexColumnWidth(1.1), // Bill No
+                              1: FlexColumnWidth(1.4), // Date & Time
+                              2: FlexColumnWidth(1.1), // Vehicle
+                              3: FlexColumnWidth(1.0), // Material
+                              4: FlexColumnWidth(1.1), // Description
+                              5: FlexColumnWidth(1.0), // Container No
+                              6: FlexColumnWidth(1.1), // Gross
+                              7: FlexColumnWidth(1.1), // Tare
+                              8: FlexColumnWidth(1.1), // Net
+                              9: FlexColumnWidth(1.0), // Status
                             },
                             children: [
                               // Table Header
@@ -360,6 +368,9 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
                                   _cell('BILL NO', isHeader: true),
                                   _cell('DATE & TIME', isHeader: true),
                                   _cell('VEHICLE', isHeader: true),
+                                  _cell('MATERIAL', isHeader: true),
+                                  _cell('DESCRIPTION', isHeader: true),
+                                  _cell('CONTAINER NO.', isHeader: true),
                                   _cell(
                                     'GROSS',
                                     isHeader: true,
@@ -391,6 +402,9 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
                                       '${dateFormat.format(r.createdAt)} ${timeFormat.format(r.createdAt)}',
                                     ),
                                     _cell(r.vehicleNumber),
+                                    _cell(_formatCell(r.material)),
+                                    _cell(_formatCell(r.description)),
+                                    _cell(_formatCell(r.effectiveContainerNo)),
                                     _cell(
                                       _formatWeight(
                                         r.grossWeightKg,
@@ -602,18 +616,21 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
       );
     }
 
+    final isDash = text == '—';
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 6),
       child: Text(
         text,
         textAlign: align,
         style: TextStyle(
           fontFamily: 'PlusJakartaSans',
-          fontSize: isHeader ? 10.5 : 11,
+          fontSize: isHeader ? 10 : 10.5,
           fontWeight: isHeader
               ? FontWeight.w700
               : (bold ? FontWeight.w700 : FontWeight.w500),
-          color: isHeader ? const Color(0xFF1E293B) : const Color(0xFF334155),
+          color: isHeader
+              ? const Color(0xFF1E293B)
+              : (isDash ? const Color(0xFF94A3B8) : const Color(0xFF334155)),
         ),
       ),
     );

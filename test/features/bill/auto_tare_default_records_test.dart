@@ -171,5 +171,112 @@ void main() {
       final netWeight = grossWeight - tareWeight;
       expect(netWeight, 16800.0);
     });
+
+    testWidgets('VehicleTareFormDialog Enter key navigation and vehicle number validation', (
+      tester,
+    ) async {
+      String? savedVehicle;
+      double? savedWeight;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: VehicleTareFormDialog(
+              weightUnit: 'kg',
+              liveScaleWeightKg: 0,
+              isScaleStable: true,
+              isScaleMotion: false,
+              isScaleOverload: false,
+              onSave: (veh, kg) async {
+                savedVehicle = veh;
+                savedWeight = kg;
+                return entity.VehicleTareRecord(
+                  id: 1,
+                  vehicleNumber: veh,
+                  tareKg: kg,
+                  createdAt: DateTime.now(),
+                  updatedAt: DateTime.now(),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final vehicleFinder = find.byKey(const Key('vehicle_tare_vehicle_field'));
+      final weightFinder = find.byKey(const Key('auto_tare_weight_field'));
+
+      // 1. Enter key in empty vehicle field should not submit the form
+      await tester.showKeyboard(vehicleFinder);
+      await tester.testTextInput.receiveAction(TextInputAction.next);
+      await tester.pumpAndSettle();
+
+      expect(savedVehicle, isNull);
+      expect(savedWeight, isNull);
+
+      // Focus should have moved to the weight field
+      final weightEditable = tester.widget<EditableText>(
+        find.descendant(of: weightFinder, matching: find.byType(EditableText)),
+      );
+      expect(weightEditable.focusNode.hasFocus, isTrue);
+
+      // 2. Entering vehicle with spaces and lowercase, e.g. "  bulk quartz  "
+      await tester.enterText(vehicleFinder, '  bulk quartz  ');
+      await tester.enterText(weightFinder, '21500');
+
+      // Pressing enter in weight field triggers save
+      await tester.showKeyboard(weightFinder);
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      expect(savedVehicle, 'BULK QUARTZ');
+      expect(savedWeight, 21500.0);
+    });
+
+    testWidgets('VehicleTareFormDialog accepts TN 14 L 1112 and JCB-11', (
+      tester,
+    ) async {
+      String? savedVehicle;
+      double? savedWeight;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: VehicleTareFormDialog(
+              weightUnit: 'kg',
+              liveScaleWeightKg: 0,
+              isScaleStable: true,
+              isScaleMotion: false,
+              isScaleOverload: false,
+              onSave: (veh, kg) async {
+                savedVehicle = veh;
+                savedWeight = kg;
+                return entity.VehicleTareRecord(
+                  id: 2,
+                  vehicleNumber: veh,
+                  tareKg: kg,
+                  createdAt: DateTime.now(),
+                  updatedAt: DateTime.now(),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final vehicleFinder = find.byKey(const Key('vehicle_tare_vehicle_field'));
+      final weightFinder = find.byKey(const Key('auto_tare_weight_field'));
+
+      await tester.enterText(vehicleFinder, '  JCB-11  ');
+      await tester.enterText(weightFinder, '7180');
+
+      await tester.tap(find.byKey(const Key('vehicle_tare_save_button')));
+      await tester.pumpAndSettle();
+
+      expect(savedVehicle, 'JCB-11');
+      expect(savedWeight, 7180.0);
+    });
   });
 }

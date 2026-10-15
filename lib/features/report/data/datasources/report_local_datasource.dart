@@ -140,7 +140,10 @@ class ReportLocalDataSource {
       query.where(
         (w) =>
             w.billNumber.lower().like(pattern, escapeChar: _likeEscapeChar) |
-            w.vehicleNumber.lower().like(pattern, escapeChar: _likeEscapeChar),
+            w.vehicleNumber.lower().like(pattern, escapeChar: _likeEscapeChar) |
+            w.material.lower().like(pattern, escapeChar: _likeEscapeChar) |
+            w.description.lower().like(pattern, escapeChar: _likeEscapeChar) |
+            w.remarks.lower().like(pattern, escapeChar: _likeEscapeChar),
       );
     }
   }
@@ -174,6 +177,18 @@ class ReportLocalDataSource {
             weights.vehicleNumber.lower().like(
               pattern,
               escapeChar: _likeEscapeChar,
+            ) |
+            weights.material.lower().like(
+              pattern,
+              escapeChar: _likeEscapeChar,
+            ) |
+            weights.description.lower().like(
+              pattern,
+              escapeChar: _likeEscapeChar,
+            ) |
+            weights.remarks.lower().like(
+              pattern,
+              escapeChar: _likeEscapeChar,
             ),
       );
     }
@@ -185,6 +200,9 @@ class ReportLocalDataSource {
       billNumber: row.billNumber,
       createdAt: row.createdAt,
       vehicleNumber: row.vehicleNumber,
+      material: row.material,
+      description: row.description,
+      containerNo: row.remarks,
       remarks: row.remarks,
       firstWeightKg: row.firstWeightKg,
       firstWeightType: row.firstWeightType,

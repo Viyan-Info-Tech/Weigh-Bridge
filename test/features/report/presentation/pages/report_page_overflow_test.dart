@@ -26,6 +26,9 @@ void main() {
       billNumber: 'WB-2026-000001',
       createdAt: DateTime(2026, 9, 18, 10, 30),
       vehicleNumber: 'TN31CM20260789A',
+      material: 'Sand',
+      description: 'CDM',
+      containerNo: '12',
       firstWeightKg: 25000,
       secondWeightKg: 6500,
     ),
@@ -34,6 +37,9 @@ void main() {
       billNumber: 'WB-2026-000002',
       createdAt: DateTime(2026, 9, 18, 12, 45),
       vehicleNumber: 'KA01AB1234',
+      material: null,
+      description: null,
+      containerNo: null,
       firstWeightKg: 0,
     ),
   ];
@@ -139,6 +145,21 @@ void main() {
           find.text('BILL NO'),
           findsOneWidget,
           reason: 'Table header missing at ${size.width}x${size.height}',
+        );
+        expect(
+          find.text('MATERIAL'),
+          findsOneWidget,
+          reason: 'Material header missing at ${size.width}x${size.height}',
+        );
+        expect(
+          find.text('DESCRIPTION'),
+          findsOneWidget,
+          reason: 'Description header missing at ${size.width}x${size.height}',
+        );
+        expect(
+          find.text('CONTAINER NO.'),
+          findsOneWidget,
+          reason: 'Container No. header missing at ${size.width}x${size.height}',
         );
         expect(
           find.text('WB-2026-000001'),

@@ -198,6 +198,9 @@ class ReportPdfGenerator {
                 'BILL NO',
                 'DATE & TIME',
                 'VEHICLE',
+                'MATERIAL',
+                'DESCRIPTION',
+                'CONTAINER NO',
                 'GROSS',
                 'TARE',
                 'NET',
@@ -222,10 +225,27 @@ class ReportPdfGenerator {
                 final dateStr =
                     '${dateFormat.format(r.createdAt)} ${timeFormat.format(r.createdAt)}';
 
+                final materialStr =
+                    (r.material != null && r.material!.trim().isNotEmpty)
+                        ? r.material!.trim()
+                        : '-';
+                final descStr =
+                    (r.description != null && r.description!.trim().isNotEmpty)
+                        ? r.description!.trim()
+                        : '-';
+                final containerStr =
+                    (r.effectiveContainerNo != null &&
+                            r.effectiveContainerNo!.trim().isNotEmpty)
+                        ? r.effectiveContainerNo!.trim()
+                        : '-';
+
                 return [
                   r.billNumber,
                   dateStr,
                   r.vehicleNumber,
+                  materialStr,
+                  descStr,
+                  containerStr,
                   grossStr,
                   tareStr,
                   netStr,
@@ -234,37 +254,40 @@ class ReportPdfGenerator {
               }).toList(),
               headerStyle: pw.TextStyle(
                 fontWeight: pw.FontWeight.bold,
-                fontSize: 8,
+                fontSize: 7.5,
                 color: PdfColor.fromHex('#0F172A'),
               ),
               headerDecoration: pw.BoxDecoration(
                 color: PdfColor.fromHex('#F1F5F9'),
               ),
               cellStyle: pw.TextStyle(
-                fontSize: 7.5,
+                fontSize: 7,
                 color: PdfColor.fromHex('#1E293B'),
               ),
               cellAlignment: pw.Alignment.centerLeft,
               cellAlignments: {
-                3: pw.Alignment.centerRight,
-                4: pw.Alignment.centerRight,
-                5: pw.Alignment.centerRight,
-                6: pw.Alignment.center,
+                6: pw.Alignment.centerRight,
+                7: pw.Alignment.centerRight,
+                8: pw.Alignment.centerRight,
+                9: pw.Alignment.center,
               },
               headerAlignments: {
-                3: pw.Alignment.centerRight,
-                4: pw.Alignment.centerRight,
-                5: pw.Alignment.centerRight,
-                6: pw.Alignment.center,
+                6: pw.Alignment.centerRight,
+                7: pw.Alignment.centerRight,
+                8: pw.Alignment.centerRight,
+                9: pw.Alignment.center,
               },
               columnWidths: {
-                0: const pw.FlexColumnWidth(1.2),
-                1: const pw.FlexColumnWidth(1.6),
-                2: const pw.FlexColumnWidth(1.3),
-                3: const pw.FlexColumnWidth(1.2),
-                4: const pw.FlexColumnWidth(1.2),
-                5: const pw.FlexColumnWidth(1.2),
+                0: const pw.FlexColumnWidth(1.1),
+                1: const pw.FlexColumnWidth(1.4),
+                2: const pw.FlexColumnWidth(1.1),
+                3: const pw.FlexColumnWidth(1.0),
+                4: const pw.FlexColumnWidth(1.1),
+                5: const pw.FlexColumnWidth(1.0),
                 6: const pw.FlexColumnWidth(1.1),
+                7: const pw.FlexColumnWidth(1.1),
+                8: const pw.FlexColumnWidth(1.1),
+                9: const pw.FlexColumnWidth(1.0),
               },
               border: pw.TableBorder.all(
                 color: PdfColor.fromHex('#CBD5E1'),

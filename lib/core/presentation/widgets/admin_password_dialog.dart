@@ -28,6 +28,21 @@ class _AdminPasswordDialogState extends State<_AdminPasswordDialog> {
   bool _isVerifying = false;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _focusNode.requestFocus();
+      }
+    });
+    Future.delayed(const Duration(milliseconds: 100), () {
+      if (mounted && !_focusNode.hasFocus) {
+        _focusNode.requestFocus();
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _controller.dispose();
     _focusNode.dispose();
