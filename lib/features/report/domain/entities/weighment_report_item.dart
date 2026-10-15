@@ -23,7 +23,7 @@ class WeighmentReportItem extends Equatable {
     this.firstWeightType = 'GROSS',
     this.secondWeightKg,
     this.secondWeightType,
-    this.weightUnit = 'ton',
+    this.weightUnit = 'kg',
   });
 
   /// Business Logic for Gross Weight:

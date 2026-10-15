@@ -361,14 +361,20 @@ class BillPageState extends State<BillPage> {
         onSelect: (record) {
           if (!mounted) return;
 
-          final isTon = bloc.state.weightUnit.toLowerCase() == 'ton';
-
-          _tareWeightController.text = isTon
+          final tareValue = bloc.state.weightUnit.toLowerCase() == 'ton'
               ? (record.tareKg / 1000).toStringAsFixed(3)
               : record.tareKg.toStringAsFixed(0);
 
-          bloc.add(TareWeightChanged(_tareWeightController.text));
+          // Update the bill form's tare field.
+          _tareWeightController.value = TextEditingValue(
+            text: tareValue,
+            selection: TextSelection.collapsed(offset: tareValue.length),
+          );
 
+          // Update the application state.
+          bloc.add(TareWeightChanged(tareValue));
+
+          // Close the Auto Tare popup.
           Navigator.of(context, rootNavigator: true).pop();
         },
         onUpdate: (id, vehicleNumber, tareKg) async {

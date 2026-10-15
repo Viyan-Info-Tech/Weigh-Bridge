@@ -18,7 +18,7 @@ class Weighments extends Table {
   TextColumn get mobileNumber =>
       text().withLength(min: 0, max: 20).nullable()();
   TextColumn get weightUnit =>
-      text().withLength(min: 1, max: 10).withDefault(const Constant('ton'))();
+      text().withLength(min: 1, max: 10).withDefault(const Constant('kg'))();
   DateTimeColumn get grossCapturedAt => dateTime().nullable()();
   DateTimeColumn get tareCapturedAt => dateTime().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();

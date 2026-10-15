@@ -133,8 +133,7 @@ class BillLocalDataSource {
       secondType = null;
     }
 
-    final unit =
-        (record.weightUnit as String?) ?? (firstWeight >= 500 ? 'kg' : 'ton');
+    final unit = (record.weightUnit as String?) ?? 'kg';
 
     return Weighment(
       id: record.id,

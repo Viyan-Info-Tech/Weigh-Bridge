@@ -4,7 +4,7 @@ class AppSettings extends Table {
   IntColumn get id => integer().autoIncrement()();
 
   // Weight
-  TextColumn get weightUnit => text().withDefault(const Constant('ton'))();
+  TextColumn get weightUnit => text().withDefault(const Constant('kg'))();
 
   // Bill numbering
   TextColumn get billPrefix => text().withDefault(const Constant('WB'))();

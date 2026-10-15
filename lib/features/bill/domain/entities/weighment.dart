@@ -36,7 +36,7 @@ class Weighment extends Equatable {
     this.description,
     this.remarks,
     this.mobileNumber,
-    this.weightUnit = 'ton',
+    this.weightUnit = 'kg',
     required this.createdAt,
     required this.updatedAt,
   }) : firstWeightKg =

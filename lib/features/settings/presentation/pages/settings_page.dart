@@ -27,7 +27,7 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   final _formKey = GlobalKey<FormState>();
 
-  String _weightUnit = 'ton';
+  String _weightUnit = 'kg';
 
   final _billPrefixController = TextEditingController(text: 'WB');
   final _billStartingNumberController = TextEditingController(text: '1');
@@ -263,7 +263,7 @@ class _SettingsPageState extends State<SettingsPage> {
 
   void _resetToDefaults() {
     setState(() {
-      _weightUnit = 'ton';
+      _weightUnit = 'kg';
       _billPrefixController.text = 'WB';
       _billStartingNumberController.text = '1';
       _billNumberDigitsController.text = '5';

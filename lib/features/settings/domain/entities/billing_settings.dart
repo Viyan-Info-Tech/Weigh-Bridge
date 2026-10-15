@@ -27,7 +27,7 @@ class BillingSettings extends Equatable {
   final DateTime updatedAt;
 
   const BillingSettings({
-    this.weightUnit = 'ton',
+    this.weightUnit = 'kg',
     this.billPrefix = 'WB',
     this.billStartingNumber = 1,
     this.billNumberDigits = 5,

@@ -19,7 +19,7 @@ class AppSettingsDao extends DatabaseAccessor<AppDatabase>
   Future<AppSetting> _createDefaults() async {
     final id = await into(appSettings).insert(
       AppSettingsCompanion.insert(
-        weightUnit: const Value('ton'),
+        weightUnit: const Value('kg'),
         billPrefix: const Value('WB'),
         billStartingNumber: const Value(1),
         billNumberDigits: const Value(5),

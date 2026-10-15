@@ -160,6 +160,9 @@ void main() {
       expect(selectedRecord, isNotNull);
       expect(selectedRecord!.vehicleNumber, 'TN 14 L 1112');
       expect(selectedRecord!.tareKg, 8200.0);
+
+      // Unmount widget so periodic timeTimer is cancelled before test ends.
+      await tester.pumpWidget(const SizedBox());
     });
 
     test('net weight calculation: Gross 25,000 kg - Tare 8,200 kg = 16,800 kg', () {
