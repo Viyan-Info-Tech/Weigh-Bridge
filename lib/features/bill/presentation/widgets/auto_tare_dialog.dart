@@ -86,7 +86,7 @@ class AutoTareDialog extends StatefulWidget {
   }) {
     return showDialog<void>(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       barrierColor: const Color(0xFF0F172A).withValues(alpha: 0.50),
       builder: (_) => AutoTareDialog(
         records: records,

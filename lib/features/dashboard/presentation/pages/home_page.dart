@@ -505,7 +505,10 @@ class _HomePageState extends State<HomePage>
                         onTap: () => _onDrawerMenuSelected(3),
                       ),
                       const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
                         child: Divider(height: 1, color: Color(0xFFE2E8F0)),
                       ),
                       _buildDrawerMenuItem(
@@ -623,10 +626,7 @@ class _HomePageState extends State<HomePage>
 
     return MouseRegion(
       cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onTap,
-        child: rowContent,
-      ),
+      child: GestureDetector(onTap: onTap, child: rowContent),
     );
   }
 
@@ -854,6 +854,7 @@ class _HomePageState extends State<HomePage>
   }
 
   /// 3. Bottom Application Footer
+
   Widget _buildAppFooter(BuildContext context) {
     return Container(
       height: 34,
@@ -886,6 +887,23 @@ class _HomePageState extends State<HomePage>
               ),
             ],
           ),
+
+          const Expanded(
+            child: Center(
+              child: Text(
+                'Rithik - 91 6379723465',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF334155),
+                  letterSpacing: 0.2,
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
+
           InkWell(
             onTap: () => setState(() => _selectedIndex = 3),
             borderRadius: BorderRadius.circular(4),
