@@ -9,6 +9,7 @@ import 'core/licensing/license_service.dart';
 import 'core/printing/print_service.dart';
 import 'core/security/admin_password_service.dart';
 import 'core/status/app_status_cubit.dart';
+import 'features/material/domain/repositories/material_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +24,9 @@ void main() async {
           value: injection.adminPasswordService,
         ),
         RepositoryProvider.value(value: injection.billRepository),
+        RepositoryProvider<MaterialRepository>.value(
+          value: injection.materialRepository,
+        ),
         RepositoryProvider<ScaleService>.value(value: injection.scaleService),
         RepositoryProvider<PrintService>.value(value: const PrintService()),
         RepositoryProvider<LicenseService>.value(
@@ -35,6 +39,7 @@ void main() async {
           BlocProvider.value(value: injection.billBloc),
           BlocProvider.value(value: injection.settingsBloc),
           BlocProvider.value(value: injection.reportBloc),
+          BlocProvider.value(value: injection.materialBloc),
           BlocProvider<AppStatusCubit>(
             create: (context) => AppStatusCubit(
               scaleService: context.read<ScaleService>(),

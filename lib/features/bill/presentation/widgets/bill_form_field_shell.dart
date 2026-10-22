@@ -9,6 +9,7 @@ class BillFormFieldShell extends StatelessWidget {
     this.backgroundColor = Colors.white,
     this.hasError = false,
     this.isValid = false,
+    this.isFocused = false,
     required this.child,
   });
 
@@ -18,17 +19,22 @@ class BillFormFieldShell extends StatelessWidget {
   final Color backgroundColor;
   final bool hasError;
   final bool isValid;
+
+  /// Drives the blue focus border so an actively-edited field reads as current.
+  final bool isFocused;
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
     final borderColor = hasError
         ? const Color(0xFFDC2626)
+        : isFocused
+        ? const Color(0xFF0D3B82)
         : isValid
         ? const Color(0xFF16A34A)
         : const Color(0xFFCBD5E1);
 
-    final borderWidth = hasError ? 1.5 : 1.0;
+    final borderWidth = hasError || isFocused ? 1.5 : 1.0;
 
     return Container(
       height: 46,

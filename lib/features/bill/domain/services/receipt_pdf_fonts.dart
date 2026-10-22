@@ -29,6 +29,14 @@ class ReceiptPdfFonts {
   /// preview and the print button can both ask for fonts in quick succession.
   static pw.ThemeData? _cached;
 
+  /// Whether the last [load] resolved Unicode-capable fonts.
+  ///
+  /// False means Courier, which cannot draw the rupee sign; the ticket PDF
+  /// then prints `Rs.` in place of `₹` instead of emitting a glyph Courier
+  /// cannot render.
+  static bool get unicodeSupported => _unicodeSupported;
+  static bool _unicodeSupported = false;
+
   /// Returns a theme using Unicode-capable fonts when the assets are present,
   /// otherwise the original Courier theme.
   ///
@@ -38,7 +46,9 @@ class ReceiptPdfFonts {
     final cached = _cached;
     if (cached != null) return cached;
 
-    final theme = await _loadUnicodeTheme() ?? _courierTheme();
+    final unicodeTheme = await _loadUnicodeTheme();
+    final theme = unicodeTheme ?? _courierTheme();
+    _unicodeSupported = unicodeTheme != null;
     _cached = theme;
     return theme;
   }

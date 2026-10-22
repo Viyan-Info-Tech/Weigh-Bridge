@@ -319,4 +319,81 @@ void main() {
       );
     });
   });
+
+  group('ReportLocalDataSource charges', () {
+    test('maps the saved charge onto report items', () async {
+      await seedWeighment(
+        db,
+        billNumber: 'WB-00003',
+        firstWeightKg: 10000,
+        charges: 250.50,
+        createdAt: todayNoon,
+      );
+
+      final records = await source.getReportRecords(const ReportFilter());
+      final withCharge = records.firstWhere((r) => r.billNumber == 'WB-00003');
+      expect(withCharge.charges, 250.50);
+
+      // The seeded fixture rows carry no charge and stay null.
+      final legacy = records.firstWhere((r) => r.billNumber == 'WB-00001');
+      expect(legacy.charges, isNull);
+    });
+
+    test(
+      'totalCharges covers every filtered record, not just one page',
+      () async {
+        await seedWeighment(
+          db,
+          billNumber: 'WB-00003',
+          firstWeightKg: 10000,
+          charges: 100,
+          createdAt: todayNoon,
+        );
+        await seedWeighment(
+          db,
+          billNumber: 'WB-00004',
+          firstWeightKg: 12000,
+          charges: 150.50,
+          createdAt: todayNoon,
+        );
+
+        const filter = ReportFilter(datePreset: DateRangePreset.today);
+
+        // A single-row page would understate the total if the summary were
+        // derived from the loaded page.
+        final page = await source.getReportRecords(filter, limit: 1);
+        expect(page, hasLength(1));
+
+        final summary = await source.summarizeReportRecords(filter);
+        expect(summary.totalCharges, closeTo(250.50, 0.0001));
+      },
+    );
+
+    test('legacy rows without charges contribute zero to the total', () async {
+      // setUp seeds two weighments without charges.
+      final summary = await source.summarizeReportRecords(
+        const ReportFilter(datePreset: DateRangePreset.today),
+      );
+      expect(summary.totalCharges, 0);
+    });
+
+    test('respects the filter when aggregating charges', () async {
+      await seedWeighment(
+        db,
+        billNumber: 'WB-00003',
+        firstWeightKg: 10000,
+        charges: 999,
+        createdAt: todayNoon,
+      );
+
+      final summary = await source.summarizeReportRecords(
+        const ReportFilter(
+          datePreset: DateRangePreset.today,
+          searchQuery: 'WB-00001',
+        ),
+      );
+      expect(summary.totalBills, 1);
+      expect(summary.totalCharges, 0);
+    });
+  });
 }

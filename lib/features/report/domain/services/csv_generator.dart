@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 import 'package:intl/intl.dart';
 
+import '../../../../core/utils/currency_formatter.dart';
 import '../entities/report_filter.dart';
 import '../entities/weighment_report_item.dart';
 
@@ -44,7 +45,8 @@ class CsvGenerator {
 
     // Clean, standard CSV Header
     buffer.writeln(
-      'Bill No,Date & Time,Vehicle,Gross Weight,Tare Weight,Net Weight,Status',
+      'Bill No,Date & Time,Vehicle,Material,Gross Weight,Tare Weight,'
+      'Net Weight,Charges (₹),Status',
     );
 
     final dateTimeFormat = DateFormat('dd/MM/yyyy hh:mm a');
@@ -72,13 +74,22 @@ class CsvGenerator {
       // captured weight (gross or tare) is Completed; no weight is Incomplete.
       final statusFormatted = item.isCompleted ? 'Completed' : 'Incomplete';
 
+      // Charges column: the bare amount (no symbol) keeps the cell numeric for
+      // Excel; legacy rows without a charge stay empty like empty weights.
+      final chargesStr = item.charges != null
+          ? formatChargesAmount(item.charges)
+          : '';
+
       final line = [
         _escape(item.billNumber),
         _escape(dateTimeStr),
         _escape(item.vehicleNumber),
+        // Saved snapshot, e.g. `Auto - Empty`; legacy rows export empty.
+        _escape(item.material ?? ''),
         _escape(grossStr),
         _escape(tareStr),
         _escape(netStr),
+        _escape(chargesStr),
         _escape(statusFormatted),
       ].join(',');
 

@@ -124,6 +124,40 @@ class PhoneNumberFormatter extends TextInputFormatter {
   }
 }
 
+/// Keeps numeric input usable for decimal amounts such as charges.
+///
+/// Everything except digits and a single `.` is stripped as it is typed, so
+/// negative signs, letters and a second decimal point can never enter the
+/// field. At most [maxDecimalPlaces] digits are kept after the point, which
+/// matches the currency precision the database stores.
+class DecimalTextFormatter extends TextInputFormatter {
+  const DecimalTextFormatter({this.maxDecimalPlaces = 2});
+
+  final int maxDecimalPlaces;
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    var text = newValue.text.replaceAll(RegExp(r'[^0-9.]'), '');
+    final firstDot = text.indexOf('.');
+    if (firstDot != -1) {
+      // Keep only the first decimal point.
+      final whole = text.substring(0, firstDot + 1);
+      var fraction = text.substring(firstDot + 1).replaceAll('.', '');
+      if (fraction.length > maxDecimalPlaces) {
+        fraction = fraction.substring(0, maxDecimalPlaces);
+      }
+      text = '$whole$fraction';
+    }
+    return TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
+}
+
 class GSTNumberFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(

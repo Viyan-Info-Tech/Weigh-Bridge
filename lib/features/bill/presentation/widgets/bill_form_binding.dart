@@ -17,28 +17,30 @@ class BillFormResources {
     required this.tareWeightController,
     required this.remarksController,
     required this.materialController,
-    required this.descriptionController,
     required this.vehicleNumberController,
     required this.vehicleFocusNode,
     required this.typeFocusNode,
     required this.materialFocusNode,
-    required this.descriptionFocusNode,
     required this.remarksFocusNode,
     required this.grossWeightFocusNode,
     required this.tareWeightFocusNode,
+    this.chargesController,
+    this.chargesFocusNode,
   });
 
   final TextEditingController grossWeightController;
   final TextEditingController tareWeightController;
   final TextEditingController remarksController;
   final TextEditingController materialController;
-  final TextEditingController descriptionController;
   final TextEditingController vehicleNumberController;
+
+  /// Optional: only supplied when the screen wires the Charges field.
+  final TextEditingController? chargesController;
 
   final FocusNode vehicleFocusNode;
   final FocusNode typeFocusNode;
   final FocusNode materialFocusNode;
-  final FocusNode descriptionFocusNode;
+  final FocusNode? chargesFocusNode;
   final FocusNode remarksFocusNode;
   final FocusNode grossWeightFocusNode;
   final FocusNode tareWeightFocusNode;
@@ -64,18 +66,25 @@ class BillFormBinding extends StatelessWidget {
     final bloc = context.read<BillBloc>();
     final r = resources;
 
+    // `Name - Type` labels for the dropdown; the id is resolved back from the
+    // picked label so the saved bill can carry the master reference too.
+    final materialOptions = state.materialOptions
+        .map((material) => material.displayValue)
+        .toList();
+
     return BillForm(
       key: ValueKey(state.formResetRevision),
       billNumber: state.currentBillNumber,
       materialText: state.materialText,
-      descriptionText: state.descriptionText,
+      materialOptions: materialOptions,
+      chargesText: state.chargesText,
       vehicleNumber: state.vehicleNumber,
       grossWeightController: r.grossWeightController,
       tareWeightController: r.tareWeightController,
       remarksController: r.remarksController,
       materialController: r.materialController,
-      descriptionController: r.descriptionController,
       vehicleNumberController: r.vehicleNumberController,
+      chargesController: r.chargesController,
       grossWeightKg: state.grossWeightKg,
       tareWeightKg: state.tareWeightKg,
       netWeightKg: state.netWeightKg,
@@ -92,14 +101,23 @@ class BillFormBinding extends StatelessWidget {
       vehicleFocusNode: r.vehicleFocusNode,
       typeFocusNode: r.typeFocusNode,
       materialFocusNode: r.materialFocusNode,
-      descriptionFocusNode: r.descriptionFocusNode,
+      chargesFocusNode: r.chargesFocusNode,
       remarksFocusNode: r.remarksFocusNode,
       grossWeightFocusNode: r.grossWeightFocusNode,
       tareWeightFocusNode: r.tareWeightFocusNode,
       onVehicleNumberChanged: (vehicleNumber) =>
           bloc.add(VehicleNumberChanged(vehicleNumber)),
-      onMaterialChanged: (v) => bloc.add(MaterialChanged(v)),
-      onDescriptionChanged: (v) => bloc.add(DescriptionChanged(v)),
+      onMaterialChanged: (value) {
+        int? materialId;
+        for (final material in state.materialOptions) {
+          if (material.displayValue == value) {
+            materialId = material.id;
+            break;
+          }
+        }
+        bloc.add(MaterialChanged(value, materialId: materialId));
+      },
+      onChargesChanged: (v) => bloc.add(ChargesChanged(v)),
       onGrossWeightChanged: (v) => bloc.add(GrossWeightChanged(v)),
       onTareWeightChanged: (v) => bloc.add(TareWeightChanged(v)),
       onGrossWeightCommitted: (v) => bloc.add(GrossWeightCommitted(v)),
@@ -110,6 +128,7 @@ class BillFormBinding extends StatelessWidget {
       onWeightUnitChanged: (v) => bloc.add(WeightUnitChanged(v)),
       vehicleNumberError: state.vehicleNumberError,
       weightError: state.weightError,
+      chargesError: state.chargesError,
     );
   }
 }

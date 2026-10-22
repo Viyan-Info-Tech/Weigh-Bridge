@@ -9,8 +9,19 @@ class Weighment extends Equatable {
   final double? secondWeightKg;
   final String? secondWeightType;
   final double? explicitNetWeightKg;
+
+  /// Material name + vehicle type snapshot stored with the weighment
+  /// (e.g. `Auto - Empty`), or null when the operator left it empty.
   final String? material;
-  final String? description;
+
+  /// Reference to the material master row selected on the form, or null for
+  /// legacy rows / tare-only weighments. The [material] text stays the
+  /// authoritative display value so old bills never change.
+  final int? materialId;
+
+  /// Manually entered charges in rupees; null when the operator left it blank
+  /// (including all legacy rows created before this field existed).
+  final double? charges;
   final String? remarks;
   final String? mobileNumber;
   final String weightUnit;
@@ -29,7 +40,8 @@ class Weighment extends Equatable {
     double? tareWeightKg,
     double? netWeightKg,
     this.material,
-    this.description,
+    this.materialId,
+    this.charges,
     this.remarks,
     this.mobileNumber,
     this.weightUnit = 'ton',
@@ -129,7 +141,8 @@ class Weighment extends Equatable {
     secondWeightType,
     explicitNetWeightKg,
     material,
-    description,
+    materialId,
+    charges,
     mobileNumber,
     weightUnit,
     createdAt,

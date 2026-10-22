@@ -96,8 +96,9 @@ class _WeighmentSlipDialogState extends State<WeighmentSlipDialog> {
       elevation: 0,
       insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       child: Container(
-        width: 720,
-        constraints: const BoxConstraints(maxHeight: 880),
+        // Fills available width up to the designed 720px so the slip shrinks
+        // on narrow windows instead of overflowing.
+        constraints: const BoxConstraints(maxWidth: 720, maxHeight: 880),
         decoration: BoxDecoration(
           color: const Color(0xFFF1F5F9),
           borderRadius: BorderRadius.circular(16),

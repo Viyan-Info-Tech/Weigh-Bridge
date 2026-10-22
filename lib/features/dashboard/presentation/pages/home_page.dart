@@ -10,6 +10,7 @@ import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../bill/presentation/pages/bill_page.dart';
+import '../../../material/presentation/widgets/material_list_page.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
 import '../../../report/presentation/pages/report_page.dart';
 import '../../../auth/presentation/widgets/truck_logo.dart';
@@ -130,6 +131,13 @@ class _HomePageState extends State<HomePage>
                           onExit: () => _confirmLogout(context),
                         ),
                         const ReportPage(),
+                        // The materials master is only built while its own tab
+                        // is selected, so the rest of the shell never needs a
+                        // MaterialBloc. The slot itself always stays in the
+                        // list so the indices below it cannot shift.
+                        _selectedIndex == 2
+                            ? const MaterialListPage()
+                            : const SizedBox.shrink(),
                         const SettingsPage(),
                         const AboutPage(),
                       ],
@@ -486,10 +494,16 @@ class _HomePageState extends State<HomePage>
                 onTap: () => _onDrawerMenuSelected(1),
               ),
               _buildDrawerMenuItem(
-                icon: Icons.settings_rounded,
-                label: 'Settings',
+                icon: Icons.category_rounded,
+                label: 'Materials',
                 isSelected: _selectedIndex == 2,
                 onTap: () => _onDrawerMenuSelected(2),
+              ),
+              _buildDrawerMenuItem(
+                icon: Icons.settings_rounded,
+                label: 'Settings',
+                isSelected: _selectedIndex == 3,
+                onTap: () => _onDrawerMenuSelected(3),
               ),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -728,7 +742,7 @@ class _HomePageState extends State<HomePage>
             ],
           ),
           InkWell(
-            onTap: () => setState(() => _selectedIndex = 3),
+            onTap: () => setState(() => _selectedIndex = 4),
             borderRadius: BorderRadius.circular(4),
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -738,7 +752,7 @@ class _HomePageState extends State<HomePage>
                 border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
               ),
               child: const Text(
-                'v0.0.1',
+                'v3.0.0',
                 style: TextStyle(
                   fontFamily: 'PlusJakartaSans',
                   fontSize: 11,

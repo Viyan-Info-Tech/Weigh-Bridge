@@ -7,6 +7,7 @@ import 'bill_form_readonly_fields.dart';
 import 'bill_form_row.dart';
 import 'bill_form_type_selector.dart';
 import 'bill_form_weight_row.dart';
+import 'searchable_dropdown.dart';
 
 /// Industrial 2-Column Weighment Ticket Form
 /// Designed with premium tactile instrument aesthetics:
@@ -16,14 +17,22 @@ import 'bill_form_weight_row.dart';
 class BillForm extends StatefulWidget {
   final String billNumber;
   final String materialText;
-  final String descriptionText;
+
+  /// `Name - Type` options loaded from the materials master, e.g.
+  /// `Auto - Empty`. Empty means the legacy free-text field is shown.
+  final List<String> materialOptions;
   final String vehicleNumber;
   final TextEditingController grossWeightController;
   final TextEditingController tareWeightController;
   final TextEditingController remarksController;
   final TextEditingController materialController;
-  final TextEditingController descriptionController;
   final TextEditingController? vehicleNumberController;
+
+  /// Controller for the optional Charges amount. Optional so existing
+  /// call sites and tests that don't exercise charges still compile.
+  final TextEditingController? chargesController;
+  final String chargesText;
+  final String? chargesError;
   final double grossWeightKg;
   final double tareWeightKg;
   final double netWeightKg;
@@ -38,14 +47,14 @@ class BillForm extends StatefulWidget {
   final FocusNode? vehicleFocusNode;
   final FocusNode? typeFocusNode;
   final FocusNode? materialFocusNode;
-  final FocusNode? descriptionFocusNode;
+  final FocusNode? chargesFocusNode;
   final FocusNode? remarksFocusNode;
   final FocusNode? grossWeightFocusNode;
   final FocusNode? tareWeightFocusNode;
 
   final ValueChanged<String> onVehicleNumberChanged;
   final ValueChanged<String> onMaterialChanged;
-  final ValueChanged<String> onDescriptionChanged;
+  final ValueChanged<String>? onChargesChanged;
   final ValueChanged<String> onGrossWeightChanged;
   final ValueChanged<String> onTareWeightChanged;
   final ValueChanged<String>? onGrossWeightCommitted;
@@ -62,14 +71,15 @@ class BillForm extends StatefulWidget {
     super.key,
     required this.billNumber,
     this.materialText = '',
-    this.descriptionText = '',
+    this.materialOptions = const [],
+    this.chargesText = '',
     this.vehicleNumber = '',
     required this.grossWeightController,
     required this.tareWeightController,
     required this.remarksController,
     required this.materialController,
-    required this.descriptionController,
     this.vehicleNumberController,
+    this.chargesController,
     this.grossWeightKg = 0,
     this.tareWeightKg = 0,
     required this.netWeightKg,
@@ -83,13 +93,13 @@ class BillForm extends StatefulWidget {
     this.vehicleFocusNode,
     this.typeFocusNode,
     this.materialFocusNode,
-    this.descriptionFocusNode,
+    this.chargesFocusNode,
     this.remarksFocusNode,
     this.grossWeightFocusNode,
     this.tareWeightFocusNode,
     required this.onVehicleNumberChanged,
     required this.onMaterialChanged,
-    required this.onDescriptionChanged,
+    this.onChargesChanged,
     required this.onGrossWeightChanged,
     required this.onTareWeightChanged,
     this.onGrossWeightCommitted,
@@ -100,6 +110,7 @@ class BillForm extends StatefulWidget {
     this.onWeightUnitChanged,
     this.vehicleNumberError,
     this.weightError,
+    this.chargesError,
   });
 
   @override
@@ -149,10 +160,20 @@ class _BillFormState extends State<BillForm> {
     );
   }
 
+  bool _materialFocused = false;
+
+  void _handleMaterialFocusChange() {
+    final focused = widget.materialFocusNode?.hasFocus ?? false;
+    if (focused != _materialFocused) {
+      setState(() => _materialFocused = focused);
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _selectedType = widget.selectedType;
+    widget.materialFocusNode?.addListener(_handleMaterialFocusChange);
     if (widget.grossCapturedAt != null) {
       _grossDate = widget.grossCapturedAt!;
       _grossTime = TimeOfDay.fromDateTime(widget.grossCapturedAt!);
@@ -169,6 +190,12 @@ class _BillFormState extends State<BillForm> {
 
     if (widget.selectedType != oldWidget.selectedType) {
       _selectedType = widget.selectedType;
+    }
+
+    if (widget.materialFocusNode != oldWidget.materialFocusNode) {
+      oldWidget.materialFocusNode?.removeListener(_handleMaterialFocusChange);
+      widget.materialFocusNode?.addListener(_handleMaterialFocusChange);
+      _materialFocused = widget.materialFocusNode?.hasFocus ?? false;
     }
 
     if (widget.grossCapturedAt != oldWidget.grossCapturedAt) {
@@ -193,6 +220,7 @@ class _BillFormState extends State<BillForm> {
 
   @override
   void dispose() {
+    widget.materialFocusNode?.removeListener(_handleMaterialFocusChange);
     _scrollController.dispose();
     super.dispose();
   }
@@ -331,17 +359,17 @@ class _BillFormState extends State<BillForm> {
         ),
         SizedBox(height: fieldGap),
         BillFormRow(
-          label: 'DESCRIPTION',
-          labelWidth: labelWidth,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          child: _buildDescriptionField(),
-        ),
-        SizedBox(height: fieldGap),
-        BillFormRow(
           label: 'CONTAINER NO',
           labelWidth: labelWidth,
           crossAxisAlignment: CrossAxisAlignment.start,
           child: _buildContainerNoField(),
+        ),
+        SizedBox(height: fieldGap),
+        BillFormRow(
+          label: 'CHARGES',
+          labelWidth: labelWidth,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          child: _buildChargesField(),
         ),
       ],
     );
@@ -669,73 +697,36 @@ class _BillFormState extends State<BillForm> {
     );
   }
 
-  /// 3. MATERIAL (free-text input, e.g. Sand, Stone, Gravel).
+  /// 3. MATERIAL (database-backed dropdown of `Name - Type` options).
+  ///
+  /// The field is selection-only (`enableSearch: false`): the operator picks a
+  /// saved material and can never type an arbitrary name. When no materials
+  /// exist yet, the popup explains where to add them. Legacy free-text values
+  /// already saved on a weighment still display here via [BillForm.materialText].
   Widget _buildMaterialField() {
     return BillFormFieldShell(
       prefixIcon: Icons.inventory_2_outlined,
-      child: TextField(
+      isFocused: _materialFocused,
+      child: SearchableDropdown<String>(
         key: const Key('bill_material_field'),
-        controller: widget.materialController,
+        label: 'MATERIAL',
+        showLabel: false,
+        borderless: true,
+        enableSearch: false,
+        emptyItemsMessage:
+            'No materials available. Add a material in Material Management.',
+        items: widget.materialOptions,
+        selectedItem: widget.materialText.isEmpty ? null : widget.materialText,
+        itemLabel: (value) => value,
         focusNode: widget.materialFocusNode,
+        nextFocusNode: widget.remarksFocusNode,
+        hintText: 'Select Material',
         onChanged: widget.onMaterialChanged,
-        onSubmitted: (_) => widget.descriptionFocusNode?.requestFocus(),
-        textCapitalization: TextCapitalization.words,
-        style: const TextStyle(
-          fontFamily: 'PlusJakartaSans',
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-          color: Color(0xFF0F172A),
-        ),
-        decoration: const InputDecoration(
-          border: InputBorder.none,
-          isDense: true,
-          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          hintText: 'Enter Material Name',
-          hintStyle: TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            color: Color(0xFF94A3B8),
-            fontSize: 15,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
       ),
     );
   }
 
-  /// 4. DESCRIPTION (free-text input).
-  Widget _buildDescriptionField() {
-    return BillFormFieldShell(
-      prefixIcon: Icons.description_outlined,
-      child: TextField(
-        key: const Key('bill_description_field'),
-        controller: widget.descriptionController,
-        focusNode: widget.descriptionFocusNode,
-        onChanged: widget.onDescriptionChanged,
-        onSubmitted: (_) => widget.remarksFocusNode?.requestFocus(),
-        textCapitalization: TextCapitalization.sentences,
-        style: const TextStyle(
-          fontFamily: 'PlusJakartaSans',
-          fontSize: 15,
-          fontWeight: FontWeight.w600,
-          color: Color(0xFF0F172A),
-        ),
-        decoration: const InputDecoration(
-          border: InputBorder.none,
-          isDense: true,
-          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          hintText: 'Enter Description',
-          hintStyle: TextStyle(
-            fontFamily: 'PlusJakartaSans',
-            color: Color(0xFF94A3B8),
-            fontSize: 15,
-            fontWeight: FontWeight.w400,
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// 5. CONTAINER NO
+  /// 4. CONTAINER NO
   Widget _buildContainerNoField() {
     return BillFormFieldShell(
       prefixIcon: Icons.view_in_ar_outlined,
@@ -743,7 +734,9 @@ class _BillFormState extends State<BillForm> {
         controller: widget.remarksController,
         focusNode: widget.remarksFocusNode,
         onChanged: widget.onRemarksChanged,
-        onSubmitted: (_) => widget.grossWeightFocusNode?.requestFocus(),
+        onSubmitted: (_) => widget.chargesFocusNode != null
+            ? widget.chargesFocusNode!.requestFocus()
+            : widget.grossWeightFocusNode?.requestFocus(),
         style: const TextStyle(
           fontFamily: 'PlusJakartaSans',
           fontSize: 15,
@@ -763,6 +756,63 @@ class _BillFormState extends State<BillForm> {
           ),
         ),
       ),
+    );
+  }
+
+  /// 5. CHARGES (optional, manually entered amount in rupees).
+  ///
+  /// The field is deliberately free of any auto-calculation: the operator
+  /// types the exact amount to bill. Empty means no charge. Input is
+  /// restricted to digits with at most two decimals by
+  /// [DecimalTextFormatter]; save-time validation is the final gate.
+  Widget _buildChargesField() {
+    final hasError = widget.chargesError != null;
+    final isValid = widget.chargesText.trim().isNotEmpty && !hasError;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        BillFormFieldShell(
+          prefixIcon: Icons.currency_rupee_outlined,
+          hasError: hasError,
+          isValid: isValid,
+          child: TextField(
+            key: const Key('bill_charges_field'),
+            controller: widget.chargesController,
+            focusNode: widget.chargesFocusNode,
+            onChanged: widget.onChargesChanged,
+            onSubmitted: (_) => widget.grossWeightFocusNode?.requestFocus(),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+              DecimalTextFormatter(),
+            ],
+            style: const TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF0F172A),
+            ),
+            decoration: const InputDecoration(
+              border: InputBorder.none,
+              isDense: true,
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 12,
+              ),
+              hintText: 'Enter Charges',
+              hintStyle: TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                color: Color(0xFF94A3B8),
+                fontSize: 15,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+          ),
+        ),
+        _buildFieldError(widget.chargesError),
+      ],
     );
   }
 }

@@ -8,11 +8,7 @@ import 'bill_shortcuts.dart';
 import '../bloc/bill_bloc.dart';
 import '../bloc/bill_event.dart';
 import '../bloc/bill_state.dart';
-import '../../domain/entities/vehicle_tare_record.dart';
-import '../../domain/repositories/vehicle_tare_repository.dart';
 import '../widgets/live_weight_banner.dart';
-import '../widgets/auto_tare_dialog.dart';
-import '../widgets/auto_tare_indicator.dart';
 import '../widgets/bill_form_binding.dart';
 import '../widgets/recent_bills_panel.dart';
 import '../widgets/weighment_action_bar.dart';
@@ -41,8 +37,8 @@ class BillPageState extends State<BillPage> {
   late final TextEditingController _tareWeightController;
   late final TextEditingController _remarksController;
   late final TextEditingController _materialController;
-  late final TextEditingController _descriptionController;
   late final TextEditingController _vehicleNumberController;
+  late final TextEditingController _chargesController;
 
   /// Controllers and focus nodes shared with the form.
   late final BillFormResources _resources;
@@ -50,14 +46,13 @@ class BillPageState extends State<BillPage> {
   late final FocusNode _vehicleFocusNode;
   late final FocusNode _typeFocusNode;
   late final FocusNode _materialFocusNode;
-  late final FocusNode _descriptionFocusNode;
+  late final FocusNode _chargesFocusNode;
   late final FocusNode _remarksFocusNode;
   late final FocusNode _grossWeightFocusNode;
   late final FocusNode _tareWeightFocusNode;
   late final FocusNode _searchFocusNode;
   bool _didRequestInitialFocus = false;
   bool _isReprintDialogOpen = false;
-  bool _isAutoTareDialogOpen = false;
   bool _isCancelDialogOpen = false;
   StreamSubscription<SettingsState>? _settingsSubscription;
   StreamSubscription<ScaleReading>? _scaleReadingSubscription;
@@ -88,7 +83,7 @@ class BillPageState extends State<BillPage> {
 
   bool get _isModalOpen {
     if (!mounted) return true;
-    if (_isCancelDialogOpen || _isReprintDialogOpen || _isAutoTareDialogOpen) {
+    if (_isCancelDialogOpen || _isReprintDialogOpen) {
       return true;
     }
     final modalRoute = ModalRoute.of(context);
@@ -107,13 +102,13 @@ class BillPageState extends State<BillPage> {
     _tareWeightController = TextEditingController();
     _remarksController = TextEditingController();
     _materialController = TextEditingController();
-    _descriptionController = TextEditingController();
     _vehicleNumberController = TextEditingController();
+    _chargesController = TextEditingController();
 
     _vehicleFocusNode = FocusNode(debugLabel: 'vehicleFocusNode');
     _typeFocusNode = FocusNode(debugLabel: 'weightTypeFocusNode');
     _materialFocusNode = FocusNode(debugLabel: 'materialFocusNode');
-    _descriptionFocusNode = FocusNode(debugLabel: 'descriptionFocusNode');
+    _chargesFocusNode = FocusNode(debugLabel: 'chargesFocusNode');
     _remarksFocusNode = FocusNode(debugLabel: 'remarksFocusNode');
     _grossWeightFocusNode = FocusNode(debugLabel: 'grossWeightFocusNode');
     _tareWeightFocusNode = FocusNode(debugLabel: 'tareWeightFocusNode');
@@ -123,12 +118,12 @@ class BillPageState extends State<BillPage> {
       tareWeightController: _tareWeightController,
       remarksController: _remarksController,
       materialController: _materialController,
-      descriptionController: _descriptionController,
       vehicleNumberController: _vehicleNumberController,
+      chargesController: _chargesController,
       vehicleFocusNode: _vehicleFocusNode,
       typeFocusNode: _typeFocusNode,
       materialFocusNode: _materialFocusNode,
-      descriptionFocusNode: _descriptionFocusNode,
+      chargesFocusNode: _chargesFocusNode,
       remarksFocusNode: _remarksFocusNode,
       grossWeightFocusNode: _grossWeightFocusNode,
       tareWeightFocusNode: _tareWeightFocusNode,
@@ -207,13 +202,13 @@ class BillPageState extends State<BillPage> {
     _tareWeightController.dispose();
     _remarksController.dispose();
     _materialController.dispose();
-    _descriptionController.dispose();
     _vehicleNumberController.dispose();
+    _chargesController.dispose();
 
     _vehicleFocusNode.dispose();
     _typeFocusNode.dispose();
     _materialFocusNode.dispose();
-    _descriptionFocusNode.dispose();
+    _chargesFocusNode.dispose();
     _remarksFocusNode.dispose();
     _grossWeightFocusNode.dispose();
     _tareWeightFocusNode.dispose();
@@ -226,8 +221,8 @@ class BillPageState extends State<BillPage> {
     _tareWeightController.clear();
     _remarksController.clear();
     _materialController.clear();
-    _descriptionController.clear();
     _vehicleNumberController.clear();
+    _chargesController.clear();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         requestFocus();
@@ -241,7 +236,7 @@ class BillPageState extends State<BillPage> {
     _setControllerText(_vehicleNumberController, state.vehicleNumber);
     _setControllerText(_remarksController, state.remarksText);
     _setControllerText(_materialController, state.materialText);
-    _setControllerText(_descriptionController, state.descriptionText);
+    _setControllerText(_chargesController, state.chargesText);
   }
 
   void _setControllerText(TextEditingController controller, String text) {
@@ -270,141 +265,6 @@ class BillPageState extends State<BillPage> {
     context.read<BillBloc>().add(
       CaptureLiveWeight(type: state.selectedWeightType),
     );
-    if (!state.hasAutoTare &&
-        state.selectedWeightType.toUpperCase() == 'GROSS') {
-      // Never fall back to yesterday's tare: tell the operator explicitly.
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _notifyAutoTareNotSet();
-      });
-    }
-  }
-
-  /// Today's auto tare is missing. Never fall back to yesterday's value:
-  /// tell the operator instead. This is a non-blocking notice so an ongoing
-  /// weighment (manual tare, second weighing) is never interrupted.
-  void _notifyAutoTareNotSet() {
-    final messenger = ScaffoldMessenger.of(context);
-    messenger
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: const Text(
-            "Auto Tare Not Set. Configure today's Auto Tare before applying it "
-            "with F3.",
-            style: TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          backgroundColor: const Color(0xFF0D3B82),
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 4),
-          action: SnackBarAction(
-            label: 'Set Auto Tare',
-            textColor: Colors.white,
-            onPressed: _openAutoTareDialog,
-          ),
-        ),
-      );
-  }
-
-  /// F3 / AUTO TARE button: copies the day's configured common tare into the
-  /// weighment currently being edited and stamps the tare capture time.
-  ///
-  /// When nothing is configured there is no value to apply, so the auto tare
-  /// configuration popup opens instead of failing silently.
-  Future<void> _applyAutoTareToBill() async {
-    final bloc = context.read<BillBloc>();
-    if (!bloc.state.hasAutoTare) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Auto Tare is not configured. Enter today\'s Auto Tare to apply it.',
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            backgroundColor: Color(0xFF0D3B82),
-            behavior: SnackBarBehavior.floating,
-            duration: Duration(seconds: 3),
-          ),
-        );
-      await _openAutoTareDialog();
-      return;
-    }
-
-    bloc.add(const ApplyAutoTareToBill());
-  }
-
-  /// Opens the Auto Tare popup with the stored per-vehicle tare records.
-  /// Reached by tapping the AUTO TARE status control and by pressing F3
-  /// while no auto tare is configured.
-  Future<void> _openAutoTareDialog() async {
-    if (_isAutoTareDialogOpen) return;
-    _isAutoTareDialogOpen = true;
-    final bloc = context.read<BillBloc>();
-    try {
-      // Load the registry first so the popup table shows fresh data.
-      final loadCompleter = Completer<void>();
-      bloc.add(LoadVehicleTares(completer: loadCompleter));
-      await loadCompleter.future;
-      if (!mounted) return;
-      await AutoTareDialog.show(
-        context,
-        records: bloc.state.vehicleTareRecords,
-        liveScaleWeightKg: bloc.state.liveScaleWeightKg,
-        isScaleStable: bloc.state.isScaleStable,
-        isScaleMotion: bloc.state.isScaleMotion,
-        isScaleOverload: bloc.state.isScaleOverload,
-        weightUnit: bloc.state.weightUnit,
-        onAdd: (vehicleNumber, tareKg) {
-          final completer = Completer<VehicleTareRecord>();
-          bloc.add(
-            SaveVehicleTare(
-              vehicleNumber,
-              tareKg,
-              completer: completer,
-            ),
-          );
-          return completer.future;
-        },
-        onDelete: (vehicleNumber) {
-          final completer = Completer<void>();
-          bloc.add(
-            DeleteVehicleTare(
-              vehicleNumber,
-              completer: completer,
-            ),
-          );
-          return completer.future;
-        },
-        onSelect: (record) {
-          final isTon = bloc.state.weightUnit.toLowerCase() == 'ton';
-          _vehicleNumberController.text = record.vehicleNumber;
-          _tareWeightController.text = isTon
-              ? (record.tareKg / 1000).toStringAsFixed(3)
-              : record.tareKg.toStringAsFixed(0);
-          bloc.add(VehicleNumberChanged(record.vehicleNumber));
-          bloc.add(TareWeightChanged(_tareWeightController.text));
-        },
-        onUpdate: (id, vehicleNumber, tareKg) async {
-          final repo = bloc.vehicleTareRepository;
-          if (repo is! VehicleTareEditableRepository) throw Exception('Vehicle tare storage is unavailable.');
-          final saved = await repo.updateVehicleTare(
-            id: id, vehicleNumber: vehicleNumber, tareKg: tareKg,
-          );
-          final loadCompleter = Completer<void>();
-          bloc.add(LoadVehicleTares(completer: loadCompleter));
-          await loadCompleter.future;
-          return saved;
-        },
-      );
-    } finally {
-      _isAutoTareDialogOpen = false;
-    }
   }
 
   void _showKeyboardMessage(String message) {
@@ -431,8 +291,8 @@ class BillPageState extends State<BillPage> {
       _vehicleFocusNode,
       _typeFocusNode,
       _materialFocusNode,
-      _descriptionFocusNode,
       _remarksFocusNode,
+      _chargesFocusNode,
     ];
     final currentFocus = FocusManager.instance.primaryFocus;
     final currentIndex = currentFocus == null
@@ -467,6 +327,8 @@ class BillPageState extends State<BillPage> {
       if (!mounted) return;
       if (errors.containsKey('vehicleNumber')) {
         _vehicleFocusNode.requestFocus();
+      } else if (errors.containsKey('charges')) {
+        _chargesFocusNode.requestFocus();
       } else if (errors.containsKey('weight')) {
         _grossWeightFocusNode.requestFocus();
       }
@@ -480,12 +342,12 @@ class BillPageState extends State<BillPage> {
         state.tareWeightKg > 0 ||
         state.remarksText.isNotEmpty ||
         state.materialText.isNotEmpty ||
-        state.descriptionText.isNotEmpty ||
+        state.chargesText.isNotEmpty ||
         _grossWeightController.text.isNotEmpty ||
         _tareWeightController.text.isNotEmpty ||
         _remarksController.text.isNotEmpty ||
         _materialController.text.isNotEmpty ||
-        _descriptionController.text.isNotEmpty;
+        _chargesController.text.isNotEmpty;
   }
 
   void _onReprintPressed(BuildContext context, BillState state) {
@@ -546,9 +408,7 @@ class BillPageState extends State<BillPage> {
           prev.vehicleNumber != curr.vehicleNumber ||
           prev.remarksText != curr.remarksText ||
           prev.materialText != curr.materialText ||
-          prev.descriptionText != curr.descriptionText ||
-          prev.autoTareKg != curr.autoTareKg ||
-          prev.autoTareDate != curr.autoTareDate ||
+          prev.chargesText != curr.chargesText ||
           (curr.status == BillScreenStatus.printing &&
               curr.printReceiptBill != null),
       listener: (context, state) {
@@ -680,22 +540,6 @@ class BillPageState extends State<BillPage> {
                               // 1. Camera feeds + live digital weight display.
                               const LiveWeightBanner(),
 
-                              // Auto tare status; tapping it opens the
-                              // configuration popup.
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  AutoTareIndicator(
-                                    autoTareKg: state.autoTareKg,
-                                    weightUnit: state.weightUnit,
-                                    autoTareDate:
-                                        state.autoTareSavedAt ??
-                                        state.autoTareDate,
-                                    onTap: _openAutoTareDialog,
-                                  ),
-                                ],
-                              ),
-
                               const SizedBox(height: 10),
 
                               // 2. Main 2-Section Form (details + displays)
@@ -769,7 +613,6 @@ class BillPageState extends State<BillPage> {
       onSave: () => _saveTicket(context, context.read<BillBloc>().state),
       onCaptureLiveWeight: _handleF1Workflow,
       onManualTare: _focusTareWeightInput,
-      onAutoTare: _applyAutoTareToBill,
       onReprint: () =>
           _onReprintPressed(context, context.read<BillBloc>().state),
       onExit: widget.onExit,
@@ -786,7 +629,6 @@ class BillPageState extends State<BillPage> {
       onSave: () => _saveTicket(context, context.read<BillBloc>().state),
       onCaptureLiveWeight: _handleF1Workflow,
       onManualTare: _focusTareWeightInput,
-      onAutoTare: _applyAutoTareToBill,
       onReprint: () =>
           _onReprintPressed(context, context.read<BillBloc>().state),
       onExit: widget.onExit,
@@ -814,15 +656,6 @@ class BillPageState extends State<BillPage> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const LiveWeightBanner(),
-        Align(
-          alignment: Alignment.centerRight,
-          child: AutoTareIndicator(
-            autoTareKg: state.autoTareKg,
-            weightUnit: state.weightUnit,
-            autoTareDate: state.autoTareSavedAt ?? state.autoTareDate,
-            onTap: _openAutoTareDialog,
-          ),
-        ),
         const SizedBox(height: 10),
         if (expandForm) Expanded(child: form) else form,
         const SizedBox(height: 10),
@@ -865,7 +698,6 @@ class BillPageState extends State<BillPage> {
       onCancel: () => _onCancelPressed(context, state),
       onRegisterWeight: _handleF1Workflow,
       onManualTare: _focusTareWeightInput,
-      onAutoTare: _applyAutoTareToBill,
       onReprint: () => _onReprintPressed(context, state),
     );
   }

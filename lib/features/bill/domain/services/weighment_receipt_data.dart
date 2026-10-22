@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 
+import '../../../../core/utils/currency_formatter.dart';
 import '../../../settings/domain/entities/billing_settings.dart';
 import '../entities/weighment.dart';
 import 'receipt_weight_resolver.dart';
@@ -75,8 +76,14 @@ class WeighmentReceiptData {
   bool get hasMaterial =>
       bill.material != null && bill.material!.trim().isNotEmpty;
 
-  bool get hasDescription =>
-      bill.description != null && bill.description!.trim().isNotEmpty;
+  /// True when the weighment carries a manually entered charge.
+  ///
+  /// Legacy rows (saved before the Charges feature) have a null charge and
+  /// simply omit the row rather than printing a placeholder.
+  bool get hasCharges => bill.charges != null;
+
+  /// Charges formatted as `₹ 250.50` from the shared currency formatter.
+  String get chargesText => formatCharges(bill.charges);
 
   bool get hasFooterNote => settings.showFooterNote;
 
@@ -123,11 +130,6 @@ class WeighmentReceiptData {
       (bill.material == null || bill.material!.trim().isEmpty)
       ? '--'
       : bill.material!.trim();
-
-  String get descriptionText =>
-      (bill.description == null || bill.description!.trim().isEmpty)
-      ? '--'
-      : bill.description!.trim();
 
   String get contactPhone => bill.mobileNumber ?? '';
 

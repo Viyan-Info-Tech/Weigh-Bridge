@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/utils/currency_formatter.dart';
 import '../../domain/entities/weighment.dart';
 
 /// A single weighment ticket rendered as a card inside the recent bills
@@ -229,6 +230,15 @@ class RecentBillCard extends StatelessWidget {
                   isBold: true,
                   textColor: const Color(0xFF0D3B82),
                 ),
+                if (bill.charges != null) ...[
+                  _buildVerticalLine(),
+                  _buildWeightCell(
+                    'Charges',
+                    formatCharges(bill.charges),
+                    isBold: true,
+                    textColor: const Color(0xFF0F172A),
+                  ),
+                ],
               ],
             ),
           ),

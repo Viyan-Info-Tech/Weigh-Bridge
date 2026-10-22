@@ -5,7 +5,7 @@ enum WeighmentActionButtonStyle { primary, danger, neutral }
 
 /// Bottom action bar for the weighment screen.
 ///
-/// Order: SAVE, CANCEL, REGISTER WEIGHT, MANUAL TARE, AUTO TARE, RE-PRINT.
+/// Order: SAVE, CANCEL, REGISTER WEIGHT, MANUAL TARE, RE-PRINT.
 /// Each button renders an icon badge, a label, and an optional keycap showing
 /// its shortcut.
 class WeighmentActionBar extends StatelessWidget {
@@ -16,7 +16,6 @@ class WeighmentActionBar extends StatelessWidget {
     required this.onCancel,
     required this.onRegisterWeight,
     required this.onManualTare,
-    required this.onAutoTare,
     required this.onReprint,
   });
 
@@ -25,7 +24,6 @@ class WeighmentActionBar extends StatelessWidget {
   final VoidCallback onCancel;
   final VoidCallback onRegisterWeight;
   final VoidCallback onManualTare;
-  final VoidCallback onAutoTare;
   final VoidCallback onReprint;
 
   @override
@@ -86,17 +84,7 @@ class WeighmentActionBar extends StatelessWidget {
             accentBgColor: const Color(0xFFE0F2FE),
             onTap: isSaving ? null : onManualTare,
           ),
-          // 5. F3: AUTO TARE (apply the day's saved common tare to this bill)
-          WeighmentActionButton(
-            icon: Icons.monitor_weight_rounded,
-            label: 'AUTO TARE',
-            shortcut: 'F3',
-            tooltip: "Apply today's saved Auto Tare to this weighment",
-            accentColor: const Color(0xFF0891B2),
-            accentBgColor: const Color(0xFFE0F7FA),
-            onTap: isSaving ? null : onAutoTare,
-          ),
-          // 6. F4: RE-PRINT
+          // 5. F4: RE-PRINT
           WeighmentActionButton(
             icon: Icons.print_rounded,
             label: 'RE-PRINT',

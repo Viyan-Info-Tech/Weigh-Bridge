@@ -35,7 +35,8 @@ class BillLocalDataSource {
       secondWeightType: Value(weighment.secondWeightType),
       netWeightKg: Value(weighment.netWeightKg),
       material: Value(weighment.material),
-      description: Value(weighment.description),
+      materialId: Value(weighment.materialId),
+      charges: Value(weighment.charges),
       remarks: Value(weighment.remarks),
       mobileNumber: Value(weighment.mobileNumber),
       weightUnit: Value(weighment.weightUnit),
@@ -60,7 +61,8 @@ class BillLocalDataSource {
         secondWeightType: Value(weighment.secondWeightType),
         netWeightKg: Value(weighment.netWeightKg),
         material: Value(weighment.material),
-        description: Value(weighment.description),
+        materialId: Value(weighment.materialId),
+        charges: Value(weighment.charges),
         remarks: Value(weighment.remarks),
         mobileNumber: Value(weighment.mobileNumber),
         weightUnit: Value(weighment.weightUnit),
@@ -141,8 +143,9 @@ class BillLocalDataSource {
       secondWeightKg: secondWeight,
       secondWeightType: secondType,
       netWeightKg: (record.netWeightKg as num?)?.toDouble(),
-      material: _readOptionalString(record, 'material'),
-      description: _readOptionalString(record, 'description'),
+      material: _readMaterial(record),
+      materialId: _readMaterialId(record),
+      charges: _readCharges(record),
       remarks: record.remarks as String?,
       mobileNumber: record.mobileNumber as String?,
       weightUnit: unit,
@@ -151,18 +154,34 @@ class BillLocalDataSource {
     );
   }
 
-  /// Reads a nullable string column that may not exist on databases created
-  /// before the Material/Description migration (schema 30).
-  String? _readOptionalString(dynamic record, String name) {
+  /// Reads the optional `material` column, which may not exist on databases
+  /// created before the schema-30 migration.
+  String? _readMaterial(dynamic record) {
+    // Drift data classes expose columns as getters; use a dynamic read so
+    // pre-migration rows (or hand-built fakes without the field) yield null
+    // instead of throwing.
     try {
-      final value = (record as dynamic);
-      // Drift data classes expose columns as getters; use a dynamic read so
-      // pre-migration rows (or hand-built fakes without the field) yield null
-      // instead of throwing.
-      if (name == 'material') {
-        return (value.material as String?);
-      }
-      return (value.description as String?);
+      return (record as dynamic).material as String?;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Reads the optional `charges` column, which may not exist on databases
+  /// created before the schema-32 migration (legacy rows store NULL).
+  double? _readCharges(dynamic record) {
+    try {
+      return ((record as dynamic).charges as num?)?.toDouble();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Reads the optional `material_id` column, which may not exist on
+  /// databases created before the schema-33 migration.
+  int? _readMaterialId(dynamic record) {
+    try {
+      return (record as dynamic).materialId as int?;
     } catch (_) {
       return null;
     }

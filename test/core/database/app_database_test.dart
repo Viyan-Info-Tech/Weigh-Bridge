@@ -9,10 +9,10 @@ import 'package:weighbridge/core/database/app_database.dart';
 import '../../support/test_database.dart';
 
 void main() {
-  test('schema version is 31', () {
+  test('schema version is 33', () {
     final db = createInMemoryDatabase();
     addTearDown(db.close);
-    expect(db.schemaVersion, 31);
+    expect(db.schemaVersion, 33);
   });
 
   test('onCreate creates all application tables', () async {
@@ -22,8 +22,6 @@ void main() {
         'weighments',
         'app_settings',
         'scale_settings',
-        'auto_tare_settings',
-        'vehicle_tare_records',
         'admin_credentials',
       ];
       for (final table in tables) {
@@ -43,16 +41,10 @@ void main() {
   });
 
   test(
-    'onCreate does not create customer, material or vehicle tables',
+    'onCreate does not create customer or vehicle tables but creates materials',
     () async {
       await withDatabase((db) async {
-        for (final table in [
-          'customers',
-          'materials',
-          'vehicles',
-          'vehicle_types',
-          'parties',
-        ]) {
+        for (final table in ['customers', 'vehicles', 'vehicle_types', 'parties']) {
           final rows = await db
               .customSelect(
                 "SELECT name FROM sqlite_master WHERE type='table' AND name = ?",
@@ -61,18 +53,26 @@ void main() {
               .get();
           expect(rows, isEmpty, reason: 'table $table must not exist');
         }
+        // The materials master is part of the current schema.
+        final materialsRows = await db
+            .customSelect(
+              "SELECT name FROM sqlite_master WHERE type='table' AND name = 'materials'",
+            )
+            .get();
+        expect(materialsRows, isNotEmpty, reason: 'table materials should exist');
       });
     },
   );
 
-  test('fresh weighments table has no customer or material columns', () async {
+  test('fresh weighments table has no customer column but has material_id', () async {
     await withDatabase((db) async {
       final cols = await db
           .customSelect("SELECT name FROM pragma_table_info('weighments')")
           .get();
       final names = cols.map((r) => r.data['name'] as String).toSet();
       expect(names, isNot(contains('customer_id')));
-      expect(names, isNot(contains('material_id')));
+      // materialId is the master reference for the material snapshot.
+      expect(names, contains('material_id'));
       expect(names, isNot(contains('party_id')));
       expect(
         names,
@@ -82,50 +82,24 @@ void main() {
           'first_weight_kg',
           'mobile_number',
           'weight_unit',
+          'charges',
         ]),
       );
     });
   });
 
-  test('fresh vehicle_tare_records table stores one tare per vehicle',
-      () async {
+  test('fresh weighments table charges column is nullable', () async {
     await withDatabase((db) async {
       final cols = await db
-          .customSelect(
-            "SELECT name FROM pragma_table_info('vehicle_tare_records')",
-          )
+          .customSelect("SELECT * FROM pragma_table_info('weighments')")
           .get();
-      final names = cols.map((r) => r.data['name'] as String).toSet();
-      expect(
-        names,
-        containsAll(<String>[
-          'vehicle_number',
-          'tare_kg',
-          'created_at',
-          'updated_at',
-        ]),
+      final chargesCol = cols.firstWhere(
+        (r) => r.data['name'] == 'charges',
+        orElse: () => throw StateError('charges column missing'),
       );
-
-      final record = await db.vehicleTareRecordsDao.upsert(
-        vehicleNumber: 'TN14L1112',
-        tareKg: 8200,
-      );
-      expect(record.vehicleNumber, 'TN14L1112');
-      expect(record.tareKg, 8200);
-
-      final updated = await db.vehicleTareRecordsDao.upsert(
-        vehicleNumber: 'TN14L1112',
-        tareKg: 8300,
-      );
-      expect(updated.tareKg, 8300);
-      final rows = await db.vehicleTareRecordsDao.getAllOrdered();
-      expect(rows, hasLength(1));
-
-      await db.vehicleTareRecordsDao.deleteByVehicleNumber('TN14L1112');
-      expect(
-        await db.vehicleTareRecordsDao.getAllOrdered(),
-        isEmpty,
-      );
+      expect(chargesCol.data['type'], 'REAL');
+      expect(chargesCol.data['notnull'], 0);
+      expect(chargesCol.data['dflt_value'], isNull);
     });
   });
 
@@ -526,7 +500,7 @@ CREATE TABLE app_settings (
     }
 
     test(
-      'backfills vehicle_number and drops removed-module tables/columns',
+      'backfills vehicle_number and drops removed modules but restores materials',
       () async {
         final sqlite = await createV14Database();
         final db = AppDatabase.forTesting(sqlite);
@@ -539,11 +513,12 @@ CREATE TABLE app_settings (
         final orphan = await db.billDao.getWeighmentByBillNumber('WB-00002');
         expect(orphan!.vehicleNumber, 'VEHICLE #99');
 
+        // The genuinely removed masters are dropped. The material master was
+        // temporarily removed at v29 but is restored by v33, so it must exist.
         for (final table in [
           'vehicles',
           'vehicle_types',
           'customers',
-          'materials',
           'parties',
         ]) {
           final rows = await db
@@ -555,13 +530,21 @@ CREATE TABLE app_settings (
           expect(rows, isEmpty, reason: 'table $table should be dropped');
         }
 
+        final materialsRows = await db
+            .customSelect(
+              "SELECT name FROM sqlite_master WHERE type='table' AND name = 'materials'",
+            )
+            .get();
+        expect(materialsRows, isNotEmpty, reason: 'materials master restored');
+
         final cols = await db
             .customSelect("SELECT name FROM pragma_table_info('weighments')")
             .get();
         final names = cols.map((r) => r.data['name'] as String).toSet();
         expect(names, isNot(contains('vehicle_id')));
         expect(names, isNot(contains('customer_id')));
-        expect(names, isNot(contains('material_id')));
+        // Re-added (nullable) by the v33 migration.
+        expect(names, contains('material_id'));
         expect(names, isNot(contains('party_id')));
         expect(names, contains('vehicle_number'));
 
@@ -729,18 +712,20 @@ CREATE TABLE app_settings (
         expect(tareOnly!.vehicleNumber, 'MH12AB5678');
         expect(tareOnly.firstWeightType, 'TARE');
 
-        // The relationship columns are gone.
+        // The customer relationship is dropped, while material_id is restored
+        // (nullable) by the v33 migration.
         final cols = await db
             .customSelect("SELECT * FROM pragma_table_info('weighments')")
             .get();
         final names = cols.map((r) => r.data['name'] as String).toSet();
         expect(names, isNot(contains('customer_id')));
-        expect(names, isNot(contains('material_id')));
+        expect(names, contains('material_id'));
         expect(names, contains('mobile_number'));
         expect(names, contains('remarks'));
 
-        // The master tables are gone.
-        for (final table in ['customers', 'materials']) {
+        // The removed customer master is dropped, while the material master is
+        // restored by v33 (with its new Empty/Load shape).
+        for (final table in ['customers']) {
           final rows = await db
               .customSelect(
                 "SELECT name FROM sqlite_master WHERE type='table' AND name = ?",
@@ -749,6 +734,12 @@ CREATE TABLE app_settings (
               .get();
           expect(rows, isEmpty, reason: 'table $table should be dropped');
         }
+        final materialsRows = await db
+            .customSelect(
+              "SELECT name FROM sqlite_master WHERE type='table' AND name = 'materials'",
+            )
+            .get();
+        expect(materialsRows, isNotEmpty, reason: 'materials master restored');
 
         // The receipt toggles for the removed modules are gone, while the
         // remaining settings values are preserved.
@@ -822,6 +813,88 @@ CREATE TABLE app_settings (
       expect(names, contains('idx_weighments_created_at'));
       expect(names, isNot(contains('idx_weighments_customer_created')));
       expect(names, isNot(contains('idx_weighments_material_created')));
+    });
+  });
+
+  group('v31 -> v32 migration', () {
+    /// Builds a genuine v31 database on disk: the weighments table has the
+    /// free-text `material`/`description` columns but no `charges`.
+    Future<NativeDatabase> createV31Database(Directory dir) async {
+      final file = File(p.join(dir.path, 'v31.sqlite'));
+      final sqlite = NativeDatabase(file);
+      await sqlite.ensureOpen(_StubExecutorUser(31));
+      final now = DateTime(2026, 10, 1).millisecondsSinceEpoch;
+
+      await sqlite.runCustom(
+        'CREATE TABLE weighments ('
+        'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+        'bill_number TEXT NOT NULL UNIQUE, '
+        'vehicle_number TEXT NOT NULL, '
+        'first_weight_kg REAL NOT NULL, '
+        'first_weight_type TEXT NOT NULL DEFAULT \'GROSS\', '
+        'second_weight_kg REAL, second_weight_type TEXT, net_weight_kg REAL, '
+        'material TEXT, description TEXT, remarks TEXT, mobile_number TEXT, '
+        'weight_unit TEXT NOT NULL DEFAULT \'ton\', '
+        'created_at INTEGER NOT NULL DEFAULT (strftime(\'%s\',\'now\')), '
+        'updated_at INTEGER NOT NULL DEFAULT (strftime(\'%s\',\'now\')))',
+      );
+      await sqlite.runCustom(
+        'INSERT INTO weighments (id, bill_number, vehicle_number, '
+        'first_weight_kg, first_weight_type, second_weight_kg, '
+        'second_weight_type, net_weight_kg, material, remarks, weight_unit, '
+        'created_at, updated_at) VALUES (1, \'WB-00001\', \'MH12AB1234\', '
+        '5000.0, \'GROSS\', 2000.0, \'TARE\', 3000.0, \'Cement\', '
+        '\'keep me\', \'kg\', ?, ?)',
+        [now, now],
+      );
+      await sqlite.runCustom('PRAGMA user_version = 31');
+      await sqlite.close();
+
+      return NativeDatabase(file);
+    }
+
+    test('adds a nullable charges column and preserves legacy rows', () async {
+      final dir = await Directory.systemTemp.createTemp('wb_v32');
+      addTearDown(() => dir.delete(recursive: true));
+
+      final db = AppDatabase.forTesting(await createV31Database(dir));
+      addTearDown(db.close);
+
+      // The pre-existing row survives with its data intact and a NULL charge.
+      final kept = await db.billDao.getWeighmentByBillNumber('WB-00001');
+      expect(kept, isNotNull);
+      expect(kept!.vehicleNumber, 'MH12AB1234');
+      expect(kept.firstWeightKg, 5000.0);
+      expect(kept.netWeightKg, 3000.0);
+      expect(kept.material, 'Cement');
+      expect(kept.remarks, 'keep me');
+      expect(kept.charges, isNull);
+
+      // The new column exists and is nullable.
+      final cols = await db
+          .customSelect("SELECT * FROM pragma_table_info('weighments')")
+          .get();
+      final names = cols.map((r) => r.data['name'] as String).toSet();
+      expect(names, contains('charges'));
+      final chargesCol = cols.firstWhere((r) => r.data['name'] == 'charges');
+      expect(chargesCol.data['notnull'], 0);
+
+      // New rows can store a charge, and it reads back exactly.
+      await db.billDao.insertWeighment(
+        WeighmentsCompanion.insert(
+          billNumber: 'WB-00002',
+          vehicleNumber: 'MH12AB5678',
+          firstWeightKg: 4200,
+          charges: const Value(250.5),
+          weightUnit: const Value('kg'),
+        ),
+      );
+      final fresh = await db.billDao.getWeighmentByBillNumber('WB-00002');
+      expect(fresh, isNotNull);
+      expect(fresh!.charges, 250.5);
+
+      final version = await db.customSelect('PRAGMA user_version').get();
+      expect(version.single.data['user_version'], db.schemaVersion);
     });
   });
 }

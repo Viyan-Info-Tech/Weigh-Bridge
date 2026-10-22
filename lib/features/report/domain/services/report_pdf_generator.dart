@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../../../../core/utils/currency_formatter.dart';
 import '../entities/report_filter.dart';
 import '../entities/report_summary.dart';
 import '../entities/weighment_report_item.dart';
@@ -198,9 +199,11 @@ class ReportPdfGenerator {
                 'BILL NO',
                 'DATE & TIME',
                 'VEHICLE',
+                'MATERIAL',
                 'GROSS',
                 'TARE',
                 'NET',
+                'CHARGES',
                 'STATUS',
               ],
               data: records.map((r) {
@@ -221,14 +224,22 @@ class ReportPdfGenerator {
                     : '-';
                 final dateStr =
                     '${dateFormat.format(r.createdAt)} ${timeFormat.format(r.createdAt)}';
+                // The report PDF uses PlusJakartaSans, which renders the rupee
+                // sign directly. Legacy rows without a charge show '-'.
+                final chargesStr = r.charges != null
+                    ? formatCharges(r.charges)
+                    : '-';
 
                 return [
                   r.billNumber,
                   dateStr,
                   r.vehicleNumber,
+                  // Saved snapshot, e.g. `Auto - Empty`; legacy rows show '-'.
+                  r.material ?? '-',
                   grossStr,
                   tareStr,
                   netStr,
+                  chargesStr,
                   r.isCompleted ? 'COMPLETED' : 'INCOMPLETE',
                 ];
               }).toList(),
@@ -246,16 +257,18 @@ class ReportPdfGenerator {
               ),
               cellAlignment: pw.Alignment.centerLeft,
               cellAlignments: {
-                3: pw.Alignment.centerRight,
                 4: pw.Alignment.centerRight,
                 5: pw.Alignment.centerRight,
-                6: pw.Alignment.center,
+                6: pw.Alignment.centerRight,
+                7: pw.Alignment.centerRight,
+                8: pw.Alignment.center,
               },
               headerAlignments: {
-                3: pw.Alignment.centerRight,
                 4: pw.Alignment.centerRight,
                 5: pw.Alignment.centerRight,
-                6: pw.Alignment.center,
+                6: pw.Alignment.centerRight,
+                7: pw.Alignment.centerRight,
+                8: pw.Alignment.center,
               },
               columnWidths: {
                 0: const pw.FlexColumnWidth(1.2),
@@ -265,6 +278,7 @@ class ReportPdfGenerator {
                 4: const pw.FlexColumnWidth(1.2),
                 5: const pw.FlexColumnWidth(1.2),
                 6: const pw.FlexColumnWidth(1.1),
+                7: const pw.FlexColumnWidth(1.1),
               },
               border: pw.TableBorder.all(
                 color: PdfColor.fromHex('#CBD5E1'),
@@ -305,6 +319,7 @@ class ReportPdfGenerator {
                     '${(weightUnit == 'ton' ? summary.totalNetWeightKg / 1000 : summary.totalNetWeightKg).toStringAsFixed(weightUnit == 'ton' ? 3 : 0)} $weightUnit',
                   ),
                   _pdfSummaryCol('Completed', '${summary.completedCount}'),
+                  _pdfSummaryCol('Total Charges', summary.totalChargesText),
                 ],
               ),
             ),

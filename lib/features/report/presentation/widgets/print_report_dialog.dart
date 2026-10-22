@@ -166,8 +166,9 @@ class _PrintReportDialogState extends State<PrintReportDialog> {
           final statusLabel = 'All Statuses';
 
           return Container(
-            width: 950,
-            constraints: const BoxConstraints(maxHeight: 740),
+            // Fill the available width but never exceed the designed 950px,
+            // so the preview shrinks instead of overflowing narrow windows.
+            constraints: const BoxConstraints(maxWidth: 950, maxHeight: 740),
             padding: const EdgeInsets.all(24),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

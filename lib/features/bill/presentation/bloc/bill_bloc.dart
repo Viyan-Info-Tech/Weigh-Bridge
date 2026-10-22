@@ -1,23 +1,23 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/utils/currency_formatter.dart';
+import '../../../material/domain/entities/material_item.dart';
+import '../../../material/domain/repositories/material_repository.dart';
 import '../../domain/entities/weighment.dart';
-import '../../domain/entities/auto_tare_entry.dart';
 import '../../domain/usecases/save_bill.dart';
-import '../../domain/repositories/auto_tare_repository.dart';
-import '../../domain/repositories/vehicle_tare_repository.dart';
-import '../../domain/usecases/get_auto_tare_for_date.dart';
 import '../../../settings/domain/repositories/settings_repository.dart';
-import 'bill_auto_tare_handlers.dart';
 import 'bill_event.dart';
 import 'bill_state.dart';
 
-class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
+class BillBloc extends Bloc<BillEvent, BillState> {
   final SaveBillUseCase _saveBillUseCase;
   final LoadRecentBillsUseCase _loadRecentBillsUseCase;
   final GenerateBillNumberUseCase _generateBillNumberUseCase;
   final SettingsRepository? _settingsRepository;
-  final AutoTareRepository? _autoTareRepository;
-  final VehicleTareRepository? _vehicleTareRepository;
+
+  /// Master data for the material dropdown. When null (e.g. in older unit
+  /// tests that don't wire it), the material field falls back to plain text.
+  final MaterialRepository? _materialRepository;
 
   /// The form as it stood immediately after the last successful save.
   ///
@@ -51,32 +51,21 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
         saved.tareWeightKg == state.tareWeightKg &&
         saved.firstWeightType == state.firstWeightType &&
         saved.materialText == state.materialText &&
-        saved.descriptionText == state.descriptionText &&
+        saved.chargesText == state.chargesText &&
         saved.remarksText == state.remarksText;
   }
-
-  @override
-  AutoTareRepository? get autoTareRepository => _autoTareRepository;
-
-  @override
-  VehicleTareRepository? get vehicleTareRepository => _vehicleTareRepository;
-
-  @override
-  void recalculateWeights(Emitter<BillState> emit) => _recalculate(emit);
 
   BillBloc({
     required SaveBillUseCase saveBillUseCase,
     required LoadRecentBillsUseCase loadRecentBillsUseCase,
     required GenerateBillNumberUseCase generateBillNumberUseCase,
     SettingsRepository? settingsRepository,
-    AutoTareRepository? autoTareRepository,
-    VehicleTareRepository? vehicleTareRepository,
+    MaterialRepository? materialRepository,
   }) : _saveBillUseCase = saveBillUseCase,
        _loadRecentBillsUseCase = loadRecentBillsUseCase,
        _generateBillNumberUseCase = generateBillNumberUseCase,
        _settingsRepository = settingsRepository,
-       _autoTareRepository = autoTareRepository,
-       _vehicleTareRepository = vehicleTareRepository,
+       _materialRepository = materialRepository,
        super(const BillState()) {
     on<LoadBillScreen>(_onLoadBillScreen);
     on<RefreshBillLookups>(_onRefreshBillLookups);
@@ -89,7 +78,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     on<TareCapturedAtChanged>(_onTareCapturedAtChanged);
     on<RemarksChanged>(_onRemarksChanged);
     on<MaterialChanged>(_onMaterialChanged);
-    on<DescriptionChanged>(_onDescriptionChanged);
+    on<ChargesChanged>(_onChargesChanged);
     on<WeightUnitChanged>(_onWeightUnitChanged);
     // Saves run one at a time. The default concurrent transformer would let a
     // double tap on SAVE (or F5 plus a click) run two inserts against the same
@@ -106,13 +95,6 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     on<LiveScaleWeightUpdated>(_onLiveScaleWeightUpdated);
     on<WeightTypeSelected>(_onWeightTypeSelected);
     on<MobileNumberChanged>(_onMobileNumberChanged);
-    on<LoadAutoTare>(handleLoadAutoTare);
-    on<SaveAutoTare>(handleSaveAutoTare);
-    on<DeleteAutoTare>(handleDeleteAutoTare);
-    on<ApplyAutoTareToBill>(handleApplyAutoTareToBill);
-    on<LoadVehicleTares>(handleLoadVehicleTares);
-    on<SaveVehicleTare>(handleSaveVehicleTare);
-    on<DeleteVehicleTare>(handleDeleteVehicleTare);
   }
 
   /// Processes one event at a time for handlers that must not overlap.
@@ -139,15 +121,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
         unit = _normalizeUnit(settings.weightUnit);
       }
 
-      final autoTareRepository = _autoTareRepository;
-      AutoTareEntry? autoTare;
-      if (autoTareRepository != null) {
-        try {
-          autoTare = await GetAutoTareForDate(autoTareRepository)(billsDate);
-        } catch (_) {
-          autoTare = null;
-        }
-      }
+      final materials = await _loadMaterialOptions();
 
       emit(
         state.copyWith(
@@ -156,10 +130,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
           billsDate: billsDate,
           currentBillNumber: billNumber,
           weightUnit: unit,
-          autoTareKg: autoTare?.tareKg ?? 0,
-          autoTareDate: autoTare?.tareDate,
-          autoTareSavedAt: autoTare?.savedAt,
-          clearAutoTare: autoTare == null,
+          materialOptions: materials,
         ),
       );
     } catch (e) {
@@ -173,19 +144,33 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     }
   }
 
-  /// Refreshes the bill number and recent bills without touching anything
-  /// the operator has already entered on the form.
+  /// Refreshes the bill number, recent bills and material options without
+  /// touching anything the operator has already entered on the form.
   Future<void> _onRefreshBillLookups(
     RefreshBillLookups event,
     Emitter<BillState> emit,
   ) async {
     try {
       final bills = await _loadBillsFor(state.effectiveBillsDate);
+      final materials = await _loadMaterialOptions();
       if (emit.isDone) return;
-      emit(state.copyWith(recentBills: bills));
+      emit(state.copyWith(recentBills: bills, materialOptions: materials));
     } catch (_) {
       // A failed refresh must not disturb the form.
       return;
+    }
+  }
+
+  /// Active materials for the dropdown, or an empty list when the material
+  /// feature is not wired (older tests / manual construction).
+  Future<List<MaterialItem>> _loadMaterialOptions() async {
+    final repository = _materialRepository;
+    if (repository == null) return const [];
+    try {
+      return await repository.getActive();
+    } catch (_) {
+      // A failed material load must not block bill entry.
+      return const [];
     }
   }
 
@@ -398,14 +383,29 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
   }
 
   void _onMaterialChanged(MaterialChanged event, Emitter<BillState> emit) {
-    emit(state.copyWith(materialText: event.value));
+    emit(
+      state.copyWith(
+        materialText: event.value,
+        selectedMaterialId: event.materialId,
+        clearSelectedMaterialId: event.materialId == null,
+      ),
+    );
   }
 
-  void _onDescriptionChanged(
-    DescriptionChanged event,
-    Emitter<BillState> emit,
-  ) {
-    emit(state.copyWith(descriptionText: event.value));
+  void _onChargesChanged(ChargesChanged event, Emitter<BillState> emit) {
+    // While typing, only clear a stale error once the text parses again; the
+    // authoritative validation still runs on save in [_validateAll].
+    final updatedErrors = Map<String, String>.from(state.fieldErrors);
+    if (event.value.trim().isEmpty || parseChargesInput(event.value) != null) {
+      updatedErrors.remove('charges');
+    }
+    emit(
+      state.copyWith(
+        chargesText: event.value,
+        fieldErrors: updatedErrors,
+        clearError: true,
+      ),
+    );
   }
 
   void _onWeightUnitChanged(WeightUnitChanged event, Emitter<BillState> emit) {
@@ -502,27 +502,12 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     final now = DateTime.now();
 
     if (event.type.toLowerCase() == 'gross') {
-      // The day's auto tare is a copy source only: it fills an empty tare
-      // field for this bill. Bills saved earlier keep their own tare value.
-      final autoTareKg = state.hasAutoTare ? state.autoTareKg : 0.0;
-      final shouldApplyAutoTare =
-          autoTareKg > 0 &&
-          !(state.tareWeightKg.isFinite && state.tareWeightKg > 0);
-      final autoTareText = isTon
-          ? (autoTareKg / 1000).toStringAsFixed(3)
-          : autoTareKg.toStringAsFixed(0);
-
       emit(
         state.copyWith(
           grossWeightKg: liveKg,
           grossWeightText: weightStr,
           grossCapturedAt: now,
           firstWeightType: state.firstWeightType ?? 'GROSS',
-          tareWeightKg: shouldApplyAutoTare ? autoTareKg : null,
-          tareWeightText: shouldApplyAutoTare ? autoTareText : null,
-          tareCapturedAt: shouldApplyAutoTare
-              ? (state.autoTareSavedAt ?? state.autoTareDate ?? now)
-              : null,
           status: BillScreenStatus.loaded,
           clearError: true,
         ),
@@ -607,6 +592,15 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
       if (!RegExp(r'^\d+$').hasMatch(mobile)) {
         errors['mobile'] = 'Mobile number can contain digits only.';
       }
+    }
+
+    // ── 4. Charges (optional) ─────────────────────────────────
+    // Empty is valid (no charge); anything typed must be a non-negative
+    // amount with at most two decimals.
+    final chargesText = state.chargesText.trim();
+    if (chargesText.isNotEmpty && parseChargesInput(chargesText) == null) {
+      errors['charges'] =
+          'Enter a valid amount (digits, up to two decimals).';
     }
 
     return errors;
@@ -732,10 +726,9 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
         : (firstWeightType == 'GROSS' ? 'TARE' : 'GROSS');
 
     // The billing time of this bill is the moment it is saved. It is
-    // deliberately not derived from the weight capture fields: those may carry
-    // the day's shared Auto Tare reference time, which is identical for every
-    // bill weighed that day and would make Recent Billings show one frozen
-    // timestamp instead of when each bill was actually created.
+    // deliberately not derived from the weight capture fields, so Recent
+    // Billings always shows when each bill was actually created rather than
+    // when a weight was captured.
     //
     // [updatedAt] is stamped with the same moment so a two-weight bill can
     // never end up with an `updatedAt` older than its `createdAt`.
@@ -761,9 +754,10 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
       material: state.materialText.trim().isNotEmpty
           ? state.materialText.trim()
           : null,
-      description: state.descriptionText.trim().isNotEmpty
-          ? state.descriptionText.trim()
-          : null,
+      materialId: state.selectedMaterialId,
+      // Manually entered charges: empty means no charge (NULL), a valid
+      // amount is stored exactly as typed (never recalculated).
+      charges: parseChargesInput(state.chargesText),
       remarks: state.remarksText.isNotEmpty ? state.remarksText : null,
       mobileNumber: null,
       weightUnit: state.weightUnit,
@@ -787,7 +781,8 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
       secondWeightType: weighment.secondWeightType,
       netWeightKg: weighment.explicitNetWeightKg,
       material: weighment.material,
-      description: weighment.description,
+      materialId: weighment.materialId,
+      charges: weighment.charges,
       remarks: weighment.remarks,
       mobileNumber: weighment.mobileNumber,
       weightUnit: weighment.weightUnit,
@@ -833,7 +828,8 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
         tareWeightText: '',
         remarksText: '',
         materialText: '',
-        descriptionText: '',
+        clearSelectedMaterialId: true,
+        chargesText: '',
         mobileNumber: '',
         grossWeightKg: 0,
         tareWeightKg: 0,

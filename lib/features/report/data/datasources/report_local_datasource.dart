@@ -71,6 +71,7 @@ class ReportLocalDataSource {
       _database.weighments.firstWeightKg,
       _database.weighments.firstWeightType,
       _database.weighments.secondWeightKg,
+      _database.weighments.charges,
     ]);
 
     final rows = await query.get();
@@ -78,6 +79,7 @@ class ReportLocalDataSource {
     double totalGross = 0;
     double totalTare = 0;
     double totalNet = 0;
+    double totalCharges = 0;
     int completed = 0;
 
     for (final row in rows) {
@@ -100,6 +102,8 @@ class ReportLocalDataSource {
       totalGross += gross ?? 0;
       totalTare += tare ?? 0;
       totalNet += WeighmentReportItem.deriveNetWeight(gross, tare) ?? 0;
+      // NULL charges (legacy rows) contribute zero, matching the table.
+      totalCharges += row.read(_database.weighments.charges) ?? 0;
       if (domain.Weighment.isCompletedForWeights(gross, tare)) {
         completed++;
       }
@@ -111,6 +115,7 @@ class ReportLocalDataSource {
       totalTareWeightKg: totalTare,
       totalNetWeightKg: totalNet,
       completedCount: completed,
+      totalCharges: totalCharges,
     );
   }
 
@@ -140,7 +145,8 @@ class ReportLocalDataSource {
       query.where(
         (w) =>
             w.billNumber.lower().like(pattern, escapeChar: _likeEscapeChar) |
-            w.vehicleNumber.lower().like(pattern, escapeChar: _likeEscapeChar),
+            w.vehicleNumber.lower().like(pattern, escapeChar: _likeEscapeChar) |
+            w.material.lower().like(pattern, escapeChar: _likeEscapeChar),
       );
     }
   }
@@ -174,6 +180,10 @@ class ReportLocalDataSource {
             weights.vehicleNumber.lower().like(
               pattern,
               escapeChar: _likeEscapeChar,
+            ) |
+            weights.material.lower().like(
+              pattern,
+              escapeChar: _likeEscapeChar,
             ),
       );
     }
@@ -185,7 +195,9 @@ class ReportLocalDataSource {
       billNumber: row.billNumber,
       createdAt: row.createdAt,
       vehicleNumber: row.vehicleNumber,
+      material: row.material,
       remarks: row.remarks,
+      charges: row.charges,
       firstWeightKg: row.firstWeightKg,
       firstWeightType: row.firstWeightType,
       secondWeightKg: row.secondWeightKg,

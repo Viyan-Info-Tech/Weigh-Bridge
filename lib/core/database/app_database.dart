@@ -7,16 +7,14 @@ import 'package:path_provider/path_provider.dart';
 
 import 'daos/user_dao.dart';
 import 'daos/bill_dao.dart';
+import 'daos/material_dao.dart';
 import 'daos/app_settings_dao.dart';
 import 'daos/scale_settings_dao.dart';
-import 'daos/auto_tare_settings_dao.dart';
-import 'daos/vehicle_tare_records_dao.dart';
 import 'tables/users_table.dart';
 import 'tables/weighments_table.dart';
+import 'tables/materials_table.dart';
 import 'tables/app_settings_table.dart';
 import 'tables/scale_settings_table.dart';
-import 'tables/auto_tare_settings_table.dart';
-import 'tables/vehicle_tare_records_table.dart';
 
 part 'app_database.g.dart';
 
@@ -24,18 +22,16 @@ part 'app_database.g.dart';
   tables: [
     Users,
     Weighments,
+    Materials,
     AppSettings,
     ScaleSettings,
-    AutoTareSettings,
-    VehicleTareRecords,
   ],
   daos: [
     UserDao,
     BillDao,
+    MaterialDao,
     AppSettingsDao,
     ScaleSettingsDao,
-    AutoTareSettingsDao,
-    VehicleTareRecordsDao,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -44,7 +40,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 31;
+  int get schemaVersion => 33;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -52,6 +48,7 @@ class AppDatabase extends _$AppDatabase {
       await m.createAll();
       await _createAdminCredentialsTable();
       await _createWeighmentQueryIndexes();
+      await _createMaterialUniqueIndex();
     },
     onUpgrade: (m, from, to) async {
       if (from < 5) {
@@ -673,11 +670,6 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(scaleSettings);
       }
 
-      if (from < 23) {
-        // Date-based common (platform) tare captured each morning with F3.
-        await m.createTable(autoTareSettings);
-      }
-
       if (from < 24) {
         // Report and bill-list queries scan weighments by date range and sort
         // by created_at, so the table needed indexes outside its unique
@@ -989,10 +981,15 @@ class AppDatabase extends _$AppDatabase {
         }
       }
       if (from < 30) {
-        // Free-text Material + Description on the weighment record (TL
+        // Free-text Material + Description columns on the weighment record (TL
         // redesign). Nullable ADD COLUMNs so every existing weighment/bill
-        // row is preserved; new bills store the typed values, old bills
-        // simply read back NULL (shown as empty / omitted on tickets).
+        // row is preserved; old bills simply read back NULL (shown as empty /
+        // omitted on tickets).
+        //
+        // Note: the Description feature has since been removed from the app.
+        // The column is still created here so the migration path matches the
+        // declared table schema; the application no longer writes to it and
+        // leaves any previously stored value untouched.
         final weighmentColumns = await customSelect(
           "PRAGMA table_info('weighments')",
         ).get();
@@ -1006,11 +1003,42 @@ class AppDatabase extends _$AppDatabase {
           await m.addColumn(weighments, weighments.description);
         }
       }
-      if (from < 31) {
-        // Per-vehicle tare registry for the Auto Tare popup. A brand-new
-        // table, so no existing rows are touched; every weighment, bill,
-        // and settings row is preserved untouched.
-        await m.createTable(vehicleTareRecords);
+      if (from < 32) {
+        // Manually entered Charges column on the weighment record.
+        //
+        // Nullable ADD COLUMN so every existing weighment/bill row is
+        // preserved; legacy rows simply read back NULL (shown as an empty
+        // value in the form and a zero total in reports). Idempotent guard
+        // keeps re-runs and partially upgraded databases safe.
+        final weighmentColumns = await customSelect(
+          "PRAGMA table_info('weighments')",
+        ).get();
+        final weighmentNames = weighmentColumns
+            .map((c) => c.read<String>('name'))
+            .toSet();
+        if (!weighmentNames.contains('charges')) {
+          await m.addColumn(weighments, weighments.charges);
+        }
+      }
+      if (from < 33) {
+        // Re-introduction of the Material module as a name + vehicle-type
+        // master (Empty/Load). The old materials table was dropped in v29;
+        // this creates the new shape from scratch, so no historical material
+        // rows are resurrected. Existing weighments keep their free-text
+        // `material` snapshot and gain a nullable `material_id` reference
+        // column (NULL for legacy rows). Additive only: no weighment rows
+        // are touched, rewritten or dropped.
+        await m.createTable(materials);
+        await _createMaterialUniqueIndex();
+        final weighmentColumns = await customSelect(
+          "PRAGMA table_info('weighments')",
+        ).get();
+        final weighmentNames = weighmentColumns
+            .map((c) => c.read<String>('name'))
+            .toSet();
+        if (!weighmentNames.contains('material_id')) {
+          await m.addColumn(weighments, weighments.materialId);
+        }
       }
     },
   );
@@ -1023,6 +1051,20 @@ class AppDatabase extends _$AppDatabase {
     await customStatement(
       'CREATE INDEX IF NOT EXISTS idx_weighments_created_at '
       'ON weighments(created_at DESC)',
+    );
+  }
+
+  /// Enforces one row per material name + vehicle-type combination.
+  ///
+  /// Expression indexes keep the rule case- and whitespace-insensitive
+  /// (`Auto - Empty` and `auto  - empty` are the same combination) without
+  /// needing generated columns. The DAO performs the same check in Dart so
+  /// the operator always gets a readable error instead of a raw SQLite
+  /// constraint failure.
+  Future<void> _createMaterialUniqueIndex() async {
+    await customStatement(
+      'CREATE UNIQUE INDEX IF NOT EXISTS materials_name_type_unique '
+      'ON materials (lower(trim(name)), lower(trim(vehicle_type)))',
     );
   }
 

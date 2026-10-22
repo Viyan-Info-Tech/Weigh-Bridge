@@ -6,7 +6,16 @@ class WeighmentReportItem extends Equatable {
   final String billNumber;
   final DateTime createdAt;
   final String vehicleNumber;
+
+  /// Saved material snapshot, e.g. `Auto - Empty`. Null for legacy rows saved
+  /// before the material column existed. Always the value captured at save
+  /// time - never the current master-data state.
+  final String? material;
   final String? remarks;
+
+  /// Manually entered charges in rupees; null for legacy rows saved before
+  /// the Charges feature existed.
+  final double? charges;
   final double firstWeightKg;
   final String firstWeightType;
   final double? secondWeightKg;
@@ -18,7 +27,9 @@ class WeighmentReportItem extends Equatable {
     required this.billNumber,
     required this.createdAt,
     required this.vehicleNumber,
+    this.material,
     this.remarks,
+    this.charges,
     required this.firstWeightKg,
     this.firstWeightType = 'GROSS',
     this.secondWeightKg,
@@ -97,7 +108,9 @@ class WeighmentReportItem extends Equatable {
     billNumber,
     createdAt,
     vehicleNumber,
+    material,
     remarks,
+    charges,
     firstWeightKg,
     firstWeightType,
     secondWeightKg,

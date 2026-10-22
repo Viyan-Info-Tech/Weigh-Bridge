@@ -9,6 +9,17 @@ void main() {
     expect(summary.totalTareWeightKg, 0);
     expect(summary.totalNetWeightKg, 0);
     expect(summary.completedCount, 0);
+    expect(summary.totalCharges, 0);
+  });
+
+  test('formats the charges total with the rupee symbol', () {
+    const summary = ReportSummary(totalCharges: 1250);
+    expect(summary.totalChargesText, '₹ 1,250.00');
+  });
+
+  test('charges total with no charge reads as zero', () {
+    const summary = ReportSummary();
+    expect(summary.totalChargesText, '₹ 0.00');
   });
 
   test('formats gross weight as tons with 2 decimals', () {

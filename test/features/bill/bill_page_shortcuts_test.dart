@@ -205,7 +205,7 @@ void main() {
         expect(find.text('SAVE'), findsOneWidget);
         expect(find.text('CANCEL'), findsOneWidget);
         expect(find.text('MANUAL TARE'), findsOneWidget);
-        expect(find.text('AUTO TARE'), findsNWidgets(2));
+        expect(find.text('AUTO TARE'), findsNothing);
         expect(find.text('RE-PRINT'), findsOneWidget);
       },
     );

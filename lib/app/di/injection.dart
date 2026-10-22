@@ -21,12 +21,6 @@ import '../../features/auth/domain/usecases/login.dart';
 import '../../features/auth/domain/usecases/logout.dart';
 import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_event.dart';
-import '../../features/bill/data/datasources/auto_tare_local_datasource.dart';
-import '../../features/bill/data/datasources/vehicle_tare_local_datasource.dart';
-import '../../features/bill/data/repositories/auto_tare_repository_impl.dart';
-import '../../features/bill/data/repositories/vehicle_tare_repository_impl.dart';
-import '../../features/bill/domain/repositories/auto_tare_repository.dart';
-import '../../features/bill/domain/repositories/vehicle_tare_repository.dart';
 import '../../features/bill/data/datasources/bill_local_datasource.dart';
 import '../../features/bill/data/repositories/bill_repository_impl.dart';
 import '../../features/bill/domain/usecases/save_bill.dart';
@@ -44,6 +38,15 @@ import '../../features/report/data/services/file_picker_save_service.dart';
 import '../../features/report/domain/services/csv_generator.dart';
 import '../../features/report/domain/usecases/export_report_usecase.dart';
 import '../../features/report/presentation/bloc/report_bloc.dart';
+import '../../features/material/data/datasources/material_local_datasource.dart';
+import '../../features/material/data/repositories/material_repository_impl.dart';
+import '../../features/material/domain/repositories/material_repository.dart';
+import '../../features/material/domain/usecases/create_material.dart';
+import '../../features/material/domain/usecases/delete_material.dart';
+import '../../features/material/domain/usecases/load_materials.dart';
+import '../../features/material/domain/usecases/update_material.dart';
+import '../../features/material/presentation/bloc/material_bloc.dart';
+import '../../features/material/presentation/bloc/material_event.dart';
 
 class Injection {
   final AppDatabase database;
@@ -51,10 +54,10 @@ class Injection {
   final BillBloc billBloc;
   final SettingsBloc settingsBloc;
   final ReportBloc reportBloc;
+  final MaterialBloc materialBloc;
   final LicenseService licenseService;
   final BillRepository billRepository;
-  final AutoTareRepository autoTareRepository;
-  final VehicleTareRepository vehicleTareRepository;
+  final MaterialRepository materialRepository;
   final AdminPasswordService adminPasswordService;
   final ScaleService scaleService;
 
@@ -64,10 +67,10 @@ class Injection {
     required this.billBloc,
     required this.settingsBloc,
     required this.reportBloc,
+    required this.materialBloc,
     required this.licenseService,
     required this.billRepository,
-    required this.autoTareRepository,
-    required this.vehicleTareRepository,
+    required this.materialRepository,
     required this.adminPasswordService,
     required this.scaleService,
   });
@@ -119,31 +122,38 @@ class Injection {
     );
     settingsBloc.add(const LoadSettings());
 
-    // Bill
+    // Bill + Materials (the bill form's material dropdown reads the master)
     final billLocalDataSource = BillLocalDataSource(database);
     final billRepository = BillRepositoryImpl(
       localDataSource: billLocalDataSource,
     );
 
+    final materialLocalDataSource = MaterialLocalDataSource(database);
+    final materialRepository = MaterialRepositoryImpl(
+      localDataSource: materialLocalDataSource,
+    );
+    final loadMaterialsUseCase = LoadMaterials(materialRepository);
+    final createMaterialUseCase = CreateMaterial(materialRepository);
+    final updateMaterialUseCase = UpdateMaterial(materialRepository);
+    final deleteMaterialUseCase = DeleteMaterial(materialRepository);
+
+    final materialBloc = MaterialBloc(
+      loadMaterials: loadMaterialsUseCase,
+      createMaterial: createMaterialUseCase,
+      updateMaterial: updateMaterialUseCase,
+      deleteMaterial: deleteMaterialUseCase,
+    )..add(const LoadMaterialsEvent());
+
     final saveBillUseCase = SaveBillUseCase(billRepository);
     final loadRecentBillsUseCase = LoadRecentBillsUseCase(billRepository);
     final generateBillNumberUseCase = GenerateBillNumberUseCase(billRepository);
-
-    final autoTareLocalDataSource = AutoTareLocalDataSource(database);
-    final autoTareRepository = AutoTareRepositoryImpl(autoTareLocalDataSource);
-
-    final vehicleTareLocalDataSource = VehicleTareLocalDataSource(database);
-    final vehicleTareRepository = VehicleTareRepositoryImpl(
-      vehicleTareLocalDataSource,
-    );
 
     final billBloc = BillBloc(
       saveBillUseCase: saveBillUseCase,
       loadRecentBillsUseCase: loadRecentBillsUseCase,
       generateBillNumberUseCase: generateBillNumberUseCase,
       settingsRepository: settingsRepository,
-      autoTareRepository: autoTareRepository,
-      vehicleTareRepository: vehicleTareRepository,
+      materialRepository: materialRepository,
     );
 
     // Report
@@ -194,10 +204,10 @@ class Injection {
       billBloc: billBloc,
       settingsBloc: settingsBloc,
       reportBloc: reportBloc,
+      materialBloc: materialBloc,
       licenseService: licenseService,
       billRepository: billRepository,
-      autoTareRepository: autoTareRepository,
-      vehicleTareRepository: vehicleTareRepository,
+      materialRepository: materialRepository,
       adminPasswordService: adminPasswordService,
       scaleService: scaleService,
     );

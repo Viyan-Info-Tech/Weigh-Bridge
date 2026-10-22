@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-/// A keyboard-first searchable dropdown component for desktop weighbridge workflow.
+/// A modern, keyboard-first searchable dropdown component for desktop weighbridge workflow.
 ///
 /// Supports:
-/// - Direct keyboard typing to filter options
-/// - Arrow Up / Arrow Down keyboard navigation
+/// - Vertically centered, beautifully styled input field with hint & selected state
+/// - Direct keyboard typing to filter options (when [enableSearch] is true)
+/// - Arrow Up / Arrow Down keyboard navigation with auto-scrolling
 /// - Enter to select and advance to [nextFocusNode]
-/// - Clear visual focus indicator
-/// - Dropdown menu with mouse click fallback
+/// - Escape to dismiss the popup
+/// - Clean elevated floating popup aligned with the field shell
+/// - Visual category icons, selected indicators, and hover effects
 /// - Optional "+ Add New" footer button
 class SearchableDropdown<T extends Object> extends StatefulWidget {
   final String label;
@@ -24,6 +26,23 @@ class SearchableDropdown<T extends Object> extends StatefulWidget {
   final bool enabled;
   final bool isRequired;
 
+  /// Whether to render the small caption above the field. Set false when the
+  /// dropdown is embedded in a field shell that already labels the row.
+  final bool showLabel;
+
+  /// When true the field renders without a filled outline border, so it can
+  /// sit flush inside [BillFormFieldShell] like the other form fields.
+  final bool borderless;
+
+  /// When false the field becomes selection-only.
+  ///
+  /// Typing, the text caret and text selection are all disabled, so the only
+  /// way to set a value is by choosing one of [items] from the popup.
+  final bool enableSearch;
+
+  /// Message shown in the popup when [items] is empty.
+  final String? emptyItemsMessage;
+
   const SearchableDropdown({
     super.key,
     required this.label,
@@ -38,6 +57,10 @@ class SearchableDropdown<T extends Object> extends StatefulWidget {
     this.onAddNew,
     this.enabled = true,
     this.isRequired = false,
+    this.showLabel = true,
+    this.borderless = false,
+    this.enableSearch = true,
+    this.emptyItemsMessage,
   });
 
   @override
@@ -48,7 +71,6 @@ class _SearchableDropdownState<T extends Object>
     extends State<SearchableDropdown<T>> {
   late final TextEditingController _textController;
   final GlobalKey _fieldKey = GlobalKey();
-  final LayerLink _layerLink = LayerLink();
   FocusNode? _internalFocusNode;
   FocusNode get _effectiveFocusNode =>
       widget.focusNode ?? (_internalFocusNode ??= FocusNode());
@@ -112,29 +134,24 @@ class _SearchableDropdownState<T extends Object>
     if (_effectiveFocusNode.hasFocus) {
       _isDismissed = false;
 
-      // Select all text when the field receives focus.
-      _textController.selection = TextSelection(
-        baseOffset: 0,
-        extentOffset: _textController.text.length,
-      );
+      if (widget.enableSearch) {
+        _textController.selection = TextSelection(
+          baseOffset: 0,
+          extentOffset: _textController.text.length,
+        );
+      }
 
       _rebuildOptions();
       return;
     }
 
-    // IMPORTANT:
-    // Do not dismiss the overlay synchronously here.
-    //
-    // On Windows desktop, clicking an item inside the OverlayEntry can
-    // cause the TextFormField to lose focus before the mouse tap reaches
-    // the InkWell. Removing the overlay here prevents the mouse click
-    // from being delivered.
-    //
-    // Let the pointer event finish first.
+    // Defer dismissal so that mouse clicks inside the overlay on Windows desktop
+    // register before the overlay is removed.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-
       if (_effectiveFocusNode.hasFocus) return;
+
+      if (mounted) setState(() {});
 
       if (widget.selectedItem != null) {
         final currentText = _textController.text.trim().toLowerCase();
@@ -222,7 +239,7 @@ class _SearchableDropdownState<T extends Object>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scrollController.hasClients && _highlightedIndex >= 0) {
         _scrollController.animateTo(
-          _highlightedIndex * 36.0, // approximate item height
+          _highlightedIndex * 46.0,
           duration: const Duration(milliseconds: 100),
           curve: Curves.easeOut,
         );
@@ -235,12 +252,15 @@ class _SearchableDropdownState<T extends Object>
   // ---------------------------------------------------------------------------
 
   List<T> _computeOptions() {
+    if (!widget.enableSearch) {
+      return widget.items;
+    }
+
     final query = _textController.text.trim().toLowerCase();
     final selectedLabel = widget.selectedItem != null
         ? widget.itemLabel(widget.selectedItem!).toLowerCase()
         : '';
 
-    // If empty or query equals current selected item label, show all items
     if (query.isEmpty || query == selectedLabel) {
       return widget.items;
     }
@@ -318,33 +338,75 @@ class _SearchableDropdownState<T extends Object>
     if (mounted) setState(() {});
   }
 
+  /// Builds the elevated popup overlay.
+  ///
+  /// Anchors directly under the field shell and spans its full width so the
+  /// dropdown looks unified with the input box.
   OverlayEntry _buildOverlay() {
     return OverlayEntry(
       builder: (context) {
         final renderBox =
             _fieldKey.currentContext?.findRenderObject() as RenderBox?;
-        final fieldSize = renderBox?.size ?? const Size(320, 40);
+        if (renderBox == null) return const SizedBox.shrink();
+
+        // Search for the enclosing field shell to span the full width if embedded.
+        RenderBox anchorBox = renderBox;
+        RenderObject? parent = renderBox.parent;
+        while (parent != null) {
+          if (parent is RenderBox &&
+              parent.size.height >= 40 &&
+              parent.size.width > anchorBox.size.width) {
+            anchorBox = parent;
+            break;
+          }
+          parent = parent.parent;
+        }
+
+        final fieldSize = anchorBox.size;
+        final fieldTopLeft = anchorBox.localToGlobal(Offset.zero);
+        final screen = MediaQuery.sizeOf(context);
+
+        const gap = 6.0;
+        const screenMargin = 12.0;
+        const desiredMaxHeight = 280.0;
+
+        final spaceBelow =
+            screen.height - (fieldTopLeft.dy + fieldSize.height) - gap - screenMargin;
+        final spaceAbove = fieldTopLeft.dy - gap - screenMargin;
+
+        final openDown = spaceBelow >= 160.0 || spaceBelow >= spaceAbove;
+        final available = openDown ? spaceBelow : spaceAbove;
+        final maxHeight = available.clamp(120.0, desiredMaxHeight);
 
         return Positioned(
+          left: fieldTopLeft.dx,
           width: fieldSize.width,
-          child: CompositedTransformFollower(
-            link: _layerLink,
-            showWhenUnlinked: false,
-            offset: Offset(0, fieldSize.height + 4),
-            child: Material(
-              elevation: 8,
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.white,
-              shadowColor: Colors.black.withValues(alpha: 0.15),
-              child: Container(
-                constraints: const BoxConstraints(maxHeight: 280),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: _buildOptionsList(),
+          top: openDown ? fieldTopLeft.dy + fieldSize.height + gap : null,
+          bottom: openDown ? null : (screen.height - fieldTopLeft.dy + gap),
+          child: Material(
+            elevation: 0,
+            color: Colors.transparent,
+            child: Container(
+              constraints: BoxConstraints(maxHeight: maxHeight),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE2E8F0), width: 1.2),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x1A0F172A),
+                    blurRadius: 20,
+                    offset: Offset(0, 8),
+                  ),
+                  BoxShadow(
+                    color: Color(0x0A0F172A),
+                    blurRadius: 4,
+                    offset: Offset(0, 1),
+                  ),
+                ],
               ),
+              clipBehavior: Clip.antiAlias,
+              child: _buildOptionsList(),
             ),
           ),
         );
@@ -355,9 +417,9 @@ class _SearchableDropdownState<T extends Object>
   String _getEmptyMessage() {
     final query = _textController.text.trim();
     if (widget.items.isEmpty) {
-      return 'No items found';
+      return widget.emptyItemsMessage ?? 'No items found';
     }
-    if (query.isNotEmpty) {
+    if (query.isNotEmpty && widget.enableSearch) {
       return 'No matches found for "$query"';
     }
     return 'No matches found';
@@ -366,27 +428,82 @@ class _SearchableDropdownState<T extends Object>
   Widget _buildOptionsList() {
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Elegant header banner
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          decoration: const BoxDecoration(
+            color: Color(0xFFF8FAFC),
+            border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1)),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.layers_outlined, size: 13, color: Color(0xFF64748B)),
+              const SizedBox(width: 6),
+              const Text(
+                'SELECT MATERIAL',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF64748B),
+                  letterSpacing: 0.6,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE2E8F0),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '${_currentOptions.length}',
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF475569),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // List of options or empty state
         if (_currentOptions.isEmpty)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-            child: Row(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.info_outline_rounded,
-                  size: 16,
-                  color: Colors.grey.shade400,
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(
+                    Icons.inventory_2_outlined,
+                    size: 20,
+                    color: Color(0xFF94A3B8),
+                  ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    _getEmptyMessage(),
-                    style: TextStyle(
-                      fontFamily: 'PlusJakartaSans',
-                      fontSize: 13,
-                      color: Colors.grey.shade600,
-                      fontWeight: FontWeight.w500,
-                    ),
+                const SizedBox(height: 10),
+                Text(
+                  _getEmptyMessage(),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF64748B),
+                    height: 1.4,
                   ),
                 ),
               ],
@@ -394,57 +511,121 @@ class _SearchableDropdownState<T extends Object>
           )
         else
           Flexible(
-            child: ListView.builder(
+            child: ListView.separated(
               controller: _scrollController,
               padding: const EdgeInsets.symmetric(vertical: 4),
               shrinkWrap: true,
               itemCount: _currentOptions.length,
+              separatorBuilder: (context, index) => const Divider(
+                height: 1,
+                thickness: 0.6,
+                color: Color(0xFFF8FAFC),
+                indent: 14,
+                endIndent: 14,
+              ),
               itemBuilder: (BuildContext context, int index) {
                 final option = _currentOptions[index];
                 final isSelected = widget.selectedItem == option;
                 final isHighlighted = _highlightedIndex == index;
+                final label = widget.itemLabel(option);
+
+                final Color rowBg;
+                if (isHighlighted) {
+                  rowBg = const Color(0xFFF1F5F9);
+                } else if (isSelected) {
+                  rowBg = const Color(0xFFF0FDF4);
+                } else {
+                  rowBg = Colors.transparent;
+                }
 
                 return InkWell(
-                  onTap: () {
-                    _selectOption(option);
+                  onTap: () => _selectOption(option),
+                  onHover: (hovering) {
+                    if (hovering && _highlightedIndex != index) {
+                      setState(() => _highlightedIndex = index);
+                      _overlayEntry?.markNeedsBuild();
+                    }
                   },
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
+                      horizontal: 14,
+                      vertical: 9,
                     ),
-                    color: isHighlighted
-                        ? const Color(0xFFEFF6FF)
-                        : (isSelected
-                              ? const Color(0xFFF1F5F9)
-                              : Colors.transparent),
+                    decoration: BoxDecoration(
+                      color: rowBg,
+                      border: Border(
+                        left: BorderSide(
+                          color: isSelected
+                              ? const Color(0xFF10B981)
+                              : (isHighlighted
+                                  ? const Color(0xFFCBD5E1)
+                                  : Colors.transparent),
+                          width: 3.5,
+                        ),
+                      ),
+                    ),
                     child: Row(
                       children: [
-                        if (isSelected)
-                          const Icon(
-                            Icons.check_rounded,
-                            size: 16,
-                            color: Color(0xFF0D3B82),
-                          )
-                        else
-                          const SizedBox(width: 16),
-                        const SizedBox(width: 8),
+                        // Icon / indicator
+                        Container(
+                          width: 26,
+                          height: 26,
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? const Color(0xFFDCFCE7)
+                                : const Color(0xFFF1F5F9),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          alignment: Alignment.center,
+                          child: Icon(
+                            isSelected
+                                ? Icons.check_rounded
+                                : Icons.inventory_2_outlined,
+                            size: 15,
+                            color: isSelected
+                                ? const Color(0xFF10B981)
+                                : const Color(0xFF64748B),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        // Label
                         Expanded(
                           child: Text(
-                            widget.itemLabel(option),
+                            label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontFamily: 'PlusJakartaSans',
                               fontSize: 13,
                               fontWeight: isSelected
                                   ? FontWeight.w700
-                                  : FontWeight.w500,
+                                  : FontWeight.w600,
                               color: isSelected
-                                  ? const Color(0xFF0D3B82)
-                                  : const Color(0xFF1E293B),
+                                  ? const Color(0xFF0F172A)
+                                  : const Color(0xFF334155),
                             ),
-                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        if (isSelected)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFDCFCE7),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: const Text(
+                              'Active',
+                              style: TextStyle(
+                                fontFamily: 'PlusJakartaSans',
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF15803D),
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),
@@ -452,8 +633,10 @@ class _SearchableDropdownState<T extends Object>
               },
             ),
           ),
+
+        // Add new button footer
         if (widget.onAddNew != null && widget.addNewLabel != null) ...[
-          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+          const Divider(height: 1, color: Color(0xFFF1F5F9)),
           InkWell(
             onTap: () {
               _dismissOverlay();
@@ -468,16 +651,16 @@ class _SearchableDropdownState<T extends Object>
                   const Icon(
                     Icons.add_circle_outline_rounded,
                     size: 16,
-                    color: Color(0xFF0D3B82),
+                    color: Color(0xFF10B981),
                   ),
                   const SizedBox(width: 8),
                   Text(
                     widget.addNewLabel!,
                     style: const TextStyle(
                       fontFamily: 'PlusJakartaSans',
-                      fontSize: 13,
+                      fontSize: 12.5,
                       fontWeight: FontWeight.w700,
-                      color: Color(0xFF0D3B82),
+                      color: Color(0xFF10B981),
                     ),
                   ),
                 ],
@@ -506,8 +689,173 @@ class _SearchableDropdownState<T extends Object>
 
   @override
   Widget build(BuildContext context) {
+    final fieldWidget = SizedBox(
+      height: 44,
+      child: TextFormField(
+        key: _fieldKey,
+        controller: _textController,
+        focusNode: _effectiveFocusNode,
+        enabled: widget.enabled,
+        readOnly: !widget.enableSearch,
+        showCursor: widget.enableSearch ? null : false,
+        enableInteractiveSelection: widget.enableSearch ? null : false,
+        textInputAction: TextInputAction.next,
+        textAlignVertical: TextAlignVertical.center,
+        onTap: () {
+          if (!widget.enabled) return;
+          _effectiveFocusNode.requestFocus();
+          if (_overlayEntry == null) {
+            _rebuildOptions(forceShow: true);
+          }
+        },
+        style: const TextStyle(
+          fontFamily: 'PlusJakartaSans',
+          fontSize: 13.5,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF0F172A),
+          overflow: TextOverflow.ellipsis,
+        ),
+        decoration: InputDecoration(
+          isDense: true,
+          contentPadding: widget.borderless
+              ? const EdgeInsets.symmetric(horizontal: 14, vertical: 12)
+              : const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          hintText: widget.hintText,
+          hintStyle: TextStyle(
+            fontFamily: 'PlusJakartaSans',
+            color: Colors.grey.shade400,
+            fontSize: 13.5,
+            fontWeight: FontWeight.w400,
+          ),
+          filled: widget.borderless ? _effectiveFocusNode.hasFocus : true,
+          fillColor: widget.borderless
+              ? (_effectiveFocusNode.hasFocus
+                  ? const Color(0xFFF8FAFC)
+                  : Colors.transparent)
+              : (widget.enabled ? Colors.white : const Color(0xFFF8FAFC)),
+          border: widget.borderless
+              ? InputBorder.none
+              : OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+          enabledBorder: widget.borderless
+              ? InputBorder.none
+              : OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+          disabledBorder: widget.borderless
+              ? InputBorder.none
+              : OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey.shade200),
+                ),
+          focusedBorder: widget.borderless
+              ? InputBorder.none
+              : OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF10B981),
+                    width: 1.5,
+                  ),
+                ),
+          suffixIconConstraints: const BoxConstraints(
+            minWidth: 32,
+            minHeight: 32,
+          ),
+          suffixIcon: Padding(
+            padding: const EdgeInsets.only(right: 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.enableSearch &&
+                    _textController.text.isNotEmpty &&
+                    widget.enabled)
+                  Tooltip(
+                    message: 'Clear',
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(16),
+                      onTap: () {
+                        _textController.clear();
+                        _effectiveFocusNode.requestFocus();
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(
+                          Icons.clear_rounded,
+                          size: 16,
+                          color: Colors.grey.shade400,
+                        ),
+                      ),
+                    ),
+                  ),
+                Tooltip(
+                  message: _overlayEntry != null ? 'Close' : 'Open',
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(6),
+                    onTap: widget.enabled ? _toggleOverlay : null,
+                    child: AnimatedRotation(
+                      turns: _overlayEntry != null ? 0.5 : 0.0,
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeInOut,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: _overlayEntry != null
+                              ? const Color(0xFFE2E8F0)
+                              : Colors.transparent,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Icon(
+                          Icons.keyboard_arrow_down_rounded,
+                          color: widget.enabled
+                              ? (_effectiveFocusNode.hasFocus
+                                  ? const Color(0xFF0F172A)
+                                  : const Color(0xFF64748B))
+                              : Colors.grey.shade300,
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        onFieldSubmitted: (value) {
+          final query = value.trim().toLowerCase();
+          final matching = widget.items.where(
+            (item) => widget.itemLabel(item).toLowerCase() == query,
+          );
+          if (matching.isNotEmpty) {
+            _selectOption(matching.first);
+          } else {
+            final partial = widget.items.where(
+              (item) =>
+                  widget.itemLabel(item).toLowerCase().contains(query),
+            );
+            if (partial.length == 1) {
+              _selectOption(partial.first);
+            } else if (widget.selectedItem != null) {
+              _textController.text = widget.itemLabel(widget.selectedItem!);
+              widget.nextFocusNode?.requestFocus();
+            } else {
+              widget.nextFocusNode?.requestFocus();
+            }
+          }
+        },
+      ),
+    );
+
+    if (!widget.showLabel) {
+      return fieldWidget;
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text(
           widget.isRequired ? '${widget.label} *' : widget.label,
@@ -519,134 +867,7 @@ class _SearchableDropdownState<T extends Object>
           ),
         ),
         const SizedBox(height: 6),
-        CompositedTransformTarget(
-          link: _layerLink,
-          child: TextFormField(
-            key: _fieldKey,
-            controller: _textController,
-            focusNode: _effectiveFocusNode,
-            enabled: widget.enabled,
-            textInputAction: TextInputAction.next,
-            onTap: () {
-              if (_overlayEntry == null) {
-                _rebuildOptions(forceShow: true);
-              }
-            },
-            style: const TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF0F172A),
-            ),
-            decoration: InputDecoration(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 8,
-              ),
-              hintText: widget.hintText,
-              hintStyle: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                color: Colors.grey.shade500,
-                fontSize: 13,
-                fontWeight: FontWeight.w400,
-              ),
-              filled: true,
-              fillColor: widget.enabled
-                  ? Colors.white
-                  : const Color(0xFFF8FAFC),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade300),
-              ),
-              disabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.grey.shade200),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
-                  color: Color(0xFF0D3B82),
-                  width: 2.0,
-                ),
-              ),
-              suffixIconConstraints: const BoxConstraints(
-                minWidth: 36,
-                minHeight: 36,
-              ),
-              suffixIcon: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (_textController.text.isNotEmpty && widget.enabled)
-                    Tooltip(
-                      message: 'Clear',
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: () {
-                          _textController.clear();
-                          _effectiveFocusNode.requestFocus();
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.all(4),
-                          child: Icon(
-                            Icons.clear_rounded,
-                            size: 16,
-                            color: Colors.grey.shade400,
-                          ),
-                        ),
-                      ),
-                    ),
-                  Tooltip(
-                    message: _overlayEntry != null ? 'Close' : 'Open',
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(16),
-                      onTap: widget.enabled ? _toggleOverlay : null,
-                      child: Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: Icon(
-                          _overlayEntry != null
-                              ? Icons.arrow_drop_up_rounded
-                              : Icons.arrow_drop_down_rounded,
-                          color: widget.enabled
-                              ? const Color(0xFF64748B)
-                              : Colors.grey.shade300,
-                          size: 24,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                ],
-              ),
-            ),
-            onFieldSubmitted: (value) {
-              // Check if user pressed enter directly on an exact match or unique option
-              final query = value.trim().toLowerCase();
-              final matching = widget.items.where(
-                (item) => widget.itemLabel(item).toLowerCase() == query,
-              );
-              if (matching.isNotEmpty) {
-                _selectOption(matching.first);
-              } else {
-                final partial = widget.items.where(
-                  (item) =>
-                      widget.itemLabel(item).toLowerCase().contains(query),
-                );
-                if (partial.length == 1) {
-                  _selectOption(partial.first);
-                } else if (widget.selectedItem != null) {
-                  _textController.text = widget.itemLabel(widget.selectedItem!);
-                  widget.nextFocusNode?.requestFocus();
-                } else {
-                  widget.nextFocusNode?.requestFocus();
-                }
-              }
-            },
-          ),
-        ),
+        fieldWidget,
       ],
     );
   }

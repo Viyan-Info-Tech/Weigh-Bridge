@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../../../../core/utils/currency_formatter.dart';
 import '../../../settings/domain/entities/billing_settings.dart';
 import '../entities/weighment.dart';
 import 'receipt_pdf_fonts.dart';
@@ -19,7 +20,7 @@ import 'weighment_receipt_data.dart';
 ///   The face comes from [ReceiptPdfFonts], which uses a Unicode-capable
 ///   TrueType font when one is bundled and Courier otherwise.
 /// - Centered company name, address, and contact details.
-/// - Left-aligned metadata fields with aligned colons (SERIAL NO, VEHICLE NO, DESCRIPTION, PRODUCT, CONTAINER NO).
+/// - Left-aligned metadata fields with aligned colons (SERIAL NO, VEHICLE NO, MATERIAL, CONTAINER NO).
 /// - Authentic dashed line separators (`--------------------------------------------------------------------------------`).
 /// - Monospace structured weight table (WEIGHT, DATE, TIME) for GROSS, TARE, and NET.
 /// - Charges, payment mode, driver and authorized signatory signature lines.
@@ -121,12 +122,16 @@ class WeighmentTicketPdfGenerator {
                 _buildFieldRow('VEHICLE NO', data.vehicleNumber, isBold: true),
               if (data.hasMaterial)
                 _buildFieldRow('MATERIAL', data.materialName),
-              if (data.hasDescription)
-                _buildFieldRow('DESCRIPTION', data.descriptionText),
               if (data.contactPhone.trim().isNotEmpty)
                 _buildFieldRow('MOBILE NO', data.contactPhone),
               if (data.hasRemarks)
                 _buildFieldRow('CONTAINER No', data.bill.remarks!),
+              if (data.hasCharges)
+                _buildFieldRow(
+                  'CHARGES',
+                  _currencyForPdf(data.chargesText),
+                  isBold: true,
+                ),
 
               pw.SizedBox(height: 8),
 
@@ -233,6 +238,16 @@ class WeighmentTicketPdfGenerator {
 
     return pdf.save();
   }
+
+  /// Rewrites the currency text for the ticket PDF's actual font.
+  ///
+  /// The bundled NotoSansMono face draws `₹`; the Courier fallback (used when
+  /// the font assets are not present) has no glyph for it, so the text is
+  /// swapped to `Rs.` to avoid an unprintable character.
+  static String _currencyForPdf(String formatted) =>
+      ReceiptPdfFonts.unicodeSupported
+      ? formatted
+      : formatted.replaceAll(currencySymbol, 'Rs.');
 
   static bool _hasContactLine(WeighmentReceiptData data) =>
       (data.settings.phoneNumber != null &&

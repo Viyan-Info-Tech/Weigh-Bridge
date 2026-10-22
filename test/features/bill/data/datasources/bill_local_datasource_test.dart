@@ -24,6 +24,7 @@ void main() {
     double firstWeightKg = 20000,
     double? secondWeightKg = 5000,
     double? netWeightKg,
+    double? charges,
   }) {
     return Weighment(
       id: 0,
@@ -32,6 +33,7 @@ void main() {
       firstWeightKg: firstWeightKg,
       secondWeightKg: secondWeightKg,
       netWeightKg: netWeightKg,
+      charges: charges,
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
@@ -130,6 +132,41 @@ void main() {
       final deleted = await source.deleteWeighment(id);
       expect(deleted, 1);
       expect(await source.getWeighmentById(id), isNull);
+    });
+
+    test('saveWeighment persists a decimal charge exactly as entered', () async {
+      final id = await source.saveWeighment(
+        buildEntity(billNumber: 'WB-00001', charges: 250.50),
+      );
+      final stored = await source.getWeighmentById(id);
+      expect(stored!.charges, 250.50);
+    });
+
+    test('saveWeighment persists a zero charge (not null)', () async {
+      final id = await source.saveWeighment(
+        buildEntity(billNumber: 'WB-00001', charges: 0),
+      );
+      final stored = await source.getWeighmentById(id);
+      expect(stored!.charges, 0);
+    });
+
+    test('legacy rows without charges read back as null', () async {
+      final id = await seedWeighment(db, billNumber: 'WB-00001');
+      final stored = await source.getWeighmentById(id);
+      expect(stored!.charges, isNull);
+    });
+
+    test('updateWeighment can change the charge', () async {
+      final id = await source.saveWeighment(
+        buildEntity(billNumber: 'WB-00001', charges: 100),
+      );
+      await source.updateWeighment(
+        id,
+        buildEntity(billNumber: 'WB-00001', charges: 1000),
+      );
+
+      final updated = await source.getWeighmentById(id);
+      expect(updated!.charges, 1000);
     });
   });
 }

@@ -592,6 +592,28 @@ class $WeighmentsTable extends Weighments
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _materialIdMeta = const VerificationMeta(
+    'materialId',
+  );
+  @override
+  late final GeneratedColumn<int> materialId = GeneratedColumn<int>(
+    'material_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _chargesMeta = const VerificationMeta(
+    'charges',
+  );
+  @override
+  late final GeneratedColumn<double> charges = GeneratedColumn<double>(
+    'charges',
+    aliasedName,
+    true,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _descriptionMeta = const VerificationMeta(
     'description',
   );
@@ -688,6 +710,8 @@ class $WeighmentsTable extends Weighments
     secondWeightType,
     netWeightKg,
     material,
+    materialId,
+    charges,
     description,
     remarks,
     mobileNumber,
@@ -782,6 +806,18 @@ class $WeighmentsTable extends Weighments
         material.isAcceptableOrUnknown(data['material']!, _materialMeta),
       );
     }
+    if (data.containsKey('material_id')) {
+      context.handle(
+        _materialIdMeta,
+        materialId.isAcceptableOrUnknown(data['material_id']!, _materialIdMeta),
+      );
+    }
+    if (data.containsKey('charges')) {
+      context.handle(
+        _chargesMeta,
+        charges.isAcceptableOrUnknown(data['charges']!, _chargesMeta),
+      );
+    }
     if (data.containsKey('description')) {
       context.handle(
         _descriptionMeta,
@@ -869,6 +905,14 @@ class $WeighmentsTable extends Weighments
         DriftSqlType.string,
         data['${effectivePrefix}material'],
       ),
+      materialId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}material_id'],
+      ),
+      charges: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}charges'],
+      ),
       description: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}description'],
@@ -911,7 +955,36 @@ class Weighment extends DataClass implements Insertable<Weighment> {
   final double? secondWeightKg;
   final String? secondWeightType;
   final double? netWeightKg;
+
+  /// Material name + vehicle type snapshot stored with the weighment
+  /// (e.g. `Auto - Empty`).
+  ///
+  /// The value is denormalised on purpose: a saved bill must keep printing
+  /// exactly what the operator selected even after the material master is
+  /// edited or deactivated later. Nullable so legacy rows (schema 30-32)
+  /// and tare-only weighments stay valid.
   final String? material;
+
+  /// Stable reference to the material master row chosen on the form
+  /// (schema 33). Nullable: legacy rows and tare-only weighments have none.
+  ///
+  /// No foreign-key constraint is declared so the schema-33 migration can be
+  /// a plain additive `ALTER TABLE ADD COLUMN` instead of a table rebuild;
+  /// deletion of referenced materials is blocked in the DAO instead.
+  final int? materialId;
+
+  /// Manually entered charges for this weighment, in rupees.
+  ///
+  /// Nullable so legacy rows (created before this column existed) stay valid;
+  /// NULL renders as an empty value in the form and zero total in reports.
+  final double? charges;
+
+  /// Legacy weighment description (schema 30).
+  ///
+  /// No longer part of the weighment workflow: the UI, receipt, PDF, and
+  /// application data flow never read or write it. The column is deliberately
+  /// kept in the schema so no migration or schema-version bump is needed and
+  /// description values already stored on existing weighment rows stay intact.
   final String? description;
   final String? remarks;
   final String? mobileNumber;
@@ -928,6 +1001,8 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     this.secondWeightType,
     this.netWeightKg,
     this.material,
+    this.materialId,
+    this.charges,
     this.description,
     this.remarks,
     this.mobileNumber,
@@ -954,6 +1029,12 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     }
     if (!nullToAbsent || material != null) {
       map['material'] = Variable<String>(material);
+    }
+    if (!nullToAbsent || materialId != null) {
+      map['material_id'] = Variable<int>(materialId);
+    }
+    if (!nullToAbsent || charges != null) {
+      map['charges'] = Variable<double>(charges);
     }
     if (!nullToAbsent || description != null) {
       map['description'] = Variable<String>(description);
@@ -989,6 +1070,12 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       material: material == null && nullToAbsent
           ? const Value.absent()
           : Value(material),
+      materialId: materialId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(materialId),
+      charges: charges == null && nullToAbsent
+          ? const Value.absent()
+          : Value(charges),
       description: description == null && nullToAbsent
           ? const Value.absent()
           : Value(description),
@@ -1019,6 +1106,8 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       secondWeightType: serializer.fromJson<String?>(json['secondWeightType']),
       netWeightKg: serializer.fromJson<double?>(json['netWeightKg']),
       material: serializer.fromJson<String?>(json['material']),
+      materialId: serializer.fromJson<int?>(json['materialId']),
+      charges: serializer.fromJson<double?>(json['charges']),
       description: serializer.fromJson<String?>(json['description']),
       remarks: serializer.fromJson<String?>(json['remarks']),
       mobileNumber: serializer.fromJson<String?>(json['mobileNumber']),
@@ -1040,6 +1129,8 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       'secondWeightType': serializer.toJson<String?>(secondWeightType),
       'netWeightKg': serializer.toJson<double?>(netWeightKg),
       'material': serializer.toJson<String?>(material),
+      'materialId': serializer.toJson<int?>(materialId),
+      'charges': serializer.toJson<double?>(charges),
       'description': serializer.toJson<String?>(description),
       'remarks': serializer.toJson<String?>(remarks),
       'mobileNumber': serializer.toJson<String?>(mobileNumber),
@@ -1059,6 +1150,8 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     Value<String?> secondWeightType = const Value.absent(),
     Value<double?> netWeightKg = const Value.absent(),
     Value<String?> material = const Value.absent(),
+    Value<int?> materialId = const Value.absent(),
+    Value<double?> charges = const Value.absent(),
     Value<String?> description = const Value.absent(),
     Value<String?> remarks = const Value.absent(),
     Value<String?> mobileNumber = const Value.absent(),
@@ -1079,6 +1172,8 @@ class Weighment extends DataClass implements Insertable<Weighment> {
         : this.secondWeightType,
     netWeightKg: netWeightKg.present ? netWeightKg.value : this.netWeightKg,
     material: material.present ? material.value : this.material,
+    materialId: materialId.present ? materialId.value : this.materialId,
+    charges: charges.present ? charges.value : this.charges,
     description: description.present ? description.value : this.description,
     remarks: remarks.present ? remarks.value : this.remarks,
     mobileNumber: mobileNumber.present ? mobileNumber.value : this.mobileNumber,
@@ -1111,6 +1206,10 @@ class Weighment extends DataClass implements Insertable<Weighment> {
           ? data.netWeightKg.value
           : this.netWeightKg,
       material: data.material.present ? data.material.value : this.material,
+      materialId: data.materialId.present
+          ? data.materialId.value
+          : this.materialId,
+      charges: data.charges.present ? data.charges.value : this.charges,
       description: data.description.present
           ? data.description.value
           : this.description,
@@ -1138,6 +1237,8 @@ class Weighment extends DataClass implements Insertable<Weighment> {
           ..write('secondWeightType: $secondWeightType, ')
           ..write('netWeightKg: $netWeightKg, ')
           ..write('material: $material, ')
+          ..write('materialId: $materialId, ')
+          ..write('charges: $charges, ')
           ..write('description: $description, ')
           ..write('remarks: $remarks, ')
           ..write('mobileNumber: $mobileNumber, ')
@@ -1159,6 +1260,8 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     secondWeightType,
     netWeightKg,
     material,
+    materialId,
+    charges,
     description,
     remarks,
     mobileNumber,
@@ -1179,6 +1282,8 @@ class Weighment extends DataClass implements Insertable<Weighment> {
           other.secondWeightType == this.secondWeightType &&
           other.netWeightKg == this.netWeightKg &&
           other.material == this.material &&
+          other.materialId == this.materialId &&
+          other.charges == this.charges &&
           other.description == this.description &&
           other.remarks == this.remarks &&
           other.mobileNumber == this.mobileNumber &&
@@ -1197,6 +1302,8 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
   final Value<String?> secondWeightType;
   final Value<double?> netWeightKg;
   final Value<String?> material;
+  final Value<int?> materialId;
+  final Value<double?> charges;
   final Value<String?> description;
   final Value<String?> remarks;
   final Value<String?> mobileNumber;
@@ -1213,6 +1320,8 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     this.secondWeightType = const Value.absent(),
     this.netWeightKg = const Value.absent(),
     this.material = const Value.absent(),
+    this.materialId = const Value.absent(),
+    this.charges = const Value.absent(),
     this.description = const Value.absent(),
     this.remarks = const Value.absent(),
     this.mobileNumber = const Value.absent(),
@@ -1230,6 +1339,8 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     this.secondWeightType = const Value.absent(),
     this.netWeightKg = const Value.absent(),
     this.material = const Value.absent(),
+    this.materialId = const Value.absent(),
+    this.charges = const Value.absent(),
     this.description = const Value.absent(),
     this.remarks = const Value.absent(),
     this.mobileNumber = const Value.absent(),
@@ -1249,6 +1360,8 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     Expression<String>? secondWeightType,
     Expression<double>? netWeightKg,
     Expression<String>? material,
+    Expression<int>? materialId,
+    Expression<double>? charges,
     Expression<String>? description,
     Expression<String>? remarks,
     Expression<String>? mobileNumber,
@@ -1266,6 +1379,8 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
       if (secondWeightType != null) 'second_weight_type': secondWeightType,
       if (netWeightKg != null) 'net_weight_kg': netWeightKg,
       if (material != null) 'material': material,
+      if (materialId != null) 'material_id': materialId,
+      if (charges != null) 'charges': charges,
       if (description != null) 'description': description,
       if (remarks != null) 'remarks': remarks,
       if (mobileNumber != null) 'mobile_number': mobileNumber,
@@ -1285,6 +1400,8 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     Value<String?>? secondWeightType,
     Value<double?>? netWeightKg,
     Value<String?>? material,
+    Value<int?>? materialId,
+    Value<double?>? charges,
     Value<String?>? description,
     Value<String?>? remarks,
     Value<String?>? mobileNumber,
@@ -1302,6 +1419,8 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
       secondWeightType: secondWeightType ?? this.secondWeightType,
       netWeightKg: netWeightKg ?? this.netWeightKg,
       material: material ?? this.material,
+      materialId: materialId ?? this.materialId,
+      charges: charges ?? this.charges,
       description: description ?? this.description,
       remarks: remarks ?? this.remarks,
       mobileNumber: mobileNumber ?? this.mobileNumber,
@@ -1341,6 +1460,12 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     if (material.present) {
       map['material'] = Variable<String>(material.value);
     }
+    if (materialId.present) {
+      map['material_id'] = Variable<int>(materialId.value);
+    }
+    if (charges.present) {
+      map['charges'] = Variable<double>(charges.value);
+    }
     if (description.present) {
       map['description'] = Variable<String>(description.value);
     }
@@ -1374,10 +1499,422 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
           ..write('secondWeightType: $secondWeightType, ')
           ..write('netWeightKg: $netWeightKg, ')
           ..write('material: $material, ')
+          ..write('materialId: $materialId, ')
+          ..write('charges: $charges, ')
           ..write('description: $description, ')
           ..write('remarks: $remarks, ')
           ..write('mobileNumber: $mobileNumber, ')
           ..write('weightUnit: $weightUnit, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $MaterialsTable extends Materials
+    with TableInfo<$MaterialsTable, Material> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $MaterialsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 100,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _vehicleTypeMeta = const VerificationMeta(
+    'vehicleType',
+  );
+  @override
+  late final GeneratedColumn<String> vehicleType = GeneratedColumn<String>(
+    'vehicle_type',
+    aliasedName,
+    false,
+    additionalChecks: GeneratedColumn.checkTextLength(
+      minTextLength: 1,
+      maxTextLength: 20,
+    ),
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _isActiveMeta = const VerificationMeta(
+    'isActive',
+  );
+  @override
+  late final GeneratedColumn<bool> isActive = GeneratedColumn<bool>(
+    'is_active',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_active" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    name,
+    vehicleType,
+    isActive,
+    createdAt,
+    updatedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'materials';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<Material> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('vehicle_type')) {
+      context.handle(
+        _vehicleTypeMeta,
+        vehicleType.isAcceptableOrUnknown(
+          data['vehicle_type']!,
+          _vehicleTypeMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_vehicleTypeMeta);
+    }
+    if (data.containsKey('is_active')) {
+      context.handle(
+        _isActiveMeta,
+        isActive.isAcceptableOrUnknown(data['is_active']!, _isActiveMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  Material map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return Material(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      vehicleType: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}vehicle_type'],
+      )!,
+      isActive: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_active'],
+      )!,
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $MaterialsTable createAlias(String alias) {
+    return $MaterialsTable(attachedDatabase, alias);
+  }
+}
+
+class Material extends DataClass implements Insertable<Material> {
+  final int id;
+  final String name;
+
+  /// One of [MaterialVehicleTypes.all]: `Empty` or `Load`.
+  final String vehicleType;
+  final bool isActive;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+  const Material({
+    required this.id,
+    required this.name,
+    required this.vehicleType,
+    required this.isActive,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['vehicle_type'] = Variable<String>(vehicleType);
+    map['is_active'] = Variable<bool>(isActive);
+    map['created_at'] = Variable<DateTime>(createdAt);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  MaterialsCompanion toCompanion(bool nullToAbsent) {
+    return MaterialsCompanion(
+      id: Value(id),
+      name: Value(name),
+      vehicleType: Value(vehicleType),
+      isActive: Value(isActive),
+      createdAt: Value(createdAt),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory Material.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return Material(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      vehicleType: serializer.fromJson<String>(json['vehicleType']),
+      isActive: serializer.fromJson<bool>(json['isActive']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'vehicleType': serializer.toJson<String>(vehicleType),
+      'isActive': serializer.toJson<bool>(isActive),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  Material copyWith({
+    int? id,
+    String? name,
+    String? vehicleType,
+    bool? isActive,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) => Material(
+    id: id ?? this.id,
+    name: name ?? this.name,
+    vehicleType: vehicleType ?? this.vehicleType,
+    isActive: isActive ?? this.isActive,
+    createdAt: createdAt ?? this.createdAt,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  Material copyWithCompanion(MaterialsCompanion data) {
+    return Material(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      vehicleType: data.vehicleType.present
+          ? data.vehicleType.value
+          : this.vehicleType,
+      isActive: data.isActive.present ? data.isActive.value : this.isActive,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('Material(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('vehicleType: $vehicleType, ')
+          ..write('isActive: $isActive, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, name, vehicleType, isActive, createdAt, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is Material &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.vehicleType == this.vehicleType &&
+          other.isActive == this.isActive &&
+          other.createdAt == this.createdAt &&
+          other.updatedAt == this.updatedAt);
+}
+
+class MaterialsCompanion extends UpdateCompanion<Material> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<String> vehicleType;
+  final Value<bool> isActive;
+  final Value<DateTime> createdAt;
+  final Value<DateTime> updatedAt;
+  const MaterialsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.vehicleType = const Value.absent(),
+    this.isActive = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  });
+  MaterialsCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    required String vehicleType,
+    this.isActive = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+  }) : name = Value(name),
+       vehicleType = Value(vehicleType);
+  static Insertable<Material> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<String>? vehicleType,
+    Expression<bool>? isActive,
+    Expression<DateTime>? createdAt,
+    Expression<DateTime>? updatedAt,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (vehicleType != null) 'vehicle_type': vehicleType,
+      if (isActive != null) 'is_active': isActive,
+      if (createdAt != null) 'created_at': createdAt,
+      if (updatedAt != null) 'updated_at': updatedAt,
+    });
+  }
+
+  MaterialsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? name,
+    Value<String>? vehicleType,
+    Value<bool>? isActive,
+    Value<DateTime>? createdAt,
+    Value<DateTime>? updatedAt,
+  }) {
+    return MaterialsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      vehicleType: vehicleType ?? this.vehicleType,
+      isActive: isActive ?? this.isActive,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (vehicleType.present) {
+      map['vehicle_type'] = Variable<String>(vehicleType.value);
+    }
+    if (isActive.present) {
+      map['is_active'] = Variable<bool>(isActive.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('MaterialsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('vehicleType: $vehicleType, ')
+          ..write('isActive: $isActive, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -3315,736 +3852,23 @@ class ScaleSettingsCompanion extends UpdateCompanion<ScaleSetting> {
   }
 }
 
-class $AutoTareSettingsTable extends AutoTareSettings
-    with TableInfo<$AutoTareSettingsTable, AutoTareSetting> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $AutoTareSettingsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
-    'id',
-    aliasedName,
-    false,
-    hasAutoIncrement: true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'PRIMARY KEY AUTOINCREMENT',
-    ),
-  );
-  static const VerificationMeta _tareDateMeta = const VerificationMeta(
-    'tareDate',
-  );
-  @override
-  late final GeneratedColumn<DateTime> tareDate = GeneratedColumn<DateTime>(
-    'tare_date',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
-  );
-  static const VerificationMeta _tareKgMeta = const VerificationMeta('tareKg');
-  @override
-  late final GeneratedColumn<double> tareKg = GeneratedColumn<double>(
-    'tare_kg',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _createdAtMeta = const VerificationMeta(
-    'createdAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-    'created_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-    defaultValue: currentDateAndTime,
-  );
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
-    'updatedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-    'updated_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-    defaultValue: currentDateAndTime,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    id,
-    tareDate,
-    tareKg,
-    createdAt,
-    updatedAt,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'auto_tare_settings';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<AutoTareSetting> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    }
-    if (data.containsKey('tare_date')) {
-      context.handle(
-        _tareDateMeta,
-        tareDate.isAcceptableOrUnknown(data['tare_date']!, _tareDateMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_tareDateMeta);
-    }
-    if (data.containsKey('tare_kg')) {
-      context.handle(
-        _tareKgMeta,
-        tareKg.isAcceptableOrUnknown(data['tare_kg']!, _tareKgMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_tareKgMeta);
-    }
-    if (data.containsKey('created_at')) {
-      context.handle(
-        _createdAtMeta,
-        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
-      );
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(
-        _updatedAtMeta,
-        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  AutoTareSetting map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return AutoTareSetting(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}id'],
-      )!,
-      tareDate: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}tare_date'],
-      )!,
-      tareKg: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}tare_kg'],
-      )!,
-      createdAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}created_at'],
-      )!,
-      updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}updated_at'],
-      )!,
-    );
-  }
-
-  @override
-  $AutoTareSettingsTable createAlias(String alias) {
-    return $AutoTareSettingsTable(attachedDatabase, alias);
-  }
-}
-
-class AutoTareSetting extends DataClass implements Insertable<AutoTareSetting> {
-  final int id;
-  final DateTime tareDate;
-  final double tareKg;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  const AutoTareSetting({
-    required this.id,
-    required this.tareDate,
-    required this.tareKg,
-    required this.createdAt,
-    required this.updatedAt,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
-    map['tare_date'] = Variable<DateTime>(tareDate);
-    map['tare_kg'] = Variable<double>(tareKg);
-    map['created_at'] = Variable<DateTime>(createdAt);
-    map['updated_at'] = Variable<DateTime>(updatedAt);
-    return map;
-  }
-
-  AutoTareSettingsCompanion toCompanion(bool nullToAbsent) {
-    return AutoTareSettingsCompanion(
-      id: Value(id),
-      tareDate: Value(tareDate),
-      tareKg: Value(tareKg),
-      createdAt: Value(createdAt),
-      updatedAt: Value(updatedAt),
-    );
-  }
-
-  factory AutoTareSetting.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return AutoTareSetting(
-      id: serializer.fromJson<int>(json['id']),
-      tareDate: serializer.fromJson<DateTime>(json['tareDate']),
-      tareKg: serializer.fromJson<double>(json['tareKg']),
-      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
-      'tareDate': serializer.toJson<DateTime>(tareDate),
-      'tareKg': serializer.toJson<double>(tareKg),
-      'createdAt': serializer.toJson<DateTime>(createdAt),
-      'updatedAt': serializer.toJson<DateTime>(updatedAt),
-    };
-  }
-
-  AutoTareSetting copyWith({
-    int? id,
-    DateTime? tareDate,
-    double? tareKg,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-  }) => AutoTareSetting(
-    id: id ?? this.id,
-    tareDate: tareDate ?? this.tareDate,
-    tareKg: tareKg ?? this.tareKg,
-    createdAt: createdAt ?? this.createdAt,
-    updatedAt: updatedAt ?? this.updatedAt,
-  );
-  AutoTareSetting copyWithCompanion(AutoTareSettingsCompanion data) {
-    return AutoTareSetting(
-      id: data.id.present ? data.id.value : this.id,
-      tareDate: data.tareDate.present ? data.tareDate.value : this.tareDate,
-      tareKg: data.tareKg.present ? data.tareKg.value : this.tareKg,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('AutoTareSetting(')
-          ..write('id: $id, ')
-          ..write('tareDate: $tareDate, ')
-          ..write('tareKg: $tareKg, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode => Object.hash(id, tareDate, tareKg, createdAt, updatedAt);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is AutoTareSetting &&
-          other.id == this.id &&
-          other.tareDate == this.tareDate &&
-          other.tareKg == this.tareKg &&
-          other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt);
-}
-
-class AutoTareSettingsCompanion extends UpdateCompanion<AutoTareSetting> {
-  final Value<int> id;
-  final Value<DateTime> tareDate;
-  final Value<double> tareKg;
-  final Value<DateTime> createdAt;
-  final Value<DateTime> updatedAt;
-  const AutoTareSettingsCompanion({
-    this.id = const Value.absent(),
-    this.tareDate = const Value.absent(),
-    this.tareKg = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-  });
-  AutoTareSettingsCompanion.insert({
-    this.id = const Value.absent(),
-    required DateTime tareDate,
-    required double tareKg,
-    this.createdAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-  }) : tareDate = Value(tareDate),
-       tareKg = Value(tareKg);
-  static Insertable<AutoTareSetting> custom({
-    Expression<int>? id,
-    Expression<DateTime>? tareDate,
-    Expression<double>? tareKg,
-    Expression<DateTime>? createdAt,
-    Expression<DateTime>? updatedAt,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (tareDate != null) 'tare_date': tareDate,
-      if (tareKg != null) 'tare_kg': tareKg,
-      if (createdAt != null) 'created_at': createdAt,
-      if (updatedAt != null) 'updated_at': updatedAt,
-    });
-  }
-
-  AutoTareSettingsCompanion copyWith({
-    Value<int>? id,
-    Value<DateTime>? tareDate,
-    Value<double>? tareKg,
-    Value<DateTime>? createdAt,
-    Value<DateTime>? updatedAt,
-  }) {
-    return AutoTareSettingsCompanion(
-      id: id ?? this.id,
-      tareDate: tareDate ?? this.tareDate,
-      tareKg: tareKg ?? this.tareKg,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<int>(id.value);
-    }
-    if (tareDate.present) {
-      map['tare_date'] = Variable<DateTime>(tareDate.value);
-    }
-    if (tareKg.present) {
-      map['tare_kg'] = Variable<double>(tareKg.value);
-    }
-    if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('AutoTareSettingsCompanion(')
-          ..write('id: $id, ')
-          ..write('tareDate: $tareDate, ')
-          ..write('tareKg: $tareKg, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
-          ..write(')'))
-        .toString();
-  }
-}
-
-class $VehicleTareRecordsTable extends VehicleTareRecords
-    with TableInfo<$VehicleTareRecordsTable, VehicleTareRecord> {
-  @override
-  final GeneratedDatabase attachedDatabase;
-  final String? _alias;
-  $VehicleTareRecordsTable(this.attachedDatabase, [this._alias]);
-  static const VerificationMeta _idMeta = const VerificationMeta('id');
-  @override
-  late final GeneratedColumn<int> id = GeneratedColumn<int>(
-    'id',
-    aliasedName,
-    false,
-    hasAutoIncrement: true,
-    type: DriftSqlType.int,
-    requiredDuringInsert: false,
-    defaultConstraints: GeneratedColumn.constraintIsAlways(
-      'PRIMARY KEY AUTOINCREMENT',
-    ),
-  );
-  static const VerificationMeta _vehicleNumberMeta = const VerificationMeta(
-    'vehicleNumber',
-  );
-  @override
-  late final GeneratedColumn<String> vehicleNumber = GeneratedColumn<String>(
-    'vehicle_number',
-    aliasedName,
-    false,
-    additionalChecks: GeneratedColumn.checkTextLength(
-      minTextLength: 1,
-      maxTextLength: 30,
-    ),
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
-  );
-  static const VerificationMeta _tareKgMeta = const VerificationMeta('tareKg');
-  @override
-  late final GeneratedColumn<double> tareKg = GeneratedColumn<double>(
-    'tare_kg',
-    aliasedName,
-    false,
-    type: DriftSqlType.double,
-    requiredDuringInsert: true,
-  );
-  static const VerificationMeta _createdAtMeta = const VerificationMeta(
-    'createdAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
-    'created_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-    defaultValue: currentDateAndTime,
-  );
-  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
-    'updatedAt',
-  );
-  @override
-  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
-    'updated_at',
-    aliasedName,
-    false,
-    type: DriftSqlType.dateTime,
-    requiredDuringInsert: false,
-    defaultValue: currentDateAndTime,
-  );
-  @override
-  List<GeneratedColumn> get $columns => [
-    id,
-    vehicleNumber,
-    tareKg,
-    createdAt,
-    updatedAt,
-  ];
-  @override
-  String get aliasedName => _alias ?? actualTableName;
-  @override
-  String get actualTableName => $name;
-  static const String $name = 'vehicle_tare_records';
-  @override
-  VerificationContext validateIntegrity(
-    Insertable<VehicleTareRecord> instance, {
-    bool isInserting = false,
-  }) {
-    final context = VerificationContext();
-    final data = instance.toColumns(true);
-    if (data.containsKey('id')) {
-      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
-    }
-    if (data.containsKey('vehicle_number')) {
-      context.handle(
-        _vehicleNumberMeta,
-        vehicleNumber.isAcceptableOrUnknown(
-          data['vehicle_number']!,
-          _vehicleNumberMeta,
-        ),
-      );
-    } else if (isInserting) {
-      context.missing(_vehicleNumberMeta);
-    }
-    if (data.containsKey('tare_kg')) {
-      context.handle(
-        _tareKgMeta,
-        tareKg.isAcceptableOrUnknown(data['tare_kg']!, _tareKgMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_tareKgMeta);
-    }
-    if (data.containsKey('created_at')) {
-      context.handle(
-        _createdAtMeta,
-        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
-      );
-    }
-    if (data.containsKey('updated_at')) {
-      context.handle(
-        _updatedAtMeta,
-        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
-      );
-    }
-    return context;
-  }
-
-  @override
-  Set<GeneratedColumn> get $primaryKey => {id};
-  @override
-  VehicleTareRecord map(Map<String, dynamic> data, {String? tablePrefix}) {
-    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return VehicleTareRecord(
-      id: attachedDatabase.typeMapping.read(
-        DriftSqlType.int,
-        data['${effectivePrefix}id'],
-      )!,
-      vehicleNumber: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}vehicle_number'],
-      )!,
-      tareKg: attachedDatabase.typeMapping.read(
-        DriftSqlType.double,
-        data['${effectivePrefix}tare_kg'],
-      )!,
-      createdAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}created_at'],
-      )!,
-      updatedAt: attachedDatabase.typeMapping.read(
-        DriftSqlType.dateTime,
-        data['${effectivePrefix}updated_at'],
-      )!,
-    );
-  }
-
-  @override
-  $VehicleTareRecordsTable createAlias(String alias) {
-    return $VehicleTareRecordsTable(attachedDatabase, alias);
-  }
-}
-
-class VehicleTareRecord extends DataClass
-    implements Insertable<VehicleTareRecord> {
-  final int id;
-  final String vehicleNumber;
-  final double tareKg;
-  final DateTime createdAt;
-  final DateTime updatedAt;
-  const VehicleTareRecord({
-    required this.id,
-    required this.vehicleNumber,
-    required this.tareKg,
-    required this.createdAt,
-    required this.updatedAt,
-  });
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    map['id'] = Variable<int>(id);
-    map['vehicle_number'] = Variable<String>(vehicleNumber);
-    map['tare_kg'] = Variable<double>(tareKg);
-    map['created_at'] = Variable<DateTime>(createdAt);
-    map['updated_at'] = Variable<DateTime>(updatedAt);
-    return map;
-  }
-
-  VehicleTareRecordsCompanion toCompanion(bool nullToAbsent) {
-    return VehicleTareRecordsCompanion(
-      id: Value(id),
-      vehicleNumber: Value(vehicleNumber),
-      tareKg: Value(tareKg),
-      createdAt: Value(createdAt),
-      updatedAt: Value(updatedAt),
-    );
-  }
-
-  factory VehicleTareRecord.fromJson(
-    Map<String, dynamic> json, {
-    ValueSerializer? serializer,
-  }) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return VehicleTareRecord(
-      id: serializer.fromJson<int>(json['id']),
-      vehicleNumber: serializer.fromJson<String>(json['vehicleNumber']),
-      tareKg: serializer.fromJson<double>(json['tareKg']),
-      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
-      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
-    );
-  }
-  @override
-  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
-    serializer ??= driftRuntimeOptions.defaultSerializer;
-    return <String, dynamic>{
-      'id': serializer.toJson<int>(id),
-      'vehicleNumber': serializer.toJson<String>(vehicleNumber),
-      'tareKg': serializer.toJson<double>(tareKg),
-      'createdAt': serializer.toJson<DateTime>(createdAt),
-      'updatedAt': serializer.toJson<DateTime>(updatedAt),
-    };
-  }
-
-  VehicleTareRecord copyWith({
-    int? id,
-    String? vehicleNumber,
-    double? tareKg,
-    DateTime? createdAt,
-    DateTime? updatedAt,
-  }) => VehicleTareRecord(
-    id: id ?? this.id,
-    vehicleNumber: vehicleNumber ?? this.vehicleNumber,
-    tareKg: tareKg ?? this.tareKg,
-    createdAt: createdAt ?? this.createdAt,
-    updatedAt: updatedAt ?? this.updatedAt,
-  );
-  VehicleTareRecord copyWithCompanion(VehicleTareRecordsCompanion data) {
-    return VehicleTareRecord(
-      id: data.id.present ? data.id.value : this.id,
-      vehicleNumber: data.vehicleNumber.present
-          ? data.vehicleNumber.value
-          : this.vehicleNumber,
-      tareKg: data.tareKg.present ? data.tareKg.value : this.tareKg,
-      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
-      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
-    );
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('VehicleTareRecord(')
-          ..write('id: $id, ')
-          ..write('vehicleNumber: $vehicleNumber, ')
-          ..write('tareKg: $tareKg, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
-          ..write(')'))
-        .toString();
-  }
-
-  @override
-  int get hashCode =>
-      Object.hash(id, vehicleNumber, tareKg, createdAt, updatedAt);
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      (other is VehicleTareRecord &&
-          other.id == this.id &&
-          other.vehicleNumber == this.vehicleNumber &&
-          other.tareKg == this.tareKg &&
-          other.createdAt == this.createdAt &&
-          other.updatedAt == this.updatedAt);
-}
-
-class VehicleTareRecordsCompanion extends UpdateCompanion<VehicleTareRecord> {
-  final Value<int> id;
-  final Value<String> vehicleNumber;
-  final Value<double> tareKg;
-  final Value<DateTime> createdAt;
-  final Value<DateTime> updatedAt;
-  const VehicleTareRecordsCompanion({
-    this.id = const Value.absent(),
-    this.vehicleNumber = const Value.absent(),
-    this.tareKg = const Value.absent(),
-    this.createdAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-  });
-  VehicleTareRecordsCompanion.insert({
-    this.id = const Value.absent(),
-    required String vehicleNumber,
-    required double tareKg,
-    this.createdAt = const Value.absent(),
-    this.updatedAt = const Value.absent(),
-  }) : vehicleNumber = Value(vehicleNumber),
-       tareKg = Value(tareKg);
-  static Insertable<VehicleTareRecord> custom({
-    Expression<int>? id,
-    Expression<String>? vehicleNumber,
-    Expression<double>? tareKg,
-    Expression<DateTime>? createdAt,
-    Expression<DateTime>? updatedAt,
-  }) {
-    return RawValuesInsertable({
-      if (id != null) 'id': id,
-      if (vehicleNumber != null) 'vehicle_number': vehicleNumber,
-      if (tareKg != null) 'tare_kg': tareKg,
-      if (createdAt != null) 'created_at': createdAt,
-      if (updatedAt != null) 'updated_at': updatedAt,
-    });
-  }
-
-  VehicleTareRecordsCompanion copyWith({
-    Value<int>? id,
-    Value<String>? vehicleNumber,
-    Value<double>? tareKg,
-    Value<DateTime>? createdAt,
-    Value<DateTime>? updatedAt,
-  }) {
-    return VehicleTareRecordsCompanion(
-      id: id ?? this.id,
-      vehicleNumber: vehicleNumber ?? this.vehicleNumber,
-      tareKg: tareKg ?? this.tareKg,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
-    );
-  }
-
-  @override
-  Map<String, Expression> toColumns(bool nullToAbsent) {
-    final map = <String, Expression>{};
-    if (id.present) {
-      map['id'] = Variable<int>(id.value);
-    }
-    if (vehicleNumber.present) {
-      map['vehicle_number'] = Variable<String>(vehicleNumber.value);
-    }
-    if (tareKg.present) {
-      map['tare_kg'] = Variable<double>(tareKg.value);
-    }
-    if (createdAt.present) {
-      map['created_at'] = Variable<DateTime>(createdAt.value);
-    }
-    if (updatedAt.present) {
-      map['updated_at'] = Variable<DateTime>(updatedAt.value);
-    }
-    return map;
-  }
-
-  @override
-  String toString() {
-    return (StringBuffer('VehicleTareRecordsCompanion(')
-          ..write('id: $id, ')
-          ..write('vehicleNumber: $vehicleNumber, ')
-          ..write('tareKg: $tareKg, ')
-          ..write('createdAt: $createdAt, ')
-          ..write('updatedAt: $updatedAt')
-          ..write(')'))
-        .toString();
-  }
-}
-
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $UsersTable users = $UsersTable(this);
   late final $WeighmentsTable weighments = $WeighmentsTable(this);
+  late final $MaterialsTable materials = $MaterialsTable(this);
   late final $AppSettingsTable appSettings = $AppSettingsTable(this);
   late final $ScaleSettingsTable scaleSettings = $ScaleSettingsTable(this);
-  late final $AutoTareSettingsTable autoTareSettings = $AutoTareSettingsTable(
-    this,
-  );
-  late final $VehicleTareRecordsTable vehicleTareRecords =
-      $VehicleTareRecordsTable(this);
   late final UserDao userDao = UserDao(this as AppDatabase);
   late final BillDao billDao = BillDao(this as AppDatabase);
+  late final MaterialDao materialDao = MaterialDao(this as AppDatabase);
   late final AppSettingsDao appSettingsDao = AppSettingsDao(
     this as AppDatabase,
   );
   late final ScaleSettingsDao scaleSettingsDao = ScaleSettingsDao(
     this as AppDatabase,
   );
-  late final AutoTareSettingsDao autoTareSettingsDao = AutoTareSettingsDao(
-    this as AppDatabase,
-  );
-  late final VehicleTareRecordsDao vehicleTareRecordsDao =
-      VehicleTareRecordsDao(this as AppDatabase);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -4052,10 +3876,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     users,
     weighments,
+    materials,
     appSettings,
     scaleSettings,
-    autoTareSettings,
-    vehicleTareRecords,
   ];
 }
 
@@ -4297,6 +4120,8 @@ typedef $$WeighmentsTableCreateCompanionBuilder =
       Value<String?> secondWeightType,
       Value<double?> netWeightKg,
       Value<String?> material,
+      Value<int?> materialId,
+      Value<double?> charges,
       Value<String?> description,
       Value<String?> remarks,
       Value<String?> mobileNumber,
@@ -4315,6 +4140,8 @@ typedef $$WeighmentsTableUpdateCompanionBuilder =
       Value<String?> secondWeightType,
       Value<double?> netWeightKg,
       Value<String?> material,
+      Value<int?> materialId,
+      Value<double?> charges,
       Value<String?> description,
       Value<String?> remarks,
       Value<String?> mobileNumber,
@@ -4374,6 +4201,16 @@ class $$WeighmentsTableFilterComposer
 
   ColumnFilters<String> get material => $composableBuilder(
     column: $table.material,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get materialId => $composableBuilder(
+    column: $table.materialId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get charges => $composableBuilder(
+    column: $table.charges,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4462,6 +4299,16 @@ class $$WeighmentsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get materialId => $composableBuilder(
+    column: $table.materialId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get charges => $composableBuilder(
+    column: $table.charges,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get description => $composableBuilder(
     column: $table.description,
     builder: (column) => ColumnOrderings(column),
@@ -4543,6 +4390,14 @@ class $$WeighmentsTableAnnotationComposer
   GeneratedColumn<String> get material =>
       $composableBuilder(column: $table.material, builder: (column) => column);
 
+  GeneratedColumn<int> get materialId => $composableBuilder(
+    column: $table.materialId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get charges =>
+      $composableBuilder(column: $table.charges, builder: (column) => column);
+
   GeneratedColumn<String> get description => $composableBuilder(
     column: $table.description,
     builder: (column) => column,
@@ -4608,6 +4463,8 @@ class $$WeighmentsTableTableManager
                 Value<String?> secondWeightType = const Value.absent(),
                 Value<double?> netWeightKg = const Value.absent(),
                 Value<String?> material = const Value.absent(),
+                Value<int?> materialId = const Value.absent(),
+                Value<double?> charges = const Value.absent(),
                 Value<String?> description = const Value.absent(),
                 Value<String?> remarks = const Value.absent(),
                 Value<String?> mobileNumber = const Value.absent(),
@@ -4624,6 +4481,8 @@ class $$WeighmentsTableTableManager
                 secondWeightType: secondWeightType,
                 netWeightKg: netWeightKg,
                 material: material,
+                materialId: materialId,
+                charges: charges,
                 description: description,
                 remarks: remarks,
                 mobileNumber: mobileNumber,
@@ -4642,6 +4501,8 @@ class $$WeighmentsTableTableManager
                 Value<String?> secondWeightType = const Value.absent(),
                 Value<double?> netWeightKg = const Value.absent(),
                 Value<String?> material = const Value.absent(),
+                Value<int?> materialId = const Value.absent(),
+                Value<double?> charges = const Value.absent(),
                 Value<String?> description = const Value.absent(),
                 Value<String?> remarks = const Value.absent(),
                 Value<String?> mobileNumber = const Value.absent(),
@@ -4658,6 +4519,8 @@ class $$WeighmentsTableTableManager
                 secondWeightType: secondWeightType,
                 netWeightKg: netWeightKg,
                 material: material,
+                materialId: materialId,
+                charges: charges,
                 description: description,
                 remarks: remarks,
                 mobileNumber: mobileNumber,
@@ -4685,6 +4548,215 @@ typedef $$WeighmentsTableProcessedTableManager =
       $$WeighmentsTableUpdateCompanionBuilder,
       (Weighment, BaseReferences<_$AppDatabase, $WeighmentsTable, Weighment>),
       Weighment,
+      PrefetchHooks Function()
+    >;
+typedef $$MaterialsTableCreateCompanionBuilder =
+    MaterialsCompanion Function({
+      Value<int> id,
+      required String name,
+      required String vehicleType,
+      Value<bool> isActive,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+    });
+typedef $$MaterialsTableUpdateCompanionBuilder =
+    MaterialsCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      Value<String> vehicleType,
+      Value<bool> isActive,
+      Value<DateTime> createdAt,
+      Value<DateTime> updatedAt,
+    });
+
+class $$MaterialsTableFilterComposer
+    extends Composer<_$AppDatabase, $MaterialsTable> {
+  $$MaterialsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get vehicleType => $composableBuilder(
+    column: $table.vehicleType,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$MaterialsTableOrderingComposer
+    extends Composer<_$AppDatabase, $MaterialsTable> {
+  $$MaterialsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get vehicleType => $composableBuilder(
+    column: $table.vehicleType,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isActive => $composableBuilder(
+    column: $table.isActive,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$MaterialsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $MaterialsTable> {
+  $$MaterialsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<String> get vehicleType => $composableBuilder(
+    column: $table.vehicleType,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get isActive =>
+      $composableBuilder(column: $table.isActive, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+}
+
+class $$MaterialsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $MaterialsTable,
+          Material,
+          $$MaterialsTableFilterComposer,
+          $$MaterialsTableOrderingComposer,
+          $$MaterialsTableAnnotationComposer,
+          $$MaterialsTableCreateCompanionBuilder,
+          $$MaterialsTableUpdateCompanionBuilder,
+          (Material, BaseReferences<_$AppDatabase, $MaterialsTable, Material>),
+          Material,
+          PrefetchHooks Function()
+        > {
+  $$MaterialsTableTableManager(_$AppDatabase db, $MaterialsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$MaterialsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$MaterialsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$MaterialsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<String> vehicleType = const Value.absent(),
+                Value<bool> isActive = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => MaterialsCompanion(
+                id: id,
+                name: name,
+                vehicleType: vehicleType,
+                isActive: isActive,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String name,
+                required String vehicleType,
+                Value<bool> isActive = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+              }) => MaterialsCompanion.insert(
+                id: id,
+                name: name,
+                vehicleType: vehicleType,
+                isActive: isActive,
+                createdAt: createdAt,
+                updatedAt: updatedAt,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$MaterialsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $MaterialsTable,
+      Material,
+      $$MaterialsTableFilterComposer,
+      $$MaterialsTableOrderingComposer,
+      $$MaterialsTableAnnotationComposer,
+      $$MaterialsTableCreateCompanionBuilder,
+      $$MaterialsTableUpdateCompanionBuilder,
+      (Material, BaseReferences<_$AppDatabase, $MaterialsTable, Material>),
+      Material,
       PrefetchHooks Function()
     >;
 typedef $$AppSettingsTableCreateCompanionBuilder =
@@ -5565,415 +5637,6 @@ typedef $$ScaleSettingsTableProcessedTableManager =
       ScaleSetting,
       PrefetchHooks Function()
     >;
-typedef $$AutoTareSettingsTableCreateCompanionBuilder =
-    AutoTareSettingsCompanion Function({
-      Value<int> id,
-      required DateTime tareDate,
-      required double tareKg,
-      Value<DateTime> createdAt,
-      Value<DateTime> updatedAt,
-    });
-typedef $$AutoTareSettingsTableUpdateCompanionBuilder =
-    AutoTareSettingsCompanion Function({
-      Value<int> id,
-      Value<DateTime> tareDate,
-      Value<double> tareKg,
-      Value<DateTime> createdAt,
-      Value<DateTime> updatedAt,
-    });
-
-class $$AutoTareSettingsTableFilterComposer
-    extends Composer<_$AppDatabase, $AutoTareSettingsTable> {
-  $$AutoTareSettingsTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get tareDate => $composableBuilder(
-    column: $table.tareDate,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get tareKg => $composableBuilder(
-    column: $table.tareKg,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-}
-
-class $$AutoTareSettingsTableOrderingComposer
-    extends Composer<_$AppDatabase, $AutoTareSettingsTable> {
-  $$AutoTareSettingsTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get tareDate => $composableBuilder(
-    column: $table.tareDate,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get tareKg => $composableBuilder(
-    column: $table.tareKg,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-}
-
-class $$AutoTareSettingsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $AutoTareSettingsTable> {
-  $$AutoTareSettingsTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<int> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get tareDate =>
-      $composableBuilder(column: $table.tareDate, builder: (column) => column);
-
-  GeneratedColumn<double> get tareKg =>
-      $composableBuilder(column: $table.tareKg, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-}
-
-class $$AutoTareSettingsTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $AutoTareSettingsTable,
-          AutoTareSetting,
-          $$AutoTareSettingsTableFilterComposer,
-          $$AutoTareSettingsTableOrderingComposer,
-          $$AutoTareSettingsTableAnnotationComposer,
-          $$AutoTareSettingsTableCreateCompanionBuilder,
-          $$AutoTareSettingsTableUpdateCompanionBuilder,
-          (
-            AutoTareSetting,
-            BaseReferences<
-              _$AppDatabase,
-              $AutoTareSettingsTable,
-              AutoTareSetting
-            >,
-          ),
-          AutoTareSetting,
-          PrefetchHooks Function()
-        > {
-  $$AutoTareSettingsTableTableManager(
-    _$AppDatabase db,
-    $AutoTareSettingsTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$AutoTareSettingsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$AutoTareSettingsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$AutoTareSettingsTableAnnotationComposer($db: db, $table: table),
-          updateCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                Value<DateTime> tareDate = const Value.absent(),
-                Value<double> tareKg = const Value.absent(),
-                Value<DateTime> createdAt = const Value.absent(),
-                Value<DateTime> updatedAt = const Value.absent(),
-              }) => AutoTareSettingsCompanion(
-                id: id,
-                tareDate: tareDate,
-                tareKg: tareKg,
-                createdAt: createdAt,
-                updatedAt: updatedAt,
-              ),
-          createCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                required DateTime tareDate,
-                required double tareKg,
-                Value<DateTime> createdAt = const Value.absent(),
-                Value<DateTime> updatedAt = const Value.absent(),
-              }) => AutoTareSettingsCompanion.insert(
-                id: id,
-                tareDate: tareDate,
-                tareKg: tareKg,
-                createdAt: createdAt,
-                updatedAt: updatedAt,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
-          prefetchHooksCallback: null,
-        ),
-      );
-}
-
-typedef $$AutoTareSettingsTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $AutoTareSettingsTable,
-      AutoTareSetting,
-      $$AutoTareSettingsTableFilterComposer,
-      $$AutoTareSettingsTableOrderingComposer,
-      $$AutoTareSettingsTableAnnotationComposer,
-      $$AutoTareSettingsTableCreateCompanionBuilder,
-      $$AutoTareSettingsTableUpdateCompanionBuilder,
-      (
-        AutoTareSetting,
-        BaseReferences<_$AppDatabase, $AutoTareSettingsTable, AutoTareSetting>,
-      ),
-      AutoTareSetting,
-      PrefetchHooks Function()
-    >;
-typedef $$VehicleTareRecordsTableCreateCompanionBuilder =
-    VehicleTareRecordsCompanion Function({
-      Value<int> id,
-      required String vehicleNumber,
-      required double tareKg,
-      Value<DateTime> createdAt,
-      Value<DateTime> updatedAt,
-    });
-typedef $$VehicleTareRecordsTableUpdateCompanionBuilder =
-    VehicleTareRecordsCompanion Function({
-      Value<int> id,
-      Value<String> vehicleNumber,
-      Value<double> tareKg,
-      Value<DateTime> createdAt,
-      Value<DateTime> updatedAt,
-    });
-
-class $$VehicleTareRecordsTableFilterComposer
-    extends Composer<_$AppDatabase, $VehicleTareRecordsTable> {
-  $$VehicleTareRecordsTableFilterComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnFilters<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<String> get vehicleNumber => $composableBuilder(
-    column: $table.vehicleNumber,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<double> get tareKg => $composableBuilder(
-    column: $table.tareKg,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnFilters(column),
-  );
-
-  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnFilters(column),
-  );
-}
-
-class $$VehicleTareRecordsTableOrderingComposer
-    extends Composer<_$AppDatabase, $VehicleTareRecordsTable> {
-  $$VehicleTareRecordsTableOrderingComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  ColumnOrderings<int> get id => $composableBuilder(
-    column: $table.id,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<String> get vehicleNumber => $composableBuilder(
-    column: $table.vehicleNumber,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<double> get tareKg => $composableBuilder(
-    column: $table.tareKg,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
-    column: $table.createdAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-
-  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
-    column: $table.updatedAt,
-    builder: (column) => ColumnOrderings(column),
-  );
-}
-
-class $$VehicleTareRecordsTableAnnotationComposer
-    extends Composer<_$AppDatabase, $VehicleTareRecordsTable> {
-  $$VehicleTareRecordsTableAnnotationComposer({
-    required super.$db,
-    required super.$table,
-    super.joinBuilder,
-    super.$addJoinBuilderToRootComposer,
-    super.$removeJoinBuilderFromRootComposer,
-  });
-  GeneratedColumn<int> get id =>
-      $composableBuilder(column: $table.id, builder: (column) => column);
-
-  GeneratedColumn<String> get vehicleNumber => $composableBuilder(
-    column: $table.vehicleNumber,
-    builder: (column) => column,
-  );
-
-  GeneratedColumn<double> get tareKg =>
-      $composableBuilder(column: $table.tareKg, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get createdAt =>
-      $composableBuilder(column: $table.createdAt, builder: (column) => column);
-
-  GeneratedColumn<DateTime> get updatedAt =>
-      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
-}
-
-class $$VehicleTareRecordsTableTableManager
-    extends
-        RootTableManager<
-          _$AppDatabase,
-          $VehicleTareRecordsTable,
-          VehicleTareRecord,
-          $$VehicleTareRecordsTableFilterComposer,
-          $$VehicleTareRecordsTableOrderingComposer,
-          $$VehicleTareRecordsTableAnnotationComposer,
-          $$VehicleTareRecordsTableCreateCompanionBuilder,
-          $$VehicleTareRecordsTableUpdateCompanionBuilder,
-          (
-            VehicleTareRecord,
-            BaseReferences<
-              _$AppDatabase,
-              $VehicleTareRecordsTable,
-              VehicleTareRecord
-            >,
-          ),
-          VehicleTareRecord,
-          PrefetchHooks Function()
-        > {
-  $$VehicleTareRecordsTableTableManager(
-    _$AppDatabase db,
-    $VehicleTareRecordsTable table,
-  ) : super(
-        TableManagerState(
-          db: db,
-          table: table,
-          createFilteringComposer: () =>
-              $$VehicleTareRecordsTableFilterComposer($db: db, $table: table),
-          createOrderingComposer: () =>
-              $$VehicleTareRecordsTableOrderingComposer($db: db, $table: table),
-          createComputedFieldComposer: () =>
-              $$VehicleTareRecordsTableAnnotationComposer(
-                $db: db,
-                $table: table,
-              ),
-          updateCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                Value<String> vehicleNumber = const Value.absent(),
-                Value<double> tareKg = const Value.absent(),
-                Value<DateTime> createdAt = const Value.absent(),
-                Value<DateTime> updatedAt = const Value.absent(),
-              }) => VehicleTareRecordsCompanion(
-                id: id,
-                vehicleNumber: vehicleNumber,
-                tareKg: tareKg,
-                createdAt: createdAt,
-                updatedAt: updatedAt,
-              ),
-          createCompanionCallback:
-              ({
-                Value<int> id = const Value.absent(),
-                required String vehicleNumber,
-                required double tareKg,
-                Value<DateTime> createdAt = const Value.absent(),
-                Value<DateTime> updatedAt = const Value.absent(),
-              }) => VehicleTareRecordsCompanion.insert(
-                id: id,
-                vehicleNumber: vehicleNumber,
-                tareKg: tareKg,
-                createdAt: createdAt,
-                updatedAt: updatedAt,
-              ),
-          withReferenceMapper: (p0) => p0
-              .map((e) => (e.readTable(table), BaseReferences(db, table, e)))
-              .toList(),
-          prefetchHooksCallback: null,
-        ),
-      );
-}
-
-typedef $$VehicleTareRecordsTableProcessedTableManager =
-    ProcessedTableManager<
-      _$AppDatabase,
-      $VehicleTareRecordsTable,
-      VehicleTareRecord,
-      $$VehicleTareRecordsTableFilterComposer,
-      $$VehicleTareRecordsTableOrderingComposer,
-      $$VehicleTareRecordsTableAnnotationComposer,
-      $$VehicleTareRecordsTableCreateCompanionBuilder,
-      $$VehicleTareRecordsTableUpdateCompanionBuilder,
-      (
-        VehicleTareRecord,
-        BaseReferences<
-          _$AppDatabase,
-          $VehicleTareRecordsTable,
-          VehicleTareRecord
-        >,
-      ),
-      VehicleTareRecord,
-      PrefetchHooks Function()
-    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -5982,12 +5645,10 @@ class $AppDatabaseManager {
       $$UsersTableTableManager(_db, _db.users);
   $$WeighmentsTableTableManager get weighments =>
       $$WeighmentsTableTableManager(_db, _db.weighments);
+  $$MaterialsTableTableManager get materials =>
+      $$MaterialsTableTableManager(_db, _db.materials);
   $$AppSettingsTableTableManager get appSettings =>
       $$AppSettingsTableTableManager(_db, _db.appSettings);
   $$ScaleSettingsTableTableManager get scaleSettings =>
       $$ScaleSettingsTableTableManager(_db, _db.scaleSettings);
-  $$AutoTareSettingsTableTableManager get autoTareSettings =>
-      $$AutoTareSettingsTableTableManager(_db, _db.autoTareSettings);
-  $$VehicleTareRecordsTableTableManager get vehicleTareRecords =>
-      $$VehicleTareRecordsTableTableManager(_db, _db.vehicleTareRecords);
 }

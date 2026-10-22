@@ -54,6 +54,17 @@ class ReportSummaryBar extends StatelessWidget {
                 bgColor: const Color(0xFFDCFCE7),
               ),
             ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _SummaryCard(
+                title: 'Total Charges',
+                value: summary.totalChargesText,
+                subtitle: 'Charges total',
+                icon: Icons.currency_rupee_outlined,
+                iconColor: const Color(0xFFB45309),
+                bgColor: const Color(0xFFFFFBEB),
+              ),
+            ),
           ],
         );
       },

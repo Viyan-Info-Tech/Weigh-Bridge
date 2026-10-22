@@ -117,7 +117,7 @@ class AuthBrandingPanel extends StatelessWidget {
                   width: 36,
                   height: 5,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFF6B00),
+                    color: const Color(0xFF10B981),
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),

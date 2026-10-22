@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/utils/currency_formatter.dart';
 import '../../../bill/domain/entities/weighment.dart';
 import '../../../bill/presentation/widgets/weighment_slip_dialog.dart';
 import '../../domain/entities/weighment_report_item.dart';
@@ -39,7 +40,13 @@ class WeighmentDetailsDialog extends StatelessWidget {
       tareWeightKg: record.tareWeightKg,
       netWeightKg: record.netWeightKg,
       weightUnit: weightUnit ?? record.weightUnit,
+      // The reprint always shows the material snapshot captured at save time,
+      // never the current master-data state.
+      material: record.material,
       remarks: record.remarks,
+      // The reprint shows the charge exactly as it was saved, never a
+      // recalculated amount.
+      charges: record.charges,
       firstWeightType: record.firstWeightType,
       secondWeightType: record.secondWeightType,
       createdAt: record.createdAt,
@@ -71,7 +78,9 @@ class WeighmentDetailsDialog extends StatelessWidget {
       backgroundColor: Colors.white,
       insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
       child: Container(
-        width: 480,
+        // Fill available width up to the designed size so it never overflows
+        // narrow or scaled windows.
+        constraints: const BoxConstraints(maxWidth: 480),
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -164,8 +173,11 @@ class WeighmentDetailsDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
 
-            // Vehicle Info
-            _buildInfoGrid([_InfoRow('Vehicle', record.vehicleNumber)]),
+            // Vehicle & Material Info
+            _buildInfoGrid([
+              _InfoRow('Vehicle', record.vehicleNumber),
+              _InfoRow('Material', record.material ?? '—'),
+            ]),
             const SizedBox(height: 16),
 
             // Weights Section
@@ -233,6 +245,11 @@ class WeighmentDetailsDialog extends StatelessWidget {
                             ? '${toDisplay(record.netWeightKg!)!.toStringAsFixed(decimals)} $unit'
                             : '—',
                         isHighlight: true,
+                      ),
+                      const Divider(height: 14, color: Color(0xFFE2E8F0)),
+                      _buildSummaryWeightRow(
+                        'Charges',
+                        formatCharges(record.charges),
                       ),
                     ],
                   ),

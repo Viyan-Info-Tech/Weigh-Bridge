@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../core/utils/currency_formatter.dart';
 import '../../domain/entities/weighment_report_item.dart';
 import '../bloc/report_bloc.dart';
 import '../bloc/report_event.dart';
@@ -18,7 +19,7 @@ class ReportTable extends StatelessWidget {
   final ScrollController hScrollController;
   final ReportState state;
 
-  static const double _minTableWidth = 1000;
+  static const double _minTableWidth = 1090;
   static const double _minTableChromeHeight = 83;
 
   String _formatWeight(double? kg, String unit) {
@@ -215,6 +216,7 @@ class _TableHeader extends StatelessWidget {
           Expanded(flex: 11, child: _HeaderCell('BILL NO')),
           Expanded(flex: 13, child: _HeaderCell('DATE & TIME')),
           Expanded(flex: 11, child: _HeaderCell('VEHICLE')),
+          Expanded(flex: 12, child: _HeaderCell('MATERIAL')),
           Expanded(
             flex: 12,
             child: _HeaderCell('GROSS WEIGHT', align: TextAlign.right),
@@ -226,6 +228,10 @@ class _TableHeader extends StatelessWidget {
           Expanded(
             flex: 12,
             child: _HeaderCell('NET WEIGHT', align: TextAlign.right),
+          ),
+          Expanded(
+            flex: 10,
+            child: _HeaderCell('CHARGES', align: TextAlign.right),
           ),
           Expanded(
             flex: 11,
@@ -309,6 +315,16 @@ class _TableFooter extends StatelessWidget {
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
                   color: Color(0xFF16A34A),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Text(
+                'Total Charges: ${state.summary.totalChargesText}',
+                style: const TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0F172A),
                 ),
               ),
             ],
@@ -411,6 +427,22 @@ class _TableRow extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
+            // Material (saved snapshot, e.g. `Auto - Empty`)
+            Expanded(
+              flex: 12,
+              child: Text(
+                item.material ?? '-',
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: item.material != null
+                      ? const Color(0xFF1E293B)
+                      : const Color(0xFF94A3B8),
+                ),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
             // Gross Weight
             Expanded(
               flex: 12,
@@ -460,6 +492,24 @@ class _TableRow extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                     color: item.netWeightKg != null
                         ? const Color(0xFF0284C7)
+                        : const Color(0xFF94A3B8),
+                  ),
+                ),
+              ),
+            ),
+            // Charges (manual amount; legacy rows show a dash)
+            Expanded(
+              flex: 10,
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  formatCharges(item.charges),
+                  style: TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: item.charges != null
+                        ? const Color(0xFF0F172A)
                         : const Color(0xFF94A3B8),
                   ),
                 ),

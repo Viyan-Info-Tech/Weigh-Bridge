@@ -163,14 +163,6 @@ class WeighmentReceiptTemplate extends StatelessWidget {
                   labelStyle: fieldLabelStyle,
                   valueStyle: fieldValueStyle,
                 ),
-              if (data.hasDescription)
-                _buildFieldRow(
-                  'DESCRIPTION',
-                  data.descriptionText,
-                  labelWidth: labelWidth,
-                  labelStyle: fieldLabelStyle,
-                  valueStyle: fieldValueStyle,
-                ),
               if (data.contactPhone.trim().isNotEmpty)
                 _buildFieldRow(
                   'MOBILE NO',
@@ -186,6 +178,14 @@ class WeighmentReceiptTemplate extends StatelessWidget {
                   labelWidth: labelWidth,
                   labelStyle: fieldLabelStyle,
                   valueStyle: fieldValueStyle,
+                ),
+              if (data.hasCharges)
+                _buildFieldRow(
+                  'CHARGES',
+                  data.chargesText,
+                  labelWidth: labelWidth,
+                  labelStyle: fieldLabelStyle,
+                  valueStyle: fieldValueBoldStyle,
                 ),
 
               SizedBox(height: compact ? 6 : 10),

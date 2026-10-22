@@ -17,23 +17,21 @@ class MockGenerateBillNumberUseCase extends Mock
 
 class FakeWeighment extends Fake implements Weighment {}
 
-/// A bill's `createdAt` is the moment it was saved, never the Auto Tare's
+/// A bill's `createdAt` is the moment it was saved, never a weight-capture
 /// reference time.
 ///
-/// Auto Tare is configured once per day and re-applied to many bills, so its
-/// timestamp is a constant for the whole day. Deriving `createdAt` from the
-/// weight capture fields leaked that constant into every bill, which made the
-/// Recent Billings panel show one frozen time for all of them.
-///
-/// The Auto Tare itself keeps its own reference timestamp; only the bill's
-/// billing time is decoupled from it.
+/// A tare may be captured long before the bill is completed (the truck's
+/// empty weight can be entered hours ahead of the loaded weighing), so the
+/// capture timestamps are constants from earlier in the day. Deriving
+/// `createdAt` from the weight capture fields leaked those constants into
+/// every bill, which made the Recent Billings panel show one frozen time.
 void main() {
   late MockSaveBillUseCase mockSaveBill;
   late MockLoadRecentBillsUseCase mockLoadRecent;
   late MockGenerateBillNumberUseCase mockGenerateBillNumber;
 
-  /// The moment the day's Auto Tare was configured. Fixed for the whole day.
-  final autoTareConfiguredAt = DateTime(2026, 10, 1, 14, 43);
+  /// The moment the tare was captured. Fixed for the whole weighment.
+  final staleTareCapturedAt = DateTime(2026, 10, 1, 14, 43);
 
   final saved = <Weighment>[];
 
@@ -72,29 +70,26 @@ void main() {
     });
   });
 
-  /// A tare-first bill whose tare came from the day's Auto Tare.
-  BillState tareFirstStateFromAutoTare() {
-    return const BillState(
+  /// A tare-first bill whose tare was captured earlier in the day.
+  BillState tareFirstState() {
+    return BillState(
       status: BillScreenStatus.loaded,
       vehicleNumber: 'TN09AB1234',
       weightUnit: 'kg',
       currentBillNumber: 'WB-00001',
-    ).copyWith(
       firstWeightType: 'TARE',
-      autoTareKg: 2000,
-      autoTareDate: DateTime(2026, 10, 1),
-      autoTareSavedAt: autoTareConfiguredAt,
+      tareWeightKg: 2000,
+      tareWeightText: '2000',
+      tareCapturedAt: staleTareCapturedAt,
     );
   }
 
   group('Recent Billings timestamp is the real save time', () {
     blocTest<BillBloc, BillState>(
-      'a tare-first bill must not inherit the Auto Tare configured time',
+      'a tare-first bill must not inherit the tare capture time',
       build: createBloc,
-      seed: () => tareFirstStateFromAutoTare(),
+      seed: tareFirstState,
       act: (bloc) async {
-        bloc.add(const ApplyAutoTareToBill());
-        await Future<void>.delayed(Duration.zero);
         bloc.add(const SaveBillRequested());
       },
       wait: const Duration(milliseconds: 50),
@@ -102,14 +97,13 @@ void main() {
         expect(saved, hasLength(1));
         final bill = saved.single;
 
-        // Auto Tare's own reference time is unchanged and still available on
-        // the state for the Auto Tare indicator to display.
+        // The tare capture reference stays on the weighment itself.
         expect(
-          bill.createdAt.isBefore(autoTareConfiguredAt),
+          bill.createdAt.isBefore(staleTareCapturedAt),
           isFalse,
           reason:
-              'createdAt fell back to the Auto Tare configured time '
-              '($autoTareConfiguredAt), which is stale for every bill of '
+              'createdAt fell back to the tare capture time '
+              '($staleTareCapturedAt), which is stale for every bill of '
               'the day.',
         );
         expect(
@@ -126,33 +120,35 @@ void main() {
     );
 
     blocTest<BillBloc, BillState>(
-      'Auto Tare keeps its own reference time, unrelated to bill createdAt',
+      'a gross capture leaves an existing tare and its capture time untouched',
       build: createBloc,
-      seed: () => tareFirstStateFromAutoTare(),
-      act: (bloc) async {
-        bloc.add(const ApplyAutoTareToBill());
-        await Future<void>.delayed(Duration.zero);
-      },
-      wait: const Duration(milliseconds: 20),
+      seed: () => tareFirstState().copyWith(
+        liveScaleWeightKg: 100000,
+        isScaleStable: true,
+      ),
+      act: (bloc) => bloc.add(const CaptureLiveWeight(type: 'Gross')),
+      wait: const Duration(milliseconds: 50),
       verify: (bloc) {
-        // The Auto Tare behaviour itself is deliberately unchanged: the tare
-        // field is stamped with the Auto Tare's configured reference time.
-        expect(bloc.state.autoTareSavedAt, autoTareConfiguredAt);
+        expect(bloc.state.grossWeightKg, 100000);
         expect(bloc.state.tareWeightKg, 2000);
-        expect(bloc.state.tareCapturedAt, autoTareConfiguredAt);
+        // The tare keeps its own capture time; the gross capture stamps only
+        // the gross field.
+        expect(bloc.state.tareCapturedAt, staleTareCapturedAt);
+        expect(bloc.state.grossCapturedAt, isNotNull);
+        expect(bloc.state.netWeightKg, 98000);
       },
     );
 
     blocTest<BillBloc, BillState>(
-      'a gross capture that auto-fills tare still bills at save time',
+      'a gross capture over an existing tare still bills at save time',
       build: createBloc,
-      seed: () => tareFirstStateFromAutoTare().copyWith(
+      seed: () => tareFirstState().copyWith(
         clearFirstWeightType: true,
         liveScaleWeightKg: 100000,
         isScaleStable: true,
       ),
       act: (bloc) async {
-        // Gross capture fills the tare from the day's Auto Tare.
+        // Gross capture leaves the already-entered tare untouched.
         bloc.add(const CaptureLiveWeight(type: 'Gross'));
         await Future<void>.delayed(Duration.zero);
         bloc.add(const SaveBillRequested());
@@ -163,9 +159,9 @@ void main() {
         final bill = saved.single;
 
         expect(bill.grossWeightKg, 100000);
-        expect(bill.tareWeightKg, 2000, reason: 'Auto Tare should fill tare.');
+        expect(bill.tareWeightKg, 2000, reason: 'Entered tare must be kept.');
 
-        // Neither timestamp may be the day-constant Auto Tare configured time.
+        // Neither timestamp may be the day-constant tare capture time.
         for (final entry in {
           'createdAt': bill.createdAt,
           'updatedAt': bill.updatedAt,
@@ -175,7 +171,7 @@ void main() {
             lessThan(const Duration(minutes: 5)),
             reason:
                 '${entry.key} was stamped with ${entry.value}, which is the '
-                'Auto Tare configured time rather than the save time.',
+                'tare capture time rather than the save time.',
           );
         }
       },
