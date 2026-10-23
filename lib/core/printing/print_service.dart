@@ -47,17 +47,30 @@ class PrintService {
   /// No browser or web preview is involved: on Windows this opens the native
   /// print dialog and streams the document straight to the selected printer.
   ///
+  /// [usePrinterSettings] (Windows only) hands the dialog the *printer's own*
+  /// saved configuration instead of a DEVMODE the plugin builds from
+  /// [initialFormat]. It defaults to `true` here because that built-in DEVMODE
+  /// is unusable for the continuous-form certificate: the `printing` plugin
+  /// sets `dmPaperSize = 0` (an invalid form index, so the driver falls back
+  /// to its default paper - typically Letter) and flips orientation to
+  /// Landscape whenever [initialFormat] is wider than it is tall. With
+  /// `true`, the operator's saved form (e.g. a 10 x 8 in continuous form in
+  /// Portrait) is what pre-selects, and [onLayout] still receives the real
+  /// size the driver reports, so the layout always matches the actual paper.
+  ///
   /// Returns `false` when the operator cancels the dialog or the job fails.
   Future<bool> printPdfLayout({
     required String jobName,
     required LayoutCallback onLayout,
     PdfPageFormat initialFormat = PdfPageFormat.a4,
+    bool usePrinterSettings = true,
   }) async {
     try {
       return await Printing.layoutPdf(
         name: jobName,
         onLayout: onLayout,
         format: initialFormat,
+        usePrinterSettings: usePrinterSettings,
       );
     } catch (_) {
       // Native printing channel might not be connected in current debug

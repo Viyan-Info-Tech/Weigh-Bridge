@@ -124,8 +124,8 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
     }).toList();
 
     // Filter bills based on the search query. Vehicle numbers are compared
-    // without spaces and case-sensitively-insensitively, so searching
-    // "TN30EN3000" also finds a bill saved as "TN 30 EN 3000".
+    // case- and space-insensitively, so searching "TN30EN3000" also finds a
+    // bill saved as "TN 30 EN 3000".
     final normalizedQuery = normalizeVehicleNumber(_searchQuery);
     final filteredBills = displayBills.where((bill) {
       final vehicleNo = normalizeVehicleNumber(bill.vehicleNumber);
