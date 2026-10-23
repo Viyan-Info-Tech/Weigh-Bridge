@@ -11,6 +11,13 @@ void main() {
         'KL07AB1234',
         'MH12DE3456',
         'AP39BC1234',
+        // Spaced formats operators actually type; validation normalises
+        // instead of rejecting the spaces.
+        'TN 31 HS 8090',
+        'TN 30 EN 3000',
+        'KL 07 AB 1234',
+        '  TN31HS8090  ',
+        'tn 31 hs 8090',
       ];
 
       for (final number in validNumbers) {
@@ -18,25 +25,32 @@ void main() {
       }
     });
 
-    test(
-      'rejects empty, malformed, long, spaced, and invalid-state values',
-      () {
-        const invalidNumbers = [
-          '',
-          'ASDFGHK345678234567890SXCVBNM',
-          'TN123456789999',
-          'TN@31HS8090',
-          'TN 31 HS 8090',
-          '1234567890',
-          'ABC',
-          'XX31HS8090',
-        ];
+    test('rejects empty, malformed, long, and invalid-state values', () {
+      const invalidNumbers = [
+        '',
+        'ASDFGHK345678234567890SXCVBNM',
+        'TN123456789999',
+        'TN@31HS8090',
+        'TN @31 HS8090',
+        '1234567890',
+        'ABC',
+        'XX31HS8090',
+        'XX 31 HS 8090',
+      ];
 
-        for (final number in invalidNumbers) {
-          expect(validateVehicleNumber(number), isNotNull, reason: number);
-        }
-      },
-    );
+      for (final number in invalidNumbers) {
+        expect(validateVehicleNumber(number), isNotNull, reason: number);
+      }
+    });
+  });
+
+  group('normalizeVehicleNumber', () {
+    test('strips every whitespace and upper-cases', () {
+      expect(normalizeVehicleNumber('TN 30 EN 3000'), 'TN30EN3000');
+      expect(normalizeVehicleNumber('  tn31hs8090  '), 'TN31HS8090');
+      expect(normalizeVehicleNumber('TN\t31\tHS\t8090'), 'TN31HS8090');
+      expect(normalizeVehicleNumber(''), '');
+    });
   });
 
   group('validateIndianMobileNumber', () {

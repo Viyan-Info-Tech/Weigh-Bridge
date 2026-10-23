@@ -192,18 +192,27 @@ class BillDao extends DatabaseAccessor<AppDatabase> with _$BillDaoMixin {
   /// a bill that already holds both weights is complete and must never be
   /// paired again.
   ///
-  /// Matching is case-insensitive and whitespace-trimmed on both sides, so a
-  /// lower-cased legacy row is still found. Newest wins, with the row id as a
-  /// stable tie-break so two weighments sharing a timestamp cannot flip the
+  /// Matching is case-insensitive and space-insensitive on both sides, so a
+  /// lower-cased legacy row is still found and `TN 30 EN 3000` matches a row
+  /// saved as `TN30EN3000` (and vice versa). Newest wins, with the row id as
+  /// a stable tie-break so two weighments sharing a timestamp cannot flip the
   /// choice between calls.
   Future<Weighment?> getLatestSingleWeightWeighmentForVehicle(
     String vehicleNumber,
   ) async {
-    final normalized = vehicleNumber.trim().toUpperCase();
+    final normalized = vehicleNumber
+        .replaceAll(RegExp(r'\s+'), '')
+        .toUpperCase();
     final query = select(weighments)
       ..where(
         (w) =>
-            w.vehicleNumber.upper().equals(normalized) &
+            // SQLite's REPLACE() strips every space inside the stored value,
+            // mirroring the Dart-side normalisation of the lookup value.
+            FunctionCallExpression<String>('REPLACE', [
+              w.vehicleNumber,
+              const Constant(' '),
+              const Constant(''),
+            ]).upper().equals(normalized) &
             w.firstWeightKg.isBiggerThanValue(0) &
             (w.secondWeightKg.isNull() |
                 w.secondWeightKg.isSmallerOrEqualValue(0)),

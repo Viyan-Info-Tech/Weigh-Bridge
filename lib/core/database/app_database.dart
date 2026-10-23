@@ -1105,13 +1105,71 @@ class AppDatabase extends _$AppDatabase {
       // stamped by an intermediate development build that already carried the
       // new version number but not yet the matching migration step below.
       // onUpgrade only runs while user_version is below schemaVersion, so
-      // such a database would otherwise keep failing with "no such column"
-      // (e.g. weighments.charges on the Reports screen) forever. This check
-      // inspects the live schema instead of the version stamp and adds any
-      // missing additive column declared by the current table definitions.
-      await _repairMissingColumns();
+      // such a database would otherwise keep failing forever. This check
+      // inspects the live schema instead of the version stamp and brings it
+      // up to the complete schema the current code expects:
+      //  * _repairMissingTables creates any declared table that is absent
+      //    (e.g. the `materials` master, dropped in v29 and re-created in
+      //    v33 - a file stamped >= 33 by such a build has no materials table
+      //    at all, so every material lookup throws "no such table").
+      //  * _repairMissingColumns adds any missing additive column declared by
+      //    the current table definitions (e.g. weighments.charges, which
+      //    made the Reports screen throw "no such column").
+      // Both are additive-only and idempotent: existing tables, columns and
+      // rows are never rewritten, dropped or lost.
+      await _repairSchema();
     },
   );
+
+  /// Brings the live schema up to the complete shape the current code expects
+  /// (see the `beforeOpen` hook for why this is needed).
+  ///
+  /// Order matters: create any missing table first, then add any missing
+  /// column, so a column repair never references a table that is still absent.
+  Future<void> _repairSchema() async {
+    // The standalone admin_credentials table is not a drift-declared table, so
+    // it is not covered by _repairMissingTables; heal it explicitly. The
+    // statement is CREATE ... IF NOT EXISTS, so this is a no-op when present.
+    await _createAdminCredentialsTable();
+    await _repairMissingTables();
+    await _repairMissingColumns();
+  }
+
+  /// Creates any table declared by the current schema that is missing from the
+  /// live database.
+  ///
+  /// The v29 migration dropped the legacy `materials` (plus `customers`,
+  /// `vehicles`, `vehicle_types`) tables, and the v33 step re-created the new
+  /// `materials` master. A database whose `PRAGMA user_version` was stamped to
+  /// the current schema version by an intermediate build - one that already
+  /// carried the version number but not yet the v33 step - never runs
+  /// `onUpgrade` again, so `materials` stays missing and every material lookup
+  /// fails with `SQLiteException: no such table: materials`.
+  ///
+  /// This runs on every open (see `beforeOpen`) and creates each declared
+  /// table that is absent, using drift's [Migrator] so the DDL always matches
+  /// the declared table shape (no hand-copied SQL to drift out of sync). It is
+  /// additive-only and idempotent: a table is only created when
+  /// `sqlite_master` shows it is missing, so existing tables and rows are never
+  /// touched and re-running the repair on a complete database is a no-op.
+  Future<void> _repairMissingTables() async {
+    final existing = await customSelect(
+      "SELECT name FROM sqlite_master WHERE type = 'table'",
+    ).get();
+    final existingNames = existing.map((r) => r.read<String>('name')).toSet();
+
+    final migrator = Migrator(this);
+    for (final entity in allSchemaEntities.whereType<TableInfo>()) {
+      if (!existingNames.contains(entity.actualTableName)) {
+        await migrator.createTable(entity);
+      }
+    }
+
+    // The material uniqueness expression index lives outside the table
+    // declaration, so ensure it separately now that `materials` is guaranteed
+    // to exist. CREATE UNIQUE INDEX IF NOT EXISTS keeps this a no-op otherwise.
+    await _createMaterialUniqueIndex();
+  }
 
   /// Repairs columns that the current schema declares but an already-opened
   /// database is missing.

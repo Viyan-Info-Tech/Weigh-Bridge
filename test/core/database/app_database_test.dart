@@ -939,6 +939,83 @@ CREATE TABLE app_settings (
         expect(fresh!.charges, 250.5);
       },
     );
+
+    test(
+      'creates the missing materials table so lookups stop failing',
+      () async {
+        final dir = await Directory.systemTemp.createTemp('wb_repair_table');
+        addTearDown(() => dir.delete(recursive: true));
+
+        // Same "stamped but incomplete" fixture as above, whose weighments
+        // table has no materials table at all (the v29 drop without the v33
+        // re-create - the exact state left behind by the intermediate build).
+        final db = AppDatabase.forTesting(
+          await createStampedButIncompleteDatabase(dir),
+        );
+        addTearDown(db.close);
+
+        // The exact query that threw
+        // SQLiteException(1): no such table: materials before the repair.
+        final rows = await db
+            .customSelect(
+              "SELECT id FROM materials "
+              "WHERE lower(trim(name)) = lower(trim(?)) "
+              "AND lower(trim(vehicle_type)) = lower(trim(?)) LIMIT 1",
+              variables: [
+                Variable.withString('Auto'),
+                Variable.withString('Empty'),
+              ],
+            )
+            .get();
+        expect(rows, isEmpty, reason: 'empty materials table returns no row');
+
+        // The table now matches the declared shape (name + vehicle_type).
+        final cols = await db
+            .customSelect("SELECT * FROM pragma_table_info('materials')")
+            .get();
+        final names = cols.map((r) => r.read<String>('name')).toSet();
+        expect(
+          names,
+          containsAll(<String>[
+            'id',
+            'name',
+            'vehicle_type',
+            'is_active',
+            'created_at',
+            'updated_at',
+          ]),
+        );
+
+        // The unique expression index over name + vehicle_type is present.
+        final indexes = await db
+            .customSelect(
+              "SELECT name FROM sqlite_master WHERE type = 'index' "
+              "AND tbl_name = 'materials'",
+            )
+            .get();
+        expect(
+          indexes.map((r) => r.read<String>('name')),
+          contains('materials_name_type_unique'),
+        );
+
+        // A material can be inserted and then found by the exact query.
+        await db.customStatement(
+          "INSERT INTO materials (name, vehicle_type) VALUES ('Auto', 'Empty')",
+        );
+        final found = await db
+            .customSelect(
+              "SELECT id FROM materials "
+              "WHERE lower(trim(name)) = lower(trim(?)) "
+              "AND lower(trim(vehicle_type)) = lower(trim(?)) LIMIT 1",
+              variables: [
+                Variable.withString('auto'),
+                Variable.withString(' empty '),
+              ],
+            )
+            .get();
+        expect(found, hasLength(1));
+      },
+    );
   });
 
   group('v31 -> v32 migration', () {

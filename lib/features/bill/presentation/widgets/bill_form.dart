@@ -666,7 +666,10 @@ class _BillFormState extends State<BillForm> {
             controller: widget.vehicleNumberController,
             focusNode: widget.vehicleFocusNode,
             inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9]')),
+              // Spaces are allowed: operators enter numbers like
+              // "TN 30 EN 3000". Comparisons (validation, duplicate lookup,
+              // search) normalise instead of stripping the typed text.
+              FilteringTextInputFormatter.allow(RegExp(r'[A-Za-z0-9 ]')),
               UpperCaseTextFormatter(),
             ],
             textCapitalization: TextCapitalization.characters,

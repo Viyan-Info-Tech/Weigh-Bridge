@@ -43,8 +43,19 @@ const Set<String> indianVehicleStateCodes = {
   'WB',
 };
 
+/// Case- and whitespace-insensitive form of a vehicle number, for
+/// comparisons only (validation, duplicate lookups, search).
+///
+/// Never write this back into a text field or a saved bill: operators keep
+/// the spaces they type, e.g. `TN 30 EN 3000`, and only comparisons treat
+/// it as the same truck as `TN30EN3000`.
+String normalizeVehicleNumber(String value) =>
+    value.replaceAll(RegExp(r'\s+'), '').toUpperCase();
+
 String? validateVehicleNumber(String? value) {
-  final vehicleNumber = value?.trim().toUpperCase() ?? '';
+  // The regex checks the registration pattern, not the spacing the operator
+  // chose, so spaces are ignored for the match - the typed value is kept.
+  final vehicleNumber = normalizeVehicleNumber(value ?? '');
 
   if (vehicleNumber.isEmpty) {
     return 'Vehicle number is required';

@@ -5,6 +5,7 @@ import 'recent_bill_card.dart';
 import 'weighment_slip_dialog.dart';
 import 'date_range_filter_popover.dart';
 
+import '../../../../core/utils/text_formatters.dart';
 import '../../domain/entities/weighment.dart';
 
 /// Read-only history of saved weighments.
@@ -122,14 +123,19 @@ class _RecentBillsPanelState extends State<RecentBillsPanel> {
       }
     }).toList();
 
-    // Filter bills based on the search query.
+    // Filter bills based on the search query. Vehicle numbers are compared
+    // without spaces and case-sensitively-insensitively, so searching
+    // "TN30EN3000" also finds a bill saved as "TN 30 EN 3000".
+    final normalizedQuery = normalizeVehicleNumber(_searchQuery);
     final filteredBills = displayBills.where((bill) {
-      final vehicleNo = bill.vehicleNumber.toLowerCase();
+      final vehicleNo = normalizeVehicleNumber(bill.vehicleNumber);
       final billNo = bill.billNumber.toLowerCase();
       final query = _searchQuery.toLowerCase();
 
       final matchesSearch =
-          query.isEmpty || vehicleNo.contains(query) || billNo.contains(query);
+          _searchQuery.isEmpty ||
+          vehicleNo.contains(normalizedQuery) ||
+          billNo.contains(query);
 
       return matchesSearch;
     }).toList();
