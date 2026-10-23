@@ -1100,7 +1100,86 @@ class AppDatabase extends _$AppDatabase {
         }
       }
     },
+    beforeOpen: (details) async {
+      // Self-healing safety net for databases whose PRAGMA user_version was
+      // stamped by an intermediate development build that already carried the
+      // new version number but not yet the matching migration step below.
+      // onUpgrade only runs while user_version is below schemaVersion, so
+      // such a database would otherwise keep failing with "no such column"
+      // (e.g. weighments.charges on the Reports screen) forever. This check
+      // inspects the live schema instead of the version stamp and adds any
+      // missing additive column declared by the current table definitions.
+      await _repairMissingColumns();
+    },
   );
+
+  /// Repairs columns that the current schema declares but an already-opened
+  /// database is missing.
+  ///
+  /// Drift's version-based migration cannot help a database whose
+  /// `PRAGMA user_version` was set to the current schema version by a build
+  /// that did not yet contain the matching migration step: `onUpgrade` never
+  /// runs again, so the column is never added and every query selecting it
+  /// fails with `SQLiteException: no such column`.
+  ///
+  /// This repair runs on every open (see `beforeOpen`) and adds the missing
+  /// columns directly. It is deliberately additive-only: every statement is
+  /// a nullable or defaulted `ALTER TABLE ADD COLUMN`, so existing rows are
+  /// never rewritten, dropped, or lost, and re-running the repair on a
+  /// complete database is a no-op guarded by `PRAGMA table_info`.
+  Future<void> _repairMissingColumns() async {
+    // Additive weighments columns introduced by schema versions 12-35. The
+    // DDL mirrors the drift table declarations in weighments_table.dart.
+    const weighmentColumns = <String, String>{
+      'first_weight_type': "TEXT NOT NULL DEFAULT 'GROSS'",
+      'second_weight_type': 'TEXT',
+      'weight_unit': "TEXT NOT NULL DEFAULT 'ton'",
+      'mobile_number': 'TEXT',
+      'material': 'TEXT',
+      'description': 'TEXT',
+      'charges': 'REAL',
+      'material_id': 'INTEGER',
+      'previous_weighment_id': 'INTEGER',
+    };
+
+    // Additive app_settings columns from the continuous-form printing step
+    // (schema 34), mirroring app_settings_table.dart.
+    const settingColumns = <String, String>{
+      'print_cpi': 'INTEGER NOT NULL DEFAULT 12',
+      'print_lpi': 'INTEGER NOT NULL DEFAULT 6',
+      'print_paper_width_mm': 'REAL NOT NULL DEFAULT 0.0',
+      'print_paper_length_mm': 'REAL NOT NULL DEFAULT 0.0',
+      'print_left_offset_mm': 'REAL NOT NULL DEFAULT 0.0',
+      'print_top_offset_mm': 'REAL NOT NULL DEFAULT 0.0',
+      'print_column_width_mm': 'REAL NOT NULL DEFAULT 0.0',
+      'print_field_grid': 'TEXT',
+      'print_weight_unit': 'INTEGER NOT NULL DEFAULT 1',
+    };
+
+    await _ensureColumns('weighments', weighmentColumns);
+    await _ensureColumns('app_settings', settingColumns);
+  }
+
+  /// Adds every entry of [columns] that is missing from [table]'s live
+  /// schema, using an additive `ALTER TABLE ADD COLUMN`.
+  ///
+  /// Skips silently when [table] itself does not exist (matches the guard
+  /// style of the migration steps, which tolerate partial fixtures).
+  Future<void> _ensureColumns(String table, Map<String, String> columns) async {
+    final existing = await customSelect(
+      "SELECT name FROM pragma_table_info('$table')",
+    ).get();
+    if (existing.isEmpty) return;
+
+    final names = existing.map((r) => r.read<String>('name')).toSet();
+    for (final entry in columns.entries) {
+      if (!names.contains(entry.key)) {
+        await customStatement(
+          'ALTER TABLE $table ADD COLUMN ${entry.key} ${entry.value}',
+        );
+      }
+    }
+  }
 
   /// Creates the weighments index used by the bill list and report queries.
   ///

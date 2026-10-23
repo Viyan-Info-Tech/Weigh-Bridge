@@ -73,7 +73,7 @@ class LiveScaleConsole extends StatelessWidget {
 
     final String packetTime;
     if (status.lastReceivedAt != null) {
-      packetTime = DateFormat('hh:mm:ss a').format(status.lastReceivedAt!);
+      packetTime = DateFormat('HH:mm:ss').format(status.lastReceivedAt!);
     } else {
       packetTime = 'No data';
     }

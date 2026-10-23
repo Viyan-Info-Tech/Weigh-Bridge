@@ -111,7 +111,7 @@ class BillFormWeightRow extends StatelessWidget {
         ? DateFormat('dd/MM/yyyy').format(date!)
         : '--/--/----';
     final timeStr = date != null
-        ? DateFormat('hh:mm:ss a').format(date!)
+        ? DateFormat('HH:mm:ss').format(date!)
         : (time != null ? _formatTime(time!) : '--:--:--');
 
     return Column(
@@ -178,6 +178,14 @@ class BillFormWeightRow extends StatelessWidget {
                   final picked = await showTimePicker(
                     context: context,
                     initialTime: time ?? TimeOfDay.now(),
+                    // Railway-style clock: the picker dialog itself never
+                    // shows AM/PM, matching the 24-hour chips around it.
+                    builder: (context, child) => MediaQuery(
+                      data: MediaQuery.of(
+                        context,
+                      ).copyWith(alwaysUse24HourFormat: true),
+                      child: child!,
+                    ),
                   );
                   if (picked != null) onSelectTime(picked);
                 },
@@ -190,10 +198,9 @@ class BillFormWeightRow extends StatelessWidget {
   }
 
   static String _formatTime(TimeOfDay value) {
-    final hour = value.hourOfPeriod == 0 ? 12 : value.hourOfPeriod;
+    final hour = value.hour.toString().padLeft(2, '0');
     final minute = value.minute.toString().padLeft(2, '0');
-    final period = value.period == DayPeriod.am ? 'AM' : 'PM';
-    return '$hour:$minute $period';
+    return '$hour:$minute';
   }
 
   Widget _buildDateTimePickerChip({
@@ -325,7 +332,15 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
         if (widget.controller.text.isEmpty &&
             widget.displayWeight != '0' &&
             widget.displayWeight != '0.000') {
-          widget.controller.text = widget.displayWeight.replaceAll(',', '');
+          // Write text and select-all selection in ONE assignment: the plain
+          // `.text=` setter would leave the selection invalid (offset -1) in
+          // the just-focused field, which is the state that crashes vertical
+          // caret movement (Down/Up arrow) inside EditableText.
+          final text = widget.displayWeight.replaceAll(',', '');
+          widget.controller.value = TextEditingValue(
+            text: text,
+            selection: TextSelection(baseOffset: 0, extentOffset: text.length),
+          );
         }
         setState(() => _editing = true);
         _selectAllText();

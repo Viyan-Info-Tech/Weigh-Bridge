@@ -103,7 +103,7 @@ class _SearchableDropdownState<T extends Object>
       final newText = widget.selectedItem != null
           ? widget.itemLabel(widget.selectedItem!)
           : '';
-      _textController.text = newText;
+      _replaceText(newText);
     }
     if (widget.focusNode != oldWidget.focusNode) {
       oldWidget.focusNode?.removeListener(_handleFocusChange);
@@ -160,12 +160,27 @@ class _SearchableDropdownState<T extends Object>
             .toLowerCase();
 
         if (currentText != selectedText) {
-          _textController.text = widget.itemLabel(widget.selectedItem!);
+          _replaceText(widget.itemLabel(widget.selectedItem!));
         }
       } else if (_textController.text.isNotEmpty) {
-        _textController.clear();
+        _replaceText('');
       }
     });
+  }
+
+  /// Replaces the field text, always leaving a valid caret selection.
+  ///
+  /// The plain [TextEditingController.text] setter (and [TextEditingController
+  /// .clear]) leaves the selection invalid at offset -1. A focused field with
+  /// an invalid selection makes the next Up/Down arrow press run the vertical
+  /// caret movement action against a position that does not exist, which is
+  /// the assertion that crashes `VerticalCaretMovementRun.moveNext`. Writing
+  /// the value with an explicit selection removes that window entirely.
+  void _replaceText(String text, {TextSelection? selection}) {
+    _textController.value = TextEditingValue(
+      text: text,
+      selection: selection ?? TextSelection.collapsed(offset: text.length),
+    );
   }
 
   void _handleTextChange() {
@@ -690,7 +705,7 @@ class _SearchableDropdownState<T extends Object>
 
   void _selectOption(T option) {
     widget.onChanged(option);
-    _textController.text = widget.itemLabel(option);
+    _replaceText(widget.itemLabel(option));
     _dismissOverlay();
     widget.nextFocusNode?.requestFocus();
   }
@@ -789,7 +804,9 @@ class _SearchableDropdownState<T extends Object>
                     child: InkWell(
                       borderRadius: BorderRadius.circular(16),
                       onTap: () {
-                        _textController.clear();
+                        // Valid collapsed selection at 0 so a following
+                        // Down/Up arrow press still has a usable caret.
+                        _replaceText('');
                         _effectiveFocusNode.requestFocus();
                       },
                       child: Padding(
@@ -850,7 +867,7 @@ class _SearchableDropdownState<T extends Object>
             if (partial.length == 1) {
               _selectOption(partial.first);
             } else if (widget.selectedItem != null) {
-              _textController.text = widget.itemLabel(widget.selectedItem!);
+              _replaceText(widget.itemLabel(widget.selectedItem!));
               widget.nextFocusNode?.requestFocus();
             } else {
               widget.nextFocusNode?.requestFocus();

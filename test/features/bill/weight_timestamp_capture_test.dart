@@ -86,7 +86,7 @@ void main() {
       );
 
       expect(find.text('--/--/----'), findsOneWidget);
-      expect(find.text('--:-- --'), findsOneWidget);
+      expect(find.text('--:--:--'), findsOneWidget);
     });
 
     testWidgets('Displays formatted date and time when captured', (
@@ -118,7 +118,7 @@ void main() {
 
       final dateStr = DateFormat('dd/MM/yyyy').format(captured);
       expect(find.text(dateStr), findsOneWidget);
-      expect(find.text('10:45 AM'), findsOneWidget);
+      expect(find.text('10:45:00'), findsOneWidget);
     });
 
     testWidgets(

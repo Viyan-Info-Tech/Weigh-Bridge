@@ -8,27 +8,23 @@ import '../entities/weighment.dart';
 import 'preprinted_ticket_layout.dart';
 import 'receipt_pdf_fonts.dart';
 
-/// Builds the print job that lands on the client's existing pre-printed
-/// HMB Enterprises continuous-form certificate.
+/// Builds the print job document that prints ONLY the dynamic weighment values
+/// onto the client's pre-printed continuous-form certificate stationery.
 ///
-/// The stationery already carries the logo, company name, address, phone
-/// numbers, approval text, headings, borders, watermark and footer, so this
-/// generator draws **only the dynamic weighment values** - and it draws each of
-/// them twice, once inside the left bill section and once inside the right one,
-/// so a single print operation produces two identical records on the same
-/// horizontal row of the form.
+/// The physical paper already contains the company logo, company name, address,
+/// phone numbers, headings, boxes/borders, field labels, and footer.
 ///
-/// The page is the exact paper the printer driver reported after the operator
-/// chose the continuous-form size in the Windows print dialog, and the positions
-/// come from [PrePrintedTicketLayout], which works in absolute physical-paper
-/// coordinates - the same coordinate system the Windows print pipeline renders
-/// the PDF in. Nothing is scaled, centred or given page margins, so the values
-/// land where the character grid says they will.
+/// This generator draws ONLY the actual weighment data values:
+/// - Left side: Copy 0 of the weighment values.
+/// - Right side: Copy 1 of identical weighment values.
+/// - NO background, NO company logo, NO headings, NO borders, and NO footer.
+///
+/// Every value is placed at its configured character grid coordinates (x, y)
+/// from [PrePrintedTicketLayout] and printed with that field's own configured
+/// font size and weight (bold or regular) from the same field grid.
 class PrePrintedTicketPdfGenerator {
   const PrePrintedTicketPdfGenerator();
 
-  /// [pageFormat] must be the printer-reported format (physical paper size plus
-  /// its printable-area offsets), not a hard-coded A4.
   Future<Uint8List> generate({
     required Weighment bill,
     required BillingSettings settings,
@@ -47,12 +43,11 @@ class PrePrintedTicketPdfGenerator {
     final texts = layout.buildPrintedTexts(data);
     final theme = await ReceiptPdfFonts.load();
     final pdf = pw.Document(theme: theme);
-    final fontSize = layout.fontSize;
 
     pdf.addPage(
       pw.Page(
-        // Physical paper, edge to edge: PDF point (0,0) is the top-left corner
-        // of the sheet, which is what the driver renders against.
+        // Physical paper, edge to edge: PDF point (0, 0) is the top-left corner
+        // of the sheet matching the Windows printer driver's physical offsets.
         pageFormat: PdfPageFormat(pageFormat.width, pageFormat.height),
         margin: pw.EdgeInsets.zero,
         clip: true,
@@ -73,7 +68,7 @@ class PrePrintedTicketPdfGenerator {
                     softWrap: false,
                     overflow: pw.TextOverflow.clip,
                     style: pw.TextStyle(
-                      fontSize: fontSize,
+                      fontSize: item.fontSize,
                       fontWeight: item.isBold
                           ? pw.FontWeight.bold
                           : pw.FontWeight.normal,

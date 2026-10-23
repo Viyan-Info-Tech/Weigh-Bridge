@@ -69,7 +69,7 @@ class WeighmentDetailsDialog extends StatelessWidget {
         ? const Color(0xFFDCFCE7)
         : const Color(0xFFFEF3C7);
     final dateFormatted = DateFormat(
-      'dd/MM/yyyy hh:mm a',
+      'dd/MM/yyyy HH:mm:ss',
     ).format(record.createdAt);
 
     return Dialog(

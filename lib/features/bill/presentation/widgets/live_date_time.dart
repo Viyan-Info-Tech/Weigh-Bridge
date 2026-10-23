@@ -34,7 +34,7 @@ class _LiveDateTimeState extends State<LiveDateTime> {
 
   @override
   Widget build(BuildContext context) {
-    final time = DateFormat('hh:mm:ss a').format(_now);
+    final time = DateFormat('HH:mm:ss').format(_now);
     final date = DateFormat('EEEE, dd MMMM yyyy').format(_now);
 
     return Row(

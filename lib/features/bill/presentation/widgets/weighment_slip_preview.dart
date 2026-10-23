@@ -45,21 +45,14 @@ class WeighmentSlipPreview extends StatelessWidget {
   /// something unreadable.
   static const double minReadableScale = 0.8;
 
-  /// Fields the dot-matrix job prints in bold, so the preview matches the ink
-  /// weight the operator will see on paper.
-  static const Set<PrePrintedField> _boldFields = {
-    PrePrintedField.vehicle,
-    PrePrintedField.charges,
-    PrePrintedField.gross,
-    PrePrintedField.tare,
-    PrePrintedField.net,
-  };
-
   @override
   Widget build(BuildContext context) {
     final data = PrePrintedTicketData(bill: bill, settings: settings);
-    final lines = _fieldLines(decodePrePrintedGrid(settings.printFieldGrid));
     final page = PrePrintedTicketLayout.initialPaperFormat(settings);
+    // The same layout the print job uses, so the preview shows each field's
+    // configured font size and weight exactly as they reach the paper.
+    final layout = PrePrintedTicketLayout(pageFormat: page, settings: settings);
+    final lines = _fieldLines(layout.placements);
 
     // One receipt = half the sheet: 5.5 x 5.5 in on the 11 x 5.5 in form, so
     // the preview keeps the printed copy's square proportion.
@@ -70,7 +63,7 @@ class WeighmentSlipPreview extends StatelessWidget {
         final available = constraints.maxWidth.isFinite
             ? constraints.maxWidth
             : ticketDesignWidth;
-        final receipt = _buildReceipt(data, lines, minHeight);
+        final receipt = _buildReceipt(data, layout, lines, minHeight);
 
         // The receipt stays centered and keeps its aspect ratio; it scales
         // down with the window until the readable floor, then the preview
@@ -122,6 +115,7 @@ class WeighmentSlipPreview extends StatelessWidget {
   /// of the ticket - no duplicate copy, no cut line between copies.
   Widget _buildReceipt(
     PrePrintedTicketData data,
+    PrePrintedTicketLayout layout,
     List<List<PrePrintedField>> lines,
     double minHeight,
   ) {
@@ -146,7 +140,7 @@ class WeighmentSlipPreview extends StatelessWidget {
       // footer Spacer fill the spare height inside a vertically scrolling
       // dialog, exactly as the two-up sheet did.
       child: IntrinsicHeight(
-        child: _TicketCopy(data: data, lines: lines),
+        child: _TicketCopy(data: data, layout: layout, lines: lines),
       ),
     );
   }
@@ -157,9 +151,14 @@ class WeighmentSlipPreview extends StatelessWidget {
 /// rendering the same [PrePrintedTicketData] the print job uses for each of
 /// its two printed copies.
 class _TicketCopy extends StatelessWidget {
-  const _TicketCopy({required this.data, required this.lines});
+  const _TicketCopy({
+    required this.data,
+    required this.layout,
+    required this.lines,
+  });
 
   final PrePrintedTicketData data;
+  final PrePrintedTicketLayout layout;
   final List<List<PrePrintedField>> lines;
 
   /// Brand red used for the business name, the title banner and the footer
@@ -437,6 +436,20 @@ class _TicketCopy extends StatelessWidget {
     return widest + 8;
   }
 
+  /// Value style for one field, mirroring the print job: the field grid's
+  /// bold toggle picks the weight, and its configured size scales the screen
+  /// font relative to the job's pitch-derived size so the card keeps its
+  /// design while still showing which fields print larger or smaller.
+  TextStyle _valueStyleFor(PrePrintedField field, TextStyle base) {
+    final placement = layout.placements[field];
+    if (placement == null) return base;
+    final ratio = layout.fontSizeFor(placement) / layout.fontSize;
+    return base.copyWith(
+      fontSize: (base.fontSize ?? 11) * ratio,
+      fontWeight: placement.isBold ? FontWeight.w700 : FontWeight.w400,
+    );
+  }
+
   /// A row of its own: fixed label column, colon, then the value. The value
   /// is clipped with an ellipsis rather than wrapping, matching how the print
   /// job clips a value at its configured character width.
@@ -461,9 +474,7 @@ class _TicketCopy extends StatelessWidget {
               data.valueFor(field),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: WeighmentSlipPreview._boldFields.contains(field)
-                  ? valueStyle.copyWith(fontWeight: FontWeight.w700)
-                  : valueStyle,
+              style: _valueStyleFor(field, valueStyle),
             ),
           ),
         ],
@@ -493,9 +504,7 @@ class _TicketCopy extends StatelessWidget {
               Text(': ', style: labelStyle),
               Text(
                 data.valueFor(fields[i]),
-                style: WeighmentSlipPreview._boldFields.contains(fields[i])
-                    ? valueStyle.copyWith(fontWeight: FontWeight.w700)
-                    : valueStyle,
+                style: _valueStyleFor(fields[i], valueStyle),
               ),
             ],
           ],

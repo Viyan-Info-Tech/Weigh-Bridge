@@ -9,7 +9,7 @@ import 'package:weighbridge/core/database/app_database.dart';
 import '../../support/test_database.dart';
 
 void main() {
-  test('schema version is 34', () {
+  test('schema version is 35', () {
     final db = createInMemoryDatabase();
     addTearDown(db.close);
     expect(db.schemaVersion, 35);
@@ -826,6 +826,119 @@ CREATE TABLE app_settings (
       expect(names, isNot(contains('idx_weighments_customer_created')));
       expect(names, isNot(contains('idx_weighments_material_created')));
     });
+  });
+
+  group('schema self-repair (beforeOpen)', () {
+    /// Builds a database stamped with the CURRENT schema version whose
+    /// weighments table is missing the additive columns - the state left
+    /// behind when an intermediate build set PRAGMA user_version ahead of
+    /// the migration steps (onUpgrade then never runs for such a file).
+    Future<NativeDatabase> createStampedButIncompleteDatabase(
+      Directory dir,
+    ) async {
+      final file = File(p.join(dir.path, 'stamped.sqlite'));
+      final sqlite = NativeDatabase(file);
+      await sqlite.ensureOpen(_StubExecutorUser(35));
+      final now = DateTime(2026, 10, 1).millisecondsSinceEpoch;
+
+      // Weighments as an intermediate v29-v31-era build created it: no
+      // charges, no material_id, no previous_weighment_id.
+      await sqlite.runCustom(
+        'CREATE TABLE weighments ('
+        'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+        'bill_number TEXT NOT NULL UNIQUE, '
+        'vehicle_number TEXT NOT NULL, '
+        'first_weight_kg REAL NOT NULL, '
+        'first_weight_type TEXT NOT NULL DEFAULT \'GROSS\', '
+        'second_weight_kg REAL, second_weight_type TEXT, net_weight_kg REAL, '
+        'material TEXT, description TEXT, remarks TEXT, mobile_number TEXT, '
+        'weight_unit TEXT NOT NULL DEFAULT \'ton\', '
+        'created_at INTEGER NOT NULL DEFAULT (strftime(\'%s\',\'now\')), '
+        'updated_at INTEGER NOT NULL DEFAULT (strftime(\'%s\',\'now\')))',
+      );
+      await sqlite.runCustom(
+        'INSERT INTO weighments (id, bill_number, vehicle_number, '
+        'first_weight_kg, net_weight_kg, remarks, weight_unit, '
+        'created_at, updated_at) VALUES (1, \'WB-00001\', \'MH12AB1234\', '
+        '5000.0, 3000.0, \'keep me\', \'kg\', ?, ?)',
+        [now, now],
+      );
+      // app_settings without the schema-34 print columns.
+      await sqlite.runCustom(
+        'CREATE TABLE app_settings ('
+        'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+        'weight_unit TEXT NOT NULL DEFAULT \'ton\', '
+        'business_name TEXT NOT NULL DEFAULT \'VIYAN WEIGHBRIDGE\', '
+        'updated_at INTEGER NOT NULL)',
+      );
+      // The file claims it is fully migrated - this is the bug's fingerprint.
+      await sqlite.runCustom('PRAGMA user_version = 35');
+      await sqlite.close();
+
+      return NativeDatabase(file);
+    }
+
+    test(
+      'adds missing weighments.charges so Reports queries stop failing',
+      () async {
+        final dir = await Directory.systemTemp.createTemp('wb_repair');
+        addTearDown(() => dir.delete(recursive: true));
+
+        final db = AppDatabase.forTesting(
+          await createStampedButIncompleteDatabase(dir),
+        );
+        addTearDown(db.close);
+
+        // The exact query that threw SQLiteException(1): no such column:
+        // weighments.charges before the repair.
+        final charges = await db
+            .customSelect(
+              "SELECT charges FROM weighments WHERE bill_number = 'WB-00001'",
+            )
+            .get();
+        expect(charges.single.data['charges'], isNull);
+
+        // The repaired column matches the declared shape (nullable REAL).
+        final cols = await db
+            .customSelect("SELECT * FROM pragma_table_info('weighments')")
+            .get();
+        final chargesCol = cols.firstWhere((r) => r.data['name'] == 'charges');
+        expect(chargesCol.data['type'], 'REAL');
+        expect(chargesCol.data['notnull'], 0);
+
+        // Other additive columns from the same class of bug are healed too.
+        final names = cols.map((r) => r.data['name'] as String).toSet();
+        expect(
+          names,
+          containsAll(<String>['material_id', 'previous_weighment_id']),
+        );
+
+        // app_settings print columns are repaired as well.
+        final settingsCols = await db
+            .customSelect("SELECT name FROM pragma_table_info('app_settings')")
+            .get();
+        final settingsNames = settingsCols.map((r) => r.read<String>('name'));
+        expect(settingsNames, contains('print_cpi'));
+        expect(settingsNames, contains('print_field_grid'));
+
+        // Existing rows are preserved and new charges round-trip.
+        final kept = await db.billDao.getWeighmentByBillNumber('WB-00001');
+        expect(kept, isNotNull);
+        expect(kept!.vehicleNumber, 'MH12AB1234');
+        expect(kept.remarks, 'keep me');
+        await db.billDao.insertWeighment(
+          WeighmentsCompanion.insert(
+            billNumber: 'WB-00002',
+            vehicleNumber: 'MH12AB5678',
+            firstWeightKg: 4200,
+            charges: const Value(250.5),
+            weightUnit: const Value('kg'),
+          ),
+        );
+        final fresh = await db.billDao.getWeighmentByBillNumber('WB-00002');
+        expect(fresh!.charges, 250.5);
+      },
+    );
   });
 
   group('v31 -> v32 migration', () {

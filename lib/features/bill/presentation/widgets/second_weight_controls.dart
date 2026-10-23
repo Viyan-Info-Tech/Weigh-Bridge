@@ -165,7 +165,7 @@ class SecondWeightStatusBanner extends StatelessWidget {
       final type = previousWeightType ?? 'GROSS';
       final capturedAt = previousCapturedAt;
       final capturedText = capturedAt != null
-          ? ' · ${DateFormat('dd/MM/yyyy hh:mm a').format(capturedAt)}'
+          ? ' · ${DateFormat('dd/MM/yyyy HH:mm:ss').format(capturedAt)}'
           : '';
       return _BannerShell(
         color: const Color(0xFF16A34A),

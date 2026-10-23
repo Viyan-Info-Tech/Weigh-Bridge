@@ -60,6 +60,8 @@ class PrePrintedFieldPlacement {
     required this.column,
     required this.line,
     this.widthChars = 0,
+    this.fontSize = 0,
+    this.isBold = true,
   });
 
   final int column;
@@ -69,11 +71,34 @@ class PrePrintedFieldPlacement {
   /// this copy's column", which is resolved once the paper size is known.
   final int widthChars;
 
+  /// Printed text size of this field's value, in PDF points. `0` means "use
+  /// the job's pitch-derived size" (12 CPI → 10 pt, 10 CPI → 12 pt), which is
+  /// how every field printed before per-field sizing existed. Each field
+  /// carries its own value so sizes can be tuned independently in
+  /// Settings ▸ Continuous Form Printing.
+  final double fontSize;
+
+  /// True prints this field's value in bold weight, false in regular weight.
+  final bool isBold;
+
   bool get isPrintable => column >= 0 && line >= 0;
 
-  Map<String, int> toJson() => {'c': column, 'l': line, 'w': widthChars};
+  Map<String, dynamic> toJson() => {
+    'c': column,
+    'l': line,
+    'w': widthChars,
+    'fs': fontSize,
+    'b': isBold,
+  };
 
-  factory PrePrintedFieldPlacement.fromJson(Map<String, dynamic> json) {
+  /// Reads one stored placement. [fallback] supplies the field's defaults for
+  /// properties the stored JSON does not mention, so grids persisted before
+  /// font size/bold existed resolve to the same per-field defaults a fresh
+  /// install gets.
+  factory PrePrintedFieldPlacement.fromJson(
+    Map<String, dynamic> json, {
+    PrePrintedFieldPlacement? fallback,
+  }) {
     int read(String key) {
       final value = json[key];
       if (value is int) return value;
@@ -85,6 +110,12 @@ class PrePrintedFieldPlacement {
       column: read('c'),
       line: read('l'),
       widthChars: read('w'),
+      fontSize: json['fs'] is num
+          ? (json['fs'] as num).toDouble()
+          : (fallback?.fontSize ?? 0),
+      isBold: json['b'] is bool
+          ? json['b'] as bool
+          : (fallback?.isBold ?? true),
     );
   }
 
@@ -93,10 +124,12 @@ class PrePrintedFieldPlacement {
       other is PrePrintedFieldPlacement &&
       other.column == column &&
       other.line == line &&
-      other.widthChars == widthChars;
+      other.widthChars == widthChars &&
+      other.fontSize == fontSize &&
+      other.isBold == isBold;
 
   @override
-  int get hashCode => Object.hash(column, line, widthChars);
+  int get hashCode => Object.hash(column, line, widthChars, fontSize, isBold);
 }
 
 /// Starting grid for a two-up weighbridge certificate.
@@ -110,51 +143,71 @@ const Map<PrePrintedField, PrePrintedFieldPlacement> kDefaultPrePrintedGrid = {
     column: 14,
     line: 0,
     widthChars: 18,
+    fontSize: 12,
+    isBold: true,
   ),
   PrePrintedField.date: PrePrintedFieldPlacement(
     column: 40,
     line: 0,
     widthChars: 12,
+    fontSize: 10,
+    isBold: true,
   ),
   PrePrintedField.time: PrePrintedFieldPlacement(
-    column: 56,
-    line: 0,
+    column: 40,
+    line: 1,
     widthChars: 12,
+    fontSize: 10,
+    isBold: true,
   ),
   PrePrintedField.vehicle: PrePrintedFieldPlacement(
     column: 14,
     line: 1,
     widthChars: 22,
+    fontSize: 12,
+    isBold: true,
   ),
   PrePrintedField.charges: PrePrintedFieldPlacement(
     column: 16,
     line: 2,
     widthChars: 18,
+    fontSize: 11,
+    isBold: true,
   ),
   PrePrintedField.material: PrePrintedFieldPlacement(
     column: 14,
     line: 3,
     widthChars: 26,
+    fontSize: 10,
+    isBold: false,
   ),
   PrePrintedField.gross: PrePrintedFieldPlacement(
     column: 14,
     line: 4,
     widthChars: 16,
+    fontSize: 12,
+    isBold: true,
   ),
   PrePrintedField.tare: PrePrintedFieldPlacement(
     column: 14,
     line: 5,
     widthChars: 16,
+    fontSize: 12,
+    isBold: true,
   ),
   PrePrintedField.net: PrePrintedFieldPlacement(
     column: 14,
     line: 6,
     widthChars: 16,
+    fontSize: 12,
+    isBold: true,
   ),
   PrePrintedField.customer: PrePrintedFieldPlacement(
     column: 14,
     line: 7,
     widthChars: 26,
+    fontSize: 10,
+    isBold: false,
   ),
 };
 
@@ -177,8 +230,22 @@ Map<PrePrintedField, PrePrintedFieldPlacement> decodePrePrintedGrid(
     for (final field in PrePrintedField.values) {
       final entry = decoded[field.name];
       if (entry is Map<String, dynamic>) {
-        placements[field] = PrePrintedFieldPlacement.fromJson(entry);
+        placements[field] = PrePrintedFieldPlacement.fromJson(
+          entry,
+          fallback: kDefaultPrePrintedGrid[field],
+        );
       }
+    }
+    // Migrate legacy default where time was on line 0 (col 56) to line 1 (col 40) down the date.
+    if (placements[PrePrintedField.time]?.column == 56 &&
+        placements[PrePrintedField.time]?.line == 0) {
+      placements[PrePrintedField.time] = const PrePrintedFieldPlacement(
+        column: 40,
+        line: 1,
+        widthChars: 12,
+        fontSize: 10,
+        isBold: true,
+      );
     }
   } catch (_) {
     return Map<PrePrintedField, PrePrintedFieldPlacement>.from(
@@ -236,7 +303,7 @@ class PrePrintedTicketData {
 
   String get dateText => DateFormat('dd/MM/yyyy').format(weighmentAt);
 
-  String get timeText => DateFormat('hh:mm a').format(weighmentAt);
+  String get timeText => DateFormat('HH:mm:ss').format(weighmentAt);
 
   /// Value for [field], or an empty string when there is nothing to print.
   ///
@@ -296,6 +363,7 @@ class PrePrintedPrintedText {
     required this.x,
     required this.y,
     required this.maxWidth,
+    required this.fontSize,
     required this.isBold,
   });
 
@@ -317,6 +385,12 @@ class PrePrintedPrintedText {
   /// Available width before the next value or the end of this copy.
   final double maxWidth;
 
+  /// This field's own configured printed size in points - resolved from the
+  /// field grid, falling back to the job's pitch-derived size when the field
+  /// carries no explicit size.
+  final double fontSize;
+
+  /// This field's own configured weight: bold when on, regular when off.
   final bool isBold;
 }
 
@@ -336,8 +410,10 @@ class PrePrintedTicketLayout {
   }) : page = pageFormat,
        settings = settings,
        placements = decodePrePrintedGrid(settings.printFieldGrid) {
-    if (cpi <= 0) _cpiInvalid = true;
-    if (lpi <= 0) _lpiInvalid = true;
+    // A persisted pitch of zero or below is unusable: the layout falls back to
+    // 12 CPI / 6 LPI and reports it through [usedFallbackPitch].
+    if (settings.printCpi <= 0) _cpiInvalid = true;
+    if (settings.printLpi <= 0) _lpiInvalid = true;
   }
 
   /// The page exactly as the printer driver reported it after the operator
@@ -368,7 +444,16 @@ class PrePrintedTicketLayout {
 
   /// Font size whose character advance equals [charWidth] for a Courier-style
   /// monospaced face (advance = 0.6 em): 12 CPI → 10 pt, 10 CPI → 12 pt.
+  ///
+  /// This is the job-wide fallback; each field's own configured size wins via
+  /// [fontSizeFor].
   double get fontSize => charWidth / 0.6;
+
+  /// Printed size for one field: the size configured for it in the field
+  /// grid, or the pitch-derived [fontSize] when the field carries no explicit
+  /// size (legacy grids).
+  double fontSizeFor(PrePrintedFieldPlacement placement) =>
+      placement.fontSize > 0 ? placement.fontSize : fontSize;
 
   // -- Printable area -------------------------------------------------------
 
@@ -460,7 +545,8 @@ class PrePrintedTicketLayout {
             x: x,
             y: y,
             maxWidth: widthFor(copy, placement),
-            isBold: _isBold(field),
+            fontSize: fontSizeFor(placement),
+            isBold: placement.isBold,
           ),
         );
       }
@@ -492,15 +578,8 @@ class PrePrintedTicketLayout {
         settings.printPaperLengthMm * mmToPoint,
       );
     }
-    return const PdfPageFormat(11 * 72.0, 5.5 * 72.0);
+    return const PdfPageFormat(10 * PdfPageFormat.inch, 8 * PdfPageFormat.inch);
   }
-
-  static bool _isBold(PrePrintedField field) =>
-      field == PrePrintedField.vehicle ||
-      field == PrePrintedField.charges ||
-      field == PrePrintedField.gross ||
-      field == PrePrintedField.tare ||
-      field == PrePrintedField.net;
 
   /// True when the persisted CPI/LPI values were unusable and the layout fell
   /// back to 12 CPI / 6 LPI.

@@ -60,6 +60,9 @@ class PrintSettingsForm {
       _controllers['${field.name}.line']?.text = '${placement?.line ?? 0}';
       _controllers['${field.name}.width']?.text =
           '${placement?.widthChars ?? 0}';
+      _controllers['${field.name}.size']?.text = PrintSettingsForm._fmt(
+        placement?.fontSize ?? 0,
+      );
     }
   }
 
@@ -76,6 +79,9 @@ class PrintSettingsForm {
       _controllers['${field.name}.col']?.text = '${placement.column}';
       _controllers['${field.name}.line']?.text = '${placement.line}';
       _controllers['${field.name}.width']?.text = '${placement.widthChars}';
+      _controllers['${field.name}.size']?.text = PrintSettingsForm._fmt(
+        placement.fontSize,
+      );
     }
   }
 
@@ -286,7 +292,8 @@ class ContinuousFormPrintCard extends StatelessWidget {
               const Expanded(
                 child: Text(
                   'Field alignment (characters from the copy origin, lines from '
-                  'the first row; -1 hides a field)',
+                  'the first row; -1 hides a field). Size is the printed text '
+                  'size in points; Bold toggles the ribbon weight per field.',
                   style: _hintStyle,
                 ),
               ),
@@ -485,6 +492,8 @@ class ContinuousFormPrintCard extends StatelessWidget {
         _gridHeadCell('Col'),
         _gridHeadCell('Line'),
         _gridHeadCell('Width'),
+        _gridHeadCell('Size'),
+        _gridHeadCell('Bold'),
       ],
     );
   }
@@ -508,25 +517,23 @@ class ContinuousFormPrintCard extends StatelessWidget {
 
     // Re-read every cell from its controller so one edit can never drop a
     // value the operator entered in a neighbouring cell.
-    void update() {
+    void update({bool? isBold}) {
+      final current = form.grid[field] ?? placement;
+      String textOf(String cell, String fallback) =>
+          form.controller('${field.name}.$cell', fallback).text;
       form.grid[field] = PrePrintedFieldPlacement(
         column:
-            int.tryParse(
-              form.controller('${field.name}.col', '${placement.column}').text,
-            ) ??
-            placement.column,
-        line:
-            int.tryParse(
-              form.controller('${field.name}.line', '${placement.line}').text,
-            ) ??
-            placement.line,
+            int.tryParse(textOf('col', '${current.column}')) ?? current.column,
+        line: int.tryParse(textOf('line', '${current.line}')) ?? current.line,
         widthChars:
-            int.tryParse(
-              form
-                  .controller('${field.name}.width', '${placement.widthChars}')
-                  .text,
+            int.tryParse(textOf('width', '${current.widthChars}')) ??
+            current.widthChars,
+        fontSize:
+            double.tryParse(
+              textOf('size', PrintSettingsForm._fmt(current.fontSize)),
             ) ??
-            placement.widthChars,
+            current.fontSize,
+        isBold: isBold ?? current.isBold,
       );
       onChanged();
     }
@@ -547,27 +554,45 @@ class ContinuousFormPrintCard extends StatelessWidget {
               ),
             ),
           ),
-          _gridCell('${field.name}.col', placement.column, update),
-          _gridCell('${field.name}.line', placement.line, update),
-          _gridCell('${field.name}.width', placement.widthChars, update),
+          _gridCell('${field.name}.col', '${placement.column}', update),
+          _gridCell('${field.name}.line', '${placement.line}', update),
+          _gridCell('${field.name}.width', '${placement.widthChars}', update),
+          _gridCell(
+            '${field.name}.size',
+            PrintSettingsForm._fmt(placement.fontSize),
+            update,
+            allowDecimal: true,
+          ),
+          _gridBoldCell(
+            placement.isBold,
+            () =>
+                update(isBold: !(form.grid[field]?.isBold ?? placement.isBold)),
+          ),
         ],
       ),
     );
   }
 
-  Widget _gridCell(String key, int value, VoidCallback onChangedCell) {
+  Widget _gridCell(
+    String key,
+    String initial,
+    VoidCallback onChangedCell, {
+    bool allowDecimal = false,
+  }) {
     return SizedBox(
       width: 64,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4),
         child: TextFormField(
           key: ValueKey('print-grid-$key'),
-          controller: form.controller(key, '$value'),
+          controller: form.controller(key, initial),
           enabled: isEditing,
           textAlign: TextAlign.center,
           keyboardType: TextInputType.number,
           inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp(r'[0-9-]')),
+            FilteringTextInputFormatter.allow(
+              allowDecimal ? RegExp(r'[0-9.]') : RegExp(r'[0-9-]'),
+            ),
           ],
           onChanged: (_) => onChangedCell(),
           style: const TextStyle(
@@ -604,6 +629,20 @@ class ContinuousFormPrintCard extends StatelessWidget {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _gridBoldCell(bool value, VoidCallback onChangedCell) {
+    return SizedBox(
+      width: 64,
+      child: Center(
+        child: Switch(
+          value: value,
+          onChanged: isEditing ? (_) => onChangedCell() : null,
+          activeTrackColor: const Color(0xFF0D3B82),
+          materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
       ),
     );

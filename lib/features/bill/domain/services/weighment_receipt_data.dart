@@ -170,7 +170,7 @@ class WeighmentReceiptData {
 
   String _timeFor(double? kg, DateTime? capturedAt, DateTime fallback) {
     if (kg == null) return '--';
-    return DateFormat('hh:mm a').format(capturedAt ?? fallback);
+    return DateFormat('HH:mm:ss').format(capturedAt ?? fallback);
   }
 
   String get printDate => DateFormat('dd/MM/yyyy HH:mm:ss').format(printedAt);

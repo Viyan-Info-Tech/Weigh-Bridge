@@ -50,8 +50,9 @@ class _MaterialListPageState extends State<MaterialListPage> {
               fontWeight: FontWeight.w600,
             ),
           ),
-          backgroundColor:
-              isError ? const Color(0xFFDC2626) : const Color(0xFF0F172A),
+          backgroundColor: isError
+              ? const Color(0xFFDC2626)
+              : const Color(0xFF0F172A),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
@@ -248,10 +249,12 @@ class _MaterialListPageState extends State<MaterialListPage> {
   Widget _buildKpiRow(material.MaterialState state) {
     final total = state.materials.length;
     final active = state.materials.where((m) => m.isActive).length;
-    final loadCount =
-        state.materials.where((m) => m.vehicleType.toLowerCase() == 'load').length;
-    final emptyCount =
-        state.materials.where((m) => m.vehicleType.toLowerCase() == 'empty').length;
+    final loadCount = state.materials
+        .where((m) => m.vehicleType.toLowerCase() == 'load')
+        .length;
+    final emptyCount = state.materials
+        .where((m) => m.vehicleType.toLowerCase() == 'empty')
+        .length;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -608,20 +611,14 @@ class _MaterialListPageState extends State<MaterialListPage> {
             ),
             child: const Row(
               children: [
-                SizedBox(
-                  width: 50,
-                  child: Text('ID', style: _headerStyle),
-                ),
+                SizedBox(width: 50, child: Text('ID', style: _headerStyle)),
                 SizedBox(width: 12),
                 Expanded(
                   flex: 3,
                   child: Text('MATERIAL NAME', style: _headerStyle),
                 ),
                 SizedBox(width: 12),
-                SizedBox(
-                  width: 110,
-                  child: Text('TYPE', style: _headerStyle),
-                ),
+                SizedBox(width: 110, child: Text('TYPE', style: _headerStyle)),
                 SizedBox(width: 12),
                 SizedBox(
                   width: 100,
@@ -976,9 +973,7 @@ class _MaterialListPageState extends State<MaterialListPage> {
           child: Container(
             width: 32,
             height: 32,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(7),
-            ),
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(7)),
             alignment: Alignment.center,
             child: Icon(icon, color: color, size: 16),
           ),

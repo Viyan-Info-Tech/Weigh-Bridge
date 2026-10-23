@@ -349,7 +349,7 @@ class _TableRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd/MM/yy');
-    final timeFormat = DateFormat('hh:mm a');
+    final timeFormat = DateFormat('HH:mm:ss');
 
     final isCompleted = item.isCompleted;
     final statusColor = isCompleted

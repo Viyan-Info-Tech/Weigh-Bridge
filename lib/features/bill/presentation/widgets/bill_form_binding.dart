@@ -107,9 +107,8 @@ class BillFormBinding extends StatelessWidget {
           : null,
       previousCapturedAt: state.previousWeighment?.createdAt,
       previousWeightMessage: state.previousWeightMessage,
-      onSecondWeightToggle: () => bloc.add(
-        SecondWeightModeChanged(!state.isSecondWeightMode),
-      ),
+      onSecondWeightToggle: () =>
+          bloc.add(SecondWeightModeChanged(!state.isSecondWeightMode)),
       vehicleFocusNode: r.vehicleFocusNode,
       typeFocusNode: r.typeFocusNode,
       materialFocusNode: r.materialFocusNode,

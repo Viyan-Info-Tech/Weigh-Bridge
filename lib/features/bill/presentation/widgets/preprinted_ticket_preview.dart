@@ -76,6 +76,15 @@ class PrePrintedTicketPreview extends StatelessWidget {
 
           for (final copy in const [0, 1]) {
             final x = layout.xFor(copy, placement) * scale;
+
+            // The print pipeline drops values that fall off the paper edge
+            // (see PrePrintedTicketLayout.buildPrintedTexts), so the preview
+            // skips them too. This also keeps the width clamp below inside a
+            // valid range: when a configured grid places a field past the
+            // right edge, `width - x` goes negative and clamp(0.0, width - x)
+            // throws.
+            if (x < 0 || x > width) continue;
+
             final maxWidth = layout.widthFor(copy, placement) * scale;
             final label = field.prePrintedLabel;
             final labelWidth = label.length * charWidth;
@@ -118,9 +127,11 @@ class PrePrintedTicketPreview extends StatelessWidget {
                   softWrap: false,
                   style: TextStyle(
                     fontFamily: 'Courier',
-                    fontSize: fontSize,
+                    fontSize: layout.fontSizeFor(placement) * scale,
                     height: 1,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: placement.isBold
+                        ? FontWeight.w700
+                        : FontWeight.w400,
                     color: const Color(0xFF0F172A),
                   ),
                 ),

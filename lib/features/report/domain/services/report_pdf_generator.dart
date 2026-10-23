@@ -36,9 +36,9 @@ class ReportPdfGenerator {
     final pdf = pw.Document(theme: pdfTheme);
 
     final dateFormat = DateFormat('dd/MM/yyyy');
-    final timeFormat = DateFormat('hh:mm a');
+    final timeFormat = DateFormat('HH:mm:ss');
     final printDateTime = DateFormat(
-      'dd/MM/yyyy hh:mm a',
+      'dd/MM/yyyy HH:mm:ss',
     ).format(DateTime.now());
 
     String filterDateLabel = filter.datePreset.label;

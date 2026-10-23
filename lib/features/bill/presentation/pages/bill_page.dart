@@ -231,12 +231,47 @@ class BillPageState extends State<BillPage> {
   }
 
   void _syncWeightControllers(BillState state) {
+    // Weight controllers stay force-synced: F1 capture and the second-weight
+    // lookup legitimately replace the value of a focused weight field, and
+    // typing in a weight row feeds the bloc verbatim, so no per-keystroke
+    // rewrite can ever come back into them.
     _setControllerText(_grossWeightController, state.grossWeightText);
     _setControllerText(_tareWeightController, state.tareWeightText);
-    _setControllerText(_vehicleNumberController, state.vehicleNumber);
-    _setControllerText(_remarksController, state.remarksText);
-    _setControllerText(_materialController, state.materialText);
-    _setControllerText(_chargesController, state.chargesText);
+    // Plain text fields are never rewritten while the operator is typing in
+    // them - see [_syncControllerIfUnfocused].
+    _syncControllerIfUnfocused(_vehicleNumberController, state.vehicleNumber);
+    _syncControllerIfUnfocused(_remarksController, state.remarksText);
+    _syncControllerIfUnfocused(_materialController, state.materialText);
+    _syncControllerIfUnfocused(_chargesController, state.chargesText);
+  }
+
+  /// Syncs [text] into [controller] unless its field currently owns keyboard
+  /// focus.
+  ///
+  /// The bloc normalizes some inputs (the vehicle number is trimmed and
+  /// upper-cased), so writing the state back into the focused field would
+  /// replace its text on every non-matching keystroke. Swapping a focused
+  /// field's text mid-interaction invalidates its text layout and caret while
+  /// the keyboard layer still holds them - which is exactly what crashed
+  /// vertical caret movement (`VerticalCaretMovementRun`) when the operator
+  /// pressed Down/Up - and visibly snaps the caret to the end. The focused
+  /// field is already the source of its own state through `onChanged`, so
+  /// skipping it cannot desynchronize the form.
+  void _syncControllerIfUnfocused(
+    TextEditingController controller,
+    String text,
+  ) {
+    if (_isControllerFocused(controller)) return;
+    _setControllerText(controller, text);
+  }
+
+  /// Whether [controller] belongs to the [EditableText] that currently owns
+  /// keyboard focus.
+  bool _isControllerFocused(TextEditingController controller) {
+    final focusContext = FocusManager.instance.primaryFocus?.context;
+    if (focusContext == null) return false;
+    final editable = focusContext.findAncestorWidgetOfExactType<EditableText>();
+    return editable?.controller == controller;
   }
 
   void _setControllerText(TextEditingController controller, String text) {

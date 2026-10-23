@@ -49,7 +49,7 @@ class CsvGenerator {
       'Net Weight,Charges (₹),Status',
     );
 
-    final dateTimeFormat = DateFormat('dd/MM/yyyy hh:mm a');
+    final dateTimeFormat = DateFormat('dd/MM/yyyy HH:mm:ss');
 
     for (final item in records) {
       final dateTimeStr = dateTimeFormat.format(item.createdAt);

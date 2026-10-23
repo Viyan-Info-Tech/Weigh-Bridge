@@ -1,6 +1,7 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weighbridge/core/database/app_database.dart';
+import 'package:weighbridge/features/bill/domain/services/preprinted_ticket_layout.dart';
 import 'package:weighbridge/features/settings/data/datasources/settings_local_datasource.dart';
 import 'package:weighbridge/features/settings/domain/entities/billing_settings.dart';
 
@@ -145,6 +146,86 @@ void main() {
       expect(settings.gstin, isNull);
       expect(settings.logoPath, isNull);
       expect(settings.footerNote, isNull);
+    });
+  });
+
+  group('Continuous-form print settings', () {
+    test('fresh database reads the documented print defaults', () async {
+      final settings = await dataSource.getSettings();
+      expect(settings.printCpi, 12);
+      expect(settings.printLpi, 6);
+      expect(settings.printPaperWidthMm, 0.0);
+      expect(settings.printPaperLengthMm, 0.0);
+      expect(settings.printLeftOffsetMm, 0.0);
+      expect(settings.printTopOffsetMm, 0.0);
+      expect(settings.printColumnWidthMm, 0.0);
+      expect(settings.printFieldGrid, isNull);
+      expect(settings.printWeightUnit, isTrue);
+    });
+
+    test('print alignment settings survive a save and reload', () async {
+      const grid =
+          '{"vehicle":{"c":18,"l":1,"w":20},"charges":{"c":20,"l":2,"w":14}}';
+      await dataSource.getSettings();
+      await dataSource.updateSettings(
+        BillingSettings(
+          printCpi: 10,
+          printLpi: 8,
+          printPaperWidthMm: 279.4,
+          printPaperLengthMm: 140.0,
+          printLeftOffsetMm: 1.5,
+          printTopOffsetMm: 2.25,
+          printColumnWidthMm: 139.7,
+          printFieldGrid: grid,
+          printWeightUnit: false,
+          updatedAt: DateTime.utc(2026, 10, 1),
+        ),
+      );
+
+      final settings = await dataSource.getSettings();
+      expect(settings.printCpi, 10);
+      expect(settings.printLpi, 8);
+      expect(settings.printPaperWidthMm, 279.4);
+      expect(settings.printPaperLengthMm, 140.0);
+      expect(settings.printLeftOffsetMm, 1.5);
+      expect(settings.printTopOffsetMm, 2.25);
+      expect(settings.printColumnWidthMm, 139.7);
+      expect(settings.printFieldGrid, grid);
+      expect(settings.printWeightUnit, isFalse);
+    });
+
+    test('a saved grid still decodes into field placements', () async {
+      await dataSource.getSettings();
+      await dataSource.updateSettings(
+        BillingSettings(
+          printFieldGrid:
+              '{"vehicle":{"c":18,"l":1,"w":20},"customer":{"c":-1,"l":-1,'
+              '"w":0}}',
+          updatedAt: DateTime.utc(2026, 10, 2),
+        ),
+      );
+
+      final settings = await dataSource.getSettings();
+      final grid = decodePrePrintedGrid(settings.printFieldGrid);
+      // The stored entry carries position only, so the vehicle keeps its
+      // default size (12) and weight (bold).
+      expect(
+        grid[PrePrintedField.vehicle],
+        const PrePrintedFieldPlacement(
+          column: 18,
+          line: 1,
+          widthChars: 20,
+          fontSize: 12,
+          isBold: true,
+        ),
+      );
+      // Fields the operator disabled stay disabled across persistence.
+      expect(grid[PrePrintedField.customer]!.isPrintable, isFalse);
+      // Everything else keeps its default position.
+      expect(
+        grid[PrePrintedField.serial],
+        kDefaultPrePrintedGrid[PrePrintedField.serial],
+      );
     });
   });
 }

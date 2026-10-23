@@ -191,7 +191,7 @@ class _HomePageState extends State<HomePage>
   /// 1. Top Application Header (Live Date/Time, User Profile)
   Widget _buildAppHeader(BuildContext context) {
     final dateStr = DateFormat('EEEE, dd MMMM yyyy').format(_currentTime);
-    final timeStr = DateFormat('hh:mm:ss a').format(_currentTime);
+    final timeStr = DateFormat('HH:mm:ss').format(_currentTime);
 
     return Container(
       height: 64,

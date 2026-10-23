@@ -32,7 +32,7 @@ class RecentBillCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vehicleNo = bill.vehicleNumber;
-    final timeStr = DateFormat('hh:mm a').format(bill.createdAt);
+    final timeStr = DateFormat('HH:mm').format(bill.createdAt);
     final dateStr = DateFormat('dd MMM').format(bill.createdAt);
     final timestampLabel = _isSameDay(bill.createdAt, DateTime.now())
         ? timeStr
