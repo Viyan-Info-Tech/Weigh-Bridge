@@ -20,7 +20,15 @@ import '../widgets/report_summary_bar.dart';
 import '../widgets/report_table.dart';
 
 class ReportPage extends StatefulWidget {
-  const ReportPage({super.key});
+  const ReportPage({super.key, this.isActive = true});
+
+  /// True while this tab is the one on screen.
+  ///
+  /// The page lives inside an [IndexedStack], so it is built once per session
+  /// and [initState] never runs again when the user returns to the tab. The
+  /// flag lets [didUpdateWidget] detect that transition and refresh the
+  /// report, so records saved after the initial load appear automatically.
+  final bool isActive;
 
   @override
   State<ReportPage> createState() => _ReportPageState();
@@ -51,6 +59,18 @@ class _ReportPageState extends State<ReportPage> {
       });
     } catch (_) {
       // Standalone page previews may not provide application settings.
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant ReportPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive && !oldWidget.isActive) {
+      // This page lives inside an IndexedStack, so it is built once per
+      // session and initState never runs again. Refresh the report now that
+      // this tab is in front again, so records saved since the last visit
+      // (or since app start) show up without re-selecting the date range.
+      context.read<ReportBloc>().add(const RefreshReport());
     }
   }
 

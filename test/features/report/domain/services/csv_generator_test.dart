@@ -74,41 +74,43 @@ void main() {
       expect(csv, contains('Material'));
     });
 
-    test('header and rows contain no Weight Unit column and align correctly', () {
-      final csv = generator.generateCsvString([
-        item(
-          billNumber: 'WB-001',
-          firstWeightKg: 20000,
-          secondWeightKg: 5000,
-          charges: 250.50,
-        ),
-      ]);
-      expect(csv, isNot(contains('Weight Unit')));
+    test(
+      'header and rows contain no Weight Unit column and align correctly',
+      () {
+        final csv = generator.generateCsvString([
+          item(
+            billNumber: 'WB-001',
+            firstWeightKg: 20000,
+            secondWeightKg: 5000,
+            charges: 250.50,
+          ),
+        ]);
+        expect(csv, isNot(contains('Weight Unit')));
 
-      final lines = csv.trim().split('\n');
-      final headerColumns =
-          lines.first.replaceFirst('\uFEFF', '').split(',');
-      expect(headerColumns, [
-        'Bill No',
-        'Date & Time',
-        'Vehicle',
-        'Material',
-        'Gross Weight',
-        'Tare Weight',
-        'Net Weight',
-        'Charges (\u20B9)',
-        'Status',
-      ]);
+        final lines = csv.trim().split('\n');
+        final headerColumns = lines.first.replaceFirst('\uFEFF', '').split(',');
+        expect(headerColumns, [
+          'Bill No',
+          'Date & Time',
+          'Vehicle',
+          'Material',
+          'Gross Weight',
+          'Tare Weight',
+          'Net Weight',
+          'Charges (\u20B9)',
+          'Status',
+        ]);
 
-      final row = lines[1];
-      expect(row, isNot(contains('Weight Unit')));
-      expect(row, contains('WB-001'));
-      expect(row, contains('TN31CM2026'));
-      expect(row, contains('20.000 ton'));
-      expect(row, contains('5.000 ton'));
-      expect(row, contains('15.000 ton,250.50,Completed'));
-      expect(row.endsWith('Completed'), isTrue);
-    });
+        final row = lines[1];
+        expect(row, isNot(contains('Weight Unit')));
+        expect(row, contains('WB-001'));
+        expect(row, contains('TN31CM2026'));
+        expect(row, contains('20.000 ton'));
+        expect(row, contains('5.000 ton'));
+        expect(row, contains('15.000 ton,250.50,Completed'));
+        expect(row.endsWith('Completed'), isTrue);
+      },
+    );
 
     test('converts ton-based weights to tons with 3 decimals', () {
       final csv = generator.generateCsvString([

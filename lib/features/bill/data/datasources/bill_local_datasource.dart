@@ -37,6 +37,7 @@ class BillLocalDataSource {
       material: Value(weighment.material),
       materialId: Value(weighment.materialId),
       charges: Value(weighment.charges),
+      previousWeighmentId: Value(weighment.previousWeighmentId),
       remarks: Value(weighment.remarks),
       mobileNumber: Value(weighment.mobileNumber),
       weightUnit: Value(weighment.weightUnit),
@@ -104,6 +105,19 @@ class BillLocalDataSource {
     return _toEntity(record);
   }
 
+  /// Most recent single-weight bill for this vehicle, or null.
+  ///
+  /// See [BillDao.getLatestSingleWeightWeighmentForVehicle] for the matching
+  /// and eligibility rules; this method only maps the row onto the entity.
+  Future<Weighment?> getLatestSingleWeightWeighmentForVehicle(
+    String vehicleNumber,
+  ) async {
+    final record = await _database.billDao
+        .getLatestSingleWeightWeighmentForVehicle(vehicleNumber);
+    if (record == null) return null;
+    return _toEntity(record);
+  }
+
   Future<String> generateNextBillNumber() async {
     final settings = await _database.appSettingsDao.getSettings();
     return _database.appSettingsDao.generateNextBillNumber(
@@ -146,6 +160,7 @@ class BillLocalDataSource {
       material: _readMaterial(record),
       materialId: _readMaterialId(record),
       charges: _readCharges(record),
+      previousWeighmentId: _readPreviousWeighmentId(record),
       remarks: record.remarks as String?,
       mobileNumber: record.mobileNumber as String?,
       weightUnit: unit,
@@ -182,6 +197,16 @@ class BillLocalDataSource {
   int? _readMaterialId(dynamic record) {
     try {
       return (record as dynamic).materialId as int?;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Reads the optional `previous_weighment_id` column, which may not exist
+  /// on databases created before the schema-35 migration.
+  int? _readPreviousWeighmentId(dynamic record) {
+    try {
+      return (record as dynamic).previousWeighmentId as int?;
     } catch (_) {
       return null;
     }

@@ -22,6 +22,7 @@ Future<int> seedWeighment(
   double? netWeightKg,
   String? remarks,
   double? charges,
+  int? previousWeighmentId,
   String weightUnit = 'ton',
   DateTime? createdAt,
 }) {
@@ -36,6 +37,7 @@ Future<int> seedWeighment(
       netWeightKg: Value(netWeightKg),
       remarks: Value(remarks),
       charges: Value(charges),
+      previousWeighmentId: Value(previousWeighmentId),
       weightUnit: Value(weightUnit),
       createdAt: createdAt != null ? Value(createdAt) : const Value.absent(),
     ),

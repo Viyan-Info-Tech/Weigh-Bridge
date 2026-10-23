@@ -24,6 +24,50 @@ class BillingSettings extends Equatable {
   final bool showRemarks;
   final bool showFooterNote;
   final String? footerNote;
+
+  // ---------------------------------------------------------------------------
+  // Continuous-form (pre-printed certificate) printing
+  //
+  // These values only position the dynamic weighment data on the client's
+  // existing HMB Enterprises stationery; they never add company details, which
+  // are already printed on the paper.
+  // ---------------------------------------------------------------------------
+
+  /// Characters per inch used for the ticket: 10 (classic dot-matrix) or 12
+  /// (condensed fit). Values outside 1..20 are ignored by the layout.
+  final int printCpi;
+
+  /// Lines per inch used for the ticket: 6 or 8.
+  final int printLpi;
+
+  /// Custom paper width in millimetres. `0` means "use the paper size the
+  /// printer driver reports in the print dialog".
+  final double printPaperWidthMm;
+
+  /// Custom paper length in millimetres. `0` means "use the printer default".
+  final double printPaperLengthMm;
+
+  /// Fine horizontal nudge, in millimetres, added to the printer's own
+  /// printable-area left offset.
+  final double printLeftOffsetMm;
+
+  /// Fine vertical nudge, in millimetres, added to the printer's own
+  /// printable-area top offset.
+  final double printTopOffsetMm;
+
+  /// Distance in millimetres between the left copy's origin and the right
+  /// copy's origin. `0` means "half the printable width", which keeps the two
+  /// copies balanced on whatever paper the driver reports.
+  final double printColumnWidthMm;
+
+  /// JSON grid of per-field character positions, see
+  /// `decodePrePrintedGrid` in `preprinted_ticket_layout.dart`.
+  final String? printFieldGrid;
+
+  /// Whether the weight values carry their unit (`80.000 ton`) or print as a
+  /// bare number (`80.000`) for forms whose unit is pre-printed.
+  final bool printWeightUnit;
+
   final DateTime updatedAt;
 
   const BillingSettings({
@@ -50,6 +94,15 @@ class BillingSettings extends Equatable {
     this.showRemarks = true,
     this.showFooterNote = true,
     this.footerNote = 'Please check the weight before leaving the weighbridge.',
+    this.printCpi = 12,
+    this.printLpi = 6,
+    this.printPaperWidthMm = 0,
+    this.printPaperLengthMm = 0,
+    this.printLeftOffsetMm = 0,
+    this.printTopOffsetMm = 0,
+    this.printColumnWidthMm = 0,
+    this.printFieldGrid,
+    this.printWeightUnit = true,
     required this.updatedAt,
   });
 
@@ -90,6 +143,16 @@ class BillingSettings extends Equatable {
     bool? showFooterNote,
     String? footerNote,
     bool clearFooterNote = false,
+    int? printCpi,
+    int? printLpi,
+    double? printPaperWidthMm,
+    double? printPaperLengthMm,
+    double? printLeftOffsetMm,
+    double? printTopOffsetMm,
+    double? printColumnWidthMm,
+    String? printFieldGrid,
+    bool clearPrintFieldGrid = false,
+    bool? printWeightUnit,
     DateTime? updatedAt,
   }) {
     return BillingSettings(
@@ -118,6 +181,17 @@ class BillingSettings extends Equatable {
       showRemarks: showRemarks ?? this.showRemarks,
       showFooterNote: showFooterNote ?? this.showFooterNote,
       footerNote: clearFooterNote ? null : (footerNote ?? this.footerNote),
+      printCpi: printCpi ?? this.printCpi,
+      printLpi: printLpi ?? this.printLpi,
+      printPaperWidthMm: printPaperWidthMm ?? this.printPaperWidthMm,
+      printPaperLengthMm: printPaperLengthMm ?? this.printPaperLengthMm,
+      printLeftOffsetMm: printLeftOffsetMm ?? this.printLeftOffsetMm,
+      printTopOffsetMm: printTopOffsetMm ?? this.printTopOffsetMm,
+      printColumnWidthMm: printColumnWidthMm ?? this.printColumnWidthMm,
+      printFieldGrid: clearPrintFieldGrid
+          ? null
+          : (printFieldGrid ?? this.printFieldGrid),
+      printWeightUnit: printWeightUnit ?? this.printWeightUnit,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
@@ -147,6 +221,15 @@ class BillingSettings extends Equatable {
     showRemarks,
     showFooterNote,
     footerNote,
+    printCpi,
+    printLpi,
+    printPaperWidthMm,
+    printPaperLengthMm,
+    printLeftOffsetMm,
+    printTopOffsetMm,
+    printColumnWidthMm,
+    printFieldGrid,
+    printWeightUnit,
     updatedAt,
   ];
 }

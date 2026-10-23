@@ -6,6 +6,7 @@ import 'package:pdf/pdf.dart';
 import '../../../../core/utils/currency_formatter.dart';
 import '../../../settings/domain/entities/billing_settings.dart';
 import '../entities/weighment.dart';
+import 'receipt_weight_resolver.dart';
 import 'weighment_receipt_data.dart';
 
 // ---------------------------------------------------------------------------
@@ -191,7 +192,8 @@ String encodePrePrintedGrid(
   Map<PrePrintedField, PrePrintedFieldPlacement> placements,
 ) {
   final encoded = <String, dynamic>{
-    for (final entry in placements.entries) entry.key.name: entry.value.toJson(),
+    for (final entry in placements.entries)
+      entry.key.name: entry.value.toJson(),
   };
   return jsonEncode(encoded);
 }
@@ -366,18 +368,19 @@ class PrePrintedTicketLayout {
 
   /// Font size whose character advance equals [charWidth] for a Courier-style
   /// monospaced face (advance = 0.6 em): 12 CPI → 10 pt, 10 CPI → 12 pt.
-  double get fontSize => charWidth * 0.6;
+  double get fontSize => charWidth / 0.6;
 
   // -- Printable area -------------------------------------------------------
 
   /// First printable point from the left edge of the paper.
-  double get printableLeft => page.marginLeft + settings.printLeftOffsetMm * mmToPoint;
+  double get printableLeft =>
+      page.marginLeft + settings.printLeftOffsetMm * mmToPoint;
 
   /// First printable point from the top edge of the paper.
-  double get printableTop => page.marginTop + settings.printTopOffsetMm * mmToPoint;
+  double get printableTop =>
+      page.marginTop + settings.printTopOffsetMm * mmToPoint;
 
-  double get printableWidth =>
-      page.width - page.marginLeft - page.marginRight;
+  double get printableWidth => page.width - page.marginLeft - page.marginRight;
 
   double get printableHeight =>
       page.height - page.marginTop - page.marginBottom;
@@ -418,7 +421,10 @@ class PrePrintedTicketLayout {
     final copyEnd = copyOriginX(copy) + columnWidth;
     if (placement.widthChars > 0) {
       final configured = placement.widthChars * charWidth;
-      return (configured).clamp(0.0, (copyEnd - xFor(copy, placement)).clamp(0.0, columnWidth));
+      return (configured).clamp(
+        0.0,
+        (copyEnd - xFor(copy, placement)).clamp(0.0, columnWidth),
+      );
     }
     return (copyEnd - xFor(copy, placement)).clamp(0.0, columnWidth);
   }
@@ -471,6 +477,23 @@ class PrePrintedTicketLayout {
 
   /// The pre-printed label for a field, for preview purposes only.
   static String labelFor(PrePrintedField field) => field.prePrintedLabel;
+
+  /// Paper size hinted to the Windows print dialog before the operator picks
+  /// one: the configured custom size, otherwise a standard 11 x 5.5 inch
+  /// continuous form.
+  ///
+  /// Only a hint - the operator can choose any paper in the dialog, and the
+  /// layout is rebuilt from whatever the driver finally reports, so no page
+  /// size is ever assumed by the printed output itself.
+  static PdfPageFormat initialPaperFormat(BillingSettings settings) {
+    if (settings.printPaperWidthMm > 0 && settings.printPaperLengthMm > 0) {
+      return PdfPageFormat(
+        settings.printPaperWidthMm * mmToPoint,
+        settings.printPaperLengthMm * mmToPoint,
+      );
+    }
+    return const PdfPageFormat(11 * 72.0, 5.5 * 72.0);
+  }
 
   static bool _isBold(PrePrintedField field) =>
       field == PrePrintedField.vehicle ||

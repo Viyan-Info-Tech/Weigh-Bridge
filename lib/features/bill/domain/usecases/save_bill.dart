@@ -58,3 +58,18 @@ class GenerateBillNumberUseCase {
     return _repository.generateNextBillNumber();
   }
 }
+
+/// Retrieves the previous weighment a returning truck can be paired with.
+///
+/// Returns the most recent single-weight bill for the vehicle, or null when
+/// no eligible weighment exists (unknown vehicle, or every previous bill
+/// already holds both weights).
+class GetPreviousWeighmentUseCase {
+  final BillRepository _repository;
+
+  GetPreviousWeighmentUseCase(this._repository);
+
+  Future<Weighment?> call(String vehicleNumber) async {
+    return _repository.getLatestSingleWeightWeighmentForVehicle(vehicleNumber);
+  }
+}

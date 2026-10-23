@@ -5,15 +5,17 @@ import '../../../settings/domain/entities/billing_settings.dart';
 import '../../../settings/presentation/bloc/settings_bloc.dart';
 import '../../../../core/printing/print_service.dart';
 import '../../domain/entities/weighment.dart';
-import '../../domain/services/weighment_receipt_data.dart';
-import '../../domain/services/weighment_ticket_pdf_generator.dart';
-import 'weighment_receipt_template.dart';
+import '../../domain/services/preprinted_ticket_layout.dart';
+import '../../domain/services/preprinted_ticket_pdf_generator.dart';
+import 'weighment_slip_preview.dart';
 
-/// Authentic on-screen preview dialog for the industrial dot-matrix weighbridge slip.
+/// Print preview dialog for the pre-printed HMB Enterprises certificate.
 ///
-/// The slip itself is [WeighmentReceiptTemplate], which the Settings live
-/// preview renders too, so this dialog only owns its chrome: the modal header,
-/// the action bar and the print pipeline.
+/// The preview ([WeighmentSlipPreview]) renders one copy of the physical
+/// ticket, with the letterhead, field rows and footer the stationery carries.
+/// The print pipeline still builds the page against the paper the printer
+/// driver actually reports and still places both identical copies on that
+/// sheet, so the job never assumes A4 or any other fixed size.
 class WeighmentSlipDialog extends StatefulWidget {
   final Weighment bill;
   final BillingSettings? settings;
@@ -49,14 +51,21 @@ class _WeighmentSlipDialogState extends State<WeighmentSlipDialog> {
     if (_isPrinting) return;
     setState(() => _isPrinting = true);
     try {
-      final pdfBytes = await const WeighmentTicketPdfGenerator()
-          .generateTicketPdf(
-            bill: widget.bill,
-            settings: _resolveActiveSettings(),
-          );
-      final printed = await widget.printService.printPdf(
-        pdfBytes,
-        jobName: 'Weighment_Ticket_${widget.bill.billNumber}',
+      final settings = _resolveActiveSettings();
+      final bill = widget.bill;
+
+      // One coordinated job: the generator receives the real paper the driver
+      // reports after the operator selects the TVS printer and the
+      // continuous-form size, and places both identical copies on that single
+      // page. Nothing is scaled, wrapped or split into a second job.
+      final printed = await widget.printService.printPdfLayout(
+        jobName: 'Weighment_Ticket_${bill.billNumber}',
+        initialFormat: PrePrintedTicketLayout.initialPaperFormat(settings),
+        onLayout: (pageFormat) => const PrePrintedTicketPdfGenerator().generate(
+          bill: bill,
+          settings: settings,
+          pageFormat: pageFormat,
+        ),
       );
       if (!mounted) return;
       if (printed) {
@@ -86,10 +95,7 @@ class _WeighmentSlipDialogState extends State<WeighmentSlipDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final receiptData = WeighmentReceiptData(
-      bill: widget.bill,
-      settings: _resolveActiveSettings(),
-    );
+    final settings = _resolveActiveSettings();
 
     return Dialog(
       backgroundColor: Colors.transparent,
@@ -116,11 +122,14 @@ class _WeighmentSlipDialogState extends State<WeighmentSlipDialog> {
             // ── Modal Top Header Bar ─────────────────────
             _buildModalTopBar(context, widget.bill.billNumber),
 
-            // ── Industrial Slip Sheet ────────────────────
+            // ── Weighment ticket preview ──────────────────
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
-                child: WeighmentReceiptTemplate(data: receiptData),
+                child: WeighmentSlipPreview(
+                  bill: widget.bill,
+                  settings: settings,
+                ),
               ),
             ),
 
@@ -198,6 +207,10 @@ class _WeighmentSlipDialogState extends State<WeighmentSlipDialog> {
   }
 
   Widget _buildModalBottomBar(BuildContext context) {
+    final page = PrePrintedTicketLayout.initialPaperFormat(
+      _resolveActiveSettings(),
+    );
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: const BoxDecoration(
@@ -205,56 +218,81 @@ class _WeighmentSlipDialogState extends State<WeighmentSlipDialog> {
         border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.end,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          OutlinedButton(
-            onPressed: () => Navigator.of(context).pop(),
-            style: OutlinedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 11),
-              foregroundColor: const Color(0xFF64748B),
-              side: const BorderSide(color: Color(0xFFCBD5E1)),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text(
-              'Close',
-              style: TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontWeight: FontWeight.w600,
-              ),
+          Text(
+            '${(page.width / 72).toStringAsFixed(1)} x '
+            '${(page.height / 72).toStringAsFixed(1)} in sheet - the '
+            'preview shows one receipt; printing places both identical '
+            'copies on the sheet in one job. Values come from the '
+            'selected weighment record.',
+            style: const TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 11,
+              height: 1.4,
+              color: Color(0xFF64748B),
             ),
           ),
-          const SizedBox(width: 12),
-          ElevatedButton.icon(
-            onPressed: _isPrinting ? null : _handlePrint,
-            icon: _isPrinting
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Icon(Icons.print_rounded, size: 18),
-            label: Text(
-              _isPrinting ? 'Printing...' : 'Print Ticket',
-              style: const TextStyle(
-                fontFamily: 'PlusJakartaSans',
-                fontWeight: FontWeight.w700,
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 11,
+                  ),
+                  foregroundColor: const Color(0xFF64748B),
+                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'Close',
+                  style: TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF16A34A),
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 11),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
+              const SizedBox(width: 12),
+              ElevatedButton.icon(
+                onPressed: _isPrinting ? null : _handlePrint,
+                icon: _isPrinting
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Icon(Icons.print_rounded, size: 18),
+                label: Text(
+                  _isPrinting ? 'Printing...' : 'Print Ticket',
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF16A34A),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 22,
+                    vertical: 11,
+                  ),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),

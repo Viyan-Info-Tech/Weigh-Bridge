@@ -35,13 +35,24 @@ class Weighments extends Table {
   /// NULL renders as an empty value in the form and zero total in reports.
   RealColumn get charges => real().nullable()();
 
+  /// Id of the earlier weighment this bill completes (second-weight flow).
+  ///
+  /// Set only when the bill was created in SECOND WEIGHT mode: it points at
+  /// the single-weight bill whose previous weight was reused. Nullable so
+  /// every normal bill (and all legacy rows) simply read back NULL. No
+  /// foreign-key constraint is declared so the schema-35 migration is a plain
+  /// additive `ALTER TABLE ADD COLUMN`; the referenced bill is immutable
+  /// history and is never deleted by the application.
+  IntColumn get previousWeighmentId => integer().nullable()();
+
   /// Legacy weighment description (schema 30).
   ///
   /// No longer part of the weighment workflow: the UI, receipt, PDF, and
   /// application data flow never read or write it. The column is deliberately
   /// kept in the schema so no migration or schema-version bump is needed and
   /// description values already stored on existing weighment rows stay intact.
-  TextColumn get description => text().withLength(min: 0, max: 500).nullable()();
+  TextColumn get description =>
+      text().withLength(min: 0, max: 500).nullable()();
   TextColumn get remarks => text().withLength(min: 0, max: 500).nullable()();
   TextColumn get mobileNumber =>
       text().withLength(min: 0, max: 20).nullable()();

@@ -87,55 +87,58 @@ class _MaterialFormDialogState extends State<MaterialFormDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-            Text(
-              widget.material == null ? 'Add Material' : 'Edit Material',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Material Name',
-                hintText: 'e.g. Auto',
-              ),
-              autofocus: true,
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              initialValue: _vehicleType,
-              decoration: const InputDecoration(labelText: 'Vehicle Type'),
-              items: const [
-                DropdownMenuItem(value: 'Empty', child: Text('Empty')),
-                DropdownMenuItem(value: 'Load', child: Text('Load')),
-              ],
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() => _vehicleType = value);
-                }
-              },
-            ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
-                ),
-                const SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: _save,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
+                Text(
+                  widget.material == null ? 'Add Material' : 'Edit Material',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
-                  child: Text(widget.material == null ? 'Add' : 'Save'),
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Material Name',
+                    hintText: 'e.g. Auto',
+                  ),
+                  autofocus: true,
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: _vehicleType,
+                  decoration: const InputDecoration(labelText: 'Vehicle Type'),
+                  items: const [
+                    DropdownMenuItem(value: 'Empty', child: Text('Empty')),
+                    DropdownMenuItem(value: 'Load', child: Text('Load')),
+                  ],
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() => _vehicleType = value);
+                    }
+                  },
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Cancel'),
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: _save,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green,
+                        foregroundColor: Colors.white,
+                      ),
+                      child: Text(widget.material == null ? 'Add' : 'Save'),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
-        ),
-      );
+          );
         },
       ),
     );

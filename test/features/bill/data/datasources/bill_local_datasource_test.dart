@@ -134,13 +134,16 @@ void main() {
       expect(await source.getWeighmentById(id), isNull);
     });
 
-    test('saveWeighment persists a decimal charge exactly as entered', () async {
-      final id = await source.saveWeighment(
-        buildEntity(billNumber: 'WB-00001', charges: 250.50),
-      );
-      final stored = await source.getWeighmentById(id);
-      expect(stored!.charges, 250.50);
-    });
+    test(
+      'saveWeighment persists a decimal charge exactly as entered',
+      () async {
+        final id = await source.saveWeighment(
+          buildEntity(billNumber: 'WB-00001', charges: 250.50),
+        );
+        final stored = await source.getWeighmentById(id);
+        expect(stored!.charges, 250.50);
+      },
+    );
 
     test('saveWeighment persists a zero charge (not null)', () async {
       final id = await source.saveWeighment(

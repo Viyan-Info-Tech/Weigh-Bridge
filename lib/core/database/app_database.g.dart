@@ -614,6 +614,16 @@ class $WeighmentsTable extends Weighments
     type: DriftSqlType.double,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _previousWeighmentIdMeta =
+      const VerificationMeta('previousWeighmentId');
+  @override
+  late final GeneratedColumn<int> previousWeighmentId = GeneratedColumn<int>(
+    'previous_weighment_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _descriptionMeta = const VerificationMeta(
     'description',
   );
@@ -712,6 +722,7 @@ class $WeighmentsTable extends Weighments
     material,
     materialId,
     charges,
+    previousWeighmentId,
     description,
     remarks,
     mobileNumber,
@@ -818,6 +829,15 @@ class $WeighmentsTable extends Weighments
         charges.isAcceptableOrUnknown(data['charges']!, _chargesMeta),
       );
     }
+    if (data.containsKey('previous_weighment_id')) {
+      context.handle(
+        _previousWeighmentIdMeta,
+        previousWeighmentId.isAcceptableOrUnknown(
+          data['previous_weighment_id']!,
+          _previousWeighmentIdMeta,
+        ),
+      );
+    }
     if (data.containsKey('description')) {
       context.handle(
         _descriptionMeta,
@@ -913,6 +933,10 @@ class $WeighmentsTable extends Weighments
         DriftSqlType.double,
         data['${effectivePrefix}charges'],
       ),
+      previousWeighmentId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}previous_weighment_id'],
+      ),
       description: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}description'],
@@ -979,6 +1003,16 @@ class Weighment extends DataClass implements Insertable<Weighment> {
   /// NULL renders as an empty value in the form and zero total in reports.
   final double? charges;
 
+  /// Id of the earlier weighment this bill completes (second-weight flow).
+  ///
+  /// Set only when the bill was created in SECOND WEIGHT mode: it points at
+  /// the single-weight bill whose previous weight was reused. Nullable so
+  /// every normal bill (and all legacy rows) simply read back NULL. No
+  /// foreign-key constraint is declared so the schema-35 migration is a plain
+  /// additive `ALTER TABLE ADD COLUMN`; the referenced bill is immutable
+  /// history and is never deleted by the application.
+  final int? previousWeighmentId;
+
   /// Legacy weighment description (schema 30).
   ///
   /// No longer part of the weighment workflow: the UI, receipt, PDF, and
@@ -1003,6 +1037,7 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     this.material,
     this.materialId,
     this.charges,
+    this.previousWeighmentId,
     this.description,
     this.remarks,
     this.mobileNumber,
@@ -1035,6 +1070,9 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     }
     if (!nullToAbsent || charges != null) {
       map['charges'] = Variable<double>(charges);
+    }
+    if (!nullToAbsent || previousWeighmentId != null) {
+      map['previous_weighment_id'] = Variable<int>(previousWeighmentId);
     }
     if (!nullToAbsent || description != null) {
       map['description'] = Variable<String>(description);
@@ -1076,6 +1114,9 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       charges: charges == null && nullToAbsent
           ? const Value.absent()
           : Value(charges),
+      previousWeighmentId: previousWeighmentId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(previousWeighmentId),
       description: description == null && nullToAbsent
           ? const Value.absent()
           : Value(description),
@@ -1108,6 +1149,9 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       material: serializer.fromJson<String?>(json['material']),
       materialId: serializer.fromJson<int?>(json['materialId']),
       charges: serializer.fromJson<double?>(json['charges']),
+      previousWeighmentId: serializer.fromJson<int?>(
+        json['previousWeighmentId'],
+      ),
       description: serializer.fromJson<String?>(json['description']),
       remarks: serializer.fromJson<String?>(json['remarks']),
       mobileNumber: serializer.fromJson<String?>(json['mobileNumber']),
@@ -1131,6 +1175,7 @@ class Weighment extends DataClass implements Insertable<Weighment> {
       'material': serializer.toJson<String?>(material),
       'materialId': serializer.toJson<int?>(materialId),
       'charges': serializer.toJson<double?>(charges),
+      'previousWeighmentId': serializer.toJson<int?>(previousWeighmentId),
       'description': serializer.toJson<String?>(description),
       'remarks': serializer.toJson<String?>(remarks),
       'mobileNumber': serializer.toJson<String?>(mobileNumber),
@@ -1152,6 +1197,7 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     Value<String?> material = const Value.absent(),
     Value<int?> materialId = const Value.absent(),
     Value<double?> charges = const Value.absent(),
+    Value<int?> previousWeighmentId = const Value.absent(),
     Value<String?> description = const Value.absent(),
     Value<String?> remarks = const Value.absent(),
     Value<String?> mobileNumber = const Value.absent(),
@@ -1174,6 +1220,9 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     material: material.present ? material.value : this.material,
     materialId: materialId.present ? materialId.value : this.materialId,
     charges: charges.present ? charges.value : this.charges,
+    previousWeighmentId: previousWeighmentId.present
+        ? previousWeighmentId.value
+        : this.previousWeighmentId,
     description: description.present ? description.value : this.description,
     remarks: remarks.present ? remarks.value : this.remarks,
     mobileNumber: mobileNumber.present ? mobileNumber.value : this.mobileNumber,
@@ -1210,6 +1259,9 @@ class Weighment extends DataClass implements Insertable<Weighment> {
           ? data.materialId.value
           : this.materialId,
       charges: data.charges.present ? data.charges.value : this.charges,
+      previousWeighmentId: data.previousWeighmentId.present
+          ? data.previousWeighmentId.value
+          : this.previousWeighmentId,
       description: data.description.present
           ? data.description.value
           : this.description,
@@ -1239,6 +1291,7 @@ class Weighment extends DataClass implements Insertable<Weighment> {
           ..write('material: $material, ')
           ..write('materialId: $materialId, ')
           ..write('charges: $charges, ')
+          ..write('previousWeighmentId: $previousWeighmentId, ')
           ..write('description: $description, ')
           ..write('remarks: $remarks, ')
           ..write('mobileNumber: $mobileNumber, ')
@@ -1262,6 +1315,7 @@ class Weighment extends DataClass implements Insertable<Weighment> {
     material,
     materialId,
     charges,
+    previousWeighmentId,
     description,
     remarks,
     mobileNumber,
@@ -1284,6 +1338,7 @@ class Weighment extends DataClass implements Insertable<Weighment> {
           other.material == this.material &&
           other.materialId == this.materialId &&
           other.charges == this.charges &&
+          other.previousWeighmentId == this.previousWeighmentId &&
           other.description == this.description &&
           other.remarks == this.remarks &&
           other.mobileNumber == this.mobileNumber &&
@@ -1304,6 +1359,7 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
   final Value<String?> material;
   final Value<int?> materialId;
   final Value<double?> charges;
+  final Value<int?> previousWeighmentId;
   final Value<String?> description;
   final Value<String?> remarks;
   final Value<String?> mobileNumber;
@@ -1322,6 +1378,7 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     this.material = const Value.absent(),
     this.materialId = const Value.absent(),
     this.charges = const Value.absent(),
+    this.previousWeighmentId = const Value.absent(),
     this.description = const Value.absent(),
     this.remarks = const Value.absent(),
     this.mobileNumber = const Value.absent(),
@@ -1341,6 +1398,7 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     this.material = const Value.absent(),
     this.materialId = const Value.absent(),
     this.charges = const Value.absent(),
+    this.previousWeighmentId = const Value.absent(),
     this.description = const Value.absent(),
     this.remarks = const Value.absent(),
     this.mobileNumber = const Value.absent(),
@@ -1362,6 +1420,7 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     Expression<String>? material,
     Expression<int>? materialId,
     Expression<double>? charges,
+    Expression<int>? previousWeighmentId,
     Expression<String>? description,
     Expression<String>? remarks,
     Expression<String>? mobileNumber,
@@ -1381,6 +1440,8 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
       if (material != null) 'material': material,
       if (materialId != null) 'material_id': materialId,
       if (charges != null) 'charges': charges,
+      if (previousWeighmentId != null)
+        'previous_weighment_id': previousWeighmentId,
       if (description != null) 'description': description,
       if (remarks != null) 'remarks': remarks,
       if (mobileNumber != null) 'mobile_number': mobileNumber,
@@ -1402,6 +1463,7 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     Value<String?>? material,
     Value<int?>? materialId,
     Value<double?>? charges,
+    Value<int?>? previousWeighmentId,
     Value<String?>? description,
     Value<String?>? remarks,
     Value<String?>? mobileNumber,
@@ -1421,6 +1483,7 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
       material: material ?? this.material,
       materialId: materialId ?? this.materialId,
       charges: charges ?? this.charges,
+      previousWeighmentId: previousWeighmentId ?? this.previousWeighmentId,
       description: description ?? this.description,
       remarks: remarks ?? this.remarks,
       mobileNumber: mobileNumber ?? this.mobileNumber,
@@ -1466,6 +1529,9 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
     if (charges.present) {
       map['charges'] = Variable<double>(charges.value);
     }
+    if (previousWeighmentId.present) {
+      map['previous_weighment_id'] = Variable<int>(previousWeighmentId.value);
+    }
     if (description.present) {
       map['description'] = Variable<String>(description.value);
     }
@@ -1501,6 +1567,7 @@ class WeighmentsCompanion extends UpdateCompanion<Weighment> {
           ..write('material: $material, ')
           ..write('materialId: $materialId, ')
           ..write('charges: $charges, ')
+          ..write('previousWeighmentId: $previousWeighmentId, ')
           ..write('description: $description, ')
           ..write('remarks: $remarks, ')
           ..write('mobileNumber: $mobileNumber, ')
@@ -2231,6 +2298,118 @@ class $AppSettingsTable extends AppSettings
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _printCpiMeta = const VerificationMeta(
+    'printCpi',
+  );
+  @override
+  late final GeneratedColumn<int> printCpi = GeneratedColumn<int>(
+    'print_cpi',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(12),
+  );
+  static const VerificationMeta _printLpiMeta = const VerificationMeta(
+    'printLpi',
+  );
+  @override
+  late final GeneratedColumn<int> printLpi = GeneratedColumn<int>(
+    'print_lpi',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(6),
+  );
+  static const VerificationMeta _printPaperWidthMmMeta = const VerificationMeta(
+    'printPaperWidthMm',
+  );
+  @override
+  late final GeneratedColumn<double> printPaperWidthMm =
+      GeneratedColumn<double>(
+        'print_paper_width_mm',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0.0),
+      );
+  static const VerificationMeta _printPaperLengthMmMeta =
+      const VerificationMeta('printPaperLengthMm');
+  @override
+  late final GeneratedColumn<double> printPaperLengthMm =
+      GeneratedColumn<double>(
+        'print_paper_length_mm',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0.0),
+      );
+  static const VerificationMeta _printLeftOffsetMmMeta = const VerificationMeta(
+    'printLeftOffsetMm',
+  );
+  @override
+  late final GeneratedColumn<double> printLeftOffsetMm =
+      GeneratedColumn<double>(
+        'print_left_offset_mm',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0.0),
+      );
+  static const VerificationMeta _printTopOffsetMmMeta = const VerificationMeta(
+    'printTopOffsetMm',
+  );
+  @override
+  late final GeneratedColumn<double> printTopOffsetMm = GeneratedColumn<double>(
+    'print_top_offset_mm',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0.0),
+  );
+  static const VerificationMeta _printColumnWidthMmMeta =
+      const VerificationMeta('printColumnWidthMm');
+  @override
+  late final GeneratedColumn<double> printColumnWidthMm =
+      GeneratedColumn<double>(
+        'print_column_width_mm',
+        aliasedName,
+        false,
+        type: DriftSqlType.double,
+        requiredDuringInsert: false,
+        defaultValue: const Constant(0.0),
+      );
+  static const VerificationMeta _printFieldGridMeta = const VerificationMeta(
+    'printFieldGrid',
+  );
+  @override
+  late final GeneratedColumn<String> printFieldGrid = GeneratedColumn<String>(
+    'print_field_grid',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _printWeightUnitMeta = const VerificationMeta(
+    'printWeightUnit',
+  );
+  @override
+  late final GeneratedColumn<bool> printWeightUnit = GeneratedColumn<bool>(
+    'print_weight_unit',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("print_weight_unit" IN (0, 1))',
+    ),
+    defaultValue: const Constant(true),
+  );
   static const VerificationMeta _updatedAtMeta = const VerificationMeta(
     'updatedAt',
   );
@@ -2269,6 +2448,15 @@ class $AppSettingsTable extends AppSettings
     showRemarks,
     showFooterNote,
     footerNote,
+    printCpi,
+    printLpi,
+    printPaperWidthMm,
+    printPaperLengthMm,
+    printLeftOffsetMm,
+    printTopOffsetMm,
+    printColumnWidthMm,
+    printFieldGrid,
+    printWeightUnit,
     updatedAt,
   ];
   @override
@@ -2466,6 +2654,81 @@ class $AppSettingsTable extends AppSettings
         footerNote.isAcceptableOrUnknown(data['footer_note']!, _footerNoteMeta),
       );
     }
+    if (data.containsKey('print_cpi')) {
+      context.handle(
+        _printCpiMeta,
+        printCpi.isAcceptableOrUnknown(data['print_cpi']!, _printCpiMeta),
+      );
+    }
+    if (data.containsKey('print_lpi')) {
+      context.handle(
+        _printLpiMeta,
+        printLpi.isAcceptableOrUnknown(data['print_lpi']!, _printLpiMeta),
+      );
+    }
+    if (data.containsKey('print_paper_width_mm')) {
+      context.handle(
+        _printPaperWidthMmMeta,
+        printPaperWidthMm.isAcceptableOrUnknown(
+          data['print_paper_width_mm']!,
+          _printPaperWidthMmMeta,
+        ),
+      );
+    }
+    if (data.containsKey('print_paper_length_mm')) {
+      context.handle(
+        _printPaperLengthMmMeta,
+        printPaperLengthMm.isAcceptableOrUnknown(
+          data['print_paper_length_mm']!,
+          _printPaperLengthMmMeta,
+        ),
+      );
+    }
+    if (data.containsKey('print_left_offset_mm')) {
+      context.handle(
+        _printLeftOffsetMmMeta,
+        printLeftOffsetMm.isAcceptableOrUnknown(
+          data['print_left_offset_mm']!,
+          _printLeftOffsetMmMeta,
+        ),
+      );
+    }
+    if (data.containsKey('print_top_offset_mm')) {
+      context.handle(
+        _printTopOffsetMmMeta,
+        printTopOffsetMm.isAcceptableOrUnknown(
+          data['print_top_offset_mm']!,
+          _printTopOffsetMmMeta,
+        ),
+      );
+    }
+    if (data.containsKey('print_column_width_mm')) {
+      context.handle(
+        _printColumnWidthMmMeta,
+        printColumnWidthMm.isAcceptableOrUnknown(
+          data['print_column_width_mm']!,
+          _printColumnWidthMmMeta,
+        ),
+      );
+    }
+    if (data.containsKey('print_field_grid')) {
+      context.handle(
+        _printFieldGridMeta,
+        printFieldGrid.isAcceptableOrUnknown(
+          data['print_field_grid']!,
+          _printFieldGridMeta,
+        ),
+      );
+    }
+    if (data.containsKey('print_weight_unit')) {
+      context.handle(
+        _printWeightUnitMeta,
+        printWeightUnit.isAcceptableOrUnknown(
+          data['print_weight_unit']!,
+          _printWeightUnitMeta,
+        ),
+      );
+    }
     if (data.containsKey('updated_at')) {
       context.handle(
         _updatedAtMeta,
@@ -2577,6 +2840,42 @@ class $AppSettingsTable extends AppSettings
         DriftSqlType.string,
         data['${effectivePrefix}footer_note'],
       ),
+      printCpi: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}print_cpi'],
+      )!,
+      printLpi: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}print_lpi'],
+      )!,
+      printPaperWidthMm: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}print_paper_width_mm'],
+      )!,
+      printPaperLengthMm: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}print_paper_length_mm'],
+      )!,
+      printLeftOffsetMm: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}print_left_offset_mm'],
+      )!,
+      printTopOffsetMm: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}print_top_offset_mm'],
+      )!,
+      printColumnWidthMm: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}print_column_width_mm'],
+      )!,
+      printFieldGrid: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}print_field_grid'],
+      ),
+      printWeightUnit: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}print_weight_unit'],
+      )!,
       updatedAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}updated_at'],
@@ -2615,6 +2914,34 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
   final bool showRemarks;
   final bool showFooterNote;
   final String? footerNote;
+
+  /// Characters per inch: 10 or 12.
+  final int printCpi;
+
+  /// Lines per inch: 6 or 8.
+  final int printLpi;
+
+  /// Custom paper width in mm; 0 = use the size reported by the printer driver.
+  final double printPaperWidthMm;
+
+  /// Custom paper length in mm; 0 = use the size reported by the printer driver.
+  final double printPaperLengthMm;
+
+  /// Fine horizontal nudge in mm added to the driver's printable-area offset.
+  final double printLeftOffsetMm;
+
+  /// Fine vertical nudge in mm added to the driver's printable-area offset.
+  final double printTopOffsetMm;
+
+  /// Distance in mm between the two copies' origins; 0 = half the paper.
+  final double printColumnWidthMm;
+
+  /// JSON grid of per-field character positions (columns/lines).
+  final String? printFieldGrid;
+
+  /// Print the weight unit with the value (`80.000 ton`) when the pre-printed
+  /// form does not carry its own unit.
+  final bool printWeightUnit;
   final DateTime updatedAt;
   const AppSetting({
     required this.id,
@@ -2641,6 +2968,15 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     required this.showRemarks,
     required this.showFooterNote,
     this.footerNote,
+    required this.printCpi,
+    required this.printLpi,
+    required this.printPaperWidthMm,
+    required this.printPaperLengthMm,
+    required this.printLeftOffsetMm,
+    required this.printTopOffsetMm,
+    required this.printColumnWidthMm,
+    this.printFieldGrid,
+    required this.printWeightUnit,
     required this.updatedAt,
   });
   @override
@@ -2686,6 +3022,17 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     if (!nullToAbsent || footerNote != null) {
       map['footer_note'] = Variable<String>(footerNote);
     }
+    map['print_cpi'] = Variable<int>(printCpi);
+    map['print_lpi'] = Variable<int>(printLpi);
+    map['print_paper_width_mm'] = Variable<double>(printPaperWidthMm);
+    map['print_paper_length_mm'] = Variable<double>(printPaperLengthMm);
+    map['print_left_offset_mm'] = Variable<double>(printLeftOffsetMm);
+    map['print_top_offset_mm'] = Variable<double>(printTopOffsetMm);
+    map['print_column_width_mm'] = Variable<double>(printColumnWidthMm);
+    if (!nullToAbsent || printFieldGrid != null) {
+      map['print_field_grid'] = Variable<String>(printFieldGrid);
+    }
+    map['print_weight_unit'] = Variable<bool>(printWeightUnit);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
   }
@@ -2732,6 +3079,17 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       footerNote: footerNote == null && nullToAbsent
           ? const Value.absent()
           : Value(footerNote),
+      printCpi: Value(printCpi),
+      printLpi: Value(printLpi),
+      printPaperWidthMm: Value(printPaperWidthMm),
+      printPaperLengthMm: Value(printPaperLengthMm),
+      printLeftOffsetMm: Value(printLeftOffsetMm),
+      printTopOffsetMm: Value(printTopOffsetMm),
+      printColumnWidthMm: Value(printColumnWidthMm),
+      printFieldGrid: printFieldGrid == null && nullToAbsent
+          ? const Value.absent()
+          : Value(printFieldGrid),
+      printWeightUnit: Value(printWeightUnit),
       updatedAt: Value(updatedAt),
     );
   }
@@ -2766,6 +3124,19 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       showRemarks: serializer.fromJson<bool>(json['showRemarks']),
       showFooterNote: serializer.fromJson<bool>(json['showFooterNote']),
       footerNote: serializer.fromJson<String?>(json['footerNote']),
+      printCpi: serializer.fromJson<int>(json['printCpi']),
+      printLpi: serializer.fromJson<int>(json['printLpi']),
+      printPaperWidthMm: serializer.fromJson<double>(json['printPaperWidthMm']),
+      printPaperLengthMm: serializer.fromJson<double>(
+        json['printPaperLengthMm'],
+      ),
+      printLeftOffsetMm: serializer.fromJson<double>(json['printLeftOffsetMm']),
+      printTopOffsetMm: serializer.fromJson<double>(json['printTopOffsetMm']),
+      printColumnWidthMm: serializer.fromJson<double>(
+        json['printColumnWidthMm'],
+      ),
+      printFieldGrid: serializer.fromJson<String?>(json['printFieldGrid']),
+      printWeightUnit: serializer.fromJson<bool>(json['printWeightUnit']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
   }
@@ -2797,6 +3168,15 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       'showRemarks': serializer.toJson<bool>(showRemarks),
       'showFooterNote': serializer.toJson<bool>(showFooterNote),
       'footerNote': serializer.toJson<String?>(footerNote),
+      'printCpi': serializer.toJson<int>(printCpi),
+      'printLpi': serializer.toJson<int>(printLpi),
+      'printPaperWidthMm': serializer.toJson<double>(printPaperWidthMm),
+      'printPaperLengthMm': serializer.toJson<double>(printPaperLengthMm),
+      'printLeftOffsetMm': serializer.toJson<double>(printLeftOffsetMm),
+      'printTopOffsetMm': serializer.toJson<double>(printTopOffsetMm),
+      'printColumnWidthMm': serializer.toJson<double>(printColumnWidthMm),
+      'printFieldGrid': serializer.toJson<String?>(printFieldGrid),
+      'printWeightUnit': serializer.toJson<bool>(printWeightUnit),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
   }
@@ -2826,6 +3206,15 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     bool? showRemarks,
     bool? showFooterNote,
     Value<String?> footerNote = const Value.absent(),
+    int? printCpi,
+    int? printLpi,
+    double? printPaperWidthMm,
+    double? printPaperLengthMm,
+    double? printLeftOffsetMm,
+    double? printTopOffsetMm,
+    double? printColumnWidthMm,
+    Value<String?> printFieldGrid = const Value.absent(),
+    bool? printWeightUnit,
     DateTime? updatedAt,
   }) => AppSetting(
     id: id ?? this.id,
@@ -2854,6 +3243,17 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     showRemarks: showRemarks ?? this.showRemarks,
     showFooterNote: showFooterNote ?? this.showFooterNote,
     footerNote: footerNote.present ? footerNote.value : this.footerNote,
+    printCpi: printCpi ?? this.printCpi,
+    printLpi: printLpi ?? this.printLpi,
+    printPaperWidthMm: printPaperWidthMm ?? this.printPaperWidthMm,
+    printPaperLengthMm: printPaperLengthMm ?? this.printPaperLengthMm,
+    printLeftOffsetMm: printLeftOffsetMm ?? this.printLeftOffsetMm,
+    printTopOffsetMm: printTopOffsetMm ?? this.printTopOffsetMm,
+    printColumnWidthMm: printColumnWidthMm ?? this.printColumnWidthMm,
+    printFieldGrid: printFieldGrid.present
+        ? printFieldGrid.value
+        : this.printFieldGrid,
+    printWeightUnit: printWeightUnit ?? this.printWeightUnit,
     updatedAt: updatedAt ?? this.updatedAt,
   );
   AppSetting copyWithCompanion(AppSettingsCompanion data) {
@@ -2916,6 +3316,29 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       footerNote: data.footerNote.present
           ? data.footerNote.value
           : this.footerNote,
+      printCpi: data.printCpi.present ? data.printCpi.value : this.printCpi,
+      printLpi: data.printLpi.present ? data.printLpi.value : this.printLpi,
+      printPaperWidthMm: data.printPaperWidthMm.present
+          ? data.printPaperWidthMm.value
+          : this.printPaperWidthMm,
+      printPaperLengthMm: data.printPaperLengthMm.present
+          ? data.printPaperLengthMm.value
+          : this.printPaperLengthMm,
+      printLeftOffsetMm: data.printLeftOffsetMm.present
+          ? data.printLeftOffsetMm.value
+          : this.printLeftOffsetMm,
+      printTopOffsetMm: data.printTopOffsetMm.present
+          ? data.printTopOffsetMm.value
+          : this.printTopOffsetMm,
+      printColumnWidthMm: data.printColumnWidthMm.present
+          ? data.printColumnWidthMm.value
+          : this.printColumnWidthMm,
+      printFieldGrid: data.printFieldGrid.present
+          ? data.printFieldGrid.value
+          : this.printFieldGrid,
+      printWeightUnit: data.printWeightUnit.present
+          ? data.printWeightUnit.value
+          : this.printWeightUnit,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
   }
@@ -2947,6 +3370,15 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           ..write('showRemarks: $showRemarks, ')
           ..write('showFooterNote: $showFooterNote, ')
           ..write('footerNote: $footerNote, ')
+          ..write('printCpi: $printCpi, ')
+          ..write('printLpi: $printLpi, ')
+          ..write('printPaperWidthMm: $printPaperWidthMm, ')
+          ..write('printPaperLengthMm: $printPaperLengthMm, ')
+          ..write('printLeftOffsetMm: $printLeftOffsetMm, ')
+          ..write('printTopOffsetMm: $printTopOffsetMm, ')
+          ..write('printColumnWidthMm: $printColumnWidthMm, ')
+          ..write('printFieldGrid: $printFieldGrid, ')
+          ..write('printWeightUnit: $printWeightUnit, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
@@ -2978,6 +3410,15 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     showRemarks,
     showFooterNote,
     footerNote,
+    printCpi,
+    printLpi,
+    printPaperWidthMm,
+    printPaperLengthMm,
+    printLeftOffsetMm,
+    printTopOffsetMm,
+    printColumnWidthMm,
+    printFieldGrid,
+    printWeightUnit,
     updatedAt,
   ]);
   @override
@@ -3008,6 +3449,15 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           other.showRemarks == this.showRemarks &&
           other.showFooterNote == this.showFooterNote &&
           other.footerNote == this.footerNote &&
+          other.printCpi == this.printCpi &&
+          other.printLpi == this.printLpi &&
+          other.printPaperWidthMm == this.printPaperWidthMm &&
+          other.printPaperLengthMm == this.printPaperLengthMm &&
+          other.printLeftOffsetMm == this.printLeftOffsetMm &&
+          other.printTopOffsetMm == this.printTopOffsetMm &&
+          other.printColumnWidthMm == this.printColumnWidthMm &&
+          other.printFieldGrid == this.printFieldGrid &&
+          other.printWeightUnit == this.printWeightUnit &&
           other.updatedAt == this.updatedAt);
 }
 
@@ -3036,6 +3486,15 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   final Value<bool> showRemarks;
   final Value<bool> showFooterNote;
   final Value<String?> footerNote;
+  final Value<int> printCpi;
+  final Value<int> printLpi;
+  final Value<double> printPaperWidthMm;
+  final Value<double> printPaperLengthMm;
+  final Value<double> printLeftOffsetMm;
+  final Value<double> printTopOffsetMm;
+  final Value<double> printColumnWidthMm;
+  final Value<String?> printFieldGrid;
+  final Value<bool> printWeightUnit;
   final Value<DateTime> updatedAt;
   const AppSettingsCompanion({
     this.id = const Value.absent(),
@@ -3062,6 +3521,15 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.showRemarks = const Value.absent(),
     this.showFooterNote = const Value.absent(),
     this.footerNote = const Value.absent(),
+    this.printCpi = const Value.absent(),
+    this.printLpi = const Value.absent(),
+    this.printPaperWidthMm = const Value.absent(),
+    this.printPaperLengthMm = const Value.absent(),
+    this.printLeftOffsetMm = const Value.absent(),
+    this.printTopOffsetMm = const Value.absent(),
+    this.printColumnWidthMm = const Value.absent(),
+    this.printFieldGrid = const Value.absent(),
+    this.printWeightUnit = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
   AppSettingsCompanion.insert({
@@ -3089,6 +3557,15 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.showRemarks = const Value.absent(),
     this.showFooterNote = const Value.absent(),
     this.footerNote = const Value.absent(),
+    this.printCpi = const Value.absent(),
+    this.printLpi = const Value.absent(),
+    this.printPaperWidthMm = const Value.absent(),
+    this.printPaperLengthMm = const Value.absent(),
+    this.printLeftOffsetMm = const Value.absent(),
+    this.printTopOffsetMm = const Value.absent(),
+    this.printColumnWidthMm = const Value.absent(),
+    this.printFieldGrid = const Value.absent(),
+    this.printWeightUnit = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
   static Insertable<AppSetting> custom({
@@ -3116,6 +3593,15 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Expression<bool>? showRemarks,
     Expression<bool>? showFooterNote,
     Expression<String>? footerNote,
+    Expression<int>? printCpi,
+    Expression<int>? printLpi,
+    Expression<double>? printPaperWidthMm,
+    Expression<double>? printPaperLengthMm,
+    Expression<double>? printLeftOffsetMm,
+    Expression<double>? printTopOffsetMm,
+    Expression<double>? printColumnWidthMm,
+    Expression<String>? printFieldGrid,
+    Expression<bool>? printWeightUnit,
     Expression<DateTime>? updatedAt,
   }) {
     return RawValuesInsertable({
@@ -3144,6 +3630,17 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       if (showRemarks != null) 'show_remarks': showRemarks,
       if (showFooterNote != null) 'show_footer_note': showFooterNote,
       if (footerNote != null) 'footer_note': footerNote,
+      if (printCpi != null) 'print_cpi': printCpi,
+      if (printLpi != null) 'print_lpi': printLpi,
+      if (printPaperWidthMm != null) 'print_paper_width_mm': printPaperWidthMm,
+      if (printPaperLengthMm != null)
+        'print_paper_length_mm': printPaperLengthMm,
+      if (printLeftOffsetMm != null) 'print_left_offset_mm': printLeftOffsetMm,
+      if (printTopOffsetMm != null) 'print_top_offset_mm': printTopOffsetMm,
+      if (printColumnWidthMm != null)
+        'print_column_width_mm': printColumnWidthMm,
+      if (printFieldGrid != null) 'print_field_grid': printFieldGrid,
+      if (printWeightUnit != null) 'print_weight_unit': printWeightUnit,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
   }
@@ -3173,6 +3670,15 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Value<bool>? showRemarks,
     Value<bool>? showFooterNote,
     Value<String?>? footerNote,
+    Value<int>? printCpi,
+    Value<int>? printLpi,
+    Value<double>? printPaperWidthMm,
+    Value<double>? printPaperLengthMm,
+    Value<double>? printLeftOffsetMm,
+    Value<double>? printTopOffsetMm,
+    Value<double>? printColumnWidthMm,
+    Value<String?>? printFieldGrid,
+    Value<bool>? printWeightUnit,
     Value<DateTime>? updatedAt,
   }) {
     return AppSettingsCompanion(
@@ -3200,6 +3706,15 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       showRemarks: showRemarks ?? this.showRemarks,
       showFooterNote: showFooterNote ?? this.showFooterNote,
       footerNote: footerNote ?? this.footerNote,
+      printCpi: printCpi ?? this.printCpi,
+      printLpi: printLpi ?? this.printLpi,
+      printPaperWidthMm: printPaperWidthMm ?? this.printPaperWidthMm,
+      printPaperLengthMm: printPaperLengthMm ?? this.printPaperLengthMm,
+      printLeftOffsetMm: printLeftOffsetMm ?? this.printLeftOffsetMm,
+      printTopOffsetMm: printTopOffsetMm ?? this.printTopOffsetMm,
+      printColumnWidthMm: printColumnWidthMm ?? this.printColumnWidthMm,
+      printFieldGrid: printFieldGrid ?? this.printFieldGrid,
+      printWeightUnit: printWeightUnit ?? this.printWeightUnit,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }
@@ -3279,6 +3794,33 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     if (footerNote.present) {
       map['footer_note'] = Variable<String>(footerNote.value);
     }
+    if (printCpi.present) {
+      map['print_cpi'] = Variable<int>(printCpi.value);
+    }
+    if (printLpi.present) {
+      map['print_lpi'] = Variable<int>(printLpi.value);
+    }
+    if (printPaperWidthMm.present) {
+      map['print_paper_width_mm'] = Variable<double>(printPaperWidthMm.value);
+    }
+    if (printPaperLengthMm.present) {
+      map['print_paper_length_mm'] = Variable<double>(printPaperLengthMm.value);
+    }
+    if (printLeftOffsetMm.present) {
+      map['print_left_offset_mm'] = Variable<double>(printLeftOffsetMm.value);
+    }
+    if (printTopOffsetMm.present) {
+      map['print_top_offset_mm'] = Variable<double>(printTopOffsetMm.value);
+    }
+    if (printColumnWidthMm.present) {
+      map['print_column_width_mm'] = Variable<double>(printColumnWidthMm.value);
+    }
+    if (printFieldGrid.present) {
+      map['print_field_grid'] = Variable<String>(printFieldGrid.value);
+    }
+    if (printWeightUnit.present) {
+      map['print_weight_unit'] = Variable<bool>(printWeightUnit.value);
+    }
     if (updatedAt.present) {
       map['updated_at'] = Variable<DateTime>(updatedAt.value);
     }
@@ -3312,6 +3854,15 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
           ..write('showRemarks: $showRemarks, ')
           ..write('showFooterNote: $showFooterNote, ')
           ..write('footerNote: $footerNote, ')
+          ..write('printCpi: $printCpi, ')
+          ..write('printLpi: $printLpi, ')
+          ..write('printPaperWidthMm: $printPaperWidthMm, ')
+          ..write('printPaperLengthMm: $printPaperLengthMm, ')
+          ..write('printLeftOffsetMm: $printLeftOffsetMm, ')
+          ..write('printTopOffsetMm: $printTopOffsetMm, ')
+          ..write('printColumnWidthMm: $printColumnWidthMm, ')
+          ..write('printFieldGrid: $printFieldGrid, ')
+          ..write('printWeightUnit: $printWeightUnit, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
         .toString();
@@ -4122,6 +4673,7 @@ typedef $$WeighmentsTableCreateCompanionBuilder =
       Value<String?> material,
       Value<int?> materialId,
       Value<double?> charges,
+      Value<int?> previousWeighmentId,
       Value<String?> description,
       Value<String?> remarks,
       Value<String?> mobileNumber,
@@ -4142,6 +4694,7 @@ typedef $$WeighmentsTableUpdateCompanionBuilder =
       Value<String?> material,
       Value<int?> materialId,
       Value<double?> charges,
+      Value<int?> previousWeighmentId,
       Value<String?> description,
       Value<String?> remarks,
       Value<String?> mobileNumber,
@@ -4211,6 +4764,11 @@ class $$WeighmentsTableFilterComposer
 
   ColumnFilters<double> get charges => $composableBuilder(
     column: $table.charges,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get previousWeighmentId => $composableBuilder(
+    column: $table.previousWeighmentId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4309,6 +4867,11 @@ class $$WeighmentsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get previousWeighmentId => $composableBuilder(
+    column: $table.previousWeighmentId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get description => $composableBuilder(
     column: $table.description,
     builder: (column) => ColumnOrderings(column),
@@ -4398,6 +4961,11 @@ class $$WeighmentsTableAnnotationComposer
   GeneratedColumn<double> get charges =>
       $composableBuilder(column: $table.charges, builder: (column) => column);
 
+  GeneratedColumn<int> get previousWeighmentId => $composableBuilder(
+    column: $table.previousWeighmentId,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<String> get description => $composableBuilder(
     column: $table.description,
     builder: (column) => column,
@@ -4465,6 +5033,7 @@ class $$WeighmentsTableTableManager
                 Value<String?> material = const Value.absent(),
                 Value<int?> materialId = const Value.absent(),
                 Value<double?> charges = const Value.absent(),
+                Value<int?> previousWeighmentId = const Value.absent(),
                 Value<String?> description = const Value.absent(),
                 Value<String?> remarks = const Value.absent(),
                 Value<String?> mobileNumber = const Value.absent(),
@@ -4483,6 +5052,7 @@ class $$WeighmentsTableTableManager
                 material: material,
                 materialId: materialId,
                 charges: charges,
+                previousWeighmentId: previousWeighmentId,
                 description: description,
                 remarks: remarks,
                 mobileNumber: mobileNumber,
@@ -4503,6 +5073,7 @@ class $$WeighmentsTableTableManager
                 Value<String?> material = const Value.absent(),
                 Value<int?> materialId = const Value.absent(),
                 Value<double?> charges = const Value.absent(),
+                Value<int?> previousWeighmentId = const Value.absent(),
                 Value<String?> description = const Value.absent(),
                 Value<String?> remarks = const Value.absent(),
                 Value<String?> mobileNumber = const Value.absent(),
@@ -4521,6 +5092,7 @@ class $$WeighmentsTableTableManager
                 material: material,
                 materialId: materialId,
                 charges: charges,
+                previousWeighmentId: previousWeighmentId,
                 description: description,
                 remarks: remarks,
                 mobileNumber: mobileNumber,
@@ -4785,6 +5357,15 @@ typedef $$AppSettingsTableCreateCompanionBuilder =
       Value<bool> showRemarks,
       Value<bool> showFooterNote,
       Value<String?> footerNote,
+      Value<int> printCpi,
+      Value<int> printLpi,
+      Value<double> printPaperWidthMm,
+      Value<double> printPaperLengthMm,
+      Value<double> printLeftOffsetMm,
+      Value<double> printTopOffsetMm,
+      Value<double> printColumnWidthMm,
+      Value<String?> printFieldGrid,
+      Value<bool> printWeightUnit,
       Value<DateTime> updatedAt,
     });
 typedef $$AppSettingsTableUpdateCompanionBuilder =
@@ -4813,6 +5394,15 @@ typedef $$AppSettingsTableUpdateCompanionBuilder =
       Value<bool> showRemarks,
       Value<bool> showFooterNote,
       Value<String?> footerNote,
+      Value<int> printCpi,
+      Value<int> printLpi,
+      Value<double> printPaperWidthMm,
+      Value<double> printPaperLengthMm,
+      Value<double> printLeftOffsetMm,
+      Value<double> printTopOffsetMm,
+      Value<double> printColumnWidthMm,
+      Value<String?> printFieldGrid,
+      Value<bool> printWeightUnit,
       Value<DateTime> updatedAt,
     });
 
@@ -4942,6 +5532,51 @@ class $$AppSettingsTableFilterComposer
 
   ColumnFilters<String> get footerNote => $composableBuilder(
     column: $table.footerNote,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get printCpi => $composableBuilder(
+    column: $table.printCpi,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get printLpi => $composableBuilder(
+    column: $table.printLpi,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get printPaperWidthMm => $composableBuilder(
+    column: $table.printPaperWidthMm,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get printPaperLengthMm => $composableBuilder(
+    column: $table.printPaperLengthMm,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get printLeftOffsetMm => $composableBuilder(
+    column: $table.printLeftOffsetMm,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get printTopOffsetMm => $composableBuilder(
+    column: $table.printTopOffsetMm,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get printColumnWidthMm => $composableBuilder(
+    column: $table.printColumnWidthMm,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get printFieldGrid => $composableBuilder(
+    column: $table.printFieldGrid,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get printWeightUnit => $composableBuilder(
+    column: $table.printWeightUnit,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5080,6 +5715,51 @@ class $$AppSettingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get printCpi => $composableBuilder(
+    column: $table.printCpi,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get printLpi => $composableBuilder(
+    column: $table.printLpi,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get printPaperWidthMm => $composableBuilder(
+    column: $table.printPaperWidthMm,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get printPaperLengthMm => $composableBuilder(
+    column: $table.printPaperLengthMm,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get printLeftOffsetMm => $composableBuilder(
+    column: $table.printLeftOffsetMm,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get printTopOffsetMm => $composableBuilder(
+    column: $table.printTopOffsetMm,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get printColumnWidthMm => $composableBuilder(
+    column: $table.printColumnWidthMm,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get printFieldGrid => $composableBuilder(
+    column: $table.printFieldGrid,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get printWeightUnit => $composableBuilder(
+    column: $table.printWeightUnit,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
     column: $table.updatedAt,
     builder: (column) => ColumnOrderings(column),
@@ -5201,6 +5881,47 @@ class $$AppSettingsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<int> get printCpi =>
+      $composableBuilder(column: $table.printCpi, builder: (column) => column);
+
+  GeneratedColumn<int> get printLpi =>
+      $composableBuilder(column: $table.printLpi, builder: (column) => column);
+
+  GeneratedColumn<double> get printPaperWidthMm => $composableBuilder(
+    column: $table.printPaperWidthMm,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get printPaperLengthMm => $composableBuilder(
+    column: $table.printPaperLengthMm,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get printLeftOffsetMm => $composableBuilder(
+    column: $table.printLeftOffsetMm,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get printTopOffsetMm => $composableBuilder(
+    column: $table.printTopOffsetMm,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get printColumnWidthMm => $composableBuilder(
+    column: $table.printColumnWidthMm,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get printFieldGrid => $composableBuilder(
+    column: $table.printFieldGrid,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get printWeightUnit => $composableBuilder(
+    column: $table.printWeightUnit,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<DateTime> get updatedAt =>
       $composableBuilder(column: $table.updatedAt, builder: (column) => column);
 }
@@ -5260,6 +5981,15 @@ class $$AppSettingsTableTableManager
                 Value<bool> showRemarks = const Value.absent(),
                 Value<bool> showFooterNote = const Value.absent(),
                 Value<String?> footerNote = const Value.absent(),
+                Value<int> printCpi = const Value.absent(),
+                Value<int> printLpi = const Value.absent(),
+                Value<double> printPaperWidthMm = const Value.absent(),
+                Value<double> printPaperLengthMm = const Value.absent(),
+                Value<double> printLeftOffsetMm = const Value.absent(),
+                Value<double> printTopOffsetMm = const Value.absent(),
+                Value<double> printColumnWidthMm = const Value.absent(),
+                Value<String?> printFieldGrid = const Value.absent(),
+                Value<bool> printWeightUnit = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => AppSettingsCompanion(
                 id: id,
@@ -5286,6 +6016,15 @@ class $$AppSettingsTableTableManager
                 showRemarks: showRemarks,
                 showFooterNote: showFooterNote,
                 footerNote: footerNote,
+                printCpi: printCpi,
+                printLpi: printLpi,
+                printPaperWidthMm: printPaperWidthMm,
+                printPaperLengthMm: printPaperLengthMm,
+                printLeftOffsetMm: printLeftOffsetMm,
+                printTopOffsetMm: printTopOffsetMm,
+                printColumnWidthMm: printColumnWidthMm,
+                printFieldGrid: printFieldGrid,
+                printWeightUnit: printWeightUnit,
                 updatedAt: updatedAt,
               ),
           createCompanionCallback:
@@ -5314,6 +6053,15 @@ class $$AppSettingsTableTableManager
                 Value<bool> showRemarks = const Value.absent(),
                 Value<bool> showFooterNote = const Value.absent(),
                 Value<String?> footerNote = const Value.absent(),
+                Value<int> printCpi = const Value.absent(),
+                Value<int> printLpi = const Value.absent(),
+                Value<double> printPaperWidthMm = const Value.absent(),
+                Value<double> printPaperLengthMm = const Value.absent(),
+                Value<double> printLeftOffsetMm = const Value.absent(),
+                Value<double> printTopOffsetMm = const Value.absent(),
+                Value<double> printColumnWidthMm = const Value.absent(),
+                Value<String?> printFieldGrid = const Value.absent(),
+                Value<bool> printWeightUnit = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => AppSettingsCompanion.insert(
                 id: id,
@@ -5340,6 +6088,15 @@ class $$AppSettingsTableTableManager
                 showRemarks: showRemarks,
                 showFooterNote: showFooterNote,
                 footerNote: footerNote,
+                printCpi: printCpi,
+                printLpi: printLpi,
+                printPaperWidthMm: printPaperWidthMm,
+                printPaperLengthMm: printPaperLengthMm,
+                printLeftOffsetMm: printLeftOffsetMm,
+                printTopOffsetMm: printTopOffsetMm,
+                printColumnWidthMm: printColumnWidthMm,
+                printFieldGrid: printFieldGrid,
+                printWeightUnit: printWeightUnit,
                 updatedAt: updatedAt,
               ),
           withReferenceMapper: (p0) => p0

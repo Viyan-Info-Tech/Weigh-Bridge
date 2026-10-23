@@ -371,7 +371,10 @@ class _SearchableDropdownState<T extends Object>
         const desiredMaxHeight = 280.0;
 
         final spaceBelow =
-            screen.height - (fieldTopLeft.dy + fieldSize.height) - gap - screenMargin;
+            screen.height -
+            (fieldTopLeft.dy + fieldSize.height) -
+            gap -
+            screenMargin;
         final spaceAbove = fieldTopLeft.dy - gap - screenMargin;
 
         final openDown = spaceBelow >= 160.0 || spaceBelow >= spaceAbove;
@@ -435,11 +438,17 @@ class _SearchableDropdownState<T extends Object>
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: const BoxDecoration(
             color: Color(0xFFF8FAFC),
-            border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1)),
+            border: Border(
+              bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1),
+            ),
           ),
           child: Row(
             children: [
-              const Icon(Icons.layers_outlined, size: 13, color: Color(0xFF64748B)),
+              const Icon(
+                Icons.layers_outlined,
+                size: 13,
+                color: Color(0xFF64748B),
+              ),
               const SizedBox(width: 6),
               const Text(
                 'SELECT MATERIAL',
@@ -453,7 +462,10 @@ class _SearchableDropdownState<T extends Object>
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1.5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 1.5,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFE2E8F0),
                   borderRadius: BorderRadius.circular(10),
@@ -558,8 +570,8 @@ class _SearchableDropdownState<T extends Object>
                           color: isSelected
                               ? const Color(0xFF10B981)
                               : (isHighlighted
-                                  ? const Color(0xFFCBD5E1)
-                                  : Colors.transparent),
+                                    ? const Color(0xFFCBD5E1)
+                                    : Colors.transparent),
                           width: 3.5,
                         ),
                       ),
@@ -730,8 +742,8 @@ class _SearchableDropdownState<T extends Object>
           filled: widget.borderless ? _effectiveFocusNode.hasFocus : true,
           fillColor: widget.borderless
               ? (_effectiveFocusNode.hasFocus
-                  ? const Color(0xFFF8FAFC)
-                  : Colors.transparent)
+                    ? const Color(0xFFF8FAFC)
+                    : Colors.transparent)
               : (widget.enabled ? Colors.white : const Color(0xFFF8FAFC)),
           border: widget.borderless
               ? InputBorder.none
@@ -811,8 +823,8 @@ class _SearchableDropdownState<T extends Object>
                           Icons.keyboard_arrow_down_rounded,
                           color: widget.enabled
                               ? (_effectiveFocusNode.hasFocus
-                                  ? const Color(0xFF0F172A)
-                                  : const Color(0xFF64748B))
+                                    ? const Color(0xFF0F172A)
+                                    : const Color(0xFF64748B))
                               : Colors.grey.shade300,
                           size: 20,
                         ),
@@ -833,8 +845,7 @@ class _SearchableDropdownState<T extends Object>
             _selectOption(matching.first);
           } else {
             final partial = widget.items.where(
-              (item) =>
-                  widget.itemLabel(item).toLowerCase().contains(query),
+              (item) => widget.itemLabel(item).toLowerCase().contains(query),
             );
             if (partial.length == 1) {
               _selectOption(partial.first);

@@ -42,11 +42,11 @@ class MaterialItem extends Equatable {
 
   @override
   List<Object?> get props => [
-        id,
-        name,
-        vehicleType,
-        isActive,
-        createdAt,
-        updatedAt,
-      ];
+    id,
+    name,
+    vehicleType,
+    isActive,
+    createdAt,
+    updatedAt,
+  ];
 }

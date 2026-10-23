@@ -1,19 +1,20 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 
 import '../../../../features/bill/domain/entities/weighment.dart';
-import '../../../../features/bill/domain/services/weighment_receipt_data.dart';
-import '../../../../features/bill/presentation/widgets/weighment_receipt_template.dart';
+import '../../../../features/bill/presentation/widgets/preprinted_ticket_preview.dart';
 import '../../../../features/settings/domain/entities/billing_settings.dart';
 
-/// A card wrapper that displays the live receipt preview.
+/// A card wrapper that displays the live ticket preview.
 ///
-/// The preview renders [WeighmentReceiptTemplate] from a [WeighmentReceiptData]
-/// built out of the most recent weighment, which is exactly what the ticket
-/// dialog and the printed PDF render. There is no second receipt layout here,
-/// so a template change reaches the preview, the slip and the printout
+/// The preview renders [PrePrintedTicketPreview] from the most recent
+/// weighment - the same dual-copy layout the print dialog shows and the same
+/// [PrePrintedTicketPdfGenerator] output the printer receives - so a change to
+/// the print alignment reaches the preview, the slip dialog and the paper
 /// together.
+///
+/// Only the dynamic values are drawn because only the dynamic values are
+/// printed: the HMB Enterprises letterhead lives on the stationery, not in the
+/// application.
 class ReceiptPreviewCard extends StatelessWidget {
   const ReceiptPreviewCard({
     super.key,
@@ -57,11 +58,6 @@ class ReceiptPreviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasLogo =
-        settings.logoPath != null &&
-        settings.logoPath!.trim().isNotEmpty &&
-        File(settings.logoPath!).existsSync();
-
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -102,7 +98,7 @@ class ReceiptPreviewCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Live Receipt Preview',
+                        'Live Ticket Preview',
                         style: TextStyle(
                           fontFamily: 'PlusJakartaSans',
                           fontSize: 15,
@@ -114,8 +110,8 @@ class ReceiptPreviewCard extends StatelessWidget {
                         isLoadingWeighment
                             ? 'Loading recent weighment data...'
                             : (latestWeighment == null
-                                  ? 'Showing sample weighment (reflects template changes in real time)'
-                                  : 'Reflects template changes in real time'),
+                                  ? 'Showing sample weighment (reflects print alignment in real time)'
+                                  : 'Reflects print alignment in real time'),
                         softWrap: true,
                         style: const TextStyle(
                           fontFamily: 'PlusJakartaSans',
@@ -150,7 +146,7 @@ class ReceiptPreviewCard extends StatelessWidget {
                       alignment: Alignment.topCenter,
                       child: SizedBox(
                         width: standardSlipWidth,
-                        child: _buildSlip(hasLogo),
+                        child: _buildSlip(),
                       ),
                     ),
                   ),
@@ -163,14 +159,8 @@ class ReceiptPreviewCard extends StatelessWidget {
     );
   }
 
-  Widget _buildSlip(bool hasLogo) {
+  Widget _buildSlip() {
     final bill = latestWeighment ?? _sampleBill;
-
-    final receiptData = WeighmentReceiptData(
-      bill: bill,
-      settings: settings,
-      forPreview: true,
-    );
 
     return Container(
       decoration: BoxDecoration(
@@ -186,23 +176,13 @@ class ReceiptPreviewCard extends StatelessWidget {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (hasLogo)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-              child: Center(
-                child: Image.file(
-                  File(settings.logoPath!),
-                  height: 44,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, _, _) => const SizedBox.shrink(),
-                ),
-              ),
-            ),
-          WeighmentReceiptTemplate(data: receiptData),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
+        child: PrePrintedTicketPreview(
+          bill: bill,
+          settings: settings,
+          showCaption: false,
+        ),
       ),
     );
   }

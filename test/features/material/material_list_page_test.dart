@@ -60,7 +60,10 @@ void main() {
         final repository = MaterialRepositoryImpl(
           localDataSource: MaterialLocalDataSource(db),
         );
-        await repository.createMaterial('Very Long Material Name Example', 'Empty');
+        await repository.createMaterial(
+          'Very Long Material Name Example',
+          'Empty',
+        );
         await repository.createMaterial('Auto', 'Load');
         await repository.createMaterial('Sand', 'Empty');
 
@@ -129,9 +132,7 @@ void main() {
         MaterialApp(
           home: BlocProvider<MaterialBloc>(
             create: (_) => _buildBloc(db),
-            child: Scaffold(
-              body: MaterialDetailsDialog(material: material),
-            ),
+            child: Scaffold(body: MaterialDetailsDialog(material: material)),
           ),
         ),
       );

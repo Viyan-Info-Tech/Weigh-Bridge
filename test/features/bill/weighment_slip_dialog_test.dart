@@ -22,73 +22,94 @@ void main() {
       );
     });
 
-    testWidgets('renders weighbridge bill sections accurately', (tester) async {
-      tester.view.physicalSize = const Size(1200, 900);
+    void setScreenSize(WidgetTester tester, Size size) {
+      tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1.0;
       addTearDown(() {
         tester.view.resetPhysicalSize();
         tester.view.resetDevicePixelRatio();
       });
+    }
 
+    Future<void> pumpDialog(WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(body: WeighmentSlipDialog(bill: testBill)),
         ),
       );
       await tester.pumpAndSettle();
+    }
 
-      // 1. Station Letterhead & Header. The business name appears in the
-      // letterhead and again above the authorised signature.
-      expect(find.text('VIYAN WEIGHBRIDGE'), findsWidgets);
+    testWidgets('renders exactly one ticket from the record', (tester) async {
+      setScreenSize(tester, const Size(1200, 900));
+      await pumpDialog(tester);
+
+      // 1. Letterhead and title, shown once - the preview has no duplicate.
+      expect(find.text('VIYAN WEIGHBRIDGE'), findsOneWidget);
       expect(find.text('Computer Weigh Bridge'), findsOneWidget);
       expect(find.text('24 HOURS SERVICE'), findsOneWidget);
-
-      // 2. Receipt Title
       expect(find.text('WEIGHMENT RECEIPT'), findsOneWidget);
 
-      // 3. Serial Number and Details
-      expect(find.text('WB-00001'), findsOneWidget);
-      expect(find.text('TN31CM2026'), findsOneWidget);
+      // 2. Every field of the physical ticket, on the single receipt.
+      for (final label in const [
+        'SERIAL NO.',
+        'DATE',
+        'TIME',
+        'VEHICLE NO.',
+        'WT. CHARGES (Rs.)',
+        'MATERIAL',
+        'GROSS',
+        'TARE',
+        'Nett',
+        'CUSTOMER',
+      ]) {
+        expect(
+          find.text(label),
+          findsOneWidget,
+          reason: 'label "$label" should appear once',
+        );
+      }
 
-      // 4. Weight Table
-      expect(find.text('Gross Weight'), findsWidgets);
-      expect(find.text('Tare Weight'), findsWidgets);
-      expect(find.text('Net Weight'), findsWidgets);
+      // 3. Values resolved from the selected weighment record - never
+      //    hardcoded.
+      for (final value in const [
+        'WB-00001',
+        'TN31CM2026',
+        '10/09/2026',
+        '04:27 PM',
+        '100.000 ton',
+        '20.000 ton',
+        '80.000 ton',
+      ]) {
+        expect(
+          find.text(value),
+          findsOneWidget,
+          reason: 'value "$value" should appear once',
+        );
+      }
 
-      // 5. Remarks & Actions
-      expect(find.text('Direct delivery to site'), findsOneWidget);
+      // 4. Modal actions.
       expect(find.text('Close'), findsOneWidget);
       expect(find.text('Print Ticket'), findsOneWidget);
     });
 
+    testWidgets('keeps the preview usable in a narrow window', (tester) async {
+      // Below the readable scale the receipt scrolls horizontally instead of
+      // overflowing, so it stays inspectable.
+      setScreenSize(tester, const Size(600, 700));
+      await pumpDialog(tester);
+
+      expect(find.text('WB-00001'), findsOneWidget);
+      expect(find.text('100.000 ton'), findsOneWidget);
+      expect(find.text('Print Ticket'), findsOneWidget);
+    });
+
     testWidgets('clicking Close closes the dialog', (tester) async {
-      tester.view.physicalSize = const Size(1200, 900);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
+      setScreenSize(tester, const Size(1200, 900));
+      await pumpDialog(tester);
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Builder(
-            builder: (context) => ElevatedButton(
-              onPressed: () => showDialog(
-                context: context,
-                builder: (_) => WeighmentSlipDialog(bill: testBill),
-              ),
-              child: const Text('Open'),
-            ),
-          ),
-        ),
-      );
-
-      await tester.tap(find.text('Open'));
-      await tester.pumpAndSettle();
-
-      // The business name shows in the receipt header and above the
-      // authorised signature.
-      expect(find.text('VIYAN WEIGHBRIDGE'), findsWidgets);
+      // The business name shows once, in the ticket letterhead.
+      expect(find.text('VIYAN WEIGHBRIDGE'), findsOneWidget);
 
       await tester.tap(find.text('Close'));
       await tester.pumpAndSettle();

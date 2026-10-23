@@ -46,9 +46,9 @@ void main() {
     when(
       () => mockGenerateBillNumber.call(),
     ).thenAnswer((_) async => 'WB-00002');
-    when(() => mockSaveBill.withNewBillNumber(any())).thenAnswer(
-      (inv) async => (id: 2, billNumber: 'WB-00002'),
-    );
+    when(
+      () => mockSaveBill.withNewBillNumber(any()),
+    ).thenAnswer((inv) async => (id: 2, billNumber: 'WB-00002'));
 
     bloc = BillBloc(
       saveBillUseCase: mockSaveBill,
@@ -194,8 +194,8 @@ void main() {
 
       bloc.add(const SaveAndPrintBillRequested());
       await bloc.stream.firstWhere(
-        (s) => s.status == BillScreenStatus.printing &&
-            s.printReceiptBill != null,
+        (s) =>
+            s.status == BillScreenStatus.printing && s.printReceiptBill != null,
       );
 
       expect(bloc.state.printReceiptBill!.charges, 1000);

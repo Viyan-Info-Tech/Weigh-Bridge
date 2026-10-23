@@ -66,20 +66,20 @@ class MaterialDetailsDialog extends StatelessWidget {
                           label: 'Created',
                           value: material.createdAt != null
                               ? '${material.createdAt!.day.toString().padLeft(2, '0')}/'
-                                  '${material.createdAt!.month.toString().padLeft(2, '0')}/'
-                                  '${material.createdAt!.year} '
-                                  '${material.createdAt!.hour.toString().padLeft(2, '0')}:'
-                                  '${material.createdAt!.minute.toString().padLeft(2, '0')}'
+                                    '${material.createdAt!.month.toString().padLeft(2, '0')}/'
+                                    '${material.createdAt!.year} '
+                                    '${material.createdAt!.hour.toString().padLeft(2, '0')}:'
+                                    '${material.createdAt!.minute.toString().padLeft(2, '0')}'
                               : 'N/A',
                         ),
                         _DetailRow(
                           label: 'Updated',
                           value: material.updatedAt != null
                               ? '${material.updatedAt!.day.toString().padLeft(2, '0')}/'
-                                  '${material.updatedAt!.month.toString().padLeft(2, '0')}/'
-                                  '${material.updatedAt!.year} '
-                                  '${material.updatedAt!.hour.toString().padLeft(2, '0')}:'
-                                  '${material.updatedAt!.minute.toString().padLeft(2, '0')}'
+                                    '${material.updatedAt!.month.toString().padLeft(2, '0')}/'
+                                    '${material.updatedAt!.year} '
+                                    '${material.updatedAt!.hour.toString().padLeft(2, '0')}:'
+                                    '${material.updatedAt!.minute.toString().padLeft(2, '0')}'
                               : 'N/A',
                         ),
                       ],

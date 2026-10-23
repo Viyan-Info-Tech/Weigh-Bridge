@@ -19,20 +19,8 @@ import 'tables/scale_settings_table.dart';
 part 'app_database.g.dart';
 
 @DriftDatabase(
-  tables: [
-    Users,
-    Weighments,
-    Materials,
-    AppSettings,
-    ScaleSettings,
-  ],
-  daos: [
-    UserDao,
-    BillDao,
-    MaterialDao,
-    AppSettingsDao,
-    ScaleSettingsDao,
-  ],
+  tables: [Users, Weighments, Materials, AppSettings, ScaleSettings],
+  daos: [UserDao, BillDao, MaterialDao, AppSettingsDao, ScaleSettingsDao],
 )
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
@@ -40,7 +28,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 33;
+  int get schemaVersion => 35;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -1038,6 +1026,77 @@ class AppDatabase extends _$AppDatabase {
             .toSet();
         if (!weighmentNames.contains('material_id')) {
           await m.addColumn(weighments, weighments.materialId);
+        }
+      }
+      if (from < 35) {
+        // SECOND WEIGHT flow: nullable link from a second weighment back to
+        // the single-weight bill whose previous weight it reused, so the two
+        // independently identifiable bills keep a traceable relationship.
+        //
+        // Additive only: one nullable column, existing weighment rows are
+        // untouched and simply read back NULL. Idempotent guard keeps re-runs
+        // and partially upgraded databases safe. Deliberately placed before
+        // the v34 step below, whose empty app_settings guard returns early.
+        // The table-existence check covers synthetic upgrade fixtures that
+        // carry only part of the schema.
+        final weighmentColumns = await customSelect(
+          "PRAGMA table_info('weighments')",
+        ).get();
+        final weighmentNames = weighmentColumns
+            .map((c) => c.read<String>('name'))
+            .toSet();
+        if (weighmentColumns.isNotEmpty &&
+            !weighmentNames.contains('previous_weighment_id')) {
+          await m.addColumn(weighments, weighments.previousWeighmentId);
+        }
+      }
+      if (from < 34) {
+        // Continuous-form print alignment settings for the client's
+        // pre-printed HMB Enterprises certificate.
+        //
+        // Additive only: nine nullable/defaulted columns on app_settings, so
+        // existing settings rows are untouched and simply read back the
+        // defaults (12 CPI, 6 LPI, printer-reported paper, zero nudges).
+        // Idempotent guards keep re-runs and partially upgraded databases safe.
+        final settingColumns = await customSelect(
+          "PRAGMA table_info('app_settings')",
+        ).get();
+        // No app_settings table means there is no settings row to upgrade
+        // (matches the guard style of the v29 rebuild above). This is the last
+        // settings upgrade step; the weighments-only v35 step above has
+        // already run, so the migration is complete either way.
+        if (settingColumns.isEmpty) return;
+
+        final settingNames = settingColumns
+            .map((c) => c.read<String>('name'))
+            .toSet();
+
+        if (!settingNames.contains('print_cpi')) {
+          await m.addColumn(appSettings, appSettings.printCpi);
+        }
+        if (!settingNames.contains('print_lpi')) {
+          await m.addColumn(appSettings, appSettings.printLpi);
+        }
+        if (!settingNames.contains('print_paper_width_mm')) {
+          await m.addColumn(appSettings, appSettings.printPaperWidthMm);
+        }
+        if (!settingNames.contains('print_paper_length_mm')) {
+          await m.addColumn(appSettings, appSettings.printPaperLengthMm);
+        }
+        if (!settingNames.contains('print_left_offset_mm')) {
+          await m.addColumn(appSettings, appSettings.printLeftOffsetMm);
+        }
+        if (!settingNames.contains('print_top_offset_mm')) {
+          await m.addColumn(appSettings, appSettings.printTopOffsetMm);
+        }
+        if (!settingNames.contains('print_column_width_mm')) {
+          await m.addColumn(appSettings, appSettings.printColumnWidthMm);
+        }
+        if (!settingNames.contains('print_field_grid')) {
+          await m.addColumn(appSettings, appSettings.printFieldGrid);
+        }
+        if (!settingNames.contains('print_weight_unit')) {
+          await m.addColumn(appSettings, appSettings.printWeightUnit);
         }
       }
     },

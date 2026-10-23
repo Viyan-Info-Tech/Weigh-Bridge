@@ -184,6 +184,38 @@ class BillDao extends DatabaseAccessor<AppDatabase> with _$BillDaoMixin {
     return query.getSingleOrNull();
   }
 
+  /// Most recent *single-weight* bill ever saved for [vehicleNumber], or null.
+  ///
+  /// This is the record the SECOND WEIGHT flow reuses: the truck came once,
+  /// was weighed once (gross or tare), and has now returned for its other
+  /// weighing. Eligibility therefore requires exactly one captured weight —
+  /// a bill that already holds both weights is complete and must never be
+  /// paired again.
+  ///
+  /// Matching is case-insensitive and whitespace-trimmed on both sides, so a
+  /// lower-cased legacy row is still found. Newest wins, with the row id as a
+  /// stable tie-break so two weighments sharing a timestamp cannot flip the
+  /// choice between calls.
+  Future<Weighment?> getLatestSingleWeightWeighmentForVehicle(
+    String vehicleNumber,
+  ) async {
+    final normalized = vehicleNumber.trim().toUpperCase();
+    final query = select(weighments)
+      ..where(
+        (w) =>
+            w.vehicleNumber.upper().equals(normalized) &
+            w.firstWeightKg.isBiggerThanValue(0) &
+            (w.secondWeightKg.isNull() |
+                w.secondWeightKg.isSmallerOrEqualValue(0)),
+      )
+      ..orderBy([
+        (t) => OrderingTerm.desc(t.createdAt),
+        (t) => OrderingTerm.desc(t.id),
+      ])
+      ..limit(1);
+    return query.getSingleOrNull();
+  }
+
   Future<String> generateNextBillNumber() async {
     return peekNextBillNumber(prefix: 'WB', digits: 5);
   }

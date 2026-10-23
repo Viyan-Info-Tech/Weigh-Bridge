@@ -98,6 +98,18 @@ class BillFormBinding extends StatelessWidget {
       tareCapturedAt: state.tareCapturedAt,
       selectedType: state.selectedWeightType,
       onTypeChanged: (type) => bloc.add(WeightTypeSelected(type)),
+      isSecondWeightMode: state.isSecondWeightMode,
+      isFetchingPreviousWeight: state.isFetchingPreviousWeight,
+      previousWeightType: state.previousWeightType,
+      previousBillNumber: state.previousWeighment?.billNumber,
+      previousWeightText: state.hasPreviousWeighment
+          ? _previousWeightDisplayText(state)
+          : null,
+      previousCapturedAt: state.previousWeighment?.createdAt,
+      previousWeightMessage: state.previousWeightMessage,
+      onSecondWeightToggle: () => bloc.add(
+        SecondWeightModeChanged(!state.isSecondWeightMode),
+      ),
       vehicleFocusNode: r.vehicleFocusNode,
       typeFocusNode: r.typeFocusNode,
       materialFocusNode: r.materialFocusNode,
@@ -131,4 +143,25 @@ class BillFormBinding extends StatelessWidget {
       chargesError: state.chargesError,
     );
   }
+}
+
+/// Formats the previous weighment's captured weight for the status banner,
+/// converted into the form's current display unit (kg or ton).
+///
+/// Mirrors the bloc's own conversion when it populates the weight field, so
+/// the banner and the locked field always agree.
+String _previousWeightDisplayText(BillState state) {
+  final previous = state.previousWeighment;
+  if (previous == null) return '';
+  final weightKg = state.previousWeightType == 'TARE'
+      ? previous.tareWeightKg
+      : previous.grossWeightKg;
+  if (weightKg == null || !weightKg.isFinite) return '';
+  final isTon = state.weightUnit.toLowerCase() == 'ton';
+  final displayValue = isTon ? weightKg / 1000 : weightKg;
+  final unit = isTon ? 'ton' : 'kg';
+  final text = isTon
+      ? displayValue.toStringAsFixed(3)
+      : displayValue.toStringAsFixed(0);
+  return '$text $unit';
 }

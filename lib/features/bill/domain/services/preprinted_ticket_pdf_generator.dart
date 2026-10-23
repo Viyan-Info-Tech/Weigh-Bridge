@@ -63,8 +63,10 @@ class PrePrintedTicketPdfGenerator {
                 pw.Positioned(
                   left: item.x,
                   top: item.y,
-                  right: (pageFormat.width - (item.x + item.maxWidth))
-                      .clamp(0.0, pageFormat.width),
+                  right: (pageFormat.width - (item.x + item.maxWidth)).clamp(
+                    0.0,
+                    pageFormat.width,
+                  ),
                   child: pw.Text(
                     item.text,
                     maxLines: 1,
@@ -72,7 +74,9 @@ class PrePrintedTicketPdfGenerator {
                     overflow: pw.TextOverflow.clip,
                     style: pw.TextStyle(
                       fontSize: fontSize,
-                      fontBold: item.isBold,
+                      fontWeight: item.isBold
+                          ? pw.FontWeight.bold
+                          : pw.FontWeight.normal,
                     ),
                   ),
                 ),

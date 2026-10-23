@@ -9,10 +9,10 @@ import 'package:weighbridge/core/database/app_database.dart';
 import '../../support/test_database.dart';
 
 void main() {
-  test('schema version is 33', () {
+  test('schema version is 34', () {
     final db = createInMemoryDatabase();
     addTearDown(db.close);
-    expect(db.schemaVersion, 33);
+    expect(db.schemaVersion, 35);
   });
 
   test('onCreate creates all application tables', () async {
@@ -44,7 +44,12 @@ void main() {
     'onCreate does not create customer or vehicle tables but creates materials',
     () async {
       await withDatabase((db) async {
-        for (final table in ['customers', 'vehicles', 'vehicle_types', 'parties']) {
+        for (final table in [
+          'customers',
+          'vehicles',
+          'vehicle_types',
+          'parties',
+        ]) {
           final rows = await db
               .customSelect(
                 "SELECT name FROM sqlite_master WHERE type='table' AND name = ?",
@@ -59,34 +64,41 @@ void main() {
               "SELECT name FROM sqlite_master WHERE type='table' AND name = 'materials'",
             )
             .get();
-        expect(materialsRows, isNotEmpty, reason: 'table materials should exist');
+        expect(
+          materialsRows,
+          isNotEmpty,
+          reason: 'table materials should exist',
+        );
       });
     },
   );
 
-  test('fresh weighments table has no customer column but has material_id', () async {
-    await withDatabase((db) async {
-      final cols = await db
-          .customSelect("SELECT name FROM pragma_table_info('weighments')")
-          .get();
-      final names = cols.map((r) => r.data['name'] as String).toSet();
-      expect(names, isNot(contains('customer_id')));
-      // materialId is the master reference for the material snapshot.
-      expect(names, contains('material_id'));
-      expect(names, isNot(contains('party_id')));
-      expect(
-        names,
-        containsAll(<String>[
-          'bill_number',
-          'vehicle_number',
-          'first_weight_kg',
-          'mobile_number',
-          'weight_unit',
-          'charges',
-        ]),
-      );
-    });
-  });
+  test(
+    'fresh weighments table has no customer column but has material_id',
+    () async {
+      await withDatabase((db) async {
+        final cols = await db
+            .customSelect("SELECT name FROM pragma_table_info('weighments')")
+            .get();
+        final names = cols.map((r) => r.data['name'] as String).toSet();
+        expect(names, isNot(contains('customer_id')));
+        // materialId is the master reference for the material snapshot.
+        expect(names, contains('material_id'));
+        expect(names, isNot(contains('party_id')));
+        expect(
+          names,
+          containsAll(<String>[
+            'bill_number',
+            'vehicle_number',
+            'first_weight_kg',
+            'mobile_number',
+            'weight_unit',
+            'charges',
+          ]),
+        );
+      });
+    },
+  );
 
   test('fresh weighments table charges column is nullable', () async {
     await withDatabase((db) async {
@@ -896,6 +908,165 @@ CREATE TABLE app_settings (
       final version = await db.customSelect('PRAGMA user_version').get();
       expect(version.single.data['user_version'], db.schemaVersion);
     });
+  });
+
+  group('v33 -> v34 migration', () {
+    /// Builds a genuine v33 database on disk: `app_settings` has every column
+    /// of the previous schema but none of the continuous-form print columns.
+    Future<NativeDatabase> createV33Database(Directory dir) async {
+      final file = File(p.join(dir.path, 'v33.sqlite'));
+      final sqlite = NativeDatabase(file);
+      await sqlite.ensureOpen(_StubExecutorUser(33));
+      final now = DateTime(2026, 10, 1).millisecondsSinceEpoch;
+
+      await sqlite.runCustom(
+        'CREATE TABLE app_settings ('
+        'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+        'weight_unit TEXT NOT NULL DEFAULT \'ton\', '
+        'bill_prefix TEXT NOT NULL DEFAULT \'WB\', '
+        'bill_starting_number INTEGER NOT NULL DEFAULT 1, '
+        'bill_number_digits INTEGER NOT NULL DEFAULT 5, '
+        'business_name TEXT NOT NULL DEFAULT \'VIYAN WEIGHBRIDGE\', '
+        'business_subtitle TEXT, service_text TEXT, address TEXT, '
+        'phone_number TEXT, email TEXT, gstin TEXT, logo_path TEXT, '
+        'receipt_title TEXT NOT NULL DEFAULT \'WEIGHMENT RECEIPT\', '
+        'show_serial_number INTEGER NOT NULL DEFAULT 1, '
+        'show_date INTEGER NOT NULL DEFAULT 1, '
+        'show_time INTEGER NOT NULL DEFAULT 1, '
+        'show_vehicle_number INTEGER NOT NULL DEFAULT 1, '
+        'show_gross_weight INTEGER NOT NULL DEFAULT 1, '
+        'show_tare_weight INTEGER NOT NULL DEFAULT 1, '
+        'show_net_weight INTEGER NOT NULL DEFAULT 1, '
+        'show_remarks INTEGER NOT NULL DEFAULT 1, '
+        'show_footer_note INTEGER NOT NULL DEFAULT 1, '
+        'footer_note TEXT, updated_at INTEGER NOT NULL)',
+      );
+      await sqlite.runCustom(
+        'INSERT INTO app_settings (id, business_name, bill_prefix, '
+        'footer_note, updated_at) VALUES (1, \'Acme Weighbridge\', \'AC\', '
+        '\'keep me\', ?)',
+        [now],
+      );
+      await sqlite.runCustom('PRAGMA user_version = 33');
+      await sqlite.close();
+
+      return NativeDatabase(file);
+    }
+
+    test(
+      'adds the print columns with defaults and keeps the settings row',
+      () async {
+        final dir = await Directory.systemTemp.createTemp('wb_v34');
+        addTearDown(() => dir.delete(recursive: true));
+
+        final db = AppDatabase.forTesting(await createV33Database(dir));
+        addTearDown(db.close);
+
+        // Every new column exists on the upgraded table.
+        final cols = await db
+            .customSelect("SELECT * FROM pragma_table_info('app_settings')")
+            .get();
+        final names = cols.map((r) => r.data['name'] as String).toSet();
+        expect(
+          names,
+          containsAll(<String>[
+            'print_cpi',
+            'print_lpi',
+            'print_paper_width_mm',
+            'print_paper_length_mm',
+            'print_left_offset_mm',
+            'print_top_offset_mm',
+            'print_column_width_mm',
+            'print_field_grid',
+            'print_weight_unit',
+          ]),
+        );
+
+        // The pre-existing row survives untouched and reads the defaults:
+        // 12 CPI, 6 LPI, printer-reported paper, zero nudges, no grid yet.
+        final settings = await db.appSettingsDao.getSettings();
+        expect(settings.businessName, 'Acme Weighbridge');
+        expect(settings.billPrefix, 'AC');
+        expect(settings.footerNote, 'keep me');
+        expect(settings.printCpi, 12);
+        expect(settings.printLpi, 6);
+        expect(settings.printPaperWidthMm, 0.0);
+        expect(settings.printPaperLengthMm, 0.0);
+        expect(settings.printLeftOffsetMm, 0.0);
+        expect(settings.printTopOffsetMm, 0.0);
+        expect(settings.printColumnWidthMm, 0.0);
+        expect(settings.printFieldGrid, isNull);
+        expect(settings.printWeightUnit, isTrue);
+
+        final version = await db.customSelect('PRAGMA user_version').get();
+        expect(version.single.data['user_version'], db.schemaVersion);
+      },
+    );
+  });
+
+  group('v34 -> v35 migration', () {
+    /// Builds a genuine v34 database on disk: `weighments` has every column
+    /// of the previous schema but none of the second-weight columns.
+    Future<NativeDatabase> createV34Database(Directory dir) async {
+      final file = File(p.join(dir.path, 'v34.sqlite'));
+      final sqlite = NativeDatabase(file);
+      await sqlite.ensureOpen(_StubExecutorUser(34));
+      final now = DateTime(2026, 10, 1).millisecondsSinceEpoch;
+
+      await sqlite.runCustom(
+        'CREATE TABLE weighments ('
+        'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+        'bill_number TEXT NOT NULL UNIQUE, '
+        'vehicle_number TEXT NOT NULL, '
+        'first_weight_kg REAL NOT NULL, '
+        "first_weight_type TEXT NOT NULL DEFAULT 'GROSS', "
+        'second_weight_kg REAL, second_weight_type TEXT, '
+        'net_weight_kg REAL, material TEXT, material_id INTEGER, '
+        'charges REAL, description TEXT, remarks TEXT, mobile_number TEXT, '
+        "weight_unit TEXT NOT NULL DEFAULT 'ton', "
+        'created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)',
+      );
+      await sqlite.runCustom(
+        'INSERT INTO weighments '
+        '(bill_number, vehicle_number, first_weight_kg, created_at, '
+        'updated_at) VALUES '
+        "('WB-00001', 'TN31CM2026', 14710, ?, ?)",
+        [now, now],
+      );
+      await sqlite.runCustom('PRAGMA user_version = 34');
+      await sqlite.close();
+
+      return NativeDatabase(file);
+    }
+
+    test(
+      'adds previous_weighment_id and keeps existing weighment rows intact',
+      () async {
+        final dir = await Directory.systemTemp.createTemp('wb_v35');
+        addTearDown(() => dir.delete(recursive: true));
+
+        final db = AppDatabase.forTesting(await createV34Database(dir));
+        addTearDown(db.close);
+
+        // The new column exists on the upgraded table.
+        final cols = await db
+            .customSelect("SELECT * FROM pragma_table_info('weighments')")
+            .get();
+        final names = cols.map((r) => r.data['name'] as String).toSet();
+        expect(names, contains('previous_weighment_id'));
+
+        // The pre-existing row survives untouched and reads back NULL for
+        // the new column: a normal bill has no second-weight link.
+        final bill = await db.billDao.getWeighmentByBillNumber('WB-00001');
+        expect(bill, isNotNull);
+        expect(bill!.vehicleNumber, 'TN31CM2026');
+        expect(bill.firstWeightKg, 14710);
+        expect(bill.previousWeighmentId, isNull);
+
+        final version = await db.customSelect('PRAGMA user_version').get();
+        expect(version.single.data['user_version'], db.schemaVersion);
+      },
+    );
   });
 }
 

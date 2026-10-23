@@ -238,14 +238,14 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Custom business name and title are displayed
+        // Custom business name and title are displayed on the receipt.
         expect(find.text('CUSTOM INDUSTRIAL WEIGHBRIDGE'), findsOneWidget);
         expect(find.text('OFFICIAL WEIGH SLIP'), findsOneWidget);
 
         // Hidden fields are omitted
         expect(find.text('Customer special order'), findsNothing);
 
-        // Visible fields are present
+        // Visible fields are present on the single previewed receipt
         expect(find.text('MH 12 AB 1234'), findsOneWidget);
         expect(
           find.text('Note: Mandatory verification before gate exit.'),
@@ -293,7 +293,7 @@ void main() {
       expect(find.text('Footer Settings'), findsOneWidget);
 
       // Verify Live Preview Panel
-      expect(find.text('Live Receipt Preview'), findsOneWidget);
+      expect(find.text('Live Ticket Preview'), findsOneWidget);
       expect(find.text('VIYAN WEIGHBRIDGE'), findsWidgets);
 
       await tester.pumpWidget(const SizedBox());
@@ -336,7 +336,7 @@ void main() {
         expect(find.text('Edit Settings'), findsOneWidget);
         expect(find.text('Reset Defaults'), findsOneWidget);
         expect(find.text('Weight Unit'), findsOneWidget);
-        expect(find.text('Live Receipt Preview'), findsOneWidget);
+        expect(find.text('Live Ticket Preview'), findsOneWidget);
 
         await tester.ensureVisible(find.text('Edit Settings'));
         await tester.ensureVisible(find.text('Reset Defaults'));

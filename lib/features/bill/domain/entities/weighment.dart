@@ -22,6 +22,10 @@ class Weighment extends Equatable {
   /// Manually entered charges in rupees; null when the operator left it blank
   /// (including all legacy rows created before this field existed).
   final double? charges;
+
+  /// Id of the earlier single-weight bill whose previous weight this bill
+  /// reused (second-weight flow), or null for a normal weighment.
+  final int? previousWeighmentId;
   final String? remarks;
   final String? mobileNumber;
   final String weightUnit;
@@ -42,6 +46,7 @@ class Weighment extends Equatable {
     this.material,
     this.materialId,
     this.charges,
+    this.previousWeighmentId,
     this.remarks,
     this.mobileNumber,
     this.weightUnit = 'ton',
@@ -143,6 +148,7 @@ class Weighment extends Equatable {
     material,
     materialId,
     charges,
+    previousWeighmentId,
     mobileNumber,
     weightUnit,
     createdAt,

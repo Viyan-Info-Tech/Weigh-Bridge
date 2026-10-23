@@ -181,10 +181,7 @@ class ReportLocalDataSource {
               pattern,
               escapeChar: _likeEscapeChar,
             ) |
-            weights.material.lower().like(
-              pattern,
-              escapeChar: _likeEscapeChar,
-            ),
+            weights.material.lower().like(pattern, escapeChar: _likeEscapeChar),
       );
     }
   }

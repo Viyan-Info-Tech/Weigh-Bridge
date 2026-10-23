@@ -27,8 +27,9 @@ class MaterialState extends Equatable {
       materials: materials ?? this.materials,
       isLoading: isLoading ?? this.isLoading,
       error: clearError ? null : (error ?? this.error),
-      successMessage:
-          clearSuccessMessage ? null : (successMessage ?? this.successMessage),
+      successMessage: clearSuccessMessage
+          ? null
+          : (successMessage ?? this.successMessage),
     );
   }
 

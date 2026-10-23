@@ -9,6 +9,7 @@ import '../../../../features/bill/domain/entities/weighment.dart';
 import '../../../../features/bill/domain/repositories/bill_repository.dart';
 import '../widgets/bill_numbering_card.dart';
 import '../widgets/business_information_card.dart';
+import '../widgets/continuous_form_print_card.dart';
 import '../widgets/footer_settings_card.dart';
 import '../widgets/receipt_content_card.dart';
 import '../widgets/receipt_preview_card.dart';
@@ -62,6 +63,9 @@ class _SettingsPageState extends State<SettingsPage> {
   bool _showNetWeight = true;
   bool _showRemarks = true;
   bool _showFooterNote = true;
+
+  /// Continuous-form print alignment, edited by [ContinuousFormPrintCard].
+  final PrintSettingsForm _printForm = PrintSettingsForm();
 
   bool _isEditing = false;
   BillingSettings? _savedSettings;
@@ -139,6 +143,7 @@ class _SettingsPageState extends State<SettingsPage> {
     _logoPathController.dispose();
     _receiptTitleController.dispose();
     _footerNoteController.dispose();
+    _printForm.dispose();
     super.dispose();
   }
 
@@ -166,6 +171,7 @@ class _SettingsPageState extends State<SettingsPage> {
     _showNetWeight = settings.showNetWeight;
     _showRemarks = settings.showRemarks;
     _showFooterNote = settings.showFooterNote;
+    _printForm.applySettings(settings);
   }
 
   void _cancelEditing() {
@@ -286,6 +292,7 @@ class _SettingsPageState extends State<SettingsPage> {
       _showNetWeight = true;
       _showRemarks = true;
       _showFooterNote = true;
+      _printForm.applySettings(BillingSettings(updatedAt: DateTime.now()));
     });
   }
 
@@ -381,6 +388,15 @@ class _SettingsPageState extends State<SettingsPage> {
       footerNote: _footerNoteController.text.trim().isEmpty
           ? null
           : _footerNoteController.text.trim(),
+      printCpi: _printForm.cpi,
+      printLpi: _printForm.lpi,
+      printPaperWidthMm: _printForm.effectivePaperWidthMm,
+      printPaperLengthMm: _printForm.effectivePaperLengthMm,
+      printLeftOffsetMm: _printForm.leftOffsetMm,
+      printTopOffsetMm: _printForm.topOffsetMm,
+      printColumnWidthMm: _printForm.columnWidthMm,
+      printFieldGrid: _printForm.gridJson,
+      printWeightUnit: _printForm.printWeightUnit,
       updatedAt: DateTime.now(),
     );
 
@@ -436,6 +452,15 @@ class _SettingsPageState extends State<SettingsPage> {
       footerNote: _footerNoteController.text.trim().isEmpty
           ? null
           : _footerNoteController.text.trim(),
+      printCpi: _printForm.cpi,
+      printLpi: _printForm.lpi,
+      printPaperWidthMm: _printForm.effectivePaperWidthMm,
+      printPaperLengthMm: _printForm.effectivePaperLengthMm,
+      printLeftOffsetMm: _printForm.leftOffsetMm,
+      printTopOffsetMm: _printForm.topOffsetMm,
+      printColumnWidthMm: _printForm.columnWidthMm,
+      printFieldGrid: _printForm.gridJson,
+      printWeightUnit: _printForm.printWeightUnit,
       updatedAt: DateTime.now(),
     );
   }
@@ -599,6 +624,12 @@ class _SettingsPageState extends State<SettingsPage> {
                               });
                             },
                             onFooterNoteChanged: (_) => setState(() {}),
+                          ),
+                          const SizedBox(height: 16),
+                          ContinuousFormPrintCard(
+                            form: _printForm,
+                            isEditing: _isEditing,
+                            onChanged: () => setState(() {}),
                           ),
                         ],
                       );

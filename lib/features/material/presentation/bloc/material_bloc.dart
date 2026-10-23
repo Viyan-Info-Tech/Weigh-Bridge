@@ -57,11 +57,13 @@ class MaterialBloc extends Bloc<MaterialEvent, MaterialState> {
         await updateMaterial(material);
       }
       final materials = await loadMaterials();
-      emit(state.copyWith(
-        materials: materials,
-        isLoading: false,
-        successMessage: 'Material saved successfully',
-      ));
+      emit(
+        state.copyWith(
+          materials: materials,
+          isLoading: false,
+          successMessage: 'Material saved successfully',
+        ),
+      );
     } on DuplicateMaterialException catch (e) {
       emit(state.copyWith(isLoading: false, error: e.message));
     } on InvalidMaterialException catch (e) {
@@ -79,11 +81,13 @@ class MaterialBloc extends Bloc<MaterialEvent, MaterialState> {
     try {
       await deleteMaterial(event.id);
       final materials = await loadMaterials();
-      emit(state.copyWith(
-        materials: materials,
-        isLoading: false,
-        successMessage: 'Material deleted successfully',
-      ));
+      emit(
+        state.copyWith(
+          materials: materials,
+          isLoading: false,
+          successMessage: 'Material deleted successfully',
+        ),
+      );
     } catch (e) {
       emit(state.copyWith(isLoading: false, error: e.toString()));
     }

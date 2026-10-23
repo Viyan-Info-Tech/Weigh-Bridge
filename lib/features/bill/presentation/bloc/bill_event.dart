@@ -147,6 +147,29 @@ class WeightTypeSelected extends BillEvent {
   List<Object?> get props => [type];
 }
 
+/// Toggles the SECOND WEIGHT workflow on the weighment form.
+///
+/// When enabled, the GROSS/TARE selector is hidden and entering a vehicle
+/// number retrieves that truck's previous single-weight bill. Toggling in
+/// either direction drops every second-weight artefact (matched bill,
+/// populated weight, messages) so no stale data survives a mode change.
+class SecondWeightModeChanged extends BillEvent {
+  final bool enabled;
+  const SecondWeightModeChanged(this.enabled);
+
+  @override
+  List<Object?> get props => [enabled];
+}
+
+/// Looks up the previous weighment for the entered vehicle number.
+///
+/// The vehicle-number field triggers this automatically while SECOND WEIGHT
+/// mode is active; it can also be dispatched directly (e.g. to retry after
+/// fixing a typo).
+class FetchPreviousWeightForVehicle extends BillEvent {
+  const FetchPreviousWeightForVehicle();
+}
+
 class GrossWeightCommitted extends BillEvent {
   final String value;
   final DateTime? capturedAt;

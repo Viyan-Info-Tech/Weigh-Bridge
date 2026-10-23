@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:pdf/pdf.dart';
 import 'package:weighbridge/app/app.dart' show scaffoldMessengerKey;
 import 'package:weighbridge/core/printing/print_service.dart';
 import 'package:weighbridge/features/bill/domain/entities/weighment.dart';
@@ -11,11 +12,17 @@ import 'package:weighbridge/features/bill/presentation/widgets/weighment_slip_di
 
 class MockPrintService extends Mock implements PrintService {}
 
+/// Fallback for the `onLayout` matcher: the dialog passes a fresh closure on
+/// every print, so the stub can only match it with `any(...)`.
+FutureOr<Uint8List> _anyPdfLayout(PdfPageFormat format) => Uint8List(0);
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUpAll(() {
     registerFallbackValue(Uint8List(0));
+    registerFallbackValue(PdfPageFormat.a4);
+    registerFallbackValue(_anyPdfLayout);
   });
 
   late MockPrintService printService;
@@ -35,6 +42,16 @@ void main() {
       updatedAt: now,
     );
   });
+
+  void stubPrint({required bool result}) {
+    when(
+      () => printService.printPdfLayout(
+        jobName: any(named: 'jobName'),
+        onLayout: any(named: 'onLayout'),
+        initialFormat: any(named: 'initialFormat'),
+      ),
+    ).thenAnswer((_) async => result);
+  }
 
   Widget buildHost() {
     return MaterialApp(
@@ -67,9 +84,7 @@ void main() {
     testWidgets('prints the generated PDF and closes the dialog on success', (
       tester,
     ) async {
-      when(
-        () => printService.printPdf(any(), jobName: any(named: 'jobName')),
-      ).thenAnswer((_) async => true);
+      stubPrint(result: true);
 
       await openDialog(tester);
       await tester.tap(find.text('Print Ticket'));
@@ -79,13 +94,20 @@ void main() {
       expect(find.text('Print Ticket'), findsNothing);
 
       final captured = verify(
-        () => printService.printPdf(
-          captureAny(),
+        () => printService.printPdfLayout(
           jobName: captureAny(named: 'jobName'),
+          onLayout: captureAny(named: 'onLayout'),
+          initialFormat: captureAny(named: 'initialFormat'),
         ),
       ).captured;
-      final pdfBytes = captured[0] as Uint8List;
-      final jobName = captured[1] as String;
+      final jobName = captured[0] as String;
+      final onLayout = captured[1] as dynamic;
+      final initialFormat = captured[2] as PdfPageFormat;
+
+      // The print pipeline still builds a real PDF for the two-up sheet:
+      // the preview redesign must not have touched the print job.
+      final dynamic generated = await Function.apply(onLayout, [initialFormat]);
+      final pdfBytes = generated as Uint8List;
       expect(pdfBytes, isNotEmpty);
       expect(pdfBytes.sublist(0, 4), [0x25, 0x50, 0x44, 0x46]); // %PDF
       expect(jobName, contains('WB-00001'));
@@ -99,9 +121,7 @@ void main() {
     testWidgets(
       'keeps the dialog open and shows an error when printing fails',
       (tester) async {
-        when(
-          () => printService.printPdf(any(), jobName: any(named: 'jobName')),
-        ).thenAnswer((_) async => false);
+        stubPrint(result: false);
 
         await openDialog(tester);
         await tester.tap(find.text('Print Ticket'));
@@ -120,7 +140,11 @@ void main() {
       tester,
     ) async {
       when(
-        () => printService.printPdf(any(), jobName: any(named: 'jobName')),
+        () => printService.printPdfLayout(
+          jobName: any(named: 'jobName'),
+          onLayout: any(named: 'onLayout'),
+          initialFormat: any(named: 'initialFormat'),
+        ),
       ).thenThrow(Exception('printer exploded'));
 
       await openDialog(tester);
@@ -136,7 +160,11 @@ void main() {
     ) async {
       final completer = Completer<bool>();
       when(
-        () => printService.printPdf(any(), jobName: any(named: 'jobName')),
+        () => printService.printPdfLayout(
+          jobName: any(named: 'jobName'),
+          onLayout: any(named: 'onLayout'),
+          initialFormat: any(named: 'initialFormat'),
+        ),
       ).thenAnswer((_) => completer.future);
 
       await openDialog(tester);
@@ -164,7 +192,11 @@ void main() {
 
       expect(find.text('Print Ticket'), findsNothing);
       verifyNever(
-        () => printService.printPdf(any(), jobName: any(named: 'jobName')),
+        () => printService.printPdfLayout(
+          jobName: any(named: 'jobName'),
+          onLayout: any(named: 'onLayout'),
+          initialFormat: any(named: 'initialFormat'),
+        ),
       );
     });
   });

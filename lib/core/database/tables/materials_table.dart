@@ -14,9 +14,8 @@ class MaterialVehicleTypes {
   static const List<String> all = [empty, load];
 
   /// Whether [value] is one of the two allowed options (case-insensitive).
-  static bool isValid(String value) => all.any(
-    (option) => option.toLowerCase() == value.trim().toLowerCase(),
-  );
+  static bool isValid(String value) =>
+      all.any((option) => option.toLowerCase() == value.trim().toLowerCase());
 
   /// Returns the canonical casing for [value], or `null` when invalid.
   static String? normalize(String value) {

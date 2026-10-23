@@ -122,11 +122,7 @@ class _ViyanVLogoPainter extends CustomPainter {
       ..shader = const LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [
-          Color(0xFFE2E8F0),
-          Color(0xFF10B981),
-          Color(0xFF064E3B),
-        ],
+        colors: [Color(0xFFE2E8F0), Color(0xFF10B981), Color(0xFF064E3B)],
       ).createShader(Rect.fromLTWH(0, 0, w, h));
     canvas.drawPath(outerVPath, vPaint);
 

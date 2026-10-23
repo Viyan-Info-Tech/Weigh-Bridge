@@ -8,6 +8,7 @@ import 'bill_form_row.dart';
 import 'bill_form_type_selector.dart';
 import 'bill_form_weight_row.dart';
 import 'searchable_dropdown.dart';
+import 'second_weight_controls.dart';
 
 /// Industrial 2-Column Weighment Ticket Form
 /// Designed with premium tactile instrument aesthetics:
@@ -43,6 +44,38 @@ class BillForm extends StatefulWidget {
   final DateTime? tareCapturedAt;
   final String selectedType;
   final ValueChanged<String>? onTypeChanged;
+
+  /// True while the form is in SECOND WEIGHT mode: the GROSS/TARE selector
+  /// is hidden and the previous weighment of the entered vehicle is loaded
+  /// into the matching weight field (locked) for the operator to pair with
+  /// the weight captured now.
+  final bool isSecondWeightMode;
+
+  /// True while the previous-weighment lookup for the entered vehicle is in
+  /// flight, so the toggle can show a busy indicator.
+  final bool isFetchingPreviousWeight;
+
+  /// Weight type ('GROSS'/'TARE') populated from the previous weighment in
+  /// SECOND WEIGHT mode, or null when no bill is matched. That field is
+  /// locked; the opposite field is where the current weight is captured.
+  final String? previousWeightType;
+
+  /// Bill number of the matched previous weighment for the status banner.
+  final String? previousBillNumber;
+
+  /// Display text of the previous weight (already converted to the form's
+  /// unit) for the status banner.
+  final String? previousWeightText;
+
+  /// Capture timestamp of the previous weighment for the status banner.
+  final DateTime? previousCapturedAt;
+
+  /// Operator-facing note when no eligible previous weighment exists (or the
+  /// matched one has invalid data); shown in the status banner.
+  final String? previousWeightMessage;
+
+  /// Toggles the SECOND WEIGHT workflow on the weighment form.
+  final VoidCallback? onSecondWeightToggle;
 
   final FocusNode? vehicleFocusNode;
   final FocusNode? typeFocusNode;
@@ -90,6 +123,14 @@ class BillForm extends StatefulWidget {
     this.tareCapturedAt,
     this.selectedType = 'Gross',
     this.onTypeChanged,
+    this.isSecondWeightMode = false,
+    this.isFetchingPreviousWeight = false,
+    this.previousWeightType,
+    this.previousBillNumber,
+    this.previousWeightText,
+    this.previousCapturedAt,
+    this.previousWeightMessage,
+    this.onSecondWeightToggle,
     this.vehicleFocusNode,
     this.typeFocusNode,
     this.materialFocusNode,
@@ -227,10 +268,16 @@ class _BillFormState extends State<BillForm> {
 
   @override
   Widget build(BuildContext context) {
-    // Both weights stay editable: this form always represents a new bill, so
-    // there is no previously captured weight that must be locked.
-    const isGrossEnabled = true;
-    const isTareEnabled = true;
+    // Both weights stay editable on a normal bill: this form always
+    // represents a new weighment. In SECOND WEIGHT mode the field that holds
+    // the retrieved previous weight is locked — it is history and must not
+    // be overwritten — while the opposite field stays editable for the weight
+    // captured now.
+    final previousType = widget.isSecondWeightMode
+        ? widget.previousWeightType
+        : null;
+    final isGrossEnabled = previousType != 'GROSS';
+    final isTareEnabled = previousType != 'TARE';
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -501,6 +548,7 @@ class _BillFormState extends State<BillForm> {
           labelWidth: labelWidth,
           crossAxisAlignment: CrossAxisAlignment.start,
           child: BillFormWeightRow(
+            key: const Key('gross_weight_row'),
             controller: widget.grossWeightController,
             weightKg: widget.grossWeightKg,
             weightUnit: widget.weightUnit,
@@ -528,6 +576,7 @@ class _BillFormState extends State<BillForm> {
             mainAxisSize: MainAxisSize.min,
             children: [
               BillFormWeightRow(
+                key: const Key('tare_weight_row'),
                 controller: widget.tareWeightController,
                 weightKg: widget.tareWeightKg,
                 weightUnit: widget.weightUnit,
@@ -643,7 +692,22 @@ class _BillFormState extends State<BillForm> {
               ),
             ),
             onChanged: widget.onVehicleNumberChanged,
-            onSubmitted: (_) => widget.typeFocusNode?.requestFocus(),
+            onSubmitted: (_) {
+              if (widget.isSecondWeightMode) {
+                // The TYPE selector is hidden in this mode, so the next step
+                // is the weight capture: focus the field that will hold the
+                // current weight, or MATERIAL while no previous weighment is
+                // matched yet.
+                final captureFocus = widget.previousWeightType == 'GROSS'
+                    ? widget.tareWeightFocusNode
+                    : widget.previousWeightType == 'TARE'
+                    ? widget.grossWeightFocusNode
+                    : null;
+                (captureFocus ?? widget.materialFocusNode)?.requestFocus();
+              } else {
+                widget.typeFocusNode?.requestFocus();
+              }
+            },
           ),
         ),
         _buildFieldError(widget.vehicleNumberError),
@@ -651,49 +715,92 @@ class _BillFormState extends State<BillForm> {
     );
   }
 
-  /// 2. TYPE Selector (● GROSS   ○ TARE)
+  /// 2. TYPE Selector (● GROSS   ○ TARE) + separate SECOND WEIGHT toggle.
+  ///
+  /// Normal mode shows the GROSS/TARE selector with the SECOND WEIGHT button
+  /// beside it. When SECOND WEIGHT mode is active the selector is hidden
+  /// entirely and the row shows the active toggle plus the lookup status
+  /// banner, keeping the same row footprint.
   Widget _buildTypeSelector() {
-    return Focus(
-      focusNode: widget.typeFocusNode,
-      onKeyEvent: (node, event) {
-        if (event is! KeyDownEvent) return KeyEventResult.ignored;
-        if (event.logicalKey == LogicalKeyboardKey.enter ||
-            event.logicalKey == LogicalKeyboardKey.numpadEnter) {
-          _focusAfterTypeStep();
-          return KeyEventResult.handled;
-        }
-        if (event.logicalKey == LogicalKeyboardKey.arrowLeft ||
-            event.logicalKey == LogicalKeyboardKey.arrowRight) {
-          final current = (_selectedType ?? widget.selectedType).toLowerCase();
-          final next = current == 'gross' ? 'Tare' : 'Gross';
-          setState(() => _selectedType = next);
-          widget.onTypeChanged?.call(next);
-          return KeyEventResult.handled;
-        }
-        return KeyEventResult.ignored;
-      },
-      child: Column(
+    if (widget.isSecondWeightMode) {
+      return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          BillFormTypeSelector(
+          SecondWeightToggle(
+            isActive: true,
+            isBusy: widget.isFetchingPreviousWeight,
+            onTap: () => widget.onSecondWeightToggle?.call(),
+          ),
+          const SizedBox(height: 5),
+          SecondWeightStatusBanner(
+            isFetching: widget.isFetchingPreviousWeight,
+            vehicleNumber: widget.vehicleNumber,
+            previousBillNumber: widget.previousBillNumber,
+            previousWeightType: widget.previousWeightType,
+            previousWeightText: widget.previousWeightText,
+            previousCapturedAt: widget.previousCapturedAt,
+            message: widget.previousWeightMessage,
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Focus(
+          focusNode: widget.typeFocusNode,
+          onKeyEvent: (node, event) {
+            if (event is! KeyDownEvent) return KeyEventResult.ignored;
+            if (event.logicalKey == LogicalKeyboardKey.enter ||
+                event.logicalKey == LogicalKeyboardKey.numpadEnter) {
+              _focusAfterTypeStep();
+              return KeyEventResult.handled;
+            }
+            if (event.logicalKey == LogicalKeyboardKey.arrowLeft ||
+                event.logicalKey == LogicalKeyboardKey.arrowRight) {
+              final current = (_selectedType ?? widget.selectedType)
+                  .toLowerCase();
+              final next = current == 'gross' ? 'Tare' : 'Gross';
+              setState(() => _selectedType = next);
+              widget.onTypeChanged?.call(next);
+              return KeyEventResult.handled;
+            }
+            return KeyEventResult.ignored;
+          },
+          child: BillFormTypeSelector(
             selectedType: _selectedType ?? widget.selectedType,
             onChanged: (type) {
               setState(() => _selectedType = type);
               widget.onTypeChanged?.call(type);
             },
           ),
-          const SizedBox(height: 5),
-          const Text(
-            'F1 captures live weight into the selected type',
-            style: TextStyle(
-              fontFamily: 'PlusJakartaSans',
-              fontSize: 11.5,
-              color: Color(0xFF64748B),
+        ),
+        const SizedBox(height: 5),
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'F1 captures live weight into the selected type',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'PlusJakartaSans',
+                  fontSize: 11.5,
+                  color: Color(0xFF64748B),
+                ),
+              ),
             ),
-          ),
-        ],
-      ),
+            const SizedBox(width: 8),
+            SecondWeightToggle(
+              isActive: false,
+              onTap: () => widget.onSecondWeightToggle?.call(),
+            ),
+          ],
+        ),
+      ],
     );
   }
 

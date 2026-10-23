@@ -287,9 +287,12 @@ class BillPageState extends State<BillPage> {
   void focusTareWeightInput() => _focusTareWeightInput();
 
   void _moveWeighmentFocus({required bool forward}) {
+    // The TYPE selector is hidden in SECOND WEIGHT mode, so its focus node
+    // is detached; requesting focus on it would silently stall the cycle.
+    final state = context.read<BillBloc>().state;
     final nodes = <FocusNode>[
       _vehicleFocusNode,
-      _typeFocusNode,
+      if (!state.isSecondWeightMode) _typeFocusNode,
       _materialFocusNode,
       _remarksFocusNode,
       _chargesFocusNode,

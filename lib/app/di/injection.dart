@@ -147,11 +147,15 @@ class Injection {
     final saveBillUseCase = SaveBillUseCase(billRepository);
     final loadRecentBillsUseCase = LoadRecentBillsUseCase(billRepository);
     final generateBillNumberUseCase = GenerateBillNumberUseCase(billRepository);
+    final getPreviousWeighmentUseCase = GetPreviousWeighmentUseCase(
+      billRepository,
+    );
 
     final billBloc = BillBloc(
       saveBillUseCase: saveBillUseCase,
       loadRecentBillsUseCase: loadRecentBillsUseCase,
       generateBillNumberUseCase: generateBillNumberUseCase,
+      previousWeighmentUseCase: getPreviousWeighmentUseCase,
       settingsRepository: settingsRepository,
       materialRepository: materialRepository,
     );

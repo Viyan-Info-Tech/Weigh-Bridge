@@ -373,9 +373,7 @@ void main() {
 
     billBloc.add(const GrossWeightCommitted('20000'));
     await tester.runAsync(() async {
-      await billBloc.stream.firstWhere(
-        (state) => state.grossWeightKg == 20000,
-      );
+      await billBloc.stream.firstWhere((state) => state.grossWeightKg == 20000);
     });
     await tester.pumpAndSettle();
 

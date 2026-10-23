@@ -57,9 +57,7 @@ void main() {
     'borderless dropdown fits the 44px shell without vertical overflow',
     (tester) async {
       String? picked;
-      await tester.pumpWidget(
-        _harness(onChanged: (v) => picked = v),
-      );
+      await tester.pumpWidget(_harness(onChanged: (v) => picked = v));
       await tester.pump();
 
       // The exact failure was a 4px RenderFlex overflow on the bottom.
@@ -69,28 +67,25 @@ void main() {
     },
   );
 
-  testWidgets(
-    'dropdown still opens, lists options, and selects a value',
-    (tester) async {
-      String? picked;
-      await tester.pumpWidget(
-        _harness(onChanged: (v) => picked = v),
-      );
-      await tester.pump();
+  testWidgets('dropdown still opens, lists options, and selects a value', (
+    tester,
+  ) async {
+    String? picked;
+    await tester.pumpWidget(_harness(onChanged: (v) => picked = v));
+    await tester.pump();
 
-      // Open the overlay.
-      await tester.tap(find.byType(TextFormField));
-      await tester.pumpAndSettle();
+    // Open the overlay.
+    await tester.tap(find.byType(TextFormField));
+    await tester.pumpAndSettle();
 
-      expect(find.text('Auto - Empty'), findsWidgets);
+    expect(find.text('Auto - Empty'), findsWidgets);
 
-      await tester.tap(find.text('Sand - Load').last);
-      await tester.pumpAndSettle();
+    await tester.tap(find.text('Sand - Load').last);
+    await tester.pumpAndSettle();
 
-      expect(picked, 'Sand - Load');
-      expect(tester.takeException(), isNull);
-    },
-  );
+    expect(picked, 'Sand - Load');
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets(
     'selected value renders without overflow at short window heights',
@@ -109,60 +104,58 @@ void main() {
     },
   );
 
-  testWidgets(
-    'popup opens below the field when there is room underneath',
-    (tester) async {
-      tester.view.physicalSize = const Size(800, 600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
+  testWidgets('popup opens below the field when there is room underneath', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(
-        _harness(
-          onChanged: (_) {},
-          alignment: Alignment.topCenter,
-          padding: const EdgeInsets.only(top: 16),
-        ),
-      );
-      await tester.pump();
+    await tester.pumpWidget(
+      _harness(
+        onChanged: (_) {},
+        alignment: Alignment.topCenter,
+        padding: const EdgeInsets.only(top: 16),
+      ),
+    );
+    await tester.pump();
 
-      await tester.tap(find.byType(TextFormField));
-      await tester.pumpAndSettle();
+    await tester.tap(find.byType(TextFormField));
+    await tester.pumpAndSettle();
 
-      final fieldRect = tester.getRect(find.byType(TextFormField));
-      final optionRect = tester.getRect(find.text('Auto - Empty'));
+    final fieldRect = tester.getRect(find.byType(TextFormField));
+    final optionRect = tester.getRect(find.text('Auto - Empty'));
 
-      expect(optionRect.top, greaterThanOrEqualTo(fieldRect.bottom));
-      expect(tester.takeException(), isNull);
-    },
-  );
+    expect(optionRect.top, greaterThanOrEqualTo(fieldRect.bottom));
+    expect(tester.takeException(), isNull);
+  });
 
-  testWidgets(
-    'popup flips above the field when there is no room below it',
-    (tester) async {
-      tester.view.physicalSize = const Size(800, 600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
+  testWidgets('popup flips above the field when there is no room below it', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(
-        _harness(
-          onChanged: (_) {},
-          alignment: Alignment.bottomCenter,
-          padding: const EdgeInsets.only(bottom: 16),
-        ),
-      );
-      await tester.pump();
+    await tester.pumpWidget(
+      _harness(
+        onChanged: (_) {},
+        alignment: Alignment.bottomCenter,
+        padding: const EdgeInsets.only(bottom: 16),
+      ),
+    );
+    await tester.pump();
 
-      await tester.tap(find.byType(TextFormField));
-      await tester.pumpAndSettle();
+    await tester.tap(find.byType(TextFormField));
+    await tester.pumpAndSettle();
 
-      final fieldRect = tester.getRect(find.byType(TextFormField));
-      final optionRect = tester.getRect(find.text('Auto - Empty'));
+    final fieldRect = tester.getRect(find.byType(TextFormField));
+    final optionRect = tester.getRect(find.text('Auto - Empty'));
 
-      // The options must sit fully above the field, not overlap it.
-      expect(optionRect.bottom, lessThanOrEqualTo(fieldRect.top));
-      expect(tester.takeException(), isNull);
-    },
-  );
+    // The options must sit fully above the field, not overlap it.
+    expect(optionRect.bottom, lessThanOrEqualTo(fieldRect.top));
+    expect(tester.takeException(), isNull);
+  });
 
   testWidgets(
     'selected option shows a blue check and the popup renders as a card',
@@ -225,136 +218,131 @@ void main() {
     },
   );
 
-  testWidgets(
-    'empty list shows the material-management guidance message',
-    (tester) async {
-      tester.view.physicalSize = const Size(800, 600);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.reset);
+  testWidgets('empty list shows the material-management guidance message', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(800, 600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
 
-      await tester.pumpWidget(_harness(onChanged: (_) {}, options: const []));
-      await tester.pump();
+    await tester.pumpWidget(_harness(onChanged: (_) {}, options: const []));
+    await tester.pump();
 
-      await tester.tap(find.byType(TextFormField));
-      await tester.pumpAndSettle();
+    await tester.tap(find.byType(TextFormField));
+    await tester.pumpAndSettle();
 
-      expect(
-        find.text(
-          'No materials available. Add a material in Material Management.',
-        ),
-        findsOneWidget,
-      );
-      expect(tester.takeException(), isNull);
-    },
-  );
+    expect(
+      find.text(
+        'No materials available. Add a material in Material Management.',
+      ),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
 
-  testWidgets(
-    'Escape closes the popup without changing the selection',
-    (tester) async {
-      String? picked;
-      await tester.pumpWidget(
-        _harness(onChanged: (v) => picked = v, selected: 'Auto - Empty'),
-      );
-      await tester.pump();
+  testWidgets('Escape closes the popup without changing the selection', (
+    tester,
+  ) async {
+    String? picked;
+    await tester.pumpWidget(
+      _harness(onChanged: (v) => picked = v, selected: 'Auto - Empty'),
+    );
+    await tester.pump();
 
-      await tester.tap(find.byType(TextFormField));
-      await tester.pumpAndSettle();
+    await tester.tap(find.byType(TextFormField));
+    await tester.pumpAndSettle();
 
-      // Popup is open and lists an option that is not the current value.
-      expect(find.text('Sand - Load'), findsWidgets);
+    // Popup is open and lists an option that is not the current value.
+    expect(find.text('Sand - Load'), findsWidgets);
 
-      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-      await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
 
-      // Selection untouched (onChanged never fired) and the popup is gone.
-      expect(picked, isNull);
-      expect(find.text('Sand - Load'), findsNothing);
-      expect(find.text('Auto - Empty'), findsOneWidget);
-      expect(tester.takeException(), isNull);
-    },
-  );
+    // Selection untouched (onChanged never fired) and the popup is gone.
+    expect(picked, isNull);
+    expect(find.text('Sand - Load'), findsNothing);
+    expect(find.text('Auto - Empty'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
-  testWidgets(
-    'shared widget still supports search mode (type-to-filter)',
-    (tester) async {
-      await tester.pumpWidget(
-        _harness(
-          onChanged: (_) {},
-          enableSearch: true,
-          options: const ['Auto - Empty', 'Sand - Load', 'Gravel - Load'],
-        ),
-      );
-      await tester.pump();
+  testWidgets('shared widget still supports search mode (type-to-filter)', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      _harness(
+        onChanged: (_) {},
+        enableSearch: true,
+        options: const ['Auto - Empty', 'Sand - Load', 'Gravel - Load'],
+      ),
+    );
+    await tester.pump();
 
-      final inner = tester.widget<TextField>(find.byType(TextField));
-      expect(inner.readOnly, isFalse);
+    final inner = tester.widget<TextField>(find.byType(TextField));
+    expect(inner.readOnly, isFalse);
 
-      await tester.tap(find.byType(TextFormField));
-      await tester.pumpAndSettle();
+    await tester.tap(find.byType(TextFormField));
+    await tester.pumpAndSettle();
 
-      await tester.enterText(find.byType(TextFormField), 'sand');
-      await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField), 'sand');
+    await tester.pumpAndSettle();
 
-      expect(find.text('Sand - Load'), findsWidgets);
-      expect(find.text('Gravel - Load'), findsNothing);
-      expect(tester.takeException(), isNull);
-    },
-  );
+    expect(find.text('Sand - Load'), findsWidgets);
+    expect(find.text('Gravel - Load'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
 
-  testWidgets(
-    'shell renders a blue focus border while the field is active',
-    (tester) async {
-      await tester.pumpWidget(
-        const MaterialApp(
-          home: Scaffold(
-            body: Center(
-              child: SizedBox(
-                width: 320,
-                height: 46,
-                child: BillFormFieldShell(
-                  isFocused: true,
-                  prefixIcon: Icons.inventory_2_outlined,
-                  child: SizedBox.shrink(),
-                ),
+  testWidgets('shell renders a blue focus border while the field is active', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: 320,
+              height: 46,
+              child: BillFormFieldShell(
+                isFocused: true,
+                prefixIcon: Icons.inventory_2_outlined,
+                child: SizedBox.shrink(),
               ),
             ),
           ),
         ),
-      );
-      await tester.pump();
+      ),
+    );
+    await tester.pump();
 
-      final hasBlueBorder = tester
-          .widgetList<Container>(find.byType(Container))
-          .any((c) {
-            final d = c.decoration;
-            return d is BoxDecoration &&
-                d.border?.top.color == const Color(0xFF0D3B82) &&
-                d.border?.top.width == 1.5;
-          });
+    final hasBlueBorder = tester
+        .widgetList<Container>(find.byType(Container))
+        .any((c) {
+          final d = c.decoration;
+          return d is BoxDecoration &&
+              d.border?.top.color == const Color(0xFF0D3B82) &&
+              d.border?.top.width == 1.5;
+        });
 
-      expect(hasBlueBorder, isTrue, reason: 'focused shell uses the blue border');
-      expect(tester.takeException(), isNull);
-    },
-  );
+    expect(hasBlueBorder, isTrue, reason: 'focused shell uses the blue border');
+    expect(tester.takeException(), isNull);
+  });
 
-  testWidgets(
-    'keyboard: ArrowDown then Enter selects an option',
-    (tester) async {
-      String? picked;
-      await tester.pumpWidget(_harness(onChanged: (v) => picked = v));
-      await tester.pump();
+  testWidgets('keyboard: ArrowDown then Enter selects an option', (
+    tester,
+  ) async {
+    String? picked;
+    await tester.pumpWidget(_harness(onChanged: (v) => picked = v));
+    await tester.pump();
 
-      await tester.tap(find.byType(TextFormField));
-      await tester.pumpAndSettle();
+    await tester.tap(find.byType(TextFormField));
+    await tester.pumpAndSettle();
 
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
-      await tester.pumpAndSettle();
-      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
-      await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pumpAndSettle();
 
-      // ArrowDown highlights the first saved option, Enter commits it.
-      expect(picked, 'Auto - Empty');
-      expect(tester.takeException(), isNull);
-    },
-  );
+    // ArrowDown highlights the first saved option, Enter commits it.
+    expect(picked, 'Auto - Empty');
+    expect(tester.takeException(), isNull);
+  });
 }

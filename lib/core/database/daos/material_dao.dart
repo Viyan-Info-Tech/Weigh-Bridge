@@ -68,9 +68,7 @@ class MaterialDao extends DatabaseAccessor<AppDatabase>
     final name = entry.name.value.trim();
     final vehicleType = entry.vehicleType.value.trim();
     if (await getMaterialByNameAndType(name, vehicleType) != null) {
-      throw Exception(
-        'Material "$name - $vehicleType" already exists.',
-      );
+      throw Exception('Material "$name - $vehicleType" already exists.');
     }
     return into(materials).insert(entry);
   }
@@ -140,10 +138,7 @@ class MaterialDao extends DatabaseAccessor<AppDatabase>
 
   Future<List<Material>> searchMaterials(String query) async {
     final q = select(materials)
-      ..where(
-        (m) =>
-            m.name.like('%$query%') | m.vehicleType.like('%$query%'),
-      )
+      ..where((m) => m.name.like('%$query%') | m.vehicleType.like('%$query%'))
       ..orderBy([
         (m) => OrderingTerm.desc(m.isActive),
         (m) => OrderingTerm.asc(m.name),

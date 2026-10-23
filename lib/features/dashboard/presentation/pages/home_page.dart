@@ -130,7 +130,10 @@ class _HomePageState extends State<HomePage>
                               !_isNavMenuClosing,
                           onExit: () => _confirmLogout(context),
                         ),
-                        const ReportPage(),
+                        // Refreshes its report when this flag turns true,
+                        // because the IndexedStack keeps it alive across tab
+                        // switches and its initState never runs again.
+                        ReportPage(isActive: _selectedIndex == 1),
                         // The materials master is only built while its own tab
                         // is selected, so the rest of the shell never needs a
                         // MaterialBloc. The slot itself always stays in the

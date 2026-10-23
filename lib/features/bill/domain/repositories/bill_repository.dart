@@ -23,6 +23,15 @@ abstract class BillRepository {
   Future<Weighment?> getWeighmentById(int id);
   Future<Weighment?> getWeighmentByBillNumber(String billNumber);
 
+  /// Most recent single-weight bill ever saved for [vehicleNumber], or null.
+  ///
+  /// Used by the SECOND WEIGHT flow to retrieve the previous weighment of a
+  /// returning truck. Matching is trimmed and case-insensitive; a bill that
+  /// already holds both weights is complete and is never returned.
+  Future<Weighment?> getLatestSingleWeightWeighmentForVehicle(
+    String vehicleNumber,
+  );
+
   /// Previews the bill number the next new weighment would receive. Does not
   /// reserve it; only [saveWeighmentWithNewBillNumber] consumes a number.
   Future<String> generateNextBillNumber();

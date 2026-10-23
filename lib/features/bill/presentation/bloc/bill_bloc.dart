@@ -13,7 +13,22 @@ class BillBloc extends Bloc<BillEvent, BillState> {
   final SaveBillUseCase _saveBillUseCase;
   final LoadRecentBillsUseCase _loadRecentBillsUseCase;
   final GenerateBillNumberUseCase _generateBillNumberUseCase;
+
+  /// Looks up the previous single-weight bill of a returning truck.
+  ///
+  /// Optional so older unit tests that construct the bloc without it keep
+  /// compiling; without it the SECOND WEIGHT lookup reports no match.
+  final GetPreviousWeighmentUseCase? _previousWeighmentUseCase;
   final SettingsRepository? _settingsRepository;
+
+  /// Monotonic token for previous-weighment lookups.
+  ///
+  /// Vehicle-number edits fire a lookup per change, so two lookups can be in
+  /// flight at once against the default concurrent transformer. A result is
+  /// applied only while its token is still the newest, which stops a slow
+  /// query for an earlier vehicle number from repopulating stale weights
+  /// after a newer one already answered.
+  int _previousWeightLookupSeq = 0;
 
   /// Master data for the material dropdown. When null (e.g. in older unit
   /// tests that don't wire it), the material field falls back to plain text.
@@ -59,11 +74,13 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     required SaveBillUseCase saveBillUseCase,
     required LoadRecentBillsUseCase loadRecentBillsUseCase,
     required GenerateBillNumberUseCase generateBillNumberUseCase,
+    GetPreviousWeighmentUseCase? previousWeighmentUseCase,
     SettingsRepository? settingsRepository,
     MaterialRepository? materialRepository,
   }) : _saveBillUseCase = saveBillUseCase,
        _loadRecentBillsUseCase = loadRecentBillsUseCase,
        _generateBillNumberUseCase = generateBillNumberUseCase,
+       _previousWeighmentUseCase = previousWeighmentUseCase,
        _settingsRepository = settingsRepository,
        _materialRepository = materialRepository,
        super(const BillState()) {
@@ -95,6 +112,8 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     on<LiveScaleWeightUpdated>(_onLiveScaleWeightUpdated);
     on<WeightTypeSelected>(_onWeightTypeSelected);
     on<MobileNumberChanged>(_onMobileNumberChanged);
+    on<SecondWeightModeChanged>(_onSecondWeightModeChanged);
+    on<FetchPreviousWeightForVehicle>(_onFetchPreviousWeightForVehicle);
   }
 
   /// Processes one event at a time for handlers that must not overlap.
@@ -201,13 +220,245 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     if (trimmed.isNotEmpty) {
       updatedErrors.remove('vehicleNumber');
     }
+    final normalized = event.vehicleNumber.trim().toUpperCase();
+    final vehicleChanged = normalized != state.vehicleNumber;
+
+    var updated = state.copyWith(
+      vehicleNumber: normalized,
+      fieldErrors: updatedErrors,
+      clearError: true,
+    );
+
+    // A different vehicle makes any previously matched bill and its
+    // populated weight stale; drop the match, the operator-facing note and
+    // the weight that came from it, so they can never be saved against the
+    // new number while the fresh lookup runs.
+    if (vehicleChanged) {
+      updated = _clearPreviousWeightData(updated);
+      if (state.isSecondWeightMode) {
+        updated = updated.copyWith(
+          isFetchingPreviousWeight: false,
+          clearPreviousWeightMessage: true,
+        );
+      }
+    }
+
+    emit(updated);
+
+    // Typing over the number in SECOND WEIGHT mode must re-run the search so
+    // the correct record is retrieved for the newly entered vehicle.
+    if (vehicleChanged && state.isSecondWeightMode) {
+      add(const FetchPreviousWeightForVehicle());
+    }
+  }
+
+  /// Drops the matched previous bill and the weight that was populated
+  /// from it, leaving the operator's own captured weight untouched.
+  BillState _clearPreviousWeightData(BillState state) {
+    final previous = state.previousWeighment;
+    var updated = state.copyWith(
+      clearPreviousWeighment: true,
+      clearPreviousWeightMessage: true,
+      isFetchingPreviousWeight: false,
+    );
+    if (previous == null) return updated;
+
+    // The populated field is the one holding the previous bill's weight
+    // type; the opposite field is where the operator captures the current
+    // weight, and it must survive untouched.
+    final previousIsTare = previous.firstWeightType.toUpperCase() == 'TARE';
+    updated = previousIsTare
+        ? updated.copyWith(
+            tareWeightText: '',
+            tareWeightKg: 0,
+            clearTareCapturedAt: true,
+            clearFirstWeightType: true,
+          )
+        : updated.copyWith(
+            grossWeightText: '',
+            grossWeightKg: 0,
+            clearGrossCapturedAt: true,
+            clearFirstWeightType: true,
+          );
+    return updated.copyWith(netWeightKg: 0);
+  }
+
+  /// Toggles the SECOND WEIGHT workflow.
+  ///
+  /// Both directions drop every weight and second-weight artefact (matched
+  /// bill, populated weight, messages), so a mode change can never carry
+  /// stale state into the restored form. The vehicle number, material and
+  /// charges the operator typed are kept: they are not second-weight state.
+  void _onSecondWeightModeChanged(
+    SecondWeightModeChanged event,
+    Emitter<BillState> emit,
+  ) {
+    if (event.enabled == state.isSecondWeightMode) return;
+
     emit(
-      state.copyWith(
-        vehicleNumber: event.vehicleNumber.trim().toUpperCase(),
-        fieldErrors: updatedErrors,
-        clearError: true,
+      _clearWeightsAndSecondWeightArtifacts(
+        state.copyWith(
+          isSecondWeightMode: event.enabled,
+          // Leaving the mode restores the default GROSS capture target so
+          // F1 never fires into a field the previous mode dictated.
+          selectedWeightType: event.enabled
+              ? state.selectedWeightType
+              : 'Gross',
+        ),
       ),
     );
+
+    if (event.enabled && state.vehicleNumber.trim().isNotEmpty) {
+      add(const FetchPreviousWeightForVehicle());
+    }
+  }
+
+  /// Clears both weight fields, their capture timestamps and every
+  /// second-weight artefact, while leaving the rest of the form intact.
+  BillState _clearWeightsAndSecondWeightArtifacts(BillState state) {
+    return state.copyWith(
+      grossWeightText: '',
+      grossWeightKg: 0,
+      tareWeightText: '',
+      tareWeightKg: 0,
+      netWeightKg: 0,
+      clearGrossCapturedAt: true,
+      clearTareCapturedAt: true,
+      clearFirstWeightType: true,
+      clearWeightError: true,
+      clearPreviousWeighment: true,
+      clearPreviousWeightMessage: true,
+      isFetchingPreviousWeight: false,
+    );
+  }
+
+  /// Looks up the previous single-weight bill for the entered vehicle.
+  Future<void> _onFetchPreviousWeightForVehicle(
+    FetchPreviousWeightForVehicle event,
+    Emitter<BillState> emit,
+  ) async {
+    if (!state.isSecondWeightMode) return;
+
+    final vehicle = state.vehicleNumber.trim().toUpperCase();
+    final lookupId = ++_previousWeightLookupSeq;
+
+    if (vehicle.isEmpty) {
+      emit(
+        state.copyWith(
+          isFetchingPreviousWeight: false,
+          clearPreviousWeighment: true,
+          clearPreviousWeightMessage: true,
+        ),
+      );
+      return;
+    }
+
+    final useCase = _previousWeighmentUseCase;
+    if (useCase == null) {
+      emit(
+        state.copyWith(
+          isFetchingPreviousWeight: false,
+          clearPreviousWeighment: true,
+          previousWeightMessage:
+              'Previous weighments are unavailable. Return to normal mode '
+              'and weigh this truck from scratch.',
+        ),
+      );
+      return;
+    }
+
+    emit(state.copyWith(isFetchingPreviousWeight: true));
+
+    Weighment? previous;
+    try {
+      previous = await useCase(vehicle);
+    } catch (e) {
+      // A failed lookup surfaces as a message, never as an exception that
+      // would leave the form stuck in the fetching state.
+      if (lookupId != _previousWeightLookupSeq || emit.isDone) return;
+      emit(
+        state.copyWith(
+          isFetchingPreviousWeight: false,
+          clearPreviousWeighment: true,
+          previousWeightMessage:
+              'Could not search previous weighments: $e. '
+              'Return to normal mode or try again.',
+        ),
+      );
+      return;
+    }
+
+    // A newer lookup owns the form now; this result is stale and dropped.
+    if (lookupId != _previousWeightLookupSeq || emit.isDone) return;
+
+    if (previous == null) {
+      emit(
+        state.copyWith(
+          isFetchingPreviousWeight: false,
+          clearPreviousWeighment: true,
+          previousWeightMessage:
+              'No previous weighment found for $vehicle. '
+              'Check the number or return to normal mode.',
+        ),
+      );
+      return;
+    }
+
+    // The previous bill must carry exactly one usable weight; anything else
+    // would make the second weighing's net weight wrong.
+    final previousIsTare = previous.firstWeightType.toUpperCase() == 'TARE';
+    final previousWeightKg = previousIsTare
+        ? previous.tareWeightKg
+        : previous.grossWeightKg;
+    if (previousWeightKg == null ||
+        !previousWeightKg.isFinite ||
+        previousWeightKg <= 0) {
+      emit(
+        state.copyWith(
+          isFetchingPreviousWeight: false,
+          clearPreviousWeighment: true,
+          previousWeightMessage:
+              'The previous weighment ${previous.billNumber} for $vehicle '
+              'has invalid weight data and cannot be used. '
+              'Return to normal mode and weigh this truck from scratch.',
+        ),
+      );
+      return;
+    }
+
+    // The previous weight is displayed in its own field (converted to the
+    // form's unit) and locked; the operator captures the opposite weight.
+    final displayValue = _fromKg(previousWeightKg, state.weightUnit);
+    final text = _formatWeightText(displayValue, state.weightUnit);
+
+    emit(
+      state.copyWith(
+        isFetchingPreviousWeight: false,
+        previousWeighment: previous,
+        clearPreviousWeightMessage: true,
+        firstWeightType: previousIsTare ? 'TARE' : 'GROSS',
+        selectedWeightType: previousIsTare ? 'Gross' : 'Tare',
+        grossWeightText: previousIsTare ? '' : text,
+        grossWeightKg: previousIsTare ? 0 : previousWeightKg,
+        clearGrossCapturedAt: previousIsTare,
+        grossCapturedAt: previousIsTare ? null : previous.createdAt,
+        tareWeightText: previousIsTare ? text : '',
+        tareWeightKg: previousIsTare ? previousWeightKg : 0,
+        clearTareCapturedAt: !previousIsTare,
+        tareCapturedAt: previousIsTare ? previous.createdAt : null,
+      ),
+    );
+    _recalculate(emit);
+  }
+
+  double _fromKg(double valueKg, String unit) {
+    return _normalizeUnit(unit) == 'ton' ? valueKg / 1000 : valueKg;
+  }
+
+  String _formatWeightText(double displayValue, String unit) {
+    return _normalizeUnit(unit) == 'ton'
+        ? displayValue.toStringAsFixed(3)
+        : displayValue.toStringAsFixed(0);
   }
 
   String _normalizeUnit(String unit) {
@@ -473,6 +724,21 @@ class BillBloc extends Bloc<BillEvent, BillState> {
   }
 
   void _onCaptureLiveWeight(CaptureLiveWeight event, Emitter<BillState> emit) {
+    // In SECOND WEIGHT mode the previous weighment decides which field is
+    // locked and which one is captured now. Capturing before the lookup
+    // answered would put the live weight into an ambiguous field, so it is
+    // refused until a previous bill is matched.
+    if (state.isSecondWeightMode && state.previousWeighment == null) {
+      emit(
+        state.copyWith(
+          status: BillScreenStatus.error,
+          errorMessage:
+              'Enter the truck number to retrieve its previous weighment '
+              'before capturing weight.',
+        ),
+      );
+      return;
+    }
     final rawLiveKg = state.liveScaleWeightKg;
     if (!rawLiveKg.isFinite || rawLiveKg == 0) {
       emit(
@@ -586,6 +852,22 @@ class BillBloc extends Bloc<BillEvent, BillState> {
           'Tare weight timestamp is missing. Re-enter the tare weight.';
     }
 
+    // ── 2b. Second-weight workflow ───────────────────────────
+    // A second weighing pairs a retrieved previous weight with the weight
+    // captured now, so both must be present before the bill can be saved.
+    if (state.isSecondWeightMode) {
+      if (state.previousWeighment == null) {
+        errors['vehicleNumber'] =
+            state.previousWeightMessage ?? 'Retrieve the previous weighment.';
+      } else if (!hasGross || !hasTare) {
+        errors['weight'] =
+            'Capture the current weight to complete the second weighing.';
+      } else if (state.weightValidationError != null) {
+        // Gross/tare relationship could not be validated (e.g. tare >= gross).
+        errors['weight'] = state.weightValidationError!;
+      }
+    }
+
     // ── 3. Mobile number (optional) ───────────────────────────
     final mobile = state.mobileNumber.trim();
     if (mobile.isNotEmpty) {
@@ -599,8 +881,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     // amount with at most two decimals.
     final chargesText = state.chargesText.trim();
     if (chargesText.isNotEmpty && parseChargesInput(chargesText) == null) {
-      errors['charges'] =
-          'Enter a valid amount (digits, up to two decimals).';
+      errors['charges'] = 'Enter a valid amount (digits, up to two decimals).';
     }
 
     return errors;
@@ -758,6 +1039,12 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       // Manually entered charges: empty means no charge (NULL), a valid
       // amount is stored exactly as typed (never recalculated).
       charges: parseChargesInput(state.chargesText),
+      // Traceable link to the single-weight bill this second weighing
+      // completes. Normal weighments store NULL. The original bill itself is
+      // never modified: this is a one-way reference on the new row only.
+      previousWeighmentId: state.isSecondWeightMode
+          ? state.previousWeighment?.id
+          : null,
       remarks: state.remarksText.isNotEmpty ? state.remarksText : null,
       mobileNumber: null,
       weightUnit: state.weightUnit,
@@ -783,6 +1070,7 @@ class BillBloc extends Bloc<BillEvent, BillState> {
       material: weighment.material,
       materialId: weighment.materialId,
       charges: weighment.charges,
+      previousWeighmentId: weighment.previousWeighmentId,
       remarks: weighment.remarks,
       mobileNumber: weighment.mobileNumber,
       weightUnit: weighment.weightUnit,
@@ -820,6 +1108,10 @@ class BillBloc extends Bloc<BillEvent, BillState> {
     required String nextBillNumber,
     String? weightUnit,
   }) {
+    // A reset always returns to the default normal-weighment form. Any
+    // in-flight previous-weight lookup is invalidated so its late result can
+    // never repopulate the freshly cleared form.
+    _previousWeightLookupSeq++;
     emit(
       state.copyWith(
         vehicleNumber: '',
@@ -842,6 +1134,17 @@ class BillBloc extends Bloc<BillEvent, BillState> {
         clearTareCapturedAt: true,
         clearFieldErrors: true,
         weightUnit: weightUnit ?? state.weightUnit,
+        // SECOND WEIGHT mode does not survive a reset: the next truck starts
+        // a fresh normal weighment. The capture target returns to the
+        // default only when the reset actually leaves the mode, so a normal
+        // save keeps the operator's GROSS/TARE selection as before.
+        isSecondWeightMode: false,
+        isFetchingPreviousWeight: false,
+        clearPreviousWeighment: true,
+        clearPreviousWeightMessage: true,
+        selectedWeightType: state.isSecondWeightMode
+            ? 'Gross'
+            : state.selectedWeightType,
       ),
     );
   }
