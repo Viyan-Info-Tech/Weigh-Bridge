@@ -27,7 +27,14 @@ typedef _WeightBannerState = ({
 /// traffic off the form, the recent billings panel, and the action bar, which
 /// are driven by the page-level BlocConsumer.
 class LiveWeightBanner extends StatelessWidget {
-  const LiveWeightBanner({super.key});
+  final VoidCallback? onNavigateToReports;
+  final VoidCallback? onNavigateToMaterials;
+
+  const LiveWeightBanner({
+    super.key,
+    this.onNavigateToReports,
+    this.onNavigateToMaterials,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +60,8 @@ class LiveWeightBanner extends StatelessWidget {
         isStable: banner.isStable,
         isMotion: banner.isMotion,
         isOverload: banner.isOverload,
+        onNavigateToReports: onNavigateToReports,
+        onNavigateToMaterials: onNavigateToMaterials,
       ),
     );
   }

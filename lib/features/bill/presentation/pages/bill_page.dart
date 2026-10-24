@@ -20,10 +20,18 @@ import '../../../../core/hardware/scale/domain/scale_status.dart';
 import '../../../../core/presentation/widgets/confirm_action_dialog.dart';
 
 class BillPage extends StatefulWidget {
-  const BillPage({super.key, this.isActive = true, this.onExit});
+  const BillPage({
+    super.key,
+    this.isActive = true,
+    this.onExit,
+    this.onNavigateToReports,
+    this.onNavigateToMaterials,
+  });
 
   final bool isActive;
   final VoidCallback? onExit;
+  final VoidCallback? onNavigateToReports;
+  final VoidCallback? onNavigateToMaterials;
 
   @override
   State<BillPage> createState() => BillPageState();
@@ -576,7 +584,10 @@ class BillPageState extends State<BillPage> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               // 1. Camera feeds + live digital weight display.
-                              const LiveWeightBanner(),
+                              LiveWeightBanner(
+                                onNavigateToReports: widget.onNavigateToReports,
+                                onNavigateToMaterials: widget.onNavigateToMaterials,
+                              ),
 
                               const SizedBox(height: 10),
 

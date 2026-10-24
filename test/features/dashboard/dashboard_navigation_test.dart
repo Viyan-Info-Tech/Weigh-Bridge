@@ -234,7 +234,9 @@ void main() {
     await openNavMenu(tester);
     expect(find.text('Weighment'), findsOneWidget);
     expect(find.text('Reports'), findsOneWidget);
+    expect(find.text('Materials'), findsOneWidget);
     expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('About'), findsOneWidget);
     expect(find.text('Exit'), findsOneWidget);
 
     // Full-height panel docked to the left window edge.
@@ -242,7 +244,7 @@ void main() {
       find.byKey(const Key('nav_drawer')),
     );
     expect(drawerTopLeft.dx, 0);
-    expect(tester.getSize(find.byKey(const Key('nav_drawer'))).width, 300);
+    expect(tester.getSize(find.byKey(const Key('nav_drawer'))).width, 320);
     // The rest of the application is dimmed behind it.
     expect(find.byKey(const Key('nav_drawer_scrim')), findsOneWidget);
 
@@ -307,9 +309,12 @@ void main() {
   ) async {
     await pumpHomePage(tester);
 
-    // IndexedStack order: [BillPage, ReportPage, SettingsPage, AboutPage].
+    // IndexedStack order: [BillPage, ReportPage, MaterialListPage, SettingsPage, AboutPage].
     await tapGuardedTab(tester, 'Reports');
     expect(find.text('REPORTS'), findsOneWidget);
+
+    await tapGuardedTab(tester, 'Materials');
+    expect(find.text('Materials'), findsWidgets);
 
     await openNavMenu(tester);
     await tester.tap(find.text('Weighment'));
@@ -318,6 +323,9 @@ void main() {
 
     await tapGuardedTab(tester, 'Settings');
     expect(find.text('Settings'), findsWidgets);
+
+    await tapGuardedTab(tester, 'About');
+    expect(find.text('About ViyanInfo'), findsOneWidget);
   });
 
   testWidgets('opens About from the version link', (tester) async {
@@ -328,6 +336,58 @@ void main() {
 
     expect(find.text('About ViyanInfo'), findsOneWidget);
     expect(find.text('WEIGHT'), findsNothing);
+  });
+
+  testWidgets('drawer shows contact details card at the bottom', (
+    tester,
+  ) async {
+    await pumpHomePage(tester);
+
+    await openNavMenu(tester);
+
+    // Contact card header
+    expect(find.text('Contact ViyanInfo'), findsOneWidget);
+    expect(find.text('Support and enquiries'), findsOneWidget);
+
+    // Contact details
+    expect(find.text('Rithick Nathan'), findsOneWidget);
+    expect(find.text('+91 6379723465'), findsOneWidget);
+    expect(find.text('viyaninfo@gmail.com'), findsOneWidget);
+    expect(find.text('rithicknathan@gmail.com'), findsOneWidget);
+    expect(find.text('www.viyaninfo.com'), findsOneWidget);
+  });
+
+  testWidgets('footer shows contact details and opens About on version tap', (
+    tester,
+  ) async {
+    await pumpHomePage(tester);
+
+    // Footer shows the contact name and phone.
+    expect(find.text('Rithick'), findsOneWidget);
+    expect(find.text('91 6379723465'), findsOneWidget);
+
+    // Tapping the phone copies it to the clipboard.
+    final phoneFinder = find.text('91 6379723465');
+    await tester.tap(phoneFinder);
+    await pumpFrames(tester);
+
+    // Tapping the version badge opens About.
+    await tester.tap(find.text('v3.0.0'));
+    await pumpFrames(tester);
+    expect(find.text('About ViyanInfo'), findsOneWidget);
+  });
+
+  testWidgets('About page shows contact person and fixed email addresses', (
+    tester,
+  ) async {
+    await pumpHomePage(tester);
+
+    await tester.tap(find.text('v3.0.0'));
+    await pumpFrames(tester);
+
+    expect(find.text('Rithick Nathan'), findsWidgets);
+    expect(find.text('viyaninfo@gmail.com'), findsWidgets);
+    expect(find.text('rithicknathan@gmail.com'), findsWidgets);
   });
 
   testWidgets('logout confirmation cancels without clearing session', (

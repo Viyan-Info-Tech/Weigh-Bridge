@@ -18,6 +18,9 @@ class WeightDisplay extends StatefulWidget {
   final double? liveScaleWeightKg;
   final String? activeMode;
 
+  final VoidCallback? onNavigateToReports;
+  final VoidCallback? onNavigateToMaterials;
+
   const WeightDisplay({
     super.key,
     required this.netWeightKg,
@@ -29,6 +32,8 @@ class WeightDisplay extends StatefulWidget {
     this.isOverload = false,
     this.liveScaleWeightKg,
     this.activeMode,
+    this.onNavigateToReports,
+    this.onNavigateToMaterials,
   });
 
   @override
@@ -103,13 +108,15 @@ class _WeightDisplayState extends State<WeightDisplay> {
           return Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 1. Left CCTV Camera 01
+              // 1. Left Quick Access: Reports
               Expanded(
                 flex: 25,
-                child: _buildCameraFeed(
-                  cameraLabel: 'CAM 01',
-                  assetPath: 'assets/images/cam_view_1.jpg',
-                  fallbackAsset: 'assets/images/modern_truck_scale.jpg',
+                child: _buildQuickNavButton(
+                  icon: Icons.bar_chart_rounded,
+                  title: 'REPORTS',
+                  accentColor: const Color(0xFFFBBF24),
+                  onTap: widget.onNavigateToReports,
+                  tooltip: 'Open Reports Screen',
                 ),
               ),
 
@@ -127,13 +134,15 @@ class _WeightDisplayState extends State<WeightDisplay> {
 
               const SizedBox(width: 8),
 
-              // 3. Right CCTV Camera 02
+              // 3. Right Quick Access: Materials
               Expanded(
                 flex: 25,
-                child: _buildCameraFeed(
-                  cameraLabel: 'CAM 02',
-                  assetPath: 'assets/images/cam_view_2.jpg',
-                  fallbackAsset: 'assets/images/weighbridge_truck.jpg',
+                child: _buildQuickNavButton(
+                  icon: Icons.category_rounded,
+                  title: 'MATERIALS',
+                  accentColor: const Color(0xFF38BDF8),
+                  onTap: widget.onNavigateToMaterials,
+                  tooltip: 'Open Materials Master',
                 ),
               ),
             ],
@@ -143,77 +152,91 @@ class _WeightDisplayState extends State<WeightDisplay> {
     );
   }
 
-  /// Camera feed view with border, overlay badge, and fallbacks
-  Widget _buildCameraFeed({
-    required String cameraLabel,
-    required String assetPath,
-    required String fallbackAsset,
+  /// Quick-access navigation action button for Reports and Materials
+  Widget _buildQuickNavButton({
+    required IconData icon,
+    required String title,
+    required Color accentColor,
+    required VoidCallback? onTap,
+    required String tooltip,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: const Color(0xFFCBD5E1), width: 1.0),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(5),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Image.asset(
-              assetPath,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => Image.asset(
-                fallbackAsset,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(
-                  color: const Color(0xFF334155),
-                  child: const Center(
-                    child: Icon(
-                      Icons.videocam_outlined,
-                      color: Color(0xFF94A3B8),
-                      size: 32,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              top: 6,
-              left: 6,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.65),
-                  borderRadius: BorderRadius.circular(3),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      width: 5,
-                      height: 5,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFEF4444),
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      cameraLabel,
-                      style: const TextStyle(
-                        fontFamily: 'PlusJakartaSans',
-                        fontSize: 9,
-                        fontWeight: FontWeight.w700,
-                        color: Colors.white,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+    return Tooltip(
+      message: tooltip,
+      waitDuration: const Duration(milliseconds: 300),
+      child: Container(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFF334155), Color(0xFF1E293B), Color(0xFF0F172A)],
+          ),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: const Color(0xFF475569), width: 2.0),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.35),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
             ),
           ],
+        ),
+        padding: const EdgeInsets.all(3.0),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(5),
+            hoverColor: accentColor.withValues(alpha: 0.12),
+            splashColor: accentColor.withValues(alpha: 0.22),
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF050B14),
+                borderRadius: BorderRadius.circular(5),
+                border: Border.all(color: const Color(0xFF1E293B), width: 1.0),
+              ),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontFamily: 'PlusJakartaSans',
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                          color: accentColor,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios_rounded,
+                        size: 10,
+                        color: accentColor.withValues(alpha: 0.7),
+                      ),
+                    ],
+                  ),
+                  Expanded(
+                    child: Center(
+                      child: Icon(
+                        icon,
+                        size: 90,
+                        color: accentColor,
+                        shadows: [
+                          Shadow(
+                            color: accentColor.withValues(alpha: 0.45),
+                            blurRadius: 16,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

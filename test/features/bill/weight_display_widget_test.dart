@@ -34,17 +34,57 @@ void main() {
       await tester.pumpWidget(buildTestWidget());
       await tester.pumpAndSettle();
 
-      // Branding and camera feeds are visible, status telemetry removed
+      // Branding is visible, cameras and status telemetry are removed
       expect(find.text('WEIGHT'), findsOneWidget);
       expect(find.text('STABLE'), findsNothing);
       expect(find.text('MOTION'), findsNothing);
       expect(find.text('OVERLOAD'), findsNothing);
-      expect(find.text('CAM 01'), findsOneWidget);
-      expect(find.text('CAM 02'), findsOneWidget);
+      expect(find.text('CAM 01'), findsNothing);
+      expect(find.text('CAM 02'), findsNothing);
+
+      // Left and right quick access buttons are rendered
+      expect(find.text('REPORTS'), findsOneWidget);
+      expect(find.text('MATERIALS'), findsOneWidget);
 
       // No FIRST / SECOND / TARE weight-control buttons in the display
       expect(find.text('FIRST'), findsNothing);
       expect(find.text('SECOND'), findsNothing);
+    });
+
+    testWidgets('triggers onNavigateToReports and onNavigateToMaterials on tap', (
+      tester,
+    ) async {
+      bool reportsTapped = false;
+      bool materialsTapped = false;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Center(
+              child: SizedBox(
+                width: 800,
+                height: 350,
+                child: WeightDisplay(
+                  netWeightKg: 0,
+                  grossWeight: 0,
+                  tareWeight: 0,
+                  onNavigateToReports: () => reportsTapped = true,
+                  onNavigateToMaterials: () => materialsTapped = true,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('REPORTS'));
+      await tester.pumpAndSettle();
+      expect(reportsTapped, isTrue);
+
+      await tester.tap(find.text('MATERIALS'));
+      await tester.pumpAndSettle();
+      expect(materialsTapped, isTrue);
     });
 
     testWidgets(
