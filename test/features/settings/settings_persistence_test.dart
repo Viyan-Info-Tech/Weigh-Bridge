@@ -160,6 +160,7 @@ void main() {
       expect(settings.printTopOffsetMm, 0.0);
       expect(settings.printColumnWidthMm, 0.0);
       expect(settings.printFieldGrid, isNull);
+      expect(settings.printRightFieldGrid, isNull);
       expect(settings.printWeightUnit, isTrue);
     });
 
@@ -193,6 +194,67 @@ void main() {
       expect(settings.printFieldGrid, grid);
       expect(settings.printWeightUnit, isFalse);
     });
+
+    test('left and right grids persist separately and reload', () async {
+      const left =
+          '{"vehicle":{"c":18,"l":1,"w":20},"charges":{"c":20,"l":2,"w":14}}';
+      const right = '{"vehicle":{"c":24,"l":4,"w":18,"fs":14,"b":false}}';
+      await dataSource.getSettings();
+      await dataSource.updateSettings(
+        BillingSettings(
+          printFieldGrid: left,
+          printRightFieldGrid: right,
+          updatedAt: DateTime.utc(2026, 10, 3),
+        ),
+      );
+
+      final settings = await dataSource.getSettings();
+      expect(settings.printFieldGrid, left);
+      expect(settings.printRightFieldGrid, right);
+
+      final leftGrid = decodePrePrintedGrid(settings.printFieldGrid);
+      final rightGrid = decodePrePrintedGrid(settings.printRightFieldGrid);
+      expect(leftGrid[PrePrintedField.vehicle]!.column, 18);
+      expect(rightGrid[PrePrintedField.vehicle]!.column, 24);
+      expect(rightGrid[PrePrintedField.vehicle]!.line, 4);
+      expect(rightGrid[PrePrintedField.vehicle]!.fontSize, 14);
+      expect(rightGrid[PrePrintedField.vehicle]!.isBold, isFalse);
+
+      // Editing/reloading one grid must not mutate the other.
+      expect(leftGrid[PrePrintedField.vehicle]!.line, 1);
+      expect(leftGrid[PrePrintedField.vehicle]!.isBold, isTrue);
+      expect(
+        rightGrid[PrePrintedField.charges],
+        kDefaultPrePrintedGrid[PrePrintedField.charges],
+      );
+    });
+
+    test(
+      'a legacy row with only a left grid keeps both copies aligned',
+      () async {
+        const legacy =
+            '{"vehicle":{"c":18,"l":2,"w":20},"customer":{"c":-1,"l":-1,'
+            '"w":0}}';
+        await dataSource.getSettings();
+        await dataSource.updateSettings(
+          BillingSettings(
+            printFieldGrid: legacy,
+            updatedAt: DateTime.utc(2026, 10, 4),
+          ),
+        );
+
+        final settings = await dataSource.getSettings();
+        expect(settings.printRightFieldGrid, isNull);
+        final rightGrid = decodePrePrintedGrid(
+          settings.printRightFieldGrid ?? settings.printFieldGrid,
+        );
+        expect(
+          rightGrid[PrePrintedField.vehicle],
+          decodePrePrintedGrid(legacy)[PrePrintedField.vehicle],
+        );
+        expect(rightGrid[PrePrintedField.customer]!.isPrintable, isFalse);
+      },
+    );
 
     test('a saved grid still decodes into field placements', () async {
       await dataSource.getSettings();

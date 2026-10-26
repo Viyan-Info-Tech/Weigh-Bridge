@@ -404,51 +404,53 @@ void main() {
       expect(content, matches(RegExp(r'\b10\b\s+Tf')));
     });
 
-    test('a regular-weight field draws with the base font, not the bold one',
-        () async {
-      // One font resource per weight is registered on the page; a job whose
-      // every field is bold references exactly one of them, while a job with
-      // a regular field must reference both.
-      Future<String> fontNamesOf(String gridJson) async {
-        final bytes = await generator.generate(
-          bill: weighment(),
-          settings: settings.copyWith(printFieldGrid: gridJson),
-          pageFormat: reported,
+    test(
+      'a regular-weight field draws with the base font, not the bold one',
+      () async {
+        // One font resource per weight is registered on the page; a job whose
+        // every field is bold references exactly one of them, while a job with
+        // a regular field must reference both.
+        Future<String> fontNamesOf(String gridJson) async {
+          final bytes = await generator.generate(
+            bill: weighment(),
+            settings: settings.copyWith(printFieldGrid: gridJson),
+            pageFormat: reported,
+          );
+          return RegExp(r'/F\d+\s+[\d.]+\s+Tf')
+              .allMatches(contentStream(bytes))
+              .map((m) => m.group(0)!)
+              .toSet()
+              .join('|');
+        }
+
+        // Every printable field bold, stacked on one line, with the material
+        // row's weight switching between the two jobs.
+        String grid({required bool materialBold}) => jsonEncode({
+          for (final name in [
+            'serial',
+            'date',
+            'time',
+            'vehicle',
+            'charges',
+            'gross',
+            'tare',
+            'net',
+          ])
+            name: {'c': 0, 'l': 0, 'w': 0, 'fs': 10, 'b': true},
+          'material': {'c': 0, 'l': 0, 'w': 0, 'fs': 10, 'b': materialBold},
+        });
+
+        final allBold = await fontNamesOf(grid(materialBold: true));
+        final withRegular = await fontNamesOf(grid(materialBold: false));
+
+        expect(allBold, isNotEmpty);
+        expect(
+          withRegular.split('|').length,
+          greaterThan(allBold.split('|').length),
+          reason: 'a regular field must add the base font to the job',
         );
-        return RegExp(r'/F\d+\s+[\d.]+\s+Tf')
-            .allMatches(contentStream(bytes))
-            .map((m) => m.group(0)!)
-            .toSet()
-            .join('|');
-      }
-
-      // Every printable field bold, stacked on one line, with the material
-      // row's weight switching between the two jobs.
-      String grid({required bool materialBold}) => jsonEncode({
-        for (final name in [
-          'serial',
-          'date',
-          'time',
-          'vehicle',
-          'charges',
-          'gross',
-          'tare',
-          'net',
-        ])
-          name: {'c': 0, 'l': 0, 'w': 0, 'fs': 10, 'b': true},
-        'material': {'c': 0, 'l': 0, 'w': 0, 'fs': 10, 'b': materialBold},
-      });
-
-      final allBold = await fontNamesOf(grid(materialBold: true));
-      final withRegular = await fontNamesOf(grid(materialBold: false));
-
-      expect(allBold, isNotEmpty);
-      expect(
-        withRegular.split('|').length,
-        greaterThan(allBold.split('|').length),
-        reason: 'a regular field must add the base font to the job',
-      );
-    });
+      },
+    );
 
     test('places the two copies side by side on the same row', () async {
       final bytes = await generator.generate(
@@ -466,6 +468,32 @@ void main() {
       final delta = vehicle[1].x - vehicle[0].x;
       expect(delta, greaterThan(0));
       expect(delta, closeTo(378, 0.01), reason: 'half the printable width');
+    });
+
+    test('the right copy is drawn from its own field grid', () async {
+      final settingsWithRightGrid = settings.copyWith(
+        printFieldGrid: '{"vehicle":{"c":14,"l":1,"w":22,"fs":12,"b":true}}',
+        printRightFieldGrid:
+            '{"vehicle":{"c":24,"l":4,"w":18,"fs":15,"b":false}}',
+      );
+      final bytes = await generator.generate(
+        bill: weighment(),
+        settings: settingsWithRightGrid,
+        pageFormat: reported,
+      );
+      final vehicle = placedTexts(
+        bytes,
+      ).where((p) => p.text.contains('TN31CM2026')).toList();
+
+      expect(vehicle, hasLength(2), reason: 'one placement per copy');
+
+      // The right copy uses its own grid positions (different column/line)
+      // and must not be a mirror of the left copy.
+      expect(vehicle[0].x, isNot(equals(vehicle[1].x)));
+      expect(vehicle[0].y, isNot(equals(vehicle[1].y)));
+      expect(vehicle[1].x, greaterThan(vehicle[0].x));
+      expect(vehicle[1].x - vehicle[0].x, greaterThan(300));
+      expect((vehicle[1].y - vehicle[0].y).abs(), greaterThan(20));
     });
   });
 }

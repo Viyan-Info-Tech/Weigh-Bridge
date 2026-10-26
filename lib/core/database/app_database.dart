@@ -28,7 +28,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.e);
 
   @override
-  int get schemaVersion => 35;
+  int get schemaVersion => 36;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -1099,6 +1099,23 @@ class AppDatabase extends _$AppDatabase {
           await m.addColumn(appSettings, appSettings.printWeightUnit);
         }
       }
+      if (from < 36) {
+        // Independent alignment for the right copy of the continuous form.
+        //
+        // Additive only: one nullable column. Existing rows keep it NULL,
+        // which the layout interprets as "the right copy still shares the
+        // left grid", so every previously saved alignment is preserved.
+        final settingColumns = await customSelect(
+          "PRAGMA table_info('app_settings')",
+        ).get();
+        if (settingColumns.isEmpty) return;
+        final settingNames = settingColumns
+            .map((c) => c.read<String>('name'))
+            .toSet();
+        if (!settingNames.contains('print_right_field_grid')) {
+          await m.addColumn(appSettings, appSettings.printRightFieldGrid);
+        }
+      }
     },
     beforeOpen: (details) async {
       // Self-healing safety net for databases whose PRAGMA user_version was
@@ -1211,6 +1228,7 @@ class AppDatabase extends _$AppDatabase {
       'print_top_offset_mm': 'REAL NOT NULL DEFAULT 0.0',
       'print_column_width_mm': 'REAL NOT NULL DEFAULT 0.0',
       'print_field_grid': 'TEXT',
+      'print_right_field_grid': 'TEXT',
       'print_weight_unit': 'INTEGER NOT NULL DEFAULT 1',
     };
 

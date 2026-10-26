@@ -68,13 +68,15 @@ class PrePrintedTicketPreview extends StatelessWidget {
         final placed = <Widget>[];
 
         for (final field in PrePrintedField.values) {
-          final placement = layout.placements[field];
-          if (placement == null || !placement.isPrintable) continue;
-
           final value = data.valueFor(field);
-          final y = layout.yFor(placement) * scale;
 
           for (final copy in const [0, 1]) {
+            // Each copy is drawn from its own field grid so the preview shows
+            // exactly what that side of the print job will produce.
+            final placement = layout.placementsFor(copy)[field];
+            if (placement == null || !placement.isPrintable) continue;
+
+            final y = layout.yFor(placement) * scale;
             final x = layout.xFor(copy, placement) * scale;
 
             // The print pipeline drops values that fall off the paper edge
@@ -183,8 +185,8 @@ class PrePrintedTicketPreview extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                 'Grey labels are already printed on the paper - the app prints '
-                'only the black values. Both copies are identical and print on '
-                'one sheet in a single job.',
+                'only the black values. Each copy uses its own alignment and '
+                'both print on one sheet in a single job.',
                 style: TextStyle(
                   fontFamily: 'PlusJakartaSans',
                   fontSize: 11,

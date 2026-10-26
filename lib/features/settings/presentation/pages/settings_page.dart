@@ -396,6 +396,7 @@ class _SettingsPageState extends State<SettingsPage> {
       printTopOffsetMm: _printForm.topOffsetMm,
       printColumnWidthMm: _printForm.columnWidthMm,
       printFieldGrid: _printForm.gridJson,
+      printRightFieldGrid: _printForm.rightGridJson,
       printWeightUnit: _printForm.printWeightUnit,
       updatedAt: DateTime.now(),
     );
@@ -460,6 +461,7 @@ class _SettingsPageState extends State<SettingsPage> {
       printTopOffsetMm: _printForm.topOffsetMm,
       printColumnWidthMm: _printForm.columnWidthMm,
       printFieldGrid: _printForm.gridJson,
+      printRightFieldGrid: _printForm.rightGridJson,
       printWeightUnit: _printForm.printWeightUnit,
       updatedAt: DateTime.now(),
     );

@@ -22,9 +22,24 @@ class PrintSettingsForm {
   double leftOffsetMm = 0;
   double columnWidthMm = 0;
   bool printWeightUnit = true;
-  Map<PrePrintedField, PrePrintedFieldPlacement> grid = Map.of(
+
+  /// Which copy the field grid below is editing: `0` = left, `1` = right.
+  int activeCopy = 0;
+
+  /// Independent field grids for the two copies. They start with the same
+  /// values, but every edit is applied only to [activeCopy].
+  Map<PrePrintedField, PrePrintedFieldPlacement> leftGrid = Map.of(
     kDefaultPrePrintedGrid,
   );
+  Map<PrePrintedField, PrePrintedFieldPlacement> rightGrid = Map.of(
+    kDefaultPrePrintedGrid,
+  );
+
+  /// The grid currently shown/edited in the field table.
+  Map<PrePrintedField, PrePrintedFieldPlacement> get grid =>
+      activeCopy == 1 ? rightGrid : leftGrid;
+
+  String get activeCopyKey => activeCopy == 1 ? 'right' : 'left';
 
   final Map<String, TextEditingController> _controllers = {};
 
@@ -47,52 +62,77 @@ class PrintSettingsForm {
     leftOffsetMm = settings.printLeftOffsetMm;
     columnWidthMm = settings.printColumnWidthMm;
     printWeightUnit = settings.printWeightUnit;
-    grid = decodePrePrintedGrid(settings.printFieldGrid);
+    leftGrid = decodePrePrintedGrid(settings.printFieldGrid);
+    // Settings saved before independent alignment existed have no right grid.
+    // Materialise it from the left one so both copies start identical and the
+    // right copy stops following the left as soon as either is edited.
+    rightGrid = decodePrePrintedGrid(
+      settings.printRightFieldGrid ?? settings.printFieldGrid,
+    );
 
     _controllers['paperWidth']?.text = _fmt(paperWidthMm);
     _controllers['paperLength']?.text = _fmt(paperLengthMm);
     _controllers['top']?.text = _fmt(topOffsetMm);
     _controllers['left']?.text = _fmt(leftOffsetMm);
     _controllers['column']?.text = _fmt(columnWidthMm);
+    _seedGridControllers('left', leftGrid);
+    _seedGridControllers('right', rightGrid);
+  }
+
+  void _seedGridControllers(
+    String copyKey,
+    Map<PrePrintedField, PrePrintedFieldPlacement> placements,
+  ) {
     for (final field in PrePrintedField.values) {
-      final placement = grid[field];
-      _controllers['${field.name}.col']?.text = '${placement?.column ?? 0}';
-      _controllers['${field.name}.line']?.text = '${placement?.line ?? 0}';
-      _controllers['${field.name}.width']?.text =
+      final placement = placements[field];
+      _controllers['$copyKey.${field.name}.col']?.text =
+          '${placement?.column ?? 0}';
+      _controllers['$copyKey.${field.name}.line']?.text =
+          '${placement?.line ?? 0}';
+      _controllers['$copyKey.${field.name}.width']?.text =
           '${placement?.widthChars ?? 0}';
-      _controllers['${field.name}.size']?.text = PrintSettingsForm._fmt(
-        placement?.fontSize ?? 0,
-      );
+      _controllers['$copyKey.${field.name}.size']?.text =
+          PrintSettingsForm._fmt(placement?.fontSize ?? 0);
     }
   }
 
+  /// Resets the alignment of the copy currently being edited. The other copy
+  /// keeps its own, independently tuned positions.
   void resetAlignment() {
     topOffsetMm = 0;
     leftOffsetMm = 0;
     columnWidthMm = 0;
-    grid = Map.of(kDefaultPrePrintedGrid);
+    if (activeCopy == 1) {
+      rightGrid = Map.of(kDefaultPrePrintedGrid);
+    } else {
+      leftGrid = Map.of(kDefaultPrePrintedGrid);
+    }
     _controllers['top']?.text = '0';
     _controllers['left']?.text = '0';
     _controllers['column']?.text = '0';
-    for (final field in PrePrintedField.values) {
-      final placement = kDefaultPrePrintedGrid[field]!;
-      _controllers['${field.name}.col']?.text = '${placement.column}';
-      _controllers['${field.name}.line']?.text = '${placement.line}';
-      _controllers['${field.name}.width']?.text = '${placement.widthChars}';
-      _controllers['${field.name}.size']?.text = PrintSettingsForm._fmt(
-        placement.fontSize,
-      );
-    }
+    _seedGridControllers(activeCopyKey, grid);
   }
 
-  /// Grid as stored in the settings row: `null` while it still equals the
+  static bool _isDefaultGrid(
+    Map<PrePrintedField, PrePrintedFieldPlacement> placements,
+  ) =>
+      placements.length == kDefaultPrePrintedGrid.length &&
+      placements.entries.every((e) => kDefaultPrePrintedGrid[e.key] == e.value);
+
+  /// Left grid as stored in the settings row: `null` while it still equals the
   /// defaults, so the column stays clean until an operator actually tunes it.
-  String? get gridJson {
-    final isDefault =
-        grid.length == kDefaultPrePrintedGrid.length &&
-        grid.entries.every((e) => kDefaultPrePrintedGrid[e.key] == e.value);
-    return isDefault ? null : encodePrePrintedGrid(grid);
-  }
+  String? get gridJson =>
+      _isDefaultGrid(leftGrid) ? null : encodePrePrintedGrid(leftGrid);
+
+  /// Right grid as stored in the settings row.
+  ///
+  /// It is stored explicitly whenever either copy has been tuned. Otherwise an
+  /// edited left copy would silently drag the right copy along through the
+  /// legacy "right falls back to left" rule.
+  String? get rightGridJson =>
+      _isDefaultGrid(leftGrid) && _isDefaultGrid(rightGrid)
+      ? null
+      : encodePrePrintedGrid(rightGrid);
 
   double get effectivePaperWidthMm => useCustomPaper ? paperWidthMm : 0;
 
@@ -287,11 +327,26 @@ class ContinuousFormPrintCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
+          _segmented<int>(
+            label: 'Copy to align',
+            hint:
+                'Left and right copies keep independent field positions. '
+                'Choose a copy, then edit its grid below.',
+            value: form.activeCopy,
+            options: const {0: 'Left Copy', 1: 'Right Copy'},
+            enabled: isEditing,
+            onSelected: (value) {
+              form.activeCopy = value;
+              onChanged();
+            },
+          ),
+          const SizedBox(height: 16),
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Field alignment (characters from the copy origin, lines from '
+                  '${form.activeCopy == 1 ? 'Right' : 'Left'} copy field '
+                  'alignment (characters from the copy origin, lines from '
                   'the first row; -1 hides a field). Size is the printed text '
                   'size in points; Bold toggles the ribbon weight per field.',
                   style: _hintStyle,
@@ -305,7 +360,9 @@ class ContinuousFormPrintCard extends StatelessWidget {
                     onChanged();
                   },
                   icon: const Icon(Icons.refresh_rounded, size: 15),
-                  label: const Text('Reset alignment'),
+                  label: Text(
+                    'Reset ${form.activeCopy == 1 ? 'right' : 'left'} alignment',
+                  ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF64748B),
                     side: const BorderSide(color: Color(0xFFCBD5E1)),
@@ -347,8 +404,9 @@ class ContinuousFormPrintCard extends StatelessWidget {
           SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Each ticket prints twice - identical left and right copies on one '
-              'row of the continuous form, in a single job. The logo, company '
+              'Each ticket prints twice - left and right copies on one row of '
+              'the continuous form, in a single job. Each copy has its own '
+              'field alignment; the logo, company '
               'name, address, headings, borders and thank-you note are already '
               'on the paper and are never printed by the application.',
               style: TextStyle(
@@ -514,13 +572,15 @@ class ContinuousFormPrintCard extends StatelessWidget {
 
   Widget _fieldRow(PrePrintedField field) {
     final placement = form.grid[field] ?? kDefaultPrePrintedGrid[field]!;
+    final copyKey = form.activeCopyKey;
 
     // Re-read every cell from its controller so one edit can never drop a
-    // value the operator entered in a neighbouring cell.
+    // value the operator entered in a neighbouring cell. The controller key
+    // includes the copy so the left and right grids never mirror each other.
     void update({bool? isBold}) {
       final current = form.grid[field] ?? placement;
       String textOf(String cell, String fallback) =>
-          form.controller('${field.name}.$cell', fallback).text;
+          form.controller('$copyKey.${field.name}.$cell', fallback).text;
       form.grid[field] = PrePrintedFieldPlacement(
         column:
             int.tryParse(textOf('col', '${current.column}')) ?? current.column,
@@ -554,11 +614,19 @@ class ContinuousFormPrintCard extends StatelessWidget {
               ),
             ),
           ),
-          _gridCell('${field.name}.col', '${placement.column}', update),
-          _gridCell('${field.name}.line', '${placement.line}', update),
-          _gridCell('${field.name}.width', '${placement.widthChars}', update),
           _gridCell(
-            '${field.name}.size',
+            '$copyKey.${field.name}.col',
+            '${placement.column}',
+            update,
+          ),
+          _gridCell('$copyKey.${field.name}.line', '${placement.line}', update),
+          _gridCell(
+            '$copyKey.${field.name}.width',
+            '${placement.widthChars}',
+            update,
+          ),
+          _gridCell(
+            '$copyKey.${field.name}.size',
             PrintSettingsForm._fmt(placement.fontSize),
             update,
             allowDecimal: true,

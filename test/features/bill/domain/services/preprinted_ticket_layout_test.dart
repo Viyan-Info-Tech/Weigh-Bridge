@@ -31,12 +31,16 @@ void main() {
     updatedAt: weighmentAt,
   );
 
-  BillingSettings settingsWith({String? printFieldGrid, int? printCpi}) =>
-      BillingSettings(
-        updatedAt: weighmentAt,
-        printFieldGrid: printFieldGrid,
-        printCpi: printCpi ?? 12,
-      );
+  BillingSettings settingsWith({
+    String? printFieldGrid,
+    String? printRightFieldGrid,
+    int? printCpi,
+  }) => BillingSettings(
+    updatedAt: weighmentAt,
+    printFieldGrid: printFieldGrid,
+    printRightFieldGrid: printRightFieldGrid,
+    printCpi: printCpi ?? 12,
+  );
 
   /// The 11 x 5.5 in continuous form with typical dot-matrix margins.
   const sheet = PdfPageFormat(
@@ -528,6 +532,112 @@ void main() {
       );
       expect(custom.width, closeTo(792, 0.01));
       expect(custom.height, closeTo(396.85, 0.01));
+    });
+
+    test('the left and right copies use their own field positions', () {
+      final settings = settingsWith(
+        printFieldGrid:
+            '{"vehicle":{"c":14,"l":1,"w":22,"fs":12,"b":true},'
+            '"material":{"c":14,"l":3,"w":26,"fs":10,"b":false}}',
+        printRightFieldGrid:
+            '{"vehicle":{"c":22,"l":4,"w":18,"fs":15,"b":false},'
+            '"material":{"c":8,"l":6,"w":20,"fs":9,"b":true}}',
+      );
+      final layout = PrePrintedTicketLayout(
+        pageFormat: sheet,
+        settings: settings,
+      );
+      final texts = layout.buildPrintedTexts(
+        PrePrintedTicketData(bill: bill(), settings: settings),
+      );
+
+      final vehicleLeft = texts.firstWhere(
+        (t) => t.field == PrePrintedField.vehicle && t.copy == 0,
+      );
+      final vehicleRight = texts.firstWhere(
+        (t) => t.field == PrePrintedField.vehicle && t.copy == 1,
+      );
+
+      // Independent columns/lines: the right copy is not a mirror of the left.
+      expect(
+        vehicleLeft.x,
+        closeTo(layout.copyOriginX(0) + 14 * layout.charWidth, 0.001),
+      );
+      expect(
+        vehicleRight.x,
+        closeTo(layout.copyOriginX(1) + 22 * layout.charWidth, 0.001),
+      );
+      expect(
+        vehicleRight.y - vehicleLeft.y,
+        closeTo(3 * layout.linePitch, 0.001),
+      );
+
+      // Independent size and bold settings reach the printed text too.
+      expect(vehicleLeft.fontSize, 12);
+      expect(vehicleRight.fontSize, 15);
+      expect(vehicleLeft.isBold, isTrue);
+      expect(vehicleRight.isBold, isFalse);
+
+      final materialLeft = texts.firstWhere(
+        (t) => t.field == PrePrintedField.material && t.copy == 0,
+      );
+      final materialRight = texts.firstWhere(
+        (t) => t.field == PrePrintedField.material && t.copy == 1,
+      );
+      expect(materialLeft.fontSize, 10);
+      expect(materialRight.fontSize, 9);
+      expect(materialLeft.isBold, isFalse);
+      expect(materialRight.isBold, isTrue);
+    });
+
+    test('a field can be hidden on one copy without hiding the other', () {
+      final settings = settingsWith(
+        printFieldGrid: '{"vehicle":{"c":14,"l":1,"w":22}}',
+        printRightFieldGrid: '{"vehicle":{"c":-1,"l":-1,"w":0}}',
+      );
+      final layout = PrePrintedTicketLayout(
+        pageFormat: sheet,
+        settings: settings,
+      );
+      final texts = layout.buildPrintedTexts(
+        PrePrintedTicketData(bill: bill(), settings: settings),
+      );
+
+      expect(
+        texts.where((t) => t.field == PrePrintedField.vehicle && t.copy == 0),
+        hasLength(1),
+      );
+      expect(
+        texts.where((t) => t.field == PrePrintedField.vehicle && t.copy == 1),
+        isEmpty,
+      );
+    });
+
+    test('settings without a right grid keep both copies aligned', () {
+      final settings = settingsWith(
+        printFieldGrid: '{"vehicle":{"c":18,"l":2,"w":20,"fs":13,"b":false}}',
+      );
+      final layout = PrePrintedTicketLayout(
+        pageFormat: sheet,
+        settings: settings,
+      );
+
+      // Legacy rows stored only one grid; the right copy must still use it.
+      expect(
+        layout.rightPlacements[PrePrintedField.vehicle],
+        layout.leftPlacements[PrePrintedField.vehicle],
+      );
+
+      final texts = layout.buildPrintedTexts(
+        PrePrintedTicketData(bill: bill(), settings: settings),
+      );
+      final vehicle = texts
+          .where((t) => t.field == PrePrintedField.vehicle)
+          .toList();
+      expect(vehicle, hasLength(2));
+      expect(vehicle[0].y, vehicle[1].y);
+      expect(vehicle[0].fontSize, vehicle[1].fontSize);
+      expect(vehicle[0].isBold, vehicle[1].isBold);
     });
   });
 }

@@ -60,9 +60,21 @@ class BillingSettings extends Equatable {
   /// copies balanced on whatever paper the driver reports.
   final double printColumnWidthMm;
 
-  /// JSON grid of per-field character positions, see
+  /// JSON grid of per-field character positions for the **left** copy, see
   /// `decodePrePrintedGrid` in `preprinted_ticket_layout.dart`.
+  ///
+  /// Historic name: before the two copies became independently tunable this
+  /// was the only grid and both copies used it. It stays the left copy so
+  /// existing saved settings keep their current alignment.
   final String? printFieldGrid;
+
+  /// JSON grid of per-field character positions for the **right** copy.
+  ///
+  /// `null` means the right copy still shares [printFieldGrid], which is how
+  /// settings saved before independent alignment existed are interpreted. Once
+  /// either copy is tuned the settings screen persists both grids explicitly,
+  /// so editing one copy never moves the other.
+  final String? printRightFieldGrid;
 
   /// Whether the weight values carry their unit (`80.000 ton`) or print as a
   /// bare number (`80.000`) for forms whose unit is pre-printed.
@@ -102,6 +114,7 @@ class BillingSettings extends Equatable {
     this.printTopOffsetMm = 0,
     this.printColumnWidthMm = 0,
     this.printFieldGrid,
+    this.printRightFieldGrid,
     this.printWeightUnit = true,
     required this.updatedAt,
   });
@@ -152,6 +165,8 @@ class BillingSettings extends Equatable {
     double? printColumnWidthMm,
     String? printFieldGrid,
     bool clearPrintFieldGrid = false,
+    String? printRightFieldGrid,
+    bool clearPrintRightFieldGrid = false,
     bool? printWeightUnit,
     DateTime? updatedAt,
   }) {
@@ -191,6 +206,9 @@ class BillingSettings extends Equatable {
       printFieldGrid: clearPrintFieldGrid
           ? null
           : (printFieldGrid ?? this.printFieldGrid),
+      printRightFieldGrid: clearPrintRightFieldGrid
+          ? null
+          : (printRightFieldGrid ?? this.printRightFieldGrid),
       printWeightUnit: printWeightUnit ?? this.printWeightUnit,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -229,6 +247,7 @@ class BillingSettings extends Equatable {
     printTopOffsetMm,
     printColumnWidthMm,
     printFieldGrid,
+    printRightFieldGrid,
     printWeightUnit,
     updatedAt,
   ];

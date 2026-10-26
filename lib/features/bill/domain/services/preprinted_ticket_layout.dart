@@ -409,7 +409,12 @@ class PrePrintedTicketLayout {
     required BillingSettings settings,
   }) : page = pageFormat,
        settings = settings,
-       placements = decodePrePrintedGrid(settings.printFieldGrid) {
+       leftPlacements = decodePrePrintedGrid(settings.printFieldGrid),
+       rightPlacements = decodePrePrintedGrid(
+         // Rows saved before independent alignment existed have no right
+         // grid; sharing the left grid keeps their two copies identical.
+         settings.printRightFieldGrid ?? settings.printFieldGrid,
+       ) {
     // A persisted pitch of zero or below is unusable: the layout falls back to
     // 12 CPI / 6 LPI and reports it through [usedFallbackPitch].
     if (settings.printCpi <= 0) _cpiInvalid = true;
@@ -422,7 +427,20 @@ class PrePrintedTicketLayout {
 
   final BillingSettings settings;
 
-  final Map<PrePrintedField, PrePrintedFieldPlacement> placements;
+  /// Field positions of the left copy (copy 0).
+  final Map<PrePrintedField, PrePrintedFieldPlacement> leftPlacements;
+
+  /// Field positions of the right copy (copy 1). Equals [leftPlacements] for
+  /// settings saved before the two copies could be aligned independently.
+  final Map<PrePrintedField, PrePrintedFieldPlacement> rightPlacements;
+
+  /// Alias for [leftPlacements], kept for callers that only render one copy.
+  Map<PrePrintedField, PrePrintedFieldPlacement> get placements =>
+      leftPlacements;
+
+  /// Field positions used by [copy] (`0` = left, `1` = right).
+  Map<PrePrintedField, PrePrintedFieldPlacement> placementsFor(int copy) =>
+      copy == 1 ? rightPlacements : leftPlacements;
 
   bool _cpiInvalid = false;
   bool _lpiInvalid = false;
@@ -517,7 +535,9 @@ class PrePrintedTicketLayout {
   /// Positions every printable value on both copies of the sheet.
   ///
   /// Both copies receive identical text from the same [data] object, so a
-  /// single print operation always produces two matching records.
+  /// single print operation always produces two matching records. Each copy is
+  /// positioned from its own field grid, so the left and right alignment can be
+  /// tuned independently without changing the other copy or splitting the job.
   List<PrePrintedPrintedText> buildPrintedTexts(PrePrintedTicketData data) {
     final texts = <PrePrintedPrintedText>[];
     final usableHeight = page.height - linePitch;
@@ -526,15 +546,15 @@ class PrePrintedTicketLayout {
       final text = data.valueFor(field);
       if (text.isEmpty) continue;
 
-      final placement = placements[field];
-      if (placement == null || !placement.isPrintable) continue;
-
-      final y = yFor(placement);
-      // A line below the sheet cannot be printed; skip it instead of letting
-      // the driver clip or roll the form into a blank page.
-      if (y < 0 || y > usableHeight) continue;
-
       for (final copy in const [0, 1]) {
+        final placement = placementsFor(copy)[field];
+        if (placement == null || !placement.isPrintable) continue;
+
+        final y = yFor(placement);
+        // A line below the sheet cannot be printed; skip it instead of letting
+        // the driver clip or roll the form into a blank page.
+        if (y < 0 || y > usableHeight) continue;
+
         final x = xFor(copy, placement);
         if (x < 0 || x > page.width) continue;
         texts.add(
@@ -556,9 +576,9 @@ class PrePrintedTicketLayout {
 
   /// Fields whose placement is on-paper and whose value exists, in print order
   /// for one copy. The preview draws these alongside their pre-printed labels.
-  List<PrePrintedFieldPlacement> placementOrder() => [
+  List<PrePrintedFieldPlacement> placementOrder({int copy = 0}) => [
     for (final field in PrePrintedField.values)
-      if (placements[field] != null) placements[field]!,
+      if (placementsFor(copy)[field] != null) placementsFor(copy)[field]!,
   ];
 
   /// The pre-printed label for a field, for preview purposes only.

@@ -47,6 +47,7 @@ class SettingsLocalDataSource {
         printTopOffsetMm: Value(settings.printTopOffsetMm),
         printColumnWidthMm: Value(settings.printColumnWidthMm),
         printFieldGrid: Value(settings.printFieldGrid),
+        printRightFieldGrid: Value(settings.printRightFieldGrid),
         printWeightUnit: Value(settings.printWeightUnit),
         updatedAt: Value(DateTime.now()),
       ),
@@ -95,6 +96,7 @@ class SettingsLocalDataSource {
       printTopOffsetMm: record.printTopOffsetMm,
       printColumnWidthMm: record.printColumnWidthMm,
       printFieldGrid: record.printFieldGrid,
+      printRightFieldGrid: record.printRightFieldGrid,
       printWeightUnit: record.printWeightUnit,
       updatedAt: record.updatedAt,
     );

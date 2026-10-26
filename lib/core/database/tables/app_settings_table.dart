@@ -76,8 +76,13 @@ class AppSettings extends Table {
   RealColumn get printColumnWidthMm =>
       real().withDefault(const Constant(0.0))();
 
-  /// JSON grid of per-field character positions (columns/lines).
+  /// JSON grid of per-field character positions for the left copy.
   TextColumn get printFieldGrid => text().nullable()();
+
+  /// JSON grid of per-field character positions for the right copy. Null on
+  /// rows saved before the copies became independently tunable; those rows
+  /// fall back to [printFieldGrid] so both copies keep their old alignment.
+  TextColumn get printRightFieldGrid => text().nullable()();
 
   /// Print the weight unit with the value (`80.000 ton`) when the pre-printed
   /// form does not carry its own unit.

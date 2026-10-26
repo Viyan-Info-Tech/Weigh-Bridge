@@ -12,7 +12,7 @@ void main() {
   test('schema version is 35', () {
     final db = createInMemoryDatabase();
     addTearDown(db.close);
-    expect(db.schemaVersion, 35);
+    expect(db.schemaVersion, 36);
   });
 
   test('onCreate creates all application tables', () async {
@@ -1252,6 +1252,86 @@ CREATE TABLE app_settings (
         expect(bill!.vehicleNumber, 'TN31CM2026');
         expect(bill.firstWeightKg, 14710);
         expect(bill.previousWeighmentId, isNull);
+
+        final version = await db.customSelect('PRAGMA user_version').get();
+        expect(version.single.data['user_version'], db.schemaVersion);
+      },
+    );
+  });
+
+  group('v35 -> v36 migration', () {
+    /// Builds a genuine v35 database on disk: `app_settings` has the
+    /// continuous-form print columns but no right-copy grid column.
+    Future<NativeDatabase> createV35Database(Directory dir) async {
+      final file = File(p.join(dir.path, 'v35.sqlite'));
+      final sqlite = NativeDatabase(file);
+      await sqlite.ensureOpen(_StubExecutorUser(35));
+      final now = DateTime(2026, 10, 1).millisecondsSinceEpoch;
+
+      await sqlite.runCustom(
+        'CREATE TABLE app_settings ('
+        'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+        "weight_unit TEXT NOT NULL DEFAULT 'ton', "
+        "bill_prefix TEXT NOT NULL DEFAULT 'WB', "
+        'bill_starting_number INTEGER NOT NULL DEFAULT 1, '
+        'bill_number_digits INTEGER NOT NULL DEFAULT 5, '
+        "business_name TEXT NOT NULL DEFAULT 'VIYAN WEIGHBRIDGE', "
+        'business_subtitle TEXT, service_text TEXT, address TEXT, '
+        'phone_number TEXT, email TEXT, gstin TEXT, logo_path TEXT, '
+        "receipt_title TEXT NOT NULL DEFAULT 'WEIGHMENT RECEIPT', "
+        'show_serial_number INTEGER NOT NULL DEFAULT 1, '
+        'show_date INTEGER NOT NULL DEFAULT 1, '
+        'show_time INTEGER NOT NULL DEFAULT 1, '
+        'show_vehicle_number INTEGER NOT NULL DEFAULT 1, '
+        'show_gross_weight INTEGER NOT NULL DEFAULT 1, '
+        'show_tare_weight INTEGER NOT NULL DEFAULT 1, '
+        'show_net_weight INTEGER NOT NULL DEFAULT 1, '
+        'show_remarks INTEGER NOT NULL DEFAULT 1, '
+        'show_footer_note INTEGER NOT NULL DEFAULT 1, '
+        'footer_note TEXT, '
+        "print_cpi INTEGER NOT NULL DEFAULT 12, "
+        "print_lpi INTEGER NOT NULL DEFAULT 6, "
+        "print_paper_width_mm REAL NOT NULL DEFAULT 0.0, "
+        "print_paper_length_mm REAL NOT NULL DEFAULT 0.0, "
+        "print_left_offset_mm REAL NOT NULL DEFAULT 0.0, "
+        "print_top_offset_mm REAL NOT NULL DEFAULT 0.0, "
+        "print_column_width_mm REAL NOT NULL DEFAULT 0.0, "
+        'print_field_grid TEXT, '
+        "print_weight_unit INTEGER NOT NULL DEFAULT 1, "
+        'updated_at INTEGER NOT NULL DEFAULT ($now))',
+      );
+      await sqlite.runCustom(
+        'INSERT INTO app_settings '
+        '(business_name, bill_prefix, footer_note, print_cpi, print_field_grid, '
+        'updated_at) VALUES '
+        "('Acme Weighbridge', 'AC', 'keep me', 12, "
+        "'{\"vehicle\":{\"c\":18,\"l\":1,\"w\":20}}', $now)",
+      );
+      await sqlite.runCustom('PRAGMA user_version = 35');
+      await sqlite.close();
+
+      return NativeDatabase(file);
+    }
+
+    test(
+      'adds print_right_field_grid with nulls and preserves the left grid',
+      () async {
+        final dir = await Directory.systemTemp.createTemp('wb_v36');
+        addTearDown(() => dir.delete(recursive: true));
+
+        final db = AppDatabase.forTesting(await createV35Database(dir));
+        addTearDown(db.close);
+
+        final cols = await db
+            .customSelect("SELECT * FROM pragma_table_info('app_settings')")
+            .get();
+        final names = cols.map((r) => r.data['name'] as String).toSet();
+        expect(names, contains('print_right_field_grid'));
+
+        final settings = await db.appSettingsDao.getSettings();
+        expect(settings.businessName, 'Acme Weighbridge');
+        expect(settings.printFieldGrid, '{"vehicle":{"c":18,"l":1,"w":20}}');
+        expect(settings.printRightFieldGrid, isNull);
 
         final version = await db.customSelect('PRAGMA user_version').get();
         expect(version.single.data['user_version'], db.schemaVersion);

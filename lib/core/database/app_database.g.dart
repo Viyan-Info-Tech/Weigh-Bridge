@@ -2395,6 +2395,17 @@ class $AppSettingsTable extends AppSettings
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _printRightFieldGridMeta =
+      const VerificationMeta('printRightFieldGrid');
+  @override
+  late final GeneratedColumn<String> printRightFieldGrid =
+      GeneratedColumn<String>(
+        'print_right_field_grid',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      );
   static const VerificationMeta _printWeightUnitMeta = const VerificationMeta(
     'printWeightUnit',
   );
@@ -2456,6 +2467,7 @@ class $AppSettingsTable extends AppSettings
     printTopOffsetMm,
     printColumnWidthMm,
     printFieldGrid,
+    printRightFieldGrid,
     printWeightUnit,
     updatedAt,
   ];
@@ -2720,6 +2732,15 @@ class $AppSettingsTable extends AppSettings
         ),
       );
     }
+    if (data.containsKey('print_right_field_grid')) {
+      context.handle(
+        _printRightFieldGridMeta,
+        printRightFieldGrid.isAcceptableOrUnknown(
+          data['print_right_field_grid']!,
+          _printRightFieldGridMeta,
+        ),
+      );
+    }
     if (data.containsKey('print_weight_unit')) {
       context.handle(
         _printWeightUnitMeta,
@@ -2872,6 +2893,10 @@ class $AppSettingsTable extends AppSettings
         DriftSqlType.string,
         data['${effectivePrefix}print_field_grid'],
       ),
+      printRightFieldGrid: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}print_right_field_grid'],
+      ),
       printWeightUnit: attachedDatabase.typeMapping.read(
         DriftSqlType.bool,
         data['${effectivePrefix}print_weight_unit'],
@@ -2936,8 +2961,13 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
   /// Distance in mm between the two copies' origins; 0 = half the paper.
   final double printColumnWidthMm;
 
-  /// JSON grid of per-field character positions (columns/lines).
+  /// JSON grid of per-field character positions for the left copy.
   final String? printFieldGrid;
+
+  /// JSON grid of per-field character positions for the right copy. Null on
+  /// rows saved before the copies became independently tunable; those rows
+  /// fall back to [printFieldGrid] so both copies keep their old alignment.
+  final String? printRightFieldGrid;
 
   /// Print the weight unit with the value (`80.000 ton`) when the pre-printed
   /// form does not carry its own unit.
@@ -2976,6 +3006,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     required this.printTopOffsetMm,
     required this.printColumnWidthMm,
     this.printFieldGrid,
+    this.printRightFieldGrid,
     required this.printWeightUnit,
     required this.updatedAt,
   });
@@ -3031,6 +3062,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     map['print_column_width_mm'] = Variable<double>(printColumnWidthMm);
     if (!nullToAbsent || printFieldGrid != null) {
       map['print_field_grid'] = Variable<String>(printFieldGrid);
+    }
+    if (!nullToAbsent || printRightFieldGrid != null) {
+      map['print_right_field_grid'] = Variable<String>(printRightFieldGrid);
     }
     map['print_weight_unit'] = Variable<bool>(printWeightUnit);
     map['updated_at'] = Variable<DateTime>(updatedAt);
@@ -3089,6 +3123,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       printFieldGrid: printFieldGrid == null && nullToAbsent
           ? const Value.absent()
           : Value(printFieldGrid),
+      printRightFieldGrid: printRightFieldGrid == null && nullToAbsent
+          ? const Value.absent()
+          : Value(printRightFieldGrid),
       printWeightUnit: Value(printWeightUnit),
       updatedAt: Value(updatedAt),
     );
@@ -3136,6 +3173,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
         json['printColumnWidthMm'],
       ),
       printFieldGrid: serializer.fromJson<String?>(json['printFieldGrid']),
+      printRightFieldGrid: serializer.fromJson<String?>(
+        json['printRightFieldGrid'],
+      ),
       printWeightUnit: serializer.fromJson<bool>(json['printWeightUnit']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -3176,6 +3216,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       'printTopOffsetMm': serializer.toJson<double>(printTopOffsetMm),
       'printColumnWidthMm': serializer.toJson<double>(printColumnWidthMm),
       'printFieldGrid': serializer.toJson<String?>(printFieldGrid),
+      'printRightFieldGrid': serializer.toJson<String?>(printRightFieldGrid),
       'printWeightUnit': serializer.toJson<bool>(printWeightUnit),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -3214,6 +3255,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     double? printTopOffsetMm,
     double? printColumnWidthMm,
     Value<String?> printFieldGrid = const Value.absent(),
+    Value<String?> printRightFieldGrid = const Value.absent(),
     bool? printWeightUnit,
     DateTime? updatedAt,
   }) => AppSetting(
@@ -3253,6 +3295,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     printFieldGrid: printFieldGrid.present
         ? printFieldGrid.value
         : this.printFieldGrid,
+    printRightFieldGrid: printRightFieldGrid.present
+        ? printRightFieldGrid.value
+        : this.printRightFieldGrid,
     printWeightUnit: printWeightUnit ?? this.printWeightUnit,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -3336,6 +3381,9 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
       printFieldGrid: data.printFieldGrid.present
           ? data.printFieldGrid.value
           : this.printFieldGrid,
+      printRightFieldGrid: data.printRightFieldGrid.present
+          ? data.printRightFieldGrid.value
+          : this.printRightFieldGrid,
       printWeightUnit: data.printWeightUnit.present
           ? data.printWeightUnit.value
           : this.printWeightUnit,
@@ -3378,6 +3426,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           ..write('printTopOffsetMm: $printTopOffsetMm, ')
           ..write('printColumnWidthMm: $printColumnWidthMm, ')
           ..write('printFieldGrid: $printFieldGrid, ')
+          ..write('printRightFieldGrid: $printRightFieldGrid, ')
           ..write('printWeightUnit: $printWeightUnit, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -3418,6 +3467,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
     printTopOffsetMm,
     printColumnWidthMm,
     printFieldGrid,
+    printRightFieldGrid,
     printWeightUnit,
     updatedAt,
   ]);
@@ -3457,6 +3507,7 @@ class AppSetting extends DataClass implements Insertable<AppSetting> {
           other.printTopOffsetMm == this.printTopOffsetMm &&
           other.printColumnWidthMm == this.printColumnWidthMm &&
           other.printFieldGrid == this.printFieldGrid &&
+          other.printRightFieldGrid == this.printRightFieldGrid &&
           other.printWeightUnit == this.printWeightUnit &&
           other.updatedAt == this.updatedAt);
 }
@@ -3494,6 +3545,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
   final Value<double> printTopOffsetMm;
   final Value<double> printColumnWidthMm;
   final Value<String?> printFieldGrid;
+  final Value<String?> printRightFieldGrid;
   final Value<bool> printWeightUnit;
   final Value<DateTime> updatedAt;
   const AppSettingsCompanion({
@@ -3529,6 +3581,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.printTopOffsetMm = const Value.absent(),
     this.printColumnWidthMm = const Value.absent(),
     this.printFieldGrid = const Value.absent(),
+    this.printRightFieldGrid = const Value.absent(),
     this.printWeightUnit = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
@@ -3565,6 +3618,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     this.printTopOffsetMm = const Value.absent(),
     this.printColumnWidthMm = const Value.absent(),
     this.printFieldGrid = const Value.absent(),
+    this.printRightFieldGrid = const Value.absent(),
     this.printWeightUnit = const Value.absent(),
     this.updatedAt = const Value.absent(),
   });
@@ -3601,6 +3655,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Expression<double>? printTopOffsetMm,
     Expression<double>? printColumnWidthMm,
     Expression<String>? printFieldGrid,
+    Expression<String>? printRightFieldGrid,
     Expression<bool>? printWeightUnit,
     Expression<DateTime>? updatedAt,
   }) {
@@ -3640,6 +3695,8 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       if (printColumnWidthMm != null)
         'print_column_width_mm': printColumnWidthMm,
       if (printFieldGrid != null) 'print_field_grid': printFieldGrid,
+      if (printRightFieldGrid != null)
+        'print_right_field_grid': printRightFieldGrid,
       if (printWeightUnit != null) 'print_weight_unit': printWeightUnit,
       if (updatedAt != null) 'updated_at': updatedAt,
     });
@@ -3678,6 +3735,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     Value<double>? printTopOffsetMm,
     Value<double>? printColumnWidthMm,
     Value<String?>? printFieldGrid,
+    Value<String?>? printRightFieldGrid,
     Value<bool>? printWeightUnit,
     Value<DateTime>? updatedAt,
   }) {
@@ -3714,6 +3772,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
       printTopOffsetMm: printTopOffsetMm ?? this.printTopOffsetMm,
       printColumnWidthMm: printColumnWidthMm ?? this.printColumnWidthMm,
       printFieldGrid: printFieldGrid ?? this.printFieldGrid,
+      printRightFieldGrid: printRightFieldGrid ?? this.printRightFieldGrid,
       printWeightUnit: printWeightUnit ?? this.printWeightUnit,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -3818,6 +3877,11 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
     if (printFieldGrid.present) {
       map['print_field_grid'] = Variable<String>(printFieldGrid.value);
     }
+    if (printRightFieldGrid.present) {
+      map['print_right_field_grid'] = Variable<String>(
+        printRightFieldGrid.value,
+      );
+    }
     if (printWeightUnit.present) {
       map['print_weight_unit'] = Variable<bool>(printWeightUnit.value);
     }
@@ -3862,6 +3926,7 @@ class AppSettingsCompanion extends UpdateCompanion<AppSetting> {
           ..write('printTopOffsetMm: $printTopOffsetMm, ')
           ..write('printColumnWidthMm: $printColumnWidthMm, ')
           ..write('printFieldGrid: $printFieldGrid, ')
+          ..write('printRightFieldGrid: $printRightFieldGrid, ')
           ..write('printWeightUnit: $printWeightUnit, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -5365,6 +5430,7 @@ typedef $$AppSettingsTableCreateCompanionBuilder =
       Value<double> printTopOffsetMm,
       Value<double> printColumnWidthMm,
       Value<String?> printFieldGrid,
+      Value<String?> printRightFieldGrid,
       Value<bool> printWeightUnit,
       Value<DateTime> updatedAt,
     });
@@ -5402,6 +5468,7 @@ typedef $$AppSettingsTableUpdateCompanionBuilder =
       Value<double> printTopOffsetMm,
       Value<double> printColumnWidthMm,
       Value<String?> printFieldGrid,
+      Value<String?> printRightFieldGrid,
       Value<bool> printWeightUnit,
       Value<DateTime> updatedAt,
     });
@@ -5572,6 +5639,11 @@ class $$AppSettingsTableFilterComposer
 
   ColumnFilters<String> get printFieldGrid => $composableBuilder(
     column: $table.printFieldGrid,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get printRightFieldGrid => $composableBuilder(
+    column: $table.printRightFieldGrid,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -5755,6 +5827,11 @@ class $$AppSettingsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get printRightFieldGrid => $composableBuilder(
+    column: $table.printRightFieldGrid,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<bool> get printWeightUnit => $composableBuilder(
     column: $table.printWeightUnit,
     builder: (column) => ColumnOrderings(column),
@@ -5917,6 +5994,11 @@ class $$AppSettingsTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get printRightFieldGrid => $composableBuilder(
+    column: $table.printRightFieldGrid,
+    builder: (column) => column,
+  );
+
   GeneratedColumn<bool> get printWeightUnit => $composableBuilder(
     column: $table.printWeightUnit,
     builder: (column) => column,
@@ -5989,6 +6071,7 @@ class $$AppSettingsTableTableManager
                 Value<double> printTopOffsetMm = const Value.absent(),
                 Value<double> printColumnWidthMm = const Value.absent(),
                 Value<String?> printFieldGrid = const Value.absent(),
+                Value<String?> printRightFieldGrid = const Value.absent(),
                 Value<bool> printWeightUnit = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => AppSettingsCompanion(
@@ -6024,6 +6107,7 @@ class $$AppSettingsTableTableManager
                 printTopOffsetMm: printTopOffsetMm,
                 printColumnWidthMm: printColumnWidthMm,
                 printFieldGrid: printFieldGrid,
+                printRightFieldGrid: printRightFieldGrid,
                 printWeightUnit: printWeightUnit,
                 updatedAt: updatedAt,
               ),
@@ -6061,6 +6145,7 @@ class $$AppSettingsTableTableManager
                 Value<double> printTopOffsetMm = const Value.absent(),
                 Value<double> printColumnWidthMm = const Value.absent(),
                 Value<String?> printFieldGrid = const Value.absent(),
+                Value<String?> printRightFieldGrid = const Value.absent(),
                 Value<bool> printWeightUnit = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
               }) => AppSettingsCompanion.insert(
@@ -6096,6 +6181,7 @@ class $$AppSettingsTableTableManager
                 printTopOffsetMm: printTopOffsetMm,
                 printColumnWidthMm: printColumnWidthMm,
                 printFieldGrid: printFieldGrid,
+                printRightFieldGrid: printRightFieldGrid,
                 printWeightUnit: printWeightUnit,
                 updatedAt: updatedAt,
               ),
