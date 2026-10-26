@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:weighbridge/core/constants/auto_tare_records.dart';
 import '../../domain/entities/weighment.dart';
 import '../../domain/entities/auto_tare_entry.dart';
 import '../../domain/entities/vehicle_tare_record.dart';
@@ -42,6 +43,12 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
   /// the one that was just saved can only be that duplicate, because an empty
   /// form can never pass validation anyway.
   BillState? _formJustSaved;
+
+  /// Tracks the vehicle number for which the tare was automatically populated
+  /// from the predefined (hardcoded) client Auto Tare records. `null` means the
+  /// current tare was entered manually (or no auto tare was applied), so an
+  /// unmatched vehicle must not have its tare cleared.
+  String? _autoTareAppliedVehicle;
 
   /// True when [state] is still untouched since the last successful save.
   bool get _isDuplicateSaveRequest {
@@ -226,9 +233,72 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     if (trimmed.isNotEmpty) {
       updatedErrors.remove('vehicleNumber');
     }
+    final normalized = trimmed.toUpperCase();
+
+    // Client-specific predefined Auto Tare lookup (hardcoded records).
+    final predefinedTare = AutoTareRecords.lookup(trimmed);
+
+    final previousAutoVehicle = _autoTareAppliedVehicle;
+
+    if (predefinedTare != null) {
+      // Avoid unnecessary repeated state updates while the operator types:
+      // only (re)apply when this vehicle's tare has not already been applied.
+      final alreadyApplied =
+          previousAutoVehicle == normalized &&
+          state.tareWeightKg == predefinedTare;
+      if (!alreadyApplied) {
+        final isTon = state.weightUnit.trim().toLowerCase() == 'ton';
+        final tareText = isTon
+            ? (predefinedTare / 1000).toStringAsFixed(3)
+            : predefinedTare.toStringAsFixed(0);
+        emit(
+          state.copyWith(
+            vehicleNumber: normalized,
+            fieldErrors: updatedErrors,
+            clearError: true,
+            tareWeightKg: predefinedTare,
+            tareWeightText: tareText,
+            tareCapturedAt:
+                state.tareCapturedAt ?? DateTime.now(),
+          ),
+        );
+        _recalculate(emit);
+      } else {
+        emit(
+          state.copyWith(
+            vehicleNumber: normalized,
+            fieldErrors: updatedErrors,
+            clearError: true,
+          ),
+        );
+      }
+      _autoTareAppliedVehicle = normalized;
+      return;
+    }
+
+    // Unmatched vehicle: never overwrite a manually entered tare. Only clear
+    // the value when it was previously auto-populated for another vehicle, so
+    // the previous vehicle's automatic tare is not retained.
+    if (previousAutoVehicle != null && previousAutoVehicle != normalized) {
+      emit(
+        state.copyWith(
+          vehicleNumber: normalized,
+          fieldErrors: updatedErrors,
+          clearError: true,
+          tareWeightKg: 0,
+          tareWeightText: '',
+          clearTareCapturedAt: true,
+        ),
+      );
+      _recalculate(emit);
+      _autoTareAppliedVehicle = null;
+      return;
+    }
+
+    _autoTareAppliedVehicle = null;
     emit(
       state.copyWith(
-        vehicleNumber: event.vehicleNumber.trim().toUpperCase(),
+        vehicleNumber: normalized,
         fieldErrors: updatedErrors,
         clearError: true,
       ),
@@ -323,6 +393,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
   }
 
   void _onTareWeightChanged(TareWeightChanged event, Emitter<BillState> emit) {
+    _autoTareAppliedVehicle = null;
     if (state.status == BillScreenStatus.initial ||
         state.status == BillScreenStatus.loading) {
       return;
@@ -353,6 +424,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
     TareWeightCommitted event,
     Emitter<BillState> emit,
   ) {
+    _autoTareAppliedVehicle = null;
     if (state.status == BillScreenStatus.initial ||
         state.status == BillScreenStatus.loading) {
       return;

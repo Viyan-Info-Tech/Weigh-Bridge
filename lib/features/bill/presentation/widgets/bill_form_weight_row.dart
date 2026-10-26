@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 /// Accent palette for a weight display row.
@@ -238,7 +237,7 @@ class BillFormWeightRow extends StatelessWidget {
   }
 }
 
-class _EditableWeightBox extends StatefulWidget {
+class _EditableWeightBox extends StatelessWidget {
   const _EditableWeightBox({
     required this.controller,
     required this.displayWeight,
@@ -265,103 +264,21 @@ class _EditableWeightBox extends StatefulWidget {
   final VoidCallback? onSubmittedNext;
   final WeightRowAccent accent;
 
-  @override
-  State<_EditableWeightBox> createState() => _EditableWeightBoxState();
-}
-
-class _EditableWeightBoxState extends State<_EditableWeightBox> {
-  final _internalFocusNode = FocusNode(debugLabel: 'manualWeightFocusNode');
-  bool _editing = false;
-
-  FocusNode get _focusNode => widget.focusNode ?? _internalFocusNode;
-
-  @override
-  void initState() {
-    super.initState();
-    _focusNode.addListener(_handleFocusChange);
-  }
-
-  @override
-  void didUpdateWidget(covariant _EditableWeightBox oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    final oldFocusNode = oldWidget.focusNode ?? _internalFocusNode;
-    final newFocusNode = widget.focusNode ?? _internalFocusNode;
-    if (oldFocusNode != newFocusNode) {
-      oldFocusNode.removeListener(_handleFocusChange);
-      newFocusNode.addListener(_handleFocusChange);
-    }
-  }
-
-  @override
-  void dispose() {
-    _focusNode.removeListener(_handleFocusChange);
-    _internalFocusNode.dispose();
-    super.dispose();
-  }
-
-  void _handleFocusChange() {
-    if (_focusNode.hasFocus && widget.enabled) {
-      if (!_editing) {
-        if (widget.controller.text.isEmpty &&
-            widget.displayWeight != '0' &&
-            widget.displayWeight != '0.000') {
-          widget.controller.text = widget.displayWeight.replaceAll(',', '');
-        }
-        setState(() => _editing = true);
-        _selectAllText();
-      }
-    } else if (!_focusNode.hasFocus) {
-      if (_editing) {
-        _commitAndFinishEditing();
-      }
-    }
-  }
-
-  void _beginEditing() {
-    if (!widget.enabled) return;
-    _focusNode.requestFocus();
-  }
-
-  void _selectAllText() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        widget.controller.selection = TextSelection(
-          baseOffset: 0,
-          extentOffset: widget.controller.text.length,
-        );
-      }
-    });
-  }
-
-  void _commitAndFinishEditing() {
-    if (_editing) setState(() => _editing = false);
-    widget.onCommitted?.call(widget.controller.text);
-  }
+  FocusNode? get _focusNode => focusNode;
 
   @override
   Widget build(BuildContext context) {
-    final activeColor = widget.hasError
-        ? const Color(0xFFDC2626)
-        : _editing
-        ? const Color(0xFF3B82F6)
-        : const Color(0xFFCBD5E1);
-    final backgroundColor = widget.hasError
-        ? const Color(0xFFFEF2F2)
-        : _editing
-        ? const Color(0xFFEFF6FF)
-        : const Color(0xFFF8FAFC);
+    final widget = this;
+    final activeColor = hasError ? const Color(0xFFDC2626) : const Color(0xFFCBD5E1);
+    final backgroundColor = hasError ? const Color(0xFFFEF2F2) : const Color(0xFFF8FAFC);
 
-    return Tooltip(
-      message: widget.enabled
-          ? 'Click to edit weight manually'
-          : 'This weight is locked while editing this ticket',
-      child: MouseRegion(
-        cursor: widget.enabled ? SystemMouseCursors.text : MouseCursor.defer,
+    return MouseRegion(
+        cursor: SystemMouseCursors.basic,
         child: Material(
           color: backgroundColor,
           borderRadius: BorderRadius.circular(6),
           child: InkWell(
-            onTap: _editing ? null : _beginEditing,
+            onTap: null,
             borderRadius: BorderRadius.circular(6),
             child: Container(
               height: 46,
@@ -370,7 +287,7 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                 borderRadius: BorderRadius.circular(6),
                 border: Border.all(
                   color: activeColor,
-                  width: (widget.hasError || _editing) ? 1.5 : 1,
+                  width: widget.hasError ? 1.5 : 1,
                 ),
               ),
               child: Row(
@@ -381,8 +298,6 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                     decoration: BoxDecoration(
                       color: widget.hasError
                           ? const Color(0xFFFEE2E2)
-                          : _editing
-                          ? const Color(0xFFDBEAFE)
                           : const Color(0xFFE2E8F0),
                       borderRadius: const BorderRadius.horizontal(
                         left: Radius.circular(5),
@@ -391,12 +306,10 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                     ),
                     alignment: Alignment.center,
                     child: Icon(
-                      _editing ? Icons.edit_rounded : Icons.scale_rounded,
+                      Icons.scale_rounded,
                       size: 20,
                       color: widget.hasError
                           ? const Color(0xFFDC2626)
-                          : _editing
-                          ? const Color(0xFF2563EB)
                           : const Color(0xFF64748B),
                     ),
                   ),
@@ -406,23 +319,13 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
                       child: TextField(
                         controller: widget.controller,
                         focusNode: _focusNode,
-                        enabled: widget.enabled,
-                        readOnly: !_editing,
-                        showCursor: _editing,
+                        enabled: true,
+                        readOnly: true,
+                        showCursor: false,
                         keyboardType: const TextInputType.numberWithOptions(
                           decimal: true,
                         ),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                            RegExp(r'^\d*\.?\d{0,3}$'),
-                          ),
-                        ],
                         textInputAction: TextInputAction.next,
-                        onChanged: widget.onChanged,
-                        onSubmitted: (value) {
-                          _commitAndFinishEditing();
-                          widget.onSubmittedNext?.call();
-                        },
                         decoration: InputDecoration(
                           hintText: widget.displayWeight,
                           hintStyle: TextStyle(
@@ -475,7 +378,6 @@ class _EditableWeightBoxState extends State<_EditableWeightBox> {
             ),
           ),
         ),
-      ),
     );
   }
 }

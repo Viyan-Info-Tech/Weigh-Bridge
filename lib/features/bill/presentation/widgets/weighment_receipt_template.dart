@@ -276,12 +276,31 @@ class WeighmentReceiptTemplate extends StatelessWidget {
 
               SizedBox(height: compact ? 14 : 28),
 
-              // 11. Print timestamp
-              Center(
-                child: Text(
-                  '* Printed on: ${data.printDate} *',
-                  style: timestampStyle,
-                ),
+              // 11. Print timestamp + signature (same row)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '* Printed on: ${data.printDate} *',
+                    style: timestampStyle,
+                  ),
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: compact ? 120.0 : 180.0,
+                        height: 1.0,
+                        color: Colors.black,
+                      ),
+                      SizedBox(height: compact ? 3 : 5),
+                      Text(
+                        'Signature',
+                        style: mono.copyWith(fontSize: baseFontSize - 2),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),

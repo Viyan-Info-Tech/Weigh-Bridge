@@ -405,19 +405,6 @@ class BillPageState extends State<BillPage> {
       ..showSnackBar(SnackBar(content: Text(message)));
   }
 
-  void _focusTareWeightInput() {
-    _tareWeightFocusNode.requestFocus();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted || !_tareWeightFocusNode.hasFocus) return;
-      _tareWeightController.selection = TextSelection(
-        baseOffset: 0,
-        extentOffset: _tareWeightController.text.length,
-      );
-    });
-  }
-
-  void focusTareWeightInput() => _focusTareWeightInput();
-
   void _moveWeighmentFocus({required bool forward}) {
     final nodes = <FocusNode>[
       _vehicleFocusNode,
@@ -760,7 +747,6 @@ class BillPageState extends State<BillPage> {
       onCancel: _clearFormFromEscape,
       onSave: () => _saveTicket(context, context.read<BillBloc>().state),
       onCaptureLiveWeight: _handleF1Workflow,
-      onManualTare: _focusTareWeightInput,
       onAutoTare: _applyAutoTareToBill,
       onReprint: () =>
           _onReprintPressed(context, context.read<BillBloc>().state),
@@ -777,7 +763,6 @@ class BillPageState extends State<BillPage> {
       onCancel: _clearFormFromEscape,
       onSave: () => _saveTicket(context, context.read<BillBloc>().state),
       onCaptureLiveWeight: _handleF1Workflow,
-      onManualTare: _focusTareWeightInput,
       onAutoTare: _applyAutoTareToBill,
       onReprint: () =>
           _onReprintPressed(context, context.read<BillBloc>().state),
@@ -856,7 +841,6 @@ class BillPageState extends State<BillPage> {
       onSave: () => _saveTicket(context, state),
       onCancel: () => _onCancelPressed(context, state),
       onRegisterWeight: _handleF1Workflow,
-      onManualTare: _focusTareWeightInput,
       onAutoTare: _applyAutoTareToBill,
       onReprint: () => _onReprintPressed(context, state),
     );

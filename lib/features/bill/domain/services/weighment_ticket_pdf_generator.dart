@@ -217,12 +217,31 @@ class WeighmentTicketPdfGenerator {
 
               pw.SizedBox(height: 24),
 
-              // ── 12. PRINT TIMESTAMP ───────────────────
-              pw.Center(
-                child: pw.Text(
-                  '* Printed on: ${data.printDate} *',
-                  style: const pw.TextStyle(fontSize: 8),
-                ),
+              // ── PRINT TIMESTAMP + SIGNATURE (same row) ─────
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                    '* Printed on: ${data.printDate} *',
+                    style: const pw.TextStyle(fontSize: 8),
+                  ),
+                  pw.Column(
+                    mainAxisSize: pw.MainAxisSize.min,
+                    crossAxisAlignment: pw.CrossAxisAlignment.center,
+                    children: [
+                      pw.Container(
+                        width: 140,
+                        height: 1,
+                        color: PdfColors.black,
+                      ),
+                      pw.SizedBox(height: 4),
+                      pw.Text(
+                        'Signature',
+                        style: const pw.TextStyle(fontSize: 8.5),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           );

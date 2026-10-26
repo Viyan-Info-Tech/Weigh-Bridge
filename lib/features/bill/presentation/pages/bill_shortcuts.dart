@@ -16,10 +16,6 @@ class CaptureLiveWeightIntent extends Intent {
   const CaptureLiveWeightIntent();
 }
 
-class ManualTareIntent extends Intent {
-  const ManualTareIntent();
-}
-
 class AutoTareIntent extends Intent {
   const AutoTareIntent();
 }
@@ -55,7 +51,6 @@ class WeighmentShortcutHandlers {
     required this.onCancel,
     required this.onSave,
     required this.onCaptureLiveWeight,
-    required this.onManualTare,
     required this.onAutoTare,
     required this.onReprint,
     required this.onExit,
@@ -70,7 +65,6 @@ class WeighmentShortcutHandlers {
   final VoidCallback onCancel;
   final VoidCallback onSave;
   final VoidCallback onCaptureLiveWeight;
-  final VoidCallback onManualTare;
   final VoidCallback onAutoTare;
   final VoidCallback onReprint;
   final VoidCallback onSaveAndPrint;
@@ -105,7 +99,6 @@ class WeighmentShortcutScope extends StatelessWidget {
             const SaveWeighmentIntent(),
         const SingleActivator(LogicalKeyboardKey.f1):
             const CaptureLiveWeightIntent(),
-        const SingleActivator(LogicalKeyboardKey.f2): const ManualTareIntent(),
         const SingleActivator(LogicalKeyboardKey.f3): const AutoTareIntent(),
         const SingleActivator(LogicalKeyboardKey.f4): const ReprintIntent(),
         const SingleActivator(LogicalKeyboardKey.f9):
@@ -140,13 +133,6 @@ class WeighmentShortcutScope extends StatelessWidget {
             onInvoke: (_) {
               if (h.isModalOpen()) return null;
               h.onCaptureLiveWeight();
-              return null;
-            },
-          ),
-          ManualTareIntent: CallbackAction<ManualTareIntent>(
-            onInvoke: (_) {
-              if (h.isModalOpen() || h.isSaving()) return null;
-              h.onManualTare();
               return null;
             },
           ),
@@ -215,7 +201,6 @@ bool handleWeighmentGlobalKeyEvent(
   required VoidCallback onCancel,
   required VoidCallback onSave,
   required VoidCallback onCaptureLiveWeight,
-  required VoidCallback onManualTare,
   required VoidCallback onAutoTare,
   required VoidCallback onReprint,
   required VoidCallback onSaveAndPrint,
@@ -234,12 +219,6 @@ bool handleWeighmentGlobalKeyEvent(
   // 1. ESC -> Cancel current weighment
   if (key == LogicalKeyboardKey.escape) {
     if (!isSaving()) onCancel();
-    return true;
-  }
-
-  // 2. F2 -> Manual Tare
-  if (key == LogicalKeyboardKey.f2) {
-    if (!isSaving()) onManualTare();
     return true;
   }
 
