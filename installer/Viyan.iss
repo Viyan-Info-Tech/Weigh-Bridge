@@ -3,8 +3,8 @@
 ; Non-commercial use only.
 
 #define MyAppName "Viyan WeighBridge"
-#define MyAppVersion "1.0.1"
-#define MyAppPublisher "Viyan Weigh Bridge"
+#define MyAppVersion "2.0.0"
+#define MyAppPublisher "ViyanInfo"
 #define MyAppURL "https://www.viyaninfo.com/"
 #define MyAppExeName "weighbridge.exe"
 #define DoubleAmp(Value) StringChange(Value, "&", "&&")
@@ -13,7 +13,7 @@
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application. Do not use the same AppId value in installers for other applications.
 ; (To generate a new GUID, click Tools | Generate GUID inside the IDE.)
-AppId={{A87EE239-0D05-402B-A066-2BE6F248183D}
+AppId={{4DFC70C0-6B5D-4B64-A587-F4E2A9274AB5}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 ;AppVerName={cm:NameAndVersion,{#EscapeConstArgument(MyAppName)},{#EscapeConstArgument(MyAppVersion)}}
@@ -34,7 +34,7 @@ DisableProgramGroupPage=yes
 ; Uncomment the following line to run in non administrative install mode (install for current user only).
 ;PrivilegesRequired=lowest
 OutputDir=G:\Flutter\Weigh-Bridge\installer
-OutputBaseFilename=Viyan WeighBridge
+OutputBaseFilename=Viyan-weighBridge
 SolidCompression=yes
 WizardStyle=modern dynamic
 
@@ -49,7 +49,6 @@ Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\{#MyAppExeName
 Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\dartjni.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\flutter_libserialport_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\flutter_windows.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\native_assets.json"; DestDir: "{app}"; Flags: ignoreversion
 Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\pdfium.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\printing_plugin.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "G:\Flutter\Weigh-Bridge\build\windows\x64\runner\Release\serialport.dll"; DestDir: "{app}"; Flags: ignoreversion

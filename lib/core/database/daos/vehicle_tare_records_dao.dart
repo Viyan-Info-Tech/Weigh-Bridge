@@ -44,16 +44,19 @@ class VehicleTareRecordsDao extends DatabaseAccessor<AppDatabase>
     final now = DateTime.now();
 
     // 1. One-time correction: Ensure TN 21 AW 4924 is updated to 7850 kg if it was 7550 kg
-    final existingTn21 = await (select(vehicleTareRecords)
-          ..where(
-            (t) =>
-                t.vehicleNumber.equals('TN 21 AW 4924') |
-                t.vehicleNumber.equals('TN21AW4924'),
-          ))
-        .getSingleOrNull();
+    final existingTn21 =
+        await (select(vehicleTareRecords)..where(
+              (t) =>
+                  t.vehicleNumber.equals('TN 21 AW 4924') |
+                  t.vehicleNumber.equals('TN21AW4924'),
+            ))
+            .getSingleOrNull();
 
-    if (existingTn21 != null && (existingTn21.tareKg == 7550 || existingTn21.tareKg == 7550.0)) {
-      await (update(vehicleTareRecords)..where((t) => t.id.equals(existingTn21.id))).write(
+    if (existingTn21 != null &&
+        (existingTn21.tareKg == 7550 || existingTn21.tareKg == 7550.0)) {
+      await (update(
+        vehicleTareRecords,
+      )..where((t) => t.id.equals(existingTn21.id))).write(
         VehicleTareRecordsCompanion(
           tareKg: const Value(7850.0),
           updatedAt: Value(now),
@@ -67,13 +70,13 @@ class VehicleTareRecordsDao extends DatabaseAccessor<AppDatabase>
       final weight = (item['weight'] as num).toDouble();
       final noSpaces = vehicleNo.replaceAll(' ', '');
 
-      final existing = await (select(vehicleTareRecords)
-            ..where(
-              (t) =>
-                  t.vehicleNumber.equals(vehicleNo) |
-                  t.vehicleNumber.equals(noSpaces),
-            ))
-          .getSingleOrNull();
+      final existing =
+          await (select(vehicleTareRecords)..where(
+                (t) =>
+                    t.vehicleNumber.equals(vehicleNo) |
+                    t.vehicleNumber.equals(noSpaces),
+              ))
+              .getSingleOrNull();
 
       if (existing == null) {
         await into(vehicleTareRecords).insert(

@@ -45,16 +45,15 @@ class ReceiptPdfFonts {
 
   static pw.ThemeData _courierTheme() {
     return pw.ThemeData.withFont(
-      base: pw.Font.courier(),
+      base: pw.Font.courierBold(),
       bold: pw.Font.courierBold(),
     );
   }
 
   static Future<pw.ThemeData?> _loadUnicodeTheme() async {
     try {
-      final regular = pw.Font.ttf(await rootBundle.load(regularAsset));
       final bold = pw.Font.ttf(await rootBundle.load(boldAsset));
-      return pw.ThemeData.withFont(base: regular, bold: bold);
+      return pw.ThemeData.withFont(base: bold, bold: bold);
     } catch (_) {
       // Assets not bundled. Courier is the documented fallback.
       return null;

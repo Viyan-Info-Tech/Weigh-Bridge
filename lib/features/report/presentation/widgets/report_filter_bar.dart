@@ -209,10 +209,7 @@ class ReportFilterBar extends StatelessWidget {
     );
   }
 
-  Widget _buildFieldContainer({
-    required String label,
-    required Widget child,
-  }) {
+  Widget _buildFieldContainer({required String label, required Widget child}) {
     return SizedBox(
       height: _controlHeight,
       child: Container(
@@ -269,10 +266,7 @@ class ReportFilterBar extends StatelessWidget {
             .map(
               (preset) => DropdownMenuItem(
                 value: preset,
-                child: Text(
-                  preset.label,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                child: Text(preset.label, overflow: TextOverflow.ellipsis),
               ),
             )
             .toList(),

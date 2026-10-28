@@ -41,13 +41,14 @@ void main() {
       expect(item.effectiveContainerNo, '12');
     });
 
-    test('effectiveContainerNo falls back to remarks when containerNo is omitted', () {
-      final item = build(
-        remarks: 'CONT-88',
-      );
-      expect(item.containerNo, 'CONT-88');
-      expect(item.effectiveContainerNo, 'CONT-88');
-    });
+    test(
+      'effectiveContainerNo falls back to remarks when containerNo is omitted',
+      () {
+        final item = build(remarks: 'CONT-88');
+        expect(item.containerNo, 'CONT-88');
+        expect(item.effectiveContainerNo, 'CONT-88');
+      },
+    );
 
     test('preserves null values when not provided', () {
       final item = build();

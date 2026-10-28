@@ -269,115 +269,119 @@ class _EditableWeightBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final widget = this;
-    final activeColor = hasError ? const Color(0xFFDC2626) : const Color(0xFFCBD5E1);
-    final backgroundColor = hasError ? const Color(0xFFFEF2F2) : const Color(0xFFF8FAFC);
+    final activeColor = hasError
+        ? const Color(0xFFDC2626)
+        : const Color(0xFFCBD5E1);
+    final backgroundColor = hasError
+        ? const Color(0xFFFEF2F2)
+        : const Color(0xFFF8FAFC);
 
     return MouseRegion(
-        cursor: SystemMouseCursors.basic,
-        child: Material(
-          color: backgroundColor,
+      cursor: SystemMouseCursors.basic,
+      child: Material(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(6),
+        child: InkWell(
+          onTap: null,
           borderRadius: BorderRadius.circular(6),
-          child: InkWell(
-            onTap: null,
-            borderRadius: BorderRadius.circular(6),
-            child: Container(
-              height: 46,
-              decoration: BoxDecoration(
-                color: backgroundColor,
-                borderRadius: BorderRadius.circular(6),
-                border: Border.all(
-                  color: activeColor,
-                  width: widget.hasError ? 1.5 : 1,
+          child: Container(
+            height: 46,
+            decoration: BoxDecoration(
+              color: backgroundColor,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(
+                color: activeColor,
+                width: widget.hasError ? 1.5 : 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: widget.hasError
+                        ? const Color(0xFFFEE2E2)
+                        : const Color(0xFFE2E8F0),
+                    borderRadius: const BorderRadius.horizontal(
+                      left: Radius.circular(5),
+                    ),
+                    border: Border(right: BorderSide(color: activeColor)),
+                  ),
+                  alignment: Alignment.center,
+                  child: Icon(
+                    Icons.scale_rounded,
+                    size: 20,
+                    color: widget.hasError
+                        ? const Color(0xFFDC2626)
+                        : const Color(0xFF64748B),
+                  ),
                 ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 46,
-                    decoration: BoxDecoration(
-                      color: widget.hasError
-                          ? const Color(0xFFFEE2E2)
-                          : const Color(0xFFE2E8F0),
-                      borderRadius: const BorderRadius.horizontal(
-                        left: Radius.circular(5),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: TextField(
+                      controller: widget.controller,
+                      focusNode: _focusNode,
+                      enabled: true,
+                      readOnly: true,
+                      showCursor: false,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
                       ),
-                      border: Border(right: BorderSide(color: activeColor)),
-                    ),
-                    alignment: Alignment.center,
-                    child: Icon(
-                      Icons.scale_rounded,
-                      size: 20,
-                      color: widget.hasError
-                          ? const Color(0xFFDC2626)
-                          : const Color(0xFF64748B),
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: TextField(
-                        controller: widget.controller,
-                        focusNode: _focusNode,
-                        enabled: true,
-                        readOnly: true,
-                        showCursor: false,
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        textInputAction: TextInputAction.next,
-                        decoration: InputDecoration(
-                          hintText: widget.displayWeight,
-                          hintStyle: TextStyle(
-                            fontFamily: 'PlusJakartaSans',
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color:
-                                (widget.isCaptured ||
-                                    (widget.displayWeight != '0' &&
-                                        widget.displayWeight != '0.000'))
-                                ? widget.accent.textColor
-                                : const Color(0xFF0F172A),
-                          ),
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                        style: TextStyle(
+                      textInputAction: TextInputAction.next,
+                      decoration: InputDecoration(
+                        hintText: widget.displayWeight,
+                        hintStyle: TextStyle(
                           fontFamily: 'PlusJakartaSans',
-                          fontSize: 24,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: widget.accent.textColor,
+                          color:
+                              (widget.isCaptured ||
+                                  (widget.displayWeight != '0' &&
+                                      widget.displayWeight != '0.000'))
+                              ? widget.accent.textColor
+                              : const Color(0xFF0F172A),
                         ),
+                        border: InputBorder.none,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
                       ),
-                    ),
-                  ),
-                  Container(
-                    width: 54,
-                    height: 46,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
-                      borderRadius: const BorderRadius.horizontal(
-                        right: Radius.circular(5),
-                      ),
-                      border: Border(left: BorderSide(color: activeColor)),
-                    ),
-                    child: Text(
-                      widget.unitLabel,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'PlusJakartaSans',
-                        fontSize: 13.5,
-                        fontWeight: FontWeight.w800,
-                        color: Color(0xFF334155),
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: widget.accent.textColor,
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+                Container(
+                  width: 54,
+                  height: 46,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: const BorderRadius.horizontal(
+                      right: Radius.circular(5),
+                    ),
+                    border: Border(left: BorderSide(color: activeColor)),
+                  ),
+                  child: Text(
+                    widget.unitLabel,
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF334155),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
+      ),
     );
   }
 }

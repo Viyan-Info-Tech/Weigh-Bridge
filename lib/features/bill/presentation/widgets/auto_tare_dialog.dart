@@ -456,9 +456,7 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
                           decoration: BoxDecoration(
                             color: const Color(0xFFF1F5F9),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: const Color(0xFFE2E8F0),
-                            ),
+                            border: Border.all(color: const Color(0xFFE2E8F0)),
                           ),
                           child: Row(
                             children: [
@@ -496,9 +494,7 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
                           decoration: BoxDecoration(
                             color: const Color(0xFFFEF2F2),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: const Color(0xFFFECDD3),
-                            ),
+                            border: Border.all(color: const Color(0xFFFECDD3)),
                           ),
                           child: Row(
                             children: [
@@ -739,9 +735,7 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: isSelected
-                  ? const Color(0xFF0D53FC)
-                  : Colors.transparent,
+              color: isSelected ? const Color(0xFF0D53FC) : Colors.transparent,
               width: 1.2,
             ),
           ),
@@ -751,7 +745,9 @@ class _AutoTareDialogState extends State<AutoTareDialog> {
               Expanded(
                 child: InkWell(
                   onTap: _isBusy ? null : () => _onRecordTap(record),
-                  onDoubleTap: _isBusy ? null : () => _onRecordDoubleTap(record),
+                  onDoubleTap: _isBusy
+                      ? null
+                      : () => _onRecordDoubleTap(record),
                   borderRadius: const BorderRadius.horizontal(
                     left: Radius.circular(7),
                   ),

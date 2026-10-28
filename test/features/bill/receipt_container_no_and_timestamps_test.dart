@@ -100,6 +100,73 @@ void main() {
       },
     );
 
+    testWidgets(
+      'WeighmentReceiptTemplate makes all text bold with increased font sizes',
+      (tester) async {
+        final receiptData = WeighmentReceiptData(
+          bill: bill,
+          settings: settings.copyWith(
+            businessSubtitle: 'Computer Weigh Bridge',
+            serviceText: '24 HOURS SERVICE',
+            address: '123 Highway Road',
+            phoneNumber: '9876543210',
+            email: 'info@weighbridge.com',
+            footerNote: 'Goods once weighed will not be re-weighed',
+          ),
+          printedAt: printTime,
+        );
+
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: SizedBox(
+                  width: 640,
+                  child: WeighmentReceiptTemplate(data: receiptData),
+                ),
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final textWidgets = tester.widgetList<Text>(find.byType(Text)).toList();
+        expect(textWidgets, isNotEmpty);
+
+        for (final text in textWidgets) {
+          final style = text.style;
+          expect(
+            style?.fontWeight,
+            FontWeight.bold,
+            reason: 'Text "${text.data}" must be bold',
+          );
+        }
+
+        // Verify key font sizes in standard mode
+        final companyText = tester.widget<Text>(find.text('VIYAN WEIGHBRIDGE'));
+        expect(companyText.style?.fontSize, 18.0);
+
+        final receiptTitleText = tester.widget<Text>(
+          find.text('WEIGHMENT RECEIPT'),
+        );
+        expect(receiptTitleText.style?.fontSize, 15.0);
+
+        final serialLabelText = tester.widget<Text>(find.text('SERIAL NO'));
+        expect(serialLabelText.style?.fontSize, 13.5);
+
+        final vehicleValueText = tester.widget<Text>(find.text('TN01AB1234'));
+        expect(vehicleValueText.style?.fontSize, 13.5);
+
+        final signatureText = tester.widget<Text>(find.text('Signature'));
+        expect(signatureText.style?.fontSize, 11.5);
+
+        final timestampText = tester.widget<Text>(
+          find.textContaining('* Printed on:'),
+        );
+        expect(timestampText.style?.fontSize, 10.5);
+      },
+    );
+
     test(
       'WeighmentTicketPdfGenerator generates PDF with CONTAINER NO and capture timestamps',
       () async {

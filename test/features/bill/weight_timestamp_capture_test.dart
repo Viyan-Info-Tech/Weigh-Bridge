@@ -355,30 +355,35 @@ void main() {
       },
     );
 
-    test('SaveAndPrintBillRequested forwards captured timestamps to saved weighment and printReceiptBill', () async {
-      final grossTime = DateTime(2026, 10, 14, 14, 11);
-      final tareTime = DateTime(2026, 10, 14, 14, 15);
+    test(
+      'SaveAndPrintBillRequested forwards captured timestamps to saved weighment and printReceiptBill',
+      () async {
+        final grossTime = DateTime(2026, 10, 14, 14, 11);
+        final tareTime = DateTime(2026, 10, 14, 14, 15);
 
-      Weighment? passedWeighment;
-      when(() => mockSaveBillUseCase.withNewBillNumber(any())).thenAnswer((inv) async {
-        passedWeighment = inv.positionalArguments[0] as Weighment;
-        return (id: 42, billNumber: 'WB-00042');
-      });
+        Weighment? passedWeighment;
+        when(() => mockSaveBillUseCase.withNewBillNumber(any())).thenAnswer((
+          inv,
+        ) async {
+          passedWeighment = inv.positionalArguments[0] as Weighment;
+          return (id: 42, billNumber: 'WB-00042');
+        });
 
-      bloc.add(const VehicleNumberChanged('TN01AA1111'));
-      bloc.add(GrossWeightCommitted('45000', capturedAt: grossTime));
-      bloc.add(TareWeightCommitted('15000', capturedAt: tareTime));
-      await pumpEventQueue();
+        bloc.add(const VehicleNumberChanged('TN01AA1111'));
+        bloc.add(GrossWeightCommitted('45000', capturedAt: grossTime));
+        bloc.add(TareWeightCommitted('15000', capturedAt: tareTime));
+        await pumpEventQueue();
 
-      bloc.add(const SaveAndPrintBillRequested());
-      await pumpEventQueue();
+        bloc.add(const SaveAndPrintBillRequested());
+        await pumpEventQueue();
 
-      expect(passedWeighment, isNotNull);
-      expect(passedWeighment!.grossCapturedAt, grossTime);
-      expect(passedWeighment!.tareCapturedAt, tareTime);
-      expect(bloc.state.printReceiptBill, isNotNull);
-      expect(bloc.state.printReceiptBill!.grossCapturedAt, grossTime);
-      expect(bloc.state.printReceiptBill!.tareCapturedAt, tareTime);
-    });
+        expect(passedWeighment, isNotNull);
+        expect(passedWeighment!.grossCapturedAt, grossTime);
+        expect(passedWeighment!.tareCapturedAt, tareTime);
+        expect(bloc.state.printReceiptBill, isNotNull);
+        expect(bloc.state.printReceiptBill!.grossCapturedAt, grossTime);
+        expect(bloc.state.printReceiptBill!.tareCapturedAt, tareTime);
+      },
+    );
   });
 }

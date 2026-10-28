@@ -157,19 +157,22 @@ void main() {
       expect(csv, contains('TN31PS2002,Sand,CDM,12'));
     });
 
-    test('handles null material, description, and container as empty values', () {
-      final csv = generator.generateCsvString([
-        item(
-          billNumber: 'WB-00008',
-          vehicleNumber: 'TN31PS2003',
-          material: null,
-          description: null,
-          containerNo: null,
-          remarks: null,
-        ),
-      ]);
-      expect(csv, contains('TN31PS2003,,,,'));
-    });
+    test(
+      'handles null material, description, and container as empty values',
+      () {
+        final csv = generator.generateCsvString([
+          item(
+            billNumber: 'WB-00008',
+            vehicleNumber: 'TN31PS2003',
+            material: null,
+            description: null,
+            containerNo: null,
+            remarks: null,
+          ),
+        ]);
+        expect(csv, contains('TN31PS2003,,,,'));
+      },
+    );
 
     test('falls back to remarks when containerNo is omitted', () {
       final csv = generator.generateCsvString([

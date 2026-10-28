@@ -20,16 +20,9 @@ class WeighmentReceiptTemplate extends StatelessWidget {
   /// Below this width the slip switches to its compact metrics.
   static const double compactWidth = 340;
 
-  static const TextStyle _mono = TextStyle(
-    fontFamily: 'Courier',
-    fontSize: 13,
-    fontWeight: FontWeight.bold,
-    color: Colors.black,
-  );
-
   static const TextStyle _monoBold = TextStyle(
     fontFamily: 'Courier',
-    fontSize: 13,
+    fontSize: 14.5,
     fontWeight: FontWeight.bold,
     color: Colors.black,
   );
@@ -47,31 +40,79 @@ class WeighmentReceiptTemplate extends StatelessWidget {
         final verticalPadding = compact ? 14.0 : 32.0;
         final labelWidth = compact ? 92.0 : 130.0;
         final tableLabelWidth = compact ? 65.0 : 100.0;
-        final baseFontSize = compact ? 10.5 : 13.0;
-        final titleFontSize = compact ? 11.0 : 13.5;
-        final companyFontSize = compact ? 13.0 : 16.0;
 
-        final mono = _mono.copyWith(fontSize: baseFontSize);
-        final monoBold = _monoBold.copyWith(fontSize: baseFontSize);
+        final baseFontSize = compact ? 11.0 : 13.5;
+        final titleFontSize = compact ? 12.5 : 15.0;
+        final companyFontSize = compact ? 15.0 : 18.0;
+        final subtitleFontSize = compact ? 10.5 : 12.5;
+        final subheaderFontSize = compact ? 10.0 : 12.0;
+        final noteFontSize = compact ? 9.5 : 11.5;
+        final timestampFontSize = compact ? 9.0 : 10.5;
+        final signatureFontSize = compact ? 9.5 : 11.5;
+
+        final monoBold = _monoBold.copyWith(
+          fontSize: baseFontSize,
+          fontWeight: FontWeight.bold,
+        );
         final companyStyle = monoBold.copyWith(
           fontSize: companyFontSize,
           letterSpacing: 0.5,
+          fontWeight: FontWeight.bold,
         );
-        final titleStyle = monoBold.copyWith(fontSize: titleFontSize);
-        final fieldLabelStyle = monoBold.copyWith(fontSize: baseFontSize);
-        final fieldValueStyle = mono.copyWith(fontSize: baseFontSize);
-        final fieldValueBoldStyle = monoBold.copyWith(fontSize: baseFontSize);
-        final tableHeaderStyle = monoBold.copyWith(fontSize: baseFontSize);
-        final tableCellStyle = mono.copyWith(fontSize: baseFontSize);
-        final tableCellBoldStyle = monoBold.copyWith(fontSize: baseFontSize);
-        final dashedStyle = mono.copyWith(
+        final subtitleStyle = monoBold.copyWith(
+          fontSize: subtitleFontSize,
+          fontWeight: FontWeight.bold,
+        );
+        final subheaderStyle = monoBold.copyWith(
+          fontSize: subheaderFontSize,
+          fontWeight: FontWeight.bold,
+        );
+        final titleStyle = monoBold.copyWith(
+          fontSize: titleFontSize,
+          fontWeight: FontWeight.bold,
+        );
+        final fieldLabelStyle = monoBold.copyWith(
+          fontSize: baseFontSize,
+          fontWeight: FontWeight.bold,
+        );
+        final fieldValueStyle = monoBold.copyWith(
+          fontSize: baseFontSize,
+          fontWeight: FontWeight.bold,
+        );
+        final fieldValueBoldStyle = monoBold.copyWith(
+          fontSize: baseFontSize,
+          fontWeight: FontWeight.bold,
+        );
+        final tableHeaderStyle = monoBold.copyWith(
+          fontSize: baseFontSize,
+          fontWeight: FontWeight.bold,
+        );
+        final tableCellStyle = monoBold.copyWith(
+          fontSize: baseFontSize,
+          fontWeight: FontWeight.bold,
+        );
+        final tableCellBoldStyle = monoBold.copyWith(
+          fontSize: baseFontSize,
+          fontWeight: FontWeight.bold,
+        );
+        final dashedStyle = monoBold.copyWith(
           fontSize: baseFontSize,
           letterSpacing: -0.2,
+          fontWeight: FontWeight.bold,
         );
-        final noteStyle = mono.copyWith(fontSize: baseFontSize - 2);
-        final timestampStyle = mono.copyWith(
-          fontSize: baseFontSize - 2,
-          color: Colors.grey.shade600,
+        final noteStyle = monoBold.copyWith(
+          fontSize: noteFontSize,
+          fontWeight: FontWeight.bold,
+        );
+        final timestampStyle = monoBold.copyWith(
+          fontSize: timestampFontSize,
+          fontWeight: FontWeight.bold,
+          color: Colors.black,
+        );
+        final signatureStyle = monoBold.copyWith(
+          fontSize: signatureFontSize,
+          fontWeight: FontWeight.bold,
+          color: Colors.black,
         );
 
         return Container(
@@ -98,7 +139,7 @@ class WeighmentReceiptTemplate extends StatelessWidget {
                       Text(
                         data.settings.businessSubtitle!,
                         textAlign: TextAlign.center,
-                        style: mono.copyWith(fontSize: baseFontSize - 1),
+                        style: subtitleStyle,
                       ),
                     ],
                     if (data.settings.serviceText != null &&
@@ -107,7 +148,7 @@ class WeighmentReceiptTemplate extends StatelessWidget {
                       Text(
                         data.settings.serviceText!,
                         textAlign: TextAlign.center,
-                        style: monoBold.copyWith(fontSize: baseFontSize - 1.5),
+                        style: subheaderStyle,
                       ),
                     ],
                     if (data.settings.address != null &&
@@ -116,7 +157,7 @@ class WeighmentReceiptTemplate extends StatelessWidget {
                       Text(
                         data.settings.address!,
                         textAlign: TextAlign.center,
-                        style: mono.copyWith(fontSize: baseFontSize - 1.5),
+                        style: subheaderStyle,
                       ),
                     ],
                     if (_hasContactLine) ...[
@@ -124,7 +165,7 @@ class WeighmentReceiptTemplate extends StatelessWidget {
                       Text(
                         _contactLine,
                         textAlign: TextAlign.center,
-                        style: mono.copyWith(fontSize: baseFontSize - 1.5),
+                        style: subheaderStyle,
                       ),
                     ],
                   ],
@@ -280,9 +321,11 @@ class WeighmentReceiptTemplate extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    '* Printed on: ${data.printDate} *',
-                    style: timestampStyle,
+                  Flexible(
+                    child: Text(
+                      '* Printed on: ${data.printDate} *',
+                      style: timestampStyle,
+                    ),
                   ),
                   Column(
                     mainAxisSize: MainAxisSize.min,
@@ -294,10 +337,7 @@ class WeighmentReceiptTemplate extends StatelessWidget {
                         color: Colors.black,
                       ),
                       SizedBox(height: compact ? 3 : 5),
-                      Text(
-                        'Signature',
-                        style: mono.copyWith(fontSize: baseFontSize - 2),
-                      ),
+                      Text('Signature', style: signatureStyle),
                     ],
                   ),
                 ],

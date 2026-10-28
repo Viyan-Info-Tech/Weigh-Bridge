@@ -227,17 +227,17 @@ class ReportPdfGenerator {
 
                 final materialStr =
                     (r.material != null && r.material!.trim().isNotEmpty)
-                        ? r.material!.trim()
-                        : '-';
+                    ? r.material!.trim()
+                    : '-';
                 final descStr =
                     (r.description != null && r.description!.trim().isNotEmpty)
-                        ? r.description!.trim()
-                        : '-';
+                    ? r.description!.trim()
+                    : '-';
                 final containerStr =
                     (r.effectiveContainerNo != null &&
-                            r.effectiveContainerNo!.trim().isNotEmpty)
-                        ? r.effectiveContainerNo!.trim()
-                        : '-';
+                        r.effectiveContainerNo!.trim().isNotEmpty)
+                    ? r.effectiveContainerNo!.trim()
+                    : '-';
 
                 return [
                   r.billNumber,

@@ -537,7 +537,8 @@ class _BillFormState extends State<BillForm> {
             weightKg: widget.grossWeightKg,
             weightUnit: widget.weightUnit,
             enabled: isGrossEnabled,
-            isCaptured: (widget.grossWeightKg > 0 ||
+            isCaptured:
+                (widget.grossWeightKg > 0 ||
                     widget.grossWeightController.text.trim().isNotEmpty) &&
                 _grossDate != null,
             hasError: effectiveWeightError != null,
@@ -566,7 +567,8 @@ class _BillFormState extends State<BillForm> {
                 weightKg: widget.tareWeightKg,
                 weightUnit: widget.weightUnit,
                 enabled: isTareEnabled,
-                isCaptured: (widget.tareWeightKg > 0 ||
+                isCaptured:
+                    (widget.tareWeightKg > 0 ||
                         widget.tareWeightController.text.trim().isNotEmpty) &&
                     _tareDate != null,
                 hasError: effectiveWeightError != null,
@@ -652,9 +654,7 @@ class _BillFormState extends State<BillForm> {
             key: const Key('bill_vehicle_number_field'),
             controller: widget.vehicleNumberController,
             focusNode: widget.vehicleFocusNode,
-            inputFormatters: [
-              UpperCaseTextFormatter(),
-            ],
+            inputFormatters: [UpperCaseTextFormatter()],
             textCapitalization: TextCapitalization.characters,
             style: const TextStyle(
               fontFamily: 'PlusJakartaSans',

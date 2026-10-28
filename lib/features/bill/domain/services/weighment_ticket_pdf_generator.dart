@@ -57,7 +57,7 @@ class WeighmentTicketPdfGenerator {
                       data.companyName.toUpperCase(),
                       textAlign: pw.TextAlign.center,
                       style: pw.TextStyle(
-                        fontSize: 13,
+                        fontSize: 16.5,
                         fontWeight: pw.FontWeight.bold,
                         letterSpacing: 0.5,
                       ),
@@ -68,7 +68,10 @@ class WeighmentTicketPdfGenerator {
                       pw.Text(
                         data.settings.businessSubtitle!,
                         textAlign: pw.TextAlign.center,
-                        style: const pw.TextStyle(fontSize: 9.5),
+                        style: pw.TextStyle(
+                          fontSize: 12,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
                       ),
                     ],
                     if (data.settings.serviceText != null &&
@@ -77,7 +80,10 @@ class WeighmentTicketPdfGenerator {
                       pw.Text(
                         data.settings.serviceText!,
                         textAlign: pw.TextAlign.center,
-                        style: const pw.TextStyle(fontSize: 9),
+                        style: pw.TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
                       ),
                     ],
                     if (data.settings.address != null &&
@@ -86,7 +92,10 @@ class WeighmentTicketPdfGenerator {
                       pw.Text(
                         data.settings.address!,
                         textAlign: pw.TextAlign.center,
-                        style: const pw.TextStyle(fontSize: 9),
+                        style: pw.TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
                       ),
                     ],
                     if (_hasContactLine(data)) ...[
@@ -94,7 +103,10 @@ class WeighmentTicketPdfGenerator {
                       pw.Text(
                         _contactLine(data),
                         textAlign: pw.TextAlign.center,
-                        style: const pw.TextStyle(fontSize: 9),
+                        style: pw.TextStyle(
+                          fontSize: 11.5,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
                       ),
                     ],
                   ],
@@ -107,7 +119,7 @@ class WeighmentTicketPdfGenerator {
               pw.Text(
                 data.receiptTitle,
                 style: pw.TextStyle(
-                  fontSize: 11,
+                  fontSize: 14,
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
@@ -118,12 +130,12 @@ class WeighmentTicketPdfGenerator {
               if (data.hasSerialNumber)
                 _buildFieldRow('SERIAL NO', data.bill.billNumber),
               if (data.hasVehicleNumber)
-                _buildFieldRow('VEHICLE NO', data.vehicleNumber, isBold: true),
+                _buildFieldRow('VEHICLE NO', data.vehicleNumber),
               if (data.hasMaterial)
                 _buildFieldRow('MATERIAL', data.materialName),
               if (data.hasDescription)
                 _buildFieldRow('DESCRIPTION', data.descriptionText),
-            
+
               if (data.hasRemarks)
                 _buildFieldRow('CONTAINER NO', data.bill.remarks!),
 
@@ -144,7 +156,7 @@ class WeighmentTicketPdfGenerator {
                         'WEIGHT',
                         textAlign: pw.TextAlign.center,
                         style: pw.TextStyle(
-                          fontSize: 10,
+                          fontSize: 12,
                           fontWeight: pw.FontWeight.bold,
                         ),
                       ),
@@ -155,7 +167,7 @@ class WeighmentTicketPdfGenerator {
                         'DATE',
                         textAlign: pw.TextAlign.center,
                         style: pw.TextStyle(
-                          fontSize: 10,
+                          fontSize: 12,
                           fontWeight: pw.FontWeight.bold,
                         ),
                       ),
@@ -166,7 +178,7 @@ class WeighmentTicketPdfGenerator {
                         'TIME',
                         textAlign: pw.TextAlign.center,
                         style: pw.TextStyle(
-                          fontSize: 10,
+                          fontSize: 12,
                           fontWeight: pw.FontWeight.bold,
                         ),
                       ),
@@ -211,7 +223,10 @@ class WeighmentTicketPdfGenerator {
                 pw.SizedBox(height: 10),
                 pw.Text(
                   'Note: ${data.footerNoteText}',
-                  style: const pw.TextStyle(fontSize: 8.5),
+                  style: pw.TextStyle(
+                    fontSize: 10.5,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
                 ),
               ],
 
@@ -223,7 +238,10 @@ class WeighmentTicketPdfGenerator {
                 children: [
                   pw.Text(
                     '* Printed on: ${data.printDate} *',
-                    style: const pw.TextStyle(fontSize: 8),
+                    style: pw.TextStyle(
+                      fontSize: 10,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
                   ),
                   pw.Column(
                     mainAxisSize: pw.MainAxisSize.min,
@@ -237,7 +255,10 @@ class WeighmentTicketPdfGenerator {
                       pw.SizedBox(height: 4),
                       pw.Text(
                         'Signature',
-                        style: const pw.TextStyle(fontSize: 8.5),
+                        style: pw.TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
@@ -268,11 +289,7 @@ class WeighmentTicketPdfGenerator {
       'GSTIN: ${data.settings.gstin!}',
   ].join('   ');
 
-  static pw.Widget _buildFieldRow(
-    String label,
-    String value, {
-    bool isBold = false,
-  }) {
+  static pw.Widget _buildFieldRow(String label, String value) {
     return pw.Padding(
       padding: const pw.EdgeInsets.symmetric(vertical: 2),
       child: pw.Row(
@@ -282,20 +299,17 @@ class WeighmentTicketPdfGenerator {
             width: 125,
             child: pw.Text(
               label,
-              style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+              style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
             ),
           ),
           pw.Text(
             ': ',
-            style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+            style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
           ),
           pw.Expanded(
             child: pw.Text(
               value,
-              style: pw.TextStyle(
-                fontSize: 10,
-                fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,
-              ),
+              style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
             ),
           ),
         ],
@@ -329,7 +343,7 @@ class WeighmentTicketPdfGenerator {
             width: 90,
             child: pw.Text(
               label,
-              style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+              style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
             ),
           ),
           pw.Expanded(
@@ -337,7 +351,7 @@ class WeighmentTicketPdfGenerator {
             child: pw.Text(
               weight,
               textAlign: pw.TextAlign.center,
-              style: pw.TextStyle(fontSize: 10, fontWeight: pw.FontWeight.bold),
+              style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
             ),
           ),
           pw.Expanded(
@@ -345,7 +359,7 @@ class WeighmentTicketPdfGenerator {
             child: pw.Text(
               date,
               textAlign: pw.TextAlign.center,
-              style: const pw.TextStyle(fontSize: 10),
+              style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
             ),
           ),
           pw.Expanded(
@@ -353,7 +367,7 @@ class WeighmentTicketPdfGenerator {
             child: pw.Text(
               time,
               textAlign: pw.TextAlign.center,
-              style: const pw.TextStyle(fontSize: 10),
+              style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
             ),
           ),
         ],

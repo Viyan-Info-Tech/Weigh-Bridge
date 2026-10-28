@@ -159,7 +159,8 @@ void main() {
         expect(
           find.text('CONTAINER NO.'),
           findsOneWidget,
-          reason: 'Container No. header missing at ${size.width}x${size.height}',
+          reason:
+              'Container No. header missing at ${size.width}x${size.height}',
         );
         expect(
           find.text('WB-2026-000001'),

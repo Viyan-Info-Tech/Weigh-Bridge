@@ -6,7 +6,7 @@
 ///
 /// Matching is exact (after trimming leading/trailing whitespace and
 /// comparing case-insensitively), so partial vehicle numbers never match.
-library auto_tare_records;
+library;
 
 /// Strongly typed representation of a single predefined Auto Tare record.
 class AutoTareRecord {
@@ -160,7 +160,8 @@ class AutoTareRecords {
 
   // Instance API (delegates to static).
   double? lookupInstance(String vehicleNumber) => lookup(vehicleNumber);
-  double? getTareWeightInstance(String vehicleNumber) => getTareWeight(vehicleNumber);
+  double? getTareWeightInstance(String vehicleNumber) =>
+      getTareWeight(vehicleNumber);
 
   double? call(String vehicleNumber) => lookup(vehicleNumber);
   double? operator [](String vehicleNumber) => lookup(vehicleNumber);

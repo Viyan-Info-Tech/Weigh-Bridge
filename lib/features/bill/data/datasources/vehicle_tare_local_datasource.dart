@@ -12,9 +12,9 @@ class VehicleTareLocalDataSource {
   }
 
   Stream<List<VehicleTareRecord>> watchVehicleTares() {
-    return _database.vehicleTareRecordsDao
-        .watchTareWeights()
-        .map((rows) => rows.map(_toEntity).toList());
+    return _database.vehicleTareRecordsDao.watchTareWeights().map(
+      (rows) => rows.map(_toEntity).toList(),
+    );
   }
 
   Future<VehicleTareRecord> saveVehicleTare({

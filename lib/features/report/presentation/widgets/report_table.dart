@@ -428,7 +428,8 @@ class _TableRow extends StatelessWidget {
                   fontFamily: 'PlusJakartaSans',
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: (item.material != null &&
+                  color:
+                      (item.material != null &&
                           item.material!.trim().isNotEmpty)
                       ? const Color(0xFF1E293B)
                       : const Color(0xFF94A3B8),
@@ -445,7 +446,8 @@ class _TableRow extends StatelessWidget {
                   fontFamily: 'PlusJakartaSans',
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: (item.description != null &&
+                  color:
+                      (item.description != null &&
                           item.description!.trim().isNotEmpty)
                       ? const Color(0xFF1E293B)
                       : const Color(0xFF94A3B8),
@@ -462,7 +464,8 @@ class _TableRow extends StatelessWidget {
                   fontFamily: 'PlusJakartaSans',
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: (item.effectiveContainerNo != null &&
+                  color:
+                      (item.effectiveContainerNo != null &&
                           item.effectiveContainerNo!.trim().isNotEmpty)
                       ? const Color(0xFF1E293B)
                       : const Color(0xFF94A3B8),

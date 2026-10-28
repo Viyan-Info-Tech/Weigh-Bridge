@@ -445,10 +445,7 @@ class _HomePageState extends State<HomePage>
                   onTap: () => _onDrawerMenuSelected(3),
                 ),
                 const Padding(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   child: Divider(height: 1, color: Color(0xFFE2E8F0)),
                 ),
                 _buildDrawerMenuItem(
@@ -535,19 +532,14 @@ class _HomePageState extends State<HomePage>
                       child: SingleChildScrollView(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            ...menuItems,
-                            contactCardWidget,
-                          ],
+                          children: [...menuItems, contactCardWidget],
                         ),
                       ),
                     )
                   else ...[
                     Expanded(
                       child: SingleChildScrollView(
-                        child: Column(
-                          children: menuItems,
-                        ),
+                        child: Column(children: menuItems),
                       ),
                     ),
                     contactCardWidget,
@@ -589,10 +581,7 @@ class _HomePageState extends State<HomePage>
                 decoration: BoxDecoration(
                   color: const Color(0xFFEFF6FF),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: const Color(0xFFBFDBFE),
-                    width: 1,
-                  ),
+                  border: Border.all(color: const Color(0xFFBFDBFE), width: 1),
                 ),
                 child: const Icon(
                   Icons.support_agent_rounded,
@@ -704,9 +693,12 @@ class _HomePageState extends State<HomePage>
                 fontWeight: isHighlight ? FontWeight.w700 : FontWeight.w600,
                 color: isHighlight
                     ? const Color(0xFF0F172A)
-                    : (isLink ? const Color(0xFF0F52BA) : const Color(0xFF1E293B)),
-                decoration:
-                    isLink ? TextDecoration.underline : TextDecoration.none,
+                    : (isLink
+                          ? const Color(0xFF0F52BA)
+                          : const Color(0xFF1E293B)),
+                decoration: isLink
+                    ? TextDecoration.underline
+                    : TextDecoration.none,
                 decorationColor: const Color(0xFF0F52BA),
               ),
             ),

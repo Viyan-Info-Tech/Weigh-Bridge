@@ -35,11 +35,7 @@ void main() {
     test('watchVehicleTares emits updated records reactively', () async {
       final streamExpectation = expectLater(
         source.watchVehicleTares(),
-        emitsInOrder([
-          isEmpty,
-          hasLength(1),
-          hasLength(2),
-        ]),
+        emitsInOrder([isEmpty, hasLength(1), hasLength(2)]),
       );
 
       await source.saveVehicleTare(vehicleNumber: 'TN14L1112', tareKg: 8200);

@@ -171,7 +171,8 @@ class WeighmentDetailsDialog extends StatelessWidget {
               _InfoRow('Vehicle', record.vehicleNumber),
               if (record.material != null && record.material!.trim().isNotEmpty)
                 _InfoRow('Material', record.material!.trim()),
-              if (record.description != null && record.description!.trim().isNotEmpty)
+              if (record.description != null &&
+                  record.description!.trim().isNotEmpty)
                 _InfoRow('Description', record.description!.trim()),
               if (record.effectiveContainerNo != null &&
                   record.effectiveContainerNo!.trim().isNotEmpty)

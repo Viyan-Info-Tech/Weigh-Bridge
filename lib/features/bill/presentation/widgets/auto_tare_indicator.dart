@@ -104,11 +104,7 @@ class AutoTareIndicator extends StatelessWidget {
                 ),
               ],
               const SizedBox(width: 4),
-              Icon(
-                Icons.edit_outlined,
-                size: 12,
-                color: accent,
-              ),
+              Icon(Icons.edit_outlined, size: 12, color: accent),
             ],
           ),
         ),

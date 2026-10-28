@@ -258,8 +258,7 @@ class BillBloc extends Bloc<BillEvent, BillState> with BillAutoTareHandlers {
             clearError: true,
             tareWeightKg: predefinedTare,
             tareWeightText: tareText,
-            tareCapturedAt:
-                state.tareCapturedAt ?? DateTime.now(),
+            tareCapturedAt: state.tareCapturedAt ?? DateTime.now(),
           ),
         );
         _recalculate(emit);
