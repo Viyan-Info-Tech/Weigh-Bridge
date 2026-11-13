@@ -324,7 +324,23 @@ void main() {
     await tapGuardedTab(tester, 'Settings');
     expect(find.text('Settings'), findsWidgets);
 
-    await tapGuardedTab(tester, 'About');
+    await openNavMenu(tester);
+    await tester.tap(find.text('About'));
+    await pumpFrames(tester);
+    expect(find.text('Administrator Access'), findsNothing);
+    expect(find.text('About ViyanInfo'), findsOneWidget);
+  });
+
+  testWidgets('About opens from the sidebar without administrator access', (
+    tester,
+  ) async {
+    await pumpHomePage(tester);
+
+    await openNavMenu(tester);
+    await tester.tap(find.text('About'));
+    await pumpFrames(tester);
+
+    expect(find.text('Administrator Access'), findsNothing);
     expect(find.text('About ViyanInfo'), findsOneWidget);
   });
 

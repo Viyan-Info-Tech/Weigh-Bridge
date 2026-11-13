@@ -896,7 +896,11 @@ class _HomePageState extends State<HomePage>
   Future<void> _selectNavTab(int index) async {
     if (index == _selectedIndex) return;
 
-    if (index != 0) {
+    // Tabs that expose configuration or business data stay password-gated.
+    // About (4) is informational and opens directly; Weighment (0) is the
+    // default operator workspace.
+    const protectedTabs = {1, 2, 3}; // Reports, Materials, Settings.
+    if (protectedTabs.contains(index)) {
       final authenticated = await showAdminPasswordDialog(context);
       if (!authenticated || !mounted) return;
     }
