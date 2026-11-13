@@ -61,6 +61,29 @@ class Weighment extends Equatable {
 
   bool get isCompleted => isCompletedForWeights(grossWeightKg, tareWeightKg);
 
+  /// True when this weighment already holds both a gross and a tare weight.
+  bool get hasBothWeights =>
+      grossWeightKg != null &&
+      tareWeightKg != null &&
+      grossWeightKg! > 0 &&
+      tareWeightKg! > 0;
+
+  /// The weight that should be reused as the reference for the next weighing
+  /// cycle of the same vehicle: the gross weight when both are present, or the
+  /// single captured weight otherwise.
+  double? get referenceWeightKg {
+    if (hasBothWeights) return grossWeightKg;
+    if (firstWeightType.toUpperCase() == 'TARE') return tareWeightKg;
+    return grossWeightKg;
+  }
+
+  /// Whether [referenceWeightKg] is a tare weight (only true for a
+  /// single-weight tare-first bill).
+  String get referenceWeightType {
+    if (hasBothWeights) return 'GROSS';
+    return firstWeightType.toUpperCase() == 'TARE' ? 'TARE' : 'GROSS';
+  }
+
   /// A saved weighment is completed once at least one valid weight exists.
   static bool isCompletedForWeights(
     double? grossWeightKg,

@@ -119,7 +119,7 @@ void main() {
           weightKg: 14710,
         ),
         grossWeightText: '14.710',
-        grossWeightKg: 14710,
+        grossWeightKg: 15000,
       ).copyWith(grossCapturedAt: DateTime(2026, 10, 1, 8, 30)),
       act: (bloc) => bloc.add(const SecondWeightModeChanged(false)),
       verify: (bloc) {
@@ -166,13 +166,13 @@ void main() {
         expect(state.previousWeighment, isNotNull);
         expect(state.previousWeighment!.billNumber, 'WB-00001');
         // The previous weight is populated into its own field...
-        expect(state.grossWeightKg, 14710);
-        expect(state.grossWeightText, '14710');
-        expect(state.grossCapturedAt, isNotNull);
+        expect(state.tareWeightKg, 14710);
+        expect(state.tareWeightText, '14710');
+        expect(state.tareCapturedAt, isNotNull);
         // ...and the operator captures the opposite weight now.
-        expect(state.tareWeightKg, 0);
-        expect(state.firstWeightType, 'GROSS');
-        expect(state.selectedWeightType, 'Tare');
+        expect(state.grossWeightKg, 0);
+        expect(state.firstWeightType, 'TARE');
+        expect(state.selectedWeightType, 'Gross');
         expect(state.previousWeightMessage, isNull);
       },
     );
@@ -232,8 +232,8 @@ void main() {
       ),
       act: (bloc) => bloc.add(const FetchPreviousWeightForVehicle()),
       verify: (bloc) {
-        expect(bloc.state.grossWeightText, '14.710');
-        expect(bloc.state.grossWeightKg, 14710);
+        expect(bloc.state.tareWeightText, '14.710');
+        expect(bloc.state.tareWeightKg, 14710);
       },
     );
 
@@ -253,7 +253,7 @@ void main() {
         expect(state.previousWeightMessage, contains('No previous weighment'));
         expect(state.previousWeightMessage, contains('MH12AB9999'));
         expect(state.grossWeightKg, 0);
-        expect(state.tareWeightKg, 0);
+        expect(state.grossWeightKg, 0);
         expect(state.isFetchingPreviousWeight, isFalse);
       },
     );
@@ -285,7 +285,7 @@ void main() {
         expect(state.previousWeightMessage, contains('WB-00001'));
         expect(state.previousWeightMessage, contains('invalid weight data'));
         expect(state.grossWeightKg, 0);
-        expect(state.tareWeightKg, 0);
+        expect(state.grossWeightKg, 0);
       },
     );
 
@@ -400,8 +400,8 @@ void main() {
           type: 'GROSS',
           weightKg: 14710,
         ),
-        grossWeightText: '14710',
-        grossWeightKg: 14710,
+        grossWeightText: '15000',
+        grossWeightKg: 15000,
       ).copyWith(grossCapturedAt: DateTime(2026, 10, 1, 8, 30)),
       act: (bloc) => bloc.add(const VehicleNumberChanged('MH12AB9999')),
       verify: (bloc) {
@@ -467,12 +467,12 @@ void main() {
       act: (bloc) async {
         bloc.add(const FetchPreviousWeightForVehicle());
         await Future<void>.delayed(Duration.zero);
-        bloc.add(const TareWeightChanged('10000'));
+        bloc.add(const GrossWeightChanged('15000'));
       },
       verify: (bloc) {
-        expect(bloc.state.grossWeightKg, 14710);
-        expect(bloc.state.tareWeightKg, 10000);
-        expect(bloc.state.netWeightKg, 4710);
+        expect(bloc.state.grossWeightKg, 15000);
+        expect(bloc.state.tareWeightKg, 14710);
+        expect(bloc.state.netWeightKg, 290);
         expect(bloc.state.weightValidationError, isNull);
       },
     );
@@ -501,7 +501,7 @@ void main() {
       act: (bloc) async {
         bloc.add(const FetchPreviousWeightForVehicle());
         await Future<void>.delayed(Duration.zero);
-        bloc.add(const TareWeightChanged('8000'));
+        bloc.add(const GrossWeightChanged('3000'));
         await Future<void>.delayed(Duration.zero);
         bloc.add(const SaveBillRequested());
       },
@@ -509,7 +509,7 @@ void main() {
         final state = bloc.state;
         expect(state.status, BillScreenStatus.loaded);
         expect(state.weightError, isNotNull);
-        expect(state.weightError, contains('greater than tare'));
+        expect(state.weightError, contains('must be greater'));
         verifyNever(() => mockSaveBill.withNewBillNumber(any()));
       },
     );
@@ -526,12 +526,12 @@ void main() {
         vehicleNumber: 'TN31CM2026',
         isSecondWeightMode: true,
         weightUnit: 'kg',
-        grossWeightText: '14710',
-        grossWeightKg: 14710,
-        tareWeightText: '10000',
-        tareWeightKg: 10000,
-        netWeightKg: 4710,
-        firstWeightType: 'GROSS',
+        grossWeightText: '15000',
+        grossWeightKg: 15000,
+        tareWeightText: '14710',
+        tareWeightKg: 14710,
+        netWeightKg: 290,
+        firstWeightType: 'TARE',
         previousWeighment: singleWeightBill(
           id: 1,
           billNumber: 'WB-00001',
@@ -559,9 +559,9 @@ void main() {
         // the database only previews a number, the DB allocates the real one.
         expect(saved.previousWeighmentId, 1);
         // Both weights stored with the correct gross/tare assignment.
-        expect(saved.grossWeightKg, 14710);
-        expect(saved.tareWeightKg, 10000);
-        expect(saved.netWeightKg, 4710);
+        expect(saved.grossWeightKg, 15000);
+        expect(saved.tareWeightKg, 14710);
+        expect(saved.netWeightKg, 290);
         // A second weighing is a completed bill, never pending.
         expect(saved.isCompleted, isTrue);
         // The number allocated by the database is what the bill carries.
@@ -596,8 +596,8 @@ void main() {
         vehicleNumber: 'TN31CM2026',
         isSecondWeightMode: true,
         weightUnit: 'kg',
-        grossWeightText: '14710',
-        grossWeightKg: 14710,
+        grossWeightText: '15000',
+        grossWeightKg: 15000,
       ).copyWith(grossCapturedAt: DateTime(2026, 10, 1, 8, 30)),
       act: (bloc) => bloc.add(const SaveBillRequested()),
       verify: (bloc) {
@@ -615,9 +615,9 @@ void main() {
         vehicleNumber: 'TN31CM2026',
         isSecondWeightMode: true,
         weightUnit: 'kg',
-        grossWeightText: '14710',
-        grossWeightKg: 14710,
-        firstWeightType: 'GROSS',
+        grossWeightText: '15000',
+        grossWeightKg: 15000,
+        firstWeightType: 'TARE',
         previousWeighment: singleWeightBill(
           id: 1,
           billNumber: 'WB-00001',
@@ -652,12 +652,12 @@ void main() {
             vehicleNumber: 'TN31CM2026',
             isSecondWeightMode: true,
             weightUnit: 'kg',
-            grossWeightText: '14710',
-            grossWeightKg: 14710,
-            tareWeightText: '10000',
-            tareWeightKg: 10000,
-            netWeightKg: 4710,
-            firstWeightType: 'GROSS',
+            grossWeightText: '15000',
+            grossWeightKg: 15000,
+            tareWeightText: '14710',
+            tareWeightKg: 14710,
+            netWeightKg: 290,
+            firstWeightType: 'TARE',
             previousWeighment: singleWeightBill(
               id: 1,
               billNumber: 'WB-00001',
@@ -674,8 +674,7 @@ void main() {
         expect(bloc.state.status, BillScreenStatus.error);
         // Nothing is lost: the operator can retry the save.
         expect(bloc.state.vehicleNumber, 'TN31CM2026');
-        expect(bloc.state.grossWeightKg, 14710);
-        expect(bloc.state.tareWeightKg, 10000);
+        expect(bloc.state.tareWeightKg, 14710);
         expect(bloc.state.previousWeighment, isNotNull);
       },
     );

@@ -50,6 +50,27 @@ class BillRepositoryImpl implements BillRepository {
   }
 
   @override
+  Future<Weighment?> getLatestWeighmentForVehicle(String vehicleNumber) async {
+    return _localDataSource.getLatestWeighmentForVehicle(vehicleNumber);
+  }
+
+  @override
+  Future<Weighment?> getLatestReferenceWeighmentForVehicle(
+    String vehicleNumber,
+  ) async {
+    return _localDataSource.getLatestReferenceWeighmentForVehicle(
+      vehicleNumber,
+    );
+  }
+
+  @override
+  Future<Weighment?> getReferenceWeighmentForVehicle(
+    String vehicleNumber,
+  ) async {
+    return _localDataSource.getReferenceWeighmentForVehicle(vehicleNumber);
+  }
+
+  @override
   Future<String> generateNextBillNumber() async {
     return _localDataSource.generateNextBillNumber();
   }

@@ -32,6 +32,14 @@ abstract class BillRepository {
     String vehicleNumber,
   );
 
+  Future<Weighment?> getLatestWeighmentForVehicle(String vehicleNumber);
+
+  Future<Weighment?> getLatestReferenceWeighmentForVehicle(
+    String vehicleNumber,
+  );
+
+  Future<Weighment?> getReferenceWeighmentForVehicle(String vehicleNumber);
+
   /// Previews the bill number the next new weighment would receive. Does not
   /// reserve it; only [saveWeighmentWithNewBillNumber] consumes a number.
   Future<String> generateNextBillNumber();

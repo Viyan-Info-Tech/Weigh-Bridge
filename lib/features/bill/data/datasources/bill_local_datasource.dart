@@ -118,6 +118,33 @@ class BillLocalDataSource {
     return _toEntity(record);
   }
 
+  Future<Weighment?> getLatestWeighmentForVehicle(String vehicleNumber) async {
+    final record = await _database.billDao.getLatestWeighmentForVehicle(
+      vehicleNumber,
+    );
+    if (record == null) return null;
+    return _toEntity(record);
+  }
+
+  Future<Weighment?> getLatestReferenceWeighmentForVehicle(
+    String vehicleNumber,
+  ) async {
+    final record = await _database.billDao
+        .getLatestReferenceWeighmentForVehicle(vehicleNumber);
+    if (record == null) return null;
+    return _toEntity(record);
+  }
+
+  Future<Weighment?> getReferenceWeighmentForVehicle(
+    String vehicleNumber,
+  ) async {
+    final record = await _database.billDao.getReferenceWeighmentForVehicle(
+      vehicleNumber,
+    );
+    if (record == null) return null;
+    return _toEntity(record);
+  }
+
   Future<String> generateNextBillNumber() async {
     final settings = await _database.appSettingsDao.getSettings();
     return _database.appSettingsDao.generateNextBillNumber(

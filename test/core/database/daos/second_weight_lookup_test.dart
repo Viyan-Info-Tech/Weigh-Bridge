@@ -105,7 +105,7 @@ void main() {
     });
 
     test(
-      'skips bills that already hold both weights (completed pairings)',
+      'returns a completed bill as the reference for the next weighing cycle',
       () async {
         await seedWeighment(
           db,
@@ -120,7 +120,8 @@ void main() {
           'TN31CM2026',
         );
 
-        expect(found, isNull);
+        expect(found, isNotNull);
+        expect(found!.billNumber, 'WB-00001');
       },
     );
 
@@ -171,8 +172,7 @@ void main() {
       );
 
       expect(found, isNotNull);
-      expect(found!.billNumber, 'WB-00002');
-      expect(found.firstWeightKg, 14710);
+      expect(found!.billNumber, 'WB-00003');
     });
 
     test(

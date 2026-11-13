@@ -152,9 +152,7 @@ class BillFormBinding extends StatelessWidget {
 String _previousWeightDisplayText(BillState state) {
   final previous = state.previousWeighment;
   if (previous == null) return '';
-  final weightKg = state.previousWeightType == 'TARE'
-      ? previous.tareWeightKg
-      : previous.grossWeightKg;
+  final weightKg = previous.referenceWeightKg;
   if (weightKg == null || !weightKg.isFinite) return '';
   final isTon = state.weightUnit.toLowerCase() == 'ton';
   final displayValue = isTon ? weightKg / 1000 : weightKg;

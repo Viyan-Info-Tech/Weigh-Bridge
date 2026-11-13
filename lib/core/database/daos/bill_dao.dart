@@ -213,9 +213,7 @@ class BillDao extends DatabaseAccessor<AppDatabase> with _$BillDaoMixin {
               const Constant(' '),
               const Constant(''),
             ]).upper().equals(normalized) &
-            w.firstWeightKg.isBiggerThanValue(0) &
-            (w.secondWeightKg.isNull() |
-                w.secondWeightKg.isSmallerOrEqualValue(0)),
+            w.firstWeightKg.isBiggerThanValue(0),
       )
       ..orderBy([
         (t) => OrderingTerm.desc(t.createdAt),
@@ -224,6 +222,20 @@ class BillDao extends DatabaseAccessor<AppDatabase> with _$BillDaoMixin {
       ..limit(1);
     return query.getSingleOrNull();
   }
+
+  /// Alias kept for the automatic gross/tare detection flow. The reference
+  /// weight for a returning vehicle is the latest bill saved for it (whether
+  /// that bill holds one weight or both), so this delegates to
+  /// [getLatestSingleWeightWeighmentForVehicle].
+  Future<Weighment?> getLatestWeighmentForVehicle(String vehicleNumber) =>
+      getLatestSingleWeightWeighmentForVehicle(vehicleNumber);
+
+  Future<Weighment?> getLatestReferenceWeighmentForVehicle(
+    String vehicleNumber,
+  ) => getLatestSingleWeightWeighmentForVehicle(vehicleNumber);
+
+  Future<Weighment?> getReferenceWeighmentForVehicle(String vehicleNumber) =>
+      getLatestSingleWeightWeighmentForVehicle(vehicleNumber);
 
   Future<String> generateNextBillNumber() async {
     return peekNextBillNumber(prefix: 'WB', digits: 5);

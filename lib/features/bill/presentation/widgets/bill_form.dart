@@ -273,9 +273,10 @@ class _BillFormState extends State<BillForm> {
     // the retrieved previous weight is locked — it is history and must not
     // be overwritten — while the opposite field stays editable for the weight
     // captured now.
-    final previousType = widget.isSecondWeightMode
-        ? widget.previousWeightType
-        : null;
+    // In SECOND WEIGHT mode the retrieved reference is always locked into the
+    // Tare field, so that field is disabled and the Gross field stays editable
+    // for the new reading.
+    final previousType = widget.isSecondWeightMode ? 'TARE' : null;
     final isGrossEnabled = previousType != 'GROSS';
     final isTareEnabled = previousType != 'TARE';
 
@@ -701,11 +702,7 @@ class _BillFormState extends State<BillForm> {
                 // is the weight capture: focus the field that will hold the
                 // current weight, or MATERIAL while no previous weighment is
                 // matched yet.
-                final captureFocus = widget.previousWeightType == 'GROSS'
-                    ? widget.tareWeightFocusNode
-                    : widget.previousWeightType == 'TARE'
-                    ? widget.grossWeightFocusNode
-                    : null;
+                final captureFocus = widget.grossWeightFocusNode;
                 (captureFocus ?? widget.materialFocusNode)?.requestFocus();
               } else {
                 widget.typeFocusNode?.requestFocus();

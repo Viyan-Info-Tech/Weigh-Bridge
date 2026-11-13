@@ -161,7 +161,11 @@ class BillState extends Equatable {
   String? get previousWeightType {
     final previous = previousWeighment;
     if (!isSecondWeightMode || previous == null) return null;
-    return previous.firstWeightType.toUpperCase() == 'TARE' ? 'TARE' : 'GROSS';
+    // The previous weighment is surfaced through its *reference* weight (the
+    // gross weight for a completed bill, or its single captured weight), so
+    // the banner and the locked field must follow that rather than the
+    // original first-weight type of a completed cycle.
+    return previous.referenceWeightType;
   }
 
   /// Weight type ('GROSS'/'TARE') the operator must capture now, or null when

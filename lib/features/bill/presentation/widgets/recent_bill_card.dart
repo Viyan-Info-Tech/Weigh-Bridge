@@ -25,18 +25,12 @@ class RecentBillCard extends StatelessWidget {
   final VoidCallback? onSelected;
   final VoidCallback? onPrintSlip;
 
-  static bool _isSameDay(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
-
   @override
   Widget build(BuildContext context) {
     final vehicleNo = bill.vehicleNumber;
     final timeStr = DateFormat('HH:mm').format(bill.createdAt);
-    final dateStr = DateFormat('dd MMM').format(bill.createdAt);
-    final timestampLabel = _isSameDay(bill.createdAt, DateTime.now())
-        ? timeStr
-        : '$dateStr, $timeStr';
+    final dateStr = DateFormat('dd/MM/yyyy').format(bill.createdAt);
+    final timestampLabel = '$dateStr · $timeStr';
 
     // --- Status badge ---
     const statusBadgeText = 'COMPLETED';
