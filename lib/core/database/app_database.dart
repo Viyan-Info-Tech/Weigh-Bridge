@@ -39,6 +39,12 @@ class AppDatabase extends _$AppDatabase {
       await _createMaterialUniqueIndex();
     },
     onUpgrade: (m, from, to) async {
+      // A previous run may have been interrupted while rebuilding a table
+      // through a temporary `<name>_new` table. Clean those up before any
+      // migration step runs, otherwise the step's CREATE TABLE fails with
+      // "table <name>_new already exists" and the app cannot start again.
+      await _recoverInterruptedRebuilds();
+
       if (from < 5) {
         await customStatement('''
               CREATE TABLE vehicle_types (
@@ -668,10 +674,21 @@ class AppDatabase extends _$AppDatabase {
       }
 
       if (from < 25) {
-        // A tare-only weighment has no net weight and so no material. SQLite
-        // cannot drop a NOT NULL constraint in place, so the table is rebuilt
-        // with a nullable material_id and the existing rows are copied across.
-        await customStatement('''
+        // Only replay this rebuild when the live table still has the legacy
+        // NOT NULL constraint. A database whose schema is already newer than
+        // its user_version stamp has a nullable (or absent) material_id;
+        // rebuilding it would reference columns that no longer exist and fail
+        // with "no such column: customer_id".
+        final materialColumn = await customSelect(
+          "SELECT \"notnull\" FROM pragma_table_info('weighments') "
+          "WHERE name = 'material_id'",
+        ).getSingleOrNull();
+        if (materialColumn != null &&
+            materialColumn.read<int>('notnull') != 0) {
+          // A tare-only weighment has no net weight and so no material. SQLite
+          // cannot drop a NOT NULL constraint in place, so the table is rebuilt
+          // with a nullable material_id and the existing rows are copied across.
+          await customStatement('''
               CREATE TABLE weighments_new (
                 id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                 bill_number TEXT NOT NULL UNIQUE,
@@ -692,35 +709,48 @@ class AppDatabase extends _$AppDatabase {
                 updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
               )
             ''');
-        await customStatement(
-          'INSERT INTO weighments_new (id, bill_number, customer_id, '
-          'vehicle_number, material_id, payment_mode, first_weight_kg, '
-          'first_weight_type, second_weight_kg, second_weight_type, '
-          'net_weight_kg, vehicle_charge, amount, remarks, weight_unit, '
-          'created_at, updated_at) '
-          'SELECT id, bill_number, customer_id, vehicle_number, material_id, '
-          'payment_mode, first_weight_kg, first_weight_type, second_weight_kg, '
-          'second_weight_type, net_weight_kg, vehicle_charge, amount, remarks, '
-          'weight_unit, created_at, updated_at FROM weighments',
-        );
-        await customStatement('DROP TABLE weighments');
-        await customStatement(
-          'ALTER TABLE weighments_new RENAME TO weighments',
-        );
-        // The rebuild discards every index on the old table, including the
-        // unique constraint on bill_number that SQLite keeps per-table.
-        await customStatement(
-          'CREATE UNIQUE INDEX IF NOT EXISTS weighments_bill_number '
-          'ON weighments(bill_number)',
-        );
-        await _createWeighmentQueryIndexes();
+          await customStatement(
+            'INSERT INTO weighments_new (id, bill_number, customer_id, '
+            'vehicle_number, material_id, payment_mode, first_weight_kg, '
+            'first_weight_type, second_weight_kg, second_weight_type, '
+            'net_weight_kg, vehicle_charge, amount, remarks, weight_unit, '
+            'created_at, updated_at) '
+            'SELECT id, bill_number, customer_id, vehicle_number, material_id, '
+            'payment_mode, first_weight_kg, first_weight_type, second_weight_kg, '
+            'second_weight_type, net_weight_kg, vehicle_charge, amount, remarks, '
+            'weight_unit, created_at, updated_at FROM weighments',
+          );
+          await customStatement('DROP TABLE weighments');
+          await customStatement(
+            'ALTER TABLE weighments_new RENAME TO weighments',
+          );
+          // The rebuild discards every index on the old table, including the
+          // unique constraint on bill_number that SQLite keeps per-table.
+          await customStatement(
+            'CREATE UNIQUE INDEX IF NOT EXISTS weighments_bill_number '
+            'ON weighments(bill_number)',
+          );
+          await _createWeighmentQueryIndexes();
+        }
       }
 
       if (from < 26) {
         await customStatement('DROP TABLE IF EXISTS weighment_rates');
         await customStatement('DROP TABLE IF EXISTS charge_vehicle_types');
 
-        await customStatement('''
+        final weighmentColumns = await customSelect(
+          "PRAGMA table_info('weighments')",
+        ).get();
+        final weighmentNames = weighmentColumns
+            .map((c) => c.read<String>('name'))
+            .toSet();
+
+        // v26 drops the payment columns but keeps the legacy customer/material
+        // relationships. If customer_id is already absent the live schema is
+        // post-v29, so this rebuild has effectively run and must not be
+        // replayed (it would fail with "no such column: customer_id").
+        if (weighmentNames.contains('customer_id')) {
+          await customStatement('''
               CREATE TABLE weighments_new (
                 id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                 bill_number TEXT NOT NULL UNIQUE,
@@ -738,28 +768,40 @@ class AppDatabase extends _$AppDatabase {
                 updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
               )
             ''');
-        await customStatement(
-          'INSERT INTO weighments_new (id, bill_number, customer_id, '
-          'vehicle_number, material_id, first_weight_kg, '
-          'first_weight_type, second_weight_kg, second_weight_type, '
-          'net_weight_kg, remarks, weight_unit, '
-          'created_at, updated_at) '
-          'SELECT id, bill_number, customer_id, vehicle_number, material_id, '
-          'first_weight_kg, first_weight_type, second_weight_kg, '
-          'second_weight_type, net_weight_kg, remarks, '
-          'weight_unit, created_at, updated_at FROM weighments',
-        );
-        await customStatement('DROP TABLE weighments');
-        await customStatement(
-          'ALTER TABLE weighments_new RENAME TO weighments',
-        );
-        await customStatement(
-          'CREATE UNIQUE INDEX IF NOT EXISTS weighments_bill_number '
-          'ON weighments(bill_number)',
-        );
-        await _createWeighmentQueryIndexes();
+          await customStatement(
+            'INSERT INTO weighments_new (id, bill_number, customer_id, '
+            'vehicle_number, material_id, first_weight_kg, '
+            'first_weight_type, second_weight_kg, second_weight_type, '
+            'net_weight_kg, remarks, weight_unit, '
+            'created_at, updated_at) '
+            'SELECT id, bill_number, customer_id, vehicle_number, material_id, '
+            'first_weight_kg, first_weight_type, second_weight_kg, '
+            'second_weight_type, net_weight_kg, remarks, '
+            'weight_unit, created_at, updated_at FROM weighments',
+          );
+          await customStatement('DROP TABLE weighments');
+          await customStatement(
+            'ALTER TABLE weighments_new RENAME TO weighments',
+          );
+          await customStatement(
+            'CREATE UNIQUE INDEX IF NOT EXISTS weighments_bill_number '
+            'ON weighments(bill_number)',
+          );
+          await _createWeighmentQueryIndexes();
+        }
 
-        await customStatement('''
+        final settingColumns = await customSelect(
+          "PRAGMA table_info('app_settings')",
+        ).get();
+        final settingNames = settingColumns
+            .map((c) => c.read<String>('name'))
+            .toSet();
+
+        // show_amount/show_payment_mode/show_cash_received were removed by
+        // this step. Their absence means the live settings table is already
+        // newer and must not be rebuilt (that would drop later print columns).
+        if (settingNames.contains('show_amount')) {
+          await customStatement('''
               CREATE TABLE app_settings_new (
                 id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                 weight_unit TEXT NOT NULL DEFAULT 'ton',
@@ -790,28 +832,29 @@ class AppDatabase extends _$AppDatabase {
                 updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
               )
             ''');
-        await customStatement(
-          'INSERT INTO app_settings_new (id, weight_unit, bill_prefix, '
-          'bill_starting_number, bill_number_digits, business_name, '
-          'business_subtitle, service_text, address, phone_number, '
-          'email, gstin, logo_path, receipt_title, show_serial_number, '
-          'show_date, show_time, show_vehicle_number, show_material, '
-          'show_party, show_gross_weight, show_tare_weight, '
-          'show_net_weight, show_remarks, show_footer_note, footer_note, '
-          'updated_at) '
-          'SELECT id, weight_unit, bill_prefix, bill_starting_number, '
-          'bill_number_digits, business_name, business_subtitle, '
-          'service_text, address, phone_number, email, gstin, logo_path, '
-          'receipt_title, show_serial_number, show_date, show_time, '
-          'show_vehicle_number, show_material, show_party, '
-          'show_gross_weight, show_tare_weight, show_net_weight, '
-          'show_remarks, show_footer_note, footer_note, updated_at '
-          'FROM app_settings',
-        );
-        await customStatement('DROP TABLE app_settings');
-        await customStatement(
-          'ALTER TABLE app_settings_new RENAME TO app_settings',
-        );
+          await customStatement(
+            'INSERT INTO app_settings_new (id, weight_unit, bill_prefix, '
+            'bill_starting_number, bill_number_digits, business_name, '
+            'business_subtitle, service_text, address, phone_number, '
+            'email, gstin, logo_path, receipt_title, show_serial_number, '
+            'show_date, show_time, show_vehicle_number, show_material, '
+            'show_party, show_gross_weight, show_tare_weight, '
+            'show_net_weight, show_remarks, show_footer_note, footer_note, '
+            'updated_at) '
+            'SELECT id, weight_unit, bill_prefix, bill_starting_number, '
+            'bill_number_digits, business_name, business_subtitle, '
+            'service_text, address, phone_number, email, gstin, logo_path, '
+            'receipt_title, show_serial_number, show_date, show_time, '
+            'show_vehicle_number, show_material, show_party, '
+            'show_gross_weight, show_tare_weight, show_net_weight, '
+            'show_remarks, show_footer_note, footer_note, updated_at '
+            'FROM app_settings',
+          );
+          await customStatement('DROP TABLE app_settings');
+          await customStatement(
+            'ALTER TABLE app_settings_new RENAME TO app_settings',
+          );
+        }
       }
 
       if (from < 28) {
@@ -850,25 +893,37 @@ class AppDatabase extends _$AppDatabase {
       }
 
       if (from < 29) {
-        // Complete removal of the Customer and Material modules. Weighment
-        // rows are preserved; only the customer/material relationships and
-        // their master tables are dropped. Historical customer/material names
-        // are intentionally not carried over: the new workflow is
-        // vehicle + weights only, and bills/receipts/reports no longer
-        // display either concept.
-        await customStatement(
-          'DROP INDEX IF EXISTS idx_weighments_customer_created',
-        );
-        await customStatement(
-          'DROP INDEX IF EXISTS idx_weighments_material_created',
-        );
-        await customStatement(
-          'DROP INDEX IF EXISTS customers_customer_code_unique',
-        );
-        await customStatement('DROP INDEX IF EXISTS materials_name_unique');
-        await customStatement('DROP INDEX IF EXISTS customers_name_unique');
+        final weighmentColumns = await customSelect(
+          "PRAGMA table_info('weighments')",
+        ).get();
+        final weighmentNames = weighmentColumns
+            .map((c) => c.read<String>('name'))
+            .toSet();
 
-        await customStatement('''
+        // customer_id was removed by this step. If it is already absent the
+        // live schema is post-v29; replaying the rebuild would drop newer
+        // columns (material, charges, previous_weighment_id, ...) and their
+        // data, so leave the table untouched.
+        if (weighmentNames.contains('customer_id')) {
+          // Complete removal of the Customer and Material modules. Weighment
+          // rows are preserved; only the customer/material relationships and
+          // their master tables are dropped. Historical customer/material
+          // names are intentionally not carried over: the new workflow is
+          // vehicle + weights only, and bills/receipts/reports no longer
+          // display either concept.
+          await customStatement(
+            'DROP INDEX IF EXISTS idx_weighments_customer_created',
+          );
+          await customStatement(
+            'DROP INDEX IF EXISTS idx_weighments_material_created',
+          );
+          await customStatement(
+            'DROP INDEX IF EXISTS customers_customer_code_unique',
+          );
+          await customStatement('DROP INDEX IF EXISTS materials_name_unique');
+          await customStatement('DROP INDEX IF EXISTS customers_name_unique');
+
+          await customStatement('''
               CREATE TABLE weighments_new (
                 id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                 bill_number TEXT NOT NULL UNIQUE,
@@ -885,39 +940,39 @@ class AppDatabase extends _$AppDatabase {
                 updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
               )
             ''');
-        await customStatement(
-          'INSERT INTO weighments_new (id, bill_number, vehicle_number, '
-          'first_weight_kg, first_weight_type, second_weight_kg, '
-          'second_weight_type, net_weight_kg, remarks, mobile_number, '
-          'weight_unit, created_at, updated_at) '
-          'SELECT id, bill_number, vehicle_number, first_weight_kg, '
-          'first_weight_type, second_weight_kg, second_weight_type, '
-          'net_weight_kg, remarks, NULLIF(mobile_number, \'\'), weight_unit, '
-          'created_at, updated_at FROM weighments',
-        );
-        await customStatement('DROP TABLE weighments');
-        await customStatement(
-          'ALTER TABLE weighments_new RENAME TO weighments',
-        );
-        await customStatement(
-          'CREATE UNIQUE INDEX IF NOT EXISTS weighments_bill_number '
-          'ON weighments(bill_number)',
-        );
-        await _createWeighmentQueryIndexes();
+          await customStatement(
+            'INSERT INTO weighments_new (id, bill_number, vehicle_number, '
+            'first_weight_kg, first_weight_type, second_weight_kg, '
+            'second_weight_type, net_weight_kg, remarks, mobile_number, '
+            'weight_unit, created_at, updated_at) '
+            'SELECT id, bill_number, vehicle_number, first_weight_kg, '
+            'first_weight_type, second_weight_kg, second_weight_type, '
+            'net_weight_kg, remarks, NULLIF(mobile_number, \'\'), weight_unit, '
+            'created_at, updated_at FROM weighments',
+          );
+          await customStatement('DROP TABLE weighments');
+          await customStatement(
+            'ALTER TABLE weighments_new RENAME TO weighments',
+          );
+          await customStatement(
+            'CREATE UNIQUE INDEX IF NOT EXISTS weighments_bill_number '
+            'ON weighments(bill_number)',
+          );
+          await _createWeighmentQueryIndexes();
 
-        await customStatement('DROP TABLE IF EXISTS customers');
-        await customStatement('DROP TABLE IF EXISTS materials');
+          await customStatement('DROP TABLE IF EXISTS customers');
+          await customStatement('DROP TABLE IF EXISTS materials');
 
-        // Receipt visibility toggles for the removed modules.
-        final settingsColumns = await customSelect(
-          "PRAGMA table_info('app_settings')",
-        ).get();
-        final settingsNames = settingsColumns
-            .map((c) => c.read<String>('name'))
-            .toSet();
-        if (settingsNames.contains('show_material') ||
-            settingsNames.contains('show_party')) {
-          await customStatement('''
+          // Receipt visibility toggles for the removed modules.
+          final settingsColumns = await customSelect(
+            "PRAGMA table_info('app_settings')",
+          ).get();
+          final settingsNames = settingsColumns
+              .map((c) => c.read<String>('name'))
+              .toSet();
+          if (settingsNames.contains('show_material') ||
+              settingsNames.contains('show_party')) {
+            await customStatement('''
                 CREATE TABLE app_settings_new (
                   id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                   weight_unit TEXT NOT NULL DEFAULT 'ton',
@@ -946,26 +1001,27 @@ class AppDatabase extends _$AppDatabase {
                   updated_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
                 )
               ''');
-          await customStatement(
-            'INSERT INTO app_settings_new (id, weight_unit, bill_prefix, '
-            'bill_starting_number, bill_number_digits, business_name, '
-            'business_subtitle, service_text, address, phone_number, '
-            'email, gstin, logo_path, receipt_title, show_serial_number, '
-            'show_date, show_time, show_vehicle_number, show_gross_weight, '
-            'show_tare_weight, show_net_weight, show_remarks, '
-            'show_footer_note, footer_note, updated_at) '
-            'SELECT id, weight_unit, bill_prefix, bill_starting_number, '
-            'bill_number_digits, business_name, business_subtitle, '
-            'service_text, address, phone_number, email, gstin, logo_path, '
-            'receipt_title, show_serial_number, show_date, show_time, '
-            'show_vehicle_number, show_gross_weight, show_tare_weight, '
-            'show_net_weight, show_remarks, show_footer_note, footer_note, '
-            'updated_at FROM app_settings',
-          );
-          await customStatement('DROP TABLE app_settings');
-          await customStatement(
-            'ALTER TABLE app_settings_new RENAME TO app_settings',
-          );
+            await customStatement(
+              'INSERT INTO app_settings_new (id, weight_unit, bill_prefix, '
+              'bill_starting_number, bill_number_digits, business_name, '
+              'business_subtitle, service_text, address, phone_number, '
+              'email, gstin, logo_path, receipt_title, show_serial_number, '
+              'show_date, show_time, show_vehicle_number, show_gross_weight, '
+              'show_tare_weight, show_net_weight, show_remarks, '
+              'show_footer_note, footer_note, updated_at) '
+              'SELECT id, weight_unit, bill_prefix, bill_starting_number, '
+              'bill_number_digits, business_name, business_subtitle, '
+              'service_text, address, phone_number, email, gstin, logo_path, '
+              'receipt_title, show_serial_number, show_date, show_time, '
+              'show_vehicle_number, show_gross_weight, show_tare_weight, '
+              'show_net_weight, show_remarks, show_footer_note, footer_note, '
+              'updated_at FROM app_settings',
+            );
+            await customStatement('DROP TABLE app_settings');
+            await customStatement(
+              'ALTER TABLE app_settings_new RENAME TO app_settings',
+            );
+          }
         }
       }
       if (from < 30) {
@@ -1010,13 +1066,16 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 33) {
         // Re-introduction of the Material module as a name + vehicle-type
-        // master (Empty/Load). The old materials table was dropped in v29;
-        // this creates the new shape from scratch, so no historical material
-        // rows are resurrected. Existing weighments keep their free-text
-        // `material` snapshot and gain a nullable `material_id` reference
-        // column (NULL for legacy rows). Additive only: no weighment rows
-        // are touched, rewritten or dropped.
-        await m.createTable(materials);
+        // master (Empty/Load). The old materials table was dropped in v29; if
+        // the live schema is already newer (newer table present under an old
+        // user_version stamp) keep it and only run the idempotent additions.
+        final existingMaterials = await customSelect(
+          "SELECT name FROM sqlite_master WHERE type = 'table' "
+          "AND name = 'materials'",
+        ).get();
+        if (existingMaterials.isEmpty) {
+          await m.createTable(materials);
+        }
         await _createMaterialUniqueIndex();
         final weighmentColumns = await customSelect(
           "PRAGMA table_info('weighments')",
@@ -1137,6 +1196,43 @@ class AppDatabase extends _$AppDatabase {
       await _repairSchema();
     },
   );
+
+  /// Recovers from migration runs that were interrupted mid table rebuild.
+  ///
+  /// The rebuild steps in [migration] copy a table into a temporary
+  /// `name_new` table, then drop the original and rename the copy. If the
+  /// process is killed between those statements, the temporary table survives.
+  /// On the next launch the step retries creating `name_new` and fails with
+  /// "table name_new already exists", permanently blocking startup.
+  ///
+  /// This runs before any migration step:
+  ///  * if both tables exist, the original is authoritative (it is only dropped
+  ///    after the copy completes), so the stale temporary table is discarded;
+  ///  * if only the temporary table exists, the original was already dropped,
+  ///    so the copy - which already holds every row - is promoted back.
+  ///
+  /// Only `_new` tables are handled on purpose: for the v28 `_old` repair the
+  /// order is reversed, so a lingering `_old` table may still hold the only
+  /// complete copy and must not be dropped blindly.
+  Future<void> _recoverInterruptedRebuilds() async {
+    final rows = await customSelect(
+      "SELECT name FROM sqlite_master WHERE type = 'table'",
+    ).get();
+    final tableNames = rows.map((r) => r.read<String>('name')).toSet();
+
+    for (final temp in tableNames.toList()) {
+      if (!temp.endsWith('_new')) continue;
+
+      final target = temp.substring(0, temp.length - '_new'.length);
+      if (tableNames.contains(target)) {
+        await customStatement('DROP TABLE "$temp"');
+      } else {
+        await customStatement('ALTER TABLE "$temp" RENAME TO "$target"');
+        tableNames.add(target);
+      }
+      tableNames.remove(temp);
+    }
+  }
 
   /// Brings the live schema up to the complete shape the current code expects
   /// (see the `beforeOpen` hook for why this is needed).

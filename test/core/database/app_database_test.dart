@@ -267,6 +267,139 @@ void main() {
     },
   );
 
+  test('recovers from an interrupted v26 weighments rebuild', () async {
+    final dir = await Directory.systemTemp.createTemp('weighbridge_rebuild');
+    addTearDown(() => dir.delete(recursive: true));
+    final file = File(p.join(dir.path, 'v25-interrupted.sqlite'));
+
+    final seed = NativeDatabase(file);
+    await seed.ensureOpen(_StubExecutorUser(25));
+    await seed.runCustom(
+      'CREATE TABLE customers ('
+      'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT)',
+    );
+    await seed.runCustom(
+      'CREATE TABLE materials ('
+      'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT)',
+    );
+    await seed.runCustom(
+      'CREATE TABLE weighments ('
+      'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+      'bill_number TEXT NOT NULL UNIQUE, '
+      'customer_id INTEGER NOT NULL REFERENCES customers(id), '
+      'vehicle_number TEXT NOT NULL, '
+      'material_id INTEGER NOT NULL REFERENCES materials(id), '
+      'payment_mode TEXT NOT NULL, '
+      'first_weight_kg REAL NOT NULL, '
+      "first_weight_type TEXT NOT NULL DEFAULT 'GROSS', "
+      'second_weight_kg REAL, second_weight_type TEXT, net_weight_kg REAL, '
+      'vehicle_charge REAL NOT NULL DEFAULT 0, '
+      'amount REAL NOT NULL DEFAULT 0, remarks TEXT, '
+      "weight_unit TEXT NOT NULL DEFAULT 'ton', "
+      'created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)',
+    );
+    await seed.runCustom(
+      'CREATE TABLE app_settings ('
+      'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, '
+      "weight_unit TEXT NOT NULL DEFAULT 'ton', "
+      "bill_prefix TEXT NOT NULL DEFAULT 'WB', "
+      'bill_starting_number INTEGER NOT NULL DEFAULT 1, '
+      'bill_number_digits INTEGER NOT NULL DEFAULT 5, '
+      "business_name TEXT NOT NULL DEFAULT 'VIYAN WEIGHBRIDGE', "
+      'business_subtitle TEXT, service_text TEXT, address TEXT, '
+      'phone_number TEXT, email TEXT, gstin TEXT, logo_path TEXT, '
+      "receipt_title TEXT NOT NULL DEFAULT 'WEIGHMENT RECEIPT', "
+      'show_serial_number INTEGER NOT NULL DEFAULT 1, '
+      'show_date INTEGER NOT NULL DEFAULT 1, '
+      'show_time INTEGER NOT NULL DEFAULT 1, '
+      'show_vehicle_number INTEGER NOT NULL DEFAULT 1, '
+      'show_material INTEGER NOT NULL DEFAULT 1, '
+      'show_party INTEGER NOT NULL DEFAULT 1, '
+      'show_gross_weight INTEGER NOT NULL DEFAULT 1, '
+      'show_tare_weight INTEGER NOT NULL DEFAULT 1, '
+      'show_net_weight INTEGER NOT NULL DEFAULT 1, '
+      'show_remarks INTEGER NOT NULL DEFAULT 1, '
+      'show_footer_note INTEGER NOT NULL DEFAULT 1, '
+      'footer_note TEXT, updated_at INTEGER NOT NULL)',
+    );
+    await seed.runCustom(
+      'INSERT INTO weighments (bill_number, customer_id, vehicle_number, '
+      'material_id, payment_mode, first_weight_kg, created_at, updated_at) '
+      "VALUES ('WB-00001', 1, 'MH12AB1234', 1, 'cash', 5000.0, 1, 1)",
+    );
+    // Leftover from a rebuild killed after CREATE TABLE but before the
+    // original table was dropped and the copy renamed into place.
+    await seed.runCustom(
+      'CREATE TABLE weighments_new ('
+      'id INTEGER NOT NULL PRIMARY KEY, bill_number TEXT NOT NULL UNIQUE)',
+    );
+    await seed.runCustom('PRAGMA user_version = 25');
+    await seed.close();
+
+    final migrated = AppDatabase.forTesting(NativeDatabase(file));
+    addTearDown(migrated.close);
+
+    // Used to throw: table weighments_new already exists.
+    final kept = await migrated.billDao.getWeighmentByBillNumber('WB-00001');
+    expect(kept, isNotNull);
+    expect(kept!.vehicleNumber, 'MH12AB1234');
+
+    final leftovers = await migrated
+        .customSelect(
+          "SELECT name FROM sqlite_master WHERE type = 'table' "
+          "AND name = 'weighments_new'",
+        )
+        .get();
+    expect(leftovers, isEmpty);
+
+    final version = await migrated.customSelect('PRAGMA user_version').get();
+    expect(version.single.data['user_version'], migrated.schemaVersion);
+  });
+
+  test(
+    'upgrades a newer live schema that carries an old user_version stamp',
+    () async {
+      // Reproduces a database whose PRAGMA user_version says 25 while its
+      // actual schema is already much newer (no customer_id/payment_mode on
+      // weighments, print columns already on app_settings). Replaying the old
+      // v26/v29 rebuilds used to fail with "no such column: customer_id" and
+      // would also have dropped the newer material/charges columns.
+      final dir = await Directory.systemTemp.createTemp('weighbridge_stamp');
+      addTearDown(() => dir.delete(recursive: true));
+      final file = File(p.join(dir.path, 'stamped.sqlite'));
+
+      final db = AppDatabase.forTesting(NativeDatabase(file));
+      await db.customSelect('SELECT 1').get();
+      await db.customStatement(
+        'INSERT INTO weighments (bill_number, vehicle_number, '
+        'first_weight_kg, material, charges, previous_weighment_id, '
+        'weight_unit, created_at, updated_at) '
+        "VALUES ('WB-00001', 'MH12AB1234', 5000.0, 'Cement', 250.0, 7, "
+        "'kg', 1, 1)",
+      );
+      await db.close();
+
+      final raw = NativeDatabase(file);
+      await raw.ensureOpen(_StubExecutorUser(25));
+      await raw.runCustom('PRAGMA user_version = 25');
+      await raw.close();
+
+      final migrated = AppDatabase.forTesting(NativeDatabase(file));
+      addTearDown(migrated.close);
+
+      final kept = await migrated.billDao.getWeighmentByBillNumber('WB-00001');
+      expect(kept, isNotNull);
+      expect(kept!.vehicleNumber, 'MH12AB1234');
+      expect(kept.material, 'Cement');
+      expect(kept.charges, 250);
+      expect(kept.previousWeighmentId, 7);
+      expect(kept.weightUnit, 'kg');
+
+      final version = await migrated.customSelect('PRAGMA user_version').get();
+      expect(version.single.data['user_version'], migrated.schemaVersion);
+    },
+  );
+
   test('weighments date range query uses the created_at index', () async {
     await withDatabase((db) async {
       final rows = await db
