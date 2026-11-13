@@ -108,8 +108,7 @@ void main() {
         tester,
         state: const BillStateLike(
           isSecondWeightMode: true,
-          previousWeightMessage:
-              'No previous weighment found for TN31CM2026.',
+          previousWeightMessage: 'No previous weighment found for TN31CM2026.',
         ),
         onSecondWeightToggle: () {},
       );
@@ -158,49 +157,48 @@ void main() {
     },
   );
 
-  testWidgets(
-    'the form fits a narrow desktop window in second-weight mode',
-    (tester) async {
-      tester.view.physicalSize = const Size(900, 700);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(() {
-        tester.view.resetPhysicalSize();
-        tester.view.resetDevicePixelRatio();
-      });
+  testWidgets('the form fits a narrow desktop window in second-weight mode', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(900, 700);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(() {
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    });
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: SingleChildScrollView(
-              child: BillForm(
-                billNumber: 'WB-00001',
-                grossWeightController: TextEditingController(),
-                tareWeightController: TextEditingController(),
-                remarksController: TextEditingController(),
-                materialController: TextEditingController(),
-                vehicleNumberController: TextEditingController(),
-                netWeightKg: 0,
-                onVehicleNumberChanged: (_) {},
-                onMaterialChanged: (_) {},
-                onGrossWeightChanged: (_) {},
-                onTareWeightChanged: (_) {},
-                onRemarksChanged: (_) {},
-                isSecondWeightMode: true,
-                previousWeightType: 'TARE',
-                previousBillNumber: 'WB-00001',
-                previousWeightText: '10.000 ton',
-                onSecondWeightToggle: () {},
-              ),
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: BillForm(
+              billNumber: 'WB-00001',
+              grossWeightController: TextEditingController(),
+              tareWeightController: TextEditingController(),
+              remarksController: TextEditingController(),
+              materialController: TextEditingController(),
+              vehicleNumberController: TextEditingController(),
+              netWeightKg: 0,
+              onVehicleNumberChanged: (_) {},
+              onMaterialChanged: (_) {},
+              onGrossWeightChanged: (_) {},
+              onTareWeightChanged: (_) {},
+              onRemarksChanged: (_) {},
+              isSecondWeightMode: true,
+              previousWeightType: 'TARE',
+              previousBillNumber: 'WB-00001',
+              previousWeightText: '10.000 ton',
+              onSecondWeightToggle: () {},
             ),
           ),
         ),
-      );
+      ),
+    );
 
-      expect(tester.takeException(), isNull);
-      expect(find.text('SECOND WEIGHT'), findsOneWidget);
-      expect(find.text('GROSS'), findsNothing);
-    },
-  );
+    expect(tester.takeException(), isNull);
+    expect(find.text('SECOND WEIGHT'), findsOneWidget);
+    expect(find.text('GROSS'), findsNothing);
+  });
 }
 
 /// Tiny value holder mirroring the second-weight subset of [BillState], so

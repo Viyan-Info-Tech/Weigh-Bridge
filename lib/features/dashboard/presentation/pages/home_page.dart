@@ -417,158 +417,153 @@ class _HomePageState extends State<HomePage>
         shadowColor: const Color(0xFF0F172A).withValues(alpha: 0.35),
         borderRadius: const BorderRadius.horizontal(right: Radius.circular(16)),
         child: Container(
-           width: 320,
-           padding: const EdgeInsets.symmetric(vertical: 12),
-           decoration: const BoxDecoration(
-             color: Colors.white,
-             borderRadius: BorderRadius.horizontal(right: Radius.circular(16)),
-             border: Border(
-               right: BorderSide(color: Color(0xFFE2E8F0), width: 1),
-             ),
-           ),
-         child: LayoutBuilder(
-           builder: (context, constraints) {
-             final isCompactHeight = constraints.maxHeight < 580;
+          width: 320,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.horizontal(right: Radius.circular(16)),
+            border: Border(
+              right: BorderSide(color: Color(0xFFE2E8F0), width: 1),
+            ),
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isCompactHeight = constraints.maxHeight < 580;
 
-             final menuItems = [
-               _buildDrawerMenuItem(
-                 icon: Icons.scale_rounded,
-                 label: 'Weighment',
-                 isSelected: _selectedIndex == 0,
-                 onTap: () => _onDrawerMenuSelected(0),
-               ),
-               _buildDrawerMenuItem(
-                 icon: Icons.bar_chart_rounded,
-                 label: 'Reports',
-                 isSelected: _selectedIndex == 1,
-                 onTap: () => _onDrawerMenuSelected(1),
-               ),
-               _buildDrawerMenuItem(
-                 icon: Icons.category_rounded,
-                 label: 'Materials',
-                 isSelected: _selectedIndex == 2,
-                 onTap: () => _onDrawerMenuSelected(2),
-               ),
-               _buildDrawerMenuItem(
-                 icon: Icons.settings_rounded,
-                 label: 'Settings',
-                 isSelected: _selectedIndex == 3,
-                 onTap: () => _onDrawerMenuSelected(3),
-               ),
-               _buildDrawerMenuItem(
-                 icon: Icons.info_outline_rounded,
-                 label: 'About',
-                 isSelected: _selectedIndex == 4,
-                 onTap: () => _onDrawerMenuSelected(4),
-               ),
-               const Padding(
-                 padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                 child: Divider(height: 1, color: Color(0xFFE2E8F0)),
-               ),
-               _buildDrawerMenuItem(
-                 icon: Icons.power_settings_new_rounded,
-                 label: 'Exit',
-                 isDestructive: true,
-                 onTap: () {
-                   _closeNavMenu();
-                   _confirmLogout(context);
-                 },
-               ),
-             ];
+              final menuItems = [
+                _buildDrawerMenuItem(
+                  icon: Icons.scale_rounded,
+                  label: 'Weighment',
+                  isSelected: _selectedIndex == 0,
+                  onTap: () => _onDrawerMenuSelected(0),
+                ),
+                _buildDrawerMenuItem(
+                  icon: Icons.bar_chart_rounded,
+                  label: 'Reports',
+                  isSelected: _selectedIndex == 1,
+                  onTap: () => _onDrawerMenuSelected(1),
+                ),
+                _buildDrawerMenuItem(
+                  icon: Icons.category_rounded,
+                  label: 'Materials',
+                  isSelected: _selectedIndex == 2,
+                  onTap: () => _onDrawerMenuSelected(2),
+                ),
+                _buildDrawerMenuItem(
+                  icon: Icons.settings_rounded,
+                  label: 'Settings',
+                  isSelected: _selectedIndex == 3,
+                  onTap: () => _onDrawerMenuSelected(3),
+                ),
+                _buildDrawerMenuItem(
+                  icon: Icons.info_outline_rounded,
+                  label: 'About',
+                  isSelected: _selectedIndex == 4,
+                  onTap: () => _onDrawerMenuSelected(4),
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+                ),
+                _buildDrawerMenuItem(
+                  icon: Icons.power_settings_new_rounded,
+                  label: 'Exit',
+                  isDestructive: true,
+                  onTap: () {
+                    _closeNavMenu();
+                    _confirmLogout(context);
+                  },
+                ),
+              ];
 
-             final contactCardWidget = Padding(
-               padding: const EdgeInsets.fromLTRB(12, 10, 12, 20),
-               child: _buildDrawerContactCard(context),
-             );
+              final contactCardWidget = Padding(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 20),
+                child: _buildDrawerContactCard(context),
+              );
 
-             return Column(
-               mainAxisSize: MainAxisSize.max,
-               crossAxisAlignment: CrossAxisAlignment.stretch,
-               children: [
-                 Padding(
-                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                   child: Row(
-                     children: [
-                       const ViyanWeighbridgeLogo(size: 44),
-                       const SizedBox(width: 12),
-                       Expanded(
-                         child: Column(
-                           mainAxisAlignment: MainAxisAlignment.center,
-                           crossAxisAlignment: CrossAxisAlignment.start,
-                           children: [
-                             RichText(
-                               text: const TextSpan(
-                                 children: [
-                                   TextSpan(
-                                     text: 'VIYAN ',
-                                     style: TextStyle(
-                                       fontFamily: 'PlusJakartaSans',
-                                       color: Color(0xFF0F172A),
-                                       fontSize: 17,
-                                       fontWeight: FontWeight.w900,
-                                       letterSpacing: 0.6,
-                                     ),
-                                   ),
-                                   TextSpan(
-                                     text: 'WEIGHBRIDGE',
-                                     style: TextStyle(
-                                       fontFamily: 'PlusJakartaSans',
-                                       color: Color(0xFF0284C7),
-                                       fontSize: 17,
-                                       fontWeight: FontWeight.w900,
-                                       letterSpacing: 0.6,
-                                     ),
-                                   ),
-                                 ],
-                               ),
-                             ),
-                             const SizedBox(height: 2),
-                             const Text(
-                               'Accurate Weighing  Reliable Business',
-                               style: TextStyle(
-                                 fontFamily: 'PlusJakartaSans',
-                                 color: Color(0xFF64748B),
-                                 fontSize: 11,
-                                 fontWeight: FontWeight.w500,
-                                 letterSpacing: 0.2,
-                               ),
-                             ),
-                           ],
-                         ),
-                       ),
-                     ],
-                   ),
-                 ),
-                 const Padding(
-                   padding: EdgeInsets.symmetric(horizontal: 12),
-                   child: Divider(height: 1, color: Color(0xFFE2E8F0)),
-                 ),
-                 const SizedBox(height: 8),
-                 if (isCompactHeight)
-                   Expanded(
-                     child: SingleChildScrollView(
-                       child: Column(
-                         crossAxisAlignment: CrossAxisAlignment.stretch,
-                         children: [
-                           ...menuItems,
-                           contactCardWidget,
-                         ],
-                       ),
-                     ),
-                   )
-                 else ...[
-                   Expanded(
-                     child: SingleChildScrollView(
-                       child: Column(
-                         children: menuItems,
-                       ),
-                     ),
-                   ),
-                   contactCardWidget,
-                 ],
-               ],
-             );
-           },
+              return Column(
+                mainAxisSize: MainAxisSize.max,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                    child: Row(
+                      children: [
+                        const ViyanWeighbridgeLogo(size: 44),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              RichText(
+                                text: const TextSpan(
+                                  children: [
+                                    TextSpan(
+                                      text: 'VIYAN ',
+                                      style: TextStyle(
+                                        fontFamily: 'PlusJakartaSans',
+                                        color: Color(0xFF0F172A),
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 0.6,
+                                      ),
+                                    ),
+                                    TextSpan(
+                                      text: 'WEIGHBRIDGE',
+                                      style: TextStyle(
+                                        fontFamily: 'PlusJakartaSans',
+                                        color: Color(0xFF0284C7),
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 0.6,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              const Text(
+                                'Accurate Weighing  Reliable Business',
+                                style: TextStyle(
+                                  fontFamily: 'PlusJakartaSans',
+                                  color: Color(0xFF64748B),
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: 0.2,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    child: Divider(height: 1, color: Color(0xFFE2E8F0)),
+                  ),
+                  const SizedBox(height: 8),
+                  if (isCompactHeight)
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [...menuItems, contactCardWidget],
+                        ),
+                      ),
+                    )
+                  else ...[
+                    Expanded(
+                      child: SingleChildScrollView(
+                        child: Column(children: menuItems),
+                      ),
+                    ),
+                    contactCardWidget,
+                  ],
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -603,10 +598,7 @@ class _HomePageState extends State<HomePage>
                 decoration: BoxDecoration(
                   color: const Color(0xFFEFF6FF),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: const Color(0xFFBFDBFE),
-                    width: 1,
-                  ),
+                  border: Border.all(color: const Color(0xFFBFDBFE), width: 1),
                 ),
                 child: const Icon(
                   Icons.support_agent_rounded,
@@ -718,9 +710,12 @@ class _HomePageState extends State<HomePage>
                 fontWeight: isHighlight ? FontWeight.w700 : FontWeight.w600,
                 color: isHighlight
                     ? const Color(0xFF0F172A)
-                    : (isLink ? const Color(0xFF0F52BA) : const Color(0xFF1E293B)),
-                decoration:
-                    isLink ? TextDecoration.underline : TextDecoration.none,
+                    : (isLink
+                          ? const Color(0xFF0F52BA)
+                          : const Color(0xFF1E293B)),
+                decoration: isLink
+                    ? TextDecoration.underline
+                    : TextDecoration.none,
                 decorationColor: const Color(0xFF0F52BA),
               ),
             ),

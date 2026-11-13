@@ -51,41 +51,42 @@ void main() {
       expect(find.text('SECOND'), findsNothing);
     });
 
-    testWidgets('triggers onNavigateToReports and onNavigateToMaterials on tap', (
-      tester,
-    ) async {
-      bool reportsTapped = false;
-      bool materialsTapped = false;
+    testWidgets(
+      'triggers onNavigateToReports and onNavigateToMaterials on tap',
+      (tester) async {
+        bool reportsTapped = false;
+        bool materialsTapped = false;
 
-      await tester.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: Center(
-              child: SizedBox(
-                width: 800,
-                height: 350,
-                child: WeightDisplay(
-                  netWeightKg: 0,
-                  grossWeight: 0,
-                  tareWeight: 0,
-                  onNavigateToReports: () => reportsTapped = true,
-                  onNavigateToMaterials: () => materialsTapped = true,
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: SizedBox(
+                  width: 800,
+                  height: 350,
+                  child: WeightDisplay(
+                    netWeightKg: 0,
+                    grossWeight: 0,
+                    tareWeight: 0,
+                    onNavigateToReports: () => reportsTapped = true,
+                    onNavigateToMaterials: () => materialsTapped = true,
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-      );
-      await tester.pumpAndSettle();
+        );
+        await tester.pumpAndSettle();
 
-      await tester.tap(find.text('REPORTS'));
-      await tester.pumpAndSettle();
-      expect(reportsTapped, isTrue);
+        await tester.tap(find.text('REPORTS'));
+        await tester.pumpAndSettle();
+        expect(reportsTapped, isTrue);
 
-      await tester.tap(find.text('MATERIALS'));
-      await tester.pumpAndSettle();
-      expect(materialsTapped, isTrue);
-    });
+        await tester.tap(find.text('MATERIALS'));
+        await tester.pumpAndSettle();
+        expect(materialsTapped, isTrue);
+      },
+    );
 
     testWidgets(
       'shows NET mode with the net weight when both weights entered',

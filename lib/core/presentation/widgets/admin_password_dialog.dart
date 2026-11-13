@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -5,6 +7,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../security/admin_password_service.dart';
 
 Future<bool> showAdminPasswordDialog(BuildContext context) async {
+  // Drop focus from whatever field opened the dialog (for example the Vehicle
+  // Number input) so the caret does not stay behind the dialog.
+  FocusManager.instance.primaryFocus?.unfocus();
+
   final result = await showDialog<bool>(
     context: context,
     barrierDismissible: false,
@@ -23,12 +29,33 @@ class _AdminPasswordDialog extends StatefulWidget {
 class _AdminPasswordDialogState extends State<_AdminPasswordDialog> {
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
+  Timer? _focusRetry;
   String? _error;
   bool _obscureText = true;
   bool _isVerifying = false;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _requestPasswordFocus();
+    });
+  }
+
+  void _requestPasswordFocus() {
+    // The route needs a moment to take focus away from the screen behind the
+    // dialog; requesting too early lets the old field keep the caret.
+    _focusRetry?.cancel();
+    _focusRetry = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
+      FocusScope.of(context).requestFocus(_focusNode);
+    });
+  }
+
+  @override
   void dispose() {
+    _focusRetry?.cancel();
     _controller.dispose();
     _focusNode.dispose();
     super.dispose();
@@ -179,7 +206,8 @@ class _AdminPasswordDialogState extends State<_AdminPasswordDialog> {
                   controller: _controller,
                   focusNode: _focusNode,
                   obscureText: _obscureText,
-                  autofocus: true,
+                  autofocus: false,
+                  keyboardType: TextInputType.visiblePassword,
                   textInputAction: TextInputAction.done,
                   style: const TextStyle(
                     fontFamily: 'PlusJakartaSans',

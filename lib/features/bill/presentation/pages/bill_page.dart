@@ -586,7 +586,8 @@ class BillPageState extends State<BillPage> {
                               // 1. Camera feeds + live digital weight display.
                               LiveWeightBanner(
                                 onNavigateToReports: widget.onNavigateToReports,
-                                onNavigateToMaterials: widget.onNavigateToMaterials,
+                                onNavigateToMaterials:
+                                    widget.onNavigateToMaterials,
                               ),
 
                               const SizedBox(height: 10),

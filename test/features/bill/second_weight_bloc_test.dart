@@ -74,9 +74,7 @@ void main() {
     when(
       () => mockSaveBill.withNewBillNumber(any()),
     ).thenAnswer((_) async => (id: 2, billNumber: 'WB-00002'));
-    when(
-      () => mockGetPrevious.call(any()),
-    ).thenAnswer((_) async => null);
+    when(() => mockGetPrevious.call(any())).thenAnswer((_) async => null);
   });
 
   // ─── MODE TOGGLE ───────────────────────────────────────────────
@@ -387,9 +385,7 @@ void main() {
     blocTest<BillBloc, BillState>(
       'a changed number drops the previously populated weight immediately',
       build: () {
-        when(
-          () => mockGetPrevious.call(any()),
-        ).thenAnswer((_) async => null);
+        when(() => mockGetPrevious.call(any())).thenAnswer((_) async => null);
         return createBloc();
       },
       seed: () => BillState(
@@ -650,28 +646,29 @@ void main() {
         ).thenThrow(Exception('disk full'));
         return createBloc();
       },
-      seed: () => BillState(
-        status: BillScreenStatus.loaded,
-        vehicleNumber: 'TN31CM2026',
-        isSecondWeightMode: true,
-        weightUnit: 'kg',
-        grossWeightText: '14710',
-        grossWeightKg: 14710,
-        tareWeightText: '10000',
-        tareWeightKg: 10000,
-        netWeightKg: 4710,
-        firstWeightType: 'GROSS',
-        previousWeighment: singleWeightBill(
-          id: 1,
-          billNumber: 'WB-00001',
-          vehicleNumber: 'TN31CM2026',
-          type: 'GROSS',
-          weightKg: 14710,
-        ),
-      ).copyWith(
-        grossCapturedAt: DateTime(2026, 10, 1, 8, 30),
-        tareCapturedAt: DateTime(2026, 10, 1, 17, 5),
-      ),
+      seed: () =>
+          BillState(
+            status: BillScreenStatus.loaded,
+            vehicleNumber: 'TN31CM2026',
+            isSecondWeightMode: true,
+            weightUnit: 'kg',
+            grossWeightText: '14710',
+            grossWeightKg: 14710,
+            tareWeightText: '10000',
+            tareWeightKg: 10000,
+            netWeightKg: 4710,
+            firstWeightType: 'GROSS',
+            previousWeighment: singleWeightBill(
+              id: 1,
+              billNumber: 'WB-00001',
+              vehicleNumber: 'TN31CM2026',
+              type: 'GROSS',
+              weightKg: 14710,
+            ),
+          ).copyWith(
+            grossCapturedAt: DateTime(2026, 10, 1, 8, 30),
+            tareCapturedAt: DateTime(2026, 10, 1, 17, 5),
+          ),
       act: (bloc) => bloc.add(const SaveBillRequested()),
       verify: (bloc) {
         expect(bloc.state.status, BillScreenStatus.error);
