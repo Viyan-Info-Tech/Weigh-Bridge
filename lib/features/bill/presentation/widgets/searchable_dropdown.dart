@@ -151,6 +151,8 @@ class _SearchableDropdownState<T extends Object>
       if (!mounted) return;
       if (_effectiveFocusNode.hasFocus) return;
 
+      _dismissOverlay();
+
       if (mounted) setState(() {});
 
       if (widget.selectedItem != null) {

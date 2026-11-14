@@ -61,6 +61,7 @@ extension _HomePageNavigation on _HomePageState {
       if (!authenticated || !mounted) return;
     }
 
+    FocusManager.instance.primaryFocus?.unfocus();
     runSetState(() => _selectedIndex = index);
     if (index == 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
