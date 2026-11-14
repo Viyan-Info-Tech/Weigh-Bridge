@@ -4,6 +4,7 @@ import '../../../../core/utils/currency_formatter.dart';
 import '../../../material/domain/entities/material_item.dart';
 import '../../../material/domain/repositories/material_repository.dart';
 import '../../domain/entities/weighment.dart';
+import '../../domain/services/weight_pairing_service.dart';
 import '../../domain/usecases/save_bill.dart';
 import '../../../settings/domain/repositories/settings_repository.dart';
 import 'bill_event.dart';
@@ -37,6 +38,8 @@ class BillBloc extends Bloc<BillEvent, BillState> {
   /// after a newer one already answered.
   int _previousWeightLookupSeq = 0;
 
+  final WeightPairingService _pairing = const WeightPairingService();
+
   /// Master data for the material dropdown. When null (e.g. in older unit
   /// tests that don't wire it), the material field falls back to plain text.
   final MaterialRepository? _materialRepository;
@@ -62,8 +65,6 @@ class BillBloc extends Bloc<BillEvent, BillState> {
   /// ordering: a request that arrives while the form still looks exactly like
   /// the one that was just saved can only be that duplicate, because an empty
   /// form can never pass validation anyway.
-  BillState? _formJustSaved;
-
   /// True when [state] is still untouched since the last successful save.
 
   BillBloc({

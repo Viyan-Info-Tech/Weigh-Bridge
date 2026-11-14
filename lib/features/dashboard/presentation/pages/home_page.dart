@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io' show Platform, Process;
+import 'dart:ui' show AppExitResponse, AppExitType;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
@@ -15,6 +16,8 @@ import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../bill/presentation/pages/bill_page.dart';
 import '../../../material/presentation/widgets/material_list_page.dart';
 import '../../../settings/presentation/pages/settings_page.dart';
+import '../../../../core/database/app_database.dart' as db;
+import '../../../../core/hardware/scale/domain/scale_service.dart';
 import '../../../report/presentation/pages/report_page.dart';
 import '../../../auth/presentation/widgets/truck_logo.dart';
 import '../../../../core/presentation/widgets/admin_password_dialog.dart';
@@ -53,10 +56,20 @@ class _HomePageState extends State<HomePage>
 
   late Timer _clockTimer;
   DateTime _currentTime = DateTime.now();
+  late final AppLifecycleListener _appLifecycleListener;
 
   @override
   void initState() {
     super.initState();
+    _appLifecycleListener = AppLifecycleListener(
+      onExitRequested: () async {
+        if (!mounted) return AppExitResponse.exit;
+        await context.read<ScaleService>().stop();
+        if (!mounted) return AppExitResponse.exit;
+        await context.read<db.AppDatabase>().close();
+        return AppExitResponse.exit;
+      },
+    );
     HardwareKeyboard.instance.addHandler(_handleAppKeyEvent);
     _navDrawerController = AnimationController(
       vsync: this,
@@ -87,6 +100,7 @@ class _HomePageState extends State<HomePage>
 
   @override
   void dispose() {
+    _appLifecycleListener.dispose();
     HardwareKeyboard.instance.removeHandler(_handleAppKeyEvent);
     _navDrawerController.dispose();
     _clockTimer.cancel();

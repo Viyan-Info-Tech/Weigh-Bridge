@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'bill_shortcuts.dart';
@@ -648,27 +649,38 @@ class BillPageState extends State<BillPage> {
     );
   }
 
-  /// Routes hardware key events through the shared global handler.
-  ///
-  /// Registered for the page's lifetime; the logic itself lives in
-  /// `bill_shortcuts.dart` alongside the [Shortcuts] widget it runs next to.
   bool _handleGlobalKeyEvent(KeyEvent event) {
-    return handleWeighmentGlobalKeyEvent(
-      event,
-      isMounted: mounted,
-      isActive: widget.isActive,
-      isModalOpen: _isModalOpen,
-      isSaving: () => _isStatusBusy(context.read<BillBloc>().state),
-      onCancel: _clearFormFromEscape,
-      onSave: () => _saveTicket(context, context.read<BillBloc>().state),
-      onCaptureLiveWeight: _handleF1Workflow,
-      onManualTare: _focusTareWeightInput,
-      onReprint: () =>
-          _onReprintPressed(context, context.read<BillBloc>().state),
-      onExit: widget.onExit,
-      onSaveAndPrint: () =>
-          _saveAndPrintTicket(context, context.read<BillBloc>().state),
-    );
+    if (!mounted || !widget.isActive) return false;
+    if (event is! KeyDownEvent) return false;
+    if (_isModalOpen) return false;
+    final isSaving = _isStatusBusy(context.read<BillBloc>().state);
+    final key = event.logicalKey;
+    if (key == LogicalKeyboardKey.escape) {
+      if (!isSaving) _clearFormFromEscape();
+      return true;
+    }
+    if (key == LogicalKeyboardKey.f1) {
+      _handleF1Workflow();
+      return true;
+    }
+    if (key == LogicalKeyboardKey.f2) {
+      if (!isSaving) _focusTareWeightInput();
+      return true;
+    }
+    if (key == LogicalKeyboardKey.f4) {
+      _onReprintPressed(context, context.read<BillBloc>().state);
+      return true;
+    }
+    if (key == LogicalKeyboardKey.f9) {
+      widget.onExit?.call();
+      return true;
+    }
+    if (key == LogicalKeyboardKey.f10) {
+      if (!isSaving)
+        _saveAndPrintTicket(context, context.read<BillBloc>().state);
+      return true;
+    }
+    return false;
   }
 
   WeighmentShortcutHandlers _buildShortcutHandlers() {
@@ -696,8 +708,7 @@ class BillPageState extends State<BillPage> {
   void _clearFormFromEscape() {
     final state = context.read<BillBloc>().state;
     if (_isStatusBusy(state)) return;
-    context.read<BillBloc>().add(const ClearBillRequested());
-    _syncControllersAfterReset();
+    _onCancelPressed(context, state);
   }
 
   Widget _buildWeighmentArea(BillState state, {bool expandForm = false}) {

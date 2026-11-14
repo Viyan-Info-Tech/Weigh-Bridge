@@ -215,29 +215,23 @@ extension _BillBlocVehicle on BillBloc {
       return;
     }
 
-    // The previous weight is displayed in its own field (converted to the
-    // form's unit) and locked; the operator captures the opposite weight.
-    final displayValue = _fromKg(previousWeightKg, state.weightUnit);
-    final text = _formatWeightText(displayValue, state.weightUnit);
-
     emit(
       state.copyWith(
         isFetchingPreviousWeight: false,
         previousWeighment: previous,
         clearPreviousWeightMessage: true,
         // The previous Gross weight becomes the Tare reference for this
-        // cycle, so it is locked into the Tare field and the operator
-        // captures the new Gross weight.
-        firstWeightType: 'TARE',
+        // Do not assign the previous weight to Gross or Tare yet. The pairing
+        // decision is made only when F1 captures the current indicator weight.
+        firstWeightType: null,
         selectedWeightType: 'Gross',
         grossWeightText: '',
         grossWeightKg: 0,
         clearGrossCapturedAt: true,
         grossCapturedAt: null,
-        tareWeightText: text,
-        tareWeightKg: previousWeightKg,
-        clearTareCapturedAt: false,
-        tareCapturedAt: previous.createdAt,
+        tareWeightText: '',
+        tareWeightKg: 0,
+        tareCapturedAt: null,
       ),
     );
     _recalculate(emit);

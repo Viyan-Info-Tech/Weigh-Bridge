@@ -1,16 +1,6 @@
 part of 'bill_bloc.dart';
 
 extension _BillBlocWeights on BillBloc {
-  double _fromKg(double valueKg, String unit) {
-    return _normalizeUnit(unit) == 'ton' ? valueKg / 1000 : valueKg;
-  }
-
-  String _formatWeightText(double displayValue, String unit) {
-    return _normalizeUnit(unit) == 'ton'
-        ? displayValue.toStringAsFixed(3)
-        : displayValue.toStringAsFixed(0);
-  }
-
   String _normalizeUnit(String unit) {
     final value = unit.trim().toLowerCase();
     if (value == 'ton' ||
@@ -68,14 +58,13 @@ extension _BillBlocWeights on BillBloc {
     // In SECOND WEIGHT mode a manually entered gross weight is only meaningful
     // when gross is the capture side (reference is a tare). Compare and assign
     // automatically so a heavier entry becomes the gross weight.
-    if (state.isSecondWeightMode &&
-        state.previousWeighment != null &&
-        state.firstWeightType == 'TARE') {
+    if (state.isSecondWeightMode && state.previousWeighment != null) {
       final displayValue = double.tryParse(event.value);
       if (displayValue != null && displayValue > 0) {
         final kgValue = _toKg(displayValue);
-        final refKg = state.tareWeightKg;
-        final refCapturedAt = state.tareCapturedAt;
+        final previous = state.previousWeighment!;
+        final refKg = previous.referenceWeightKg ?? 0;
+        final refCapturedAt = previous.referenceCapturedAt;
         final now = event.capturedAt ?? state.grossCapturedAt ?? DateTime.now();
         final isTon = _normalizeUnit(state.weightUnit) == 'ton';
         final enteredText = isTon
@@ -85,27 +74,28 @@ extension _BillBlocWeights on BillBloc {
             ? (refKg / 1000).toStringAsFixed(3)
             : refKg.toStringAsFixed(0);
 
-        if (kgValue <= refKg) {
+        final pairing = _pairing.pair(previousKg: refKg, currentKg: kgValue);
+        if (pairing is WeightPairingRejected) {
           emit(
             state.copyWith(
               status: BillScreenStatus.error,
-              errorMessage:
-                  'Current weight must be greater than the previous Gross '
-                  'weight (${refKg.toStringAsFixed(0)} kg).',
+              errorMessage: pairing.message,
             ),
           );
           return;
         }
+        final paired = pairing as WeightPairingPaired;
+        final currentIsGross = kgValue >= refKg;
 
         emit(
           state.copyWith(
-            grossWeightKg: kgValue,
-            grossWeightText: enteredText,
-            grossCapturedAt: now,
-            tareWeightKg: refKg,
-            tareWeightText: refText,
-            tareCapturedAt: refCapturedAt ?? now,
-            firstWeightType: 'TARE',
+            grossWeightKg: paired.grossKg,
+            grossWeightText: currentIsGross ? enteredText : refText,
+            grossCapturedAt: currentIsGross ? now : (refCapturedAt ?? now),
+            tareWeightKg: paired.tareKg,
+            tareWeightText: currentIsGross ? refText : enteredText,
+            tareCapturedAt: currentIsGross ? (refCapturedAt ?? now) : now,
+            firstWeightType: currentIsGross ? 'TARE' : 'GROSS',
             status: BillScreenStatus.loaded,
             clearError: true,
           ),
@@ -177,14 +167,13 @@ extension _BillBlocWeights on BillBloc {
       return;
     }
 
-    if (state.isSecondWeightMode &&
-        state.previousWeighment != null &&
-        state.firstWeightType == 'GROSS') {
+    if (state.isSecondWeightMode && state.previousWeighment != null) {
       final displayValue = double.tryParse(event.value);
       if (displayValue != null && displayValue > 0) {
         final kgValue = _toKg(displayValue);
-        final refKg = state.grossWeightKg;
-        final refCapturedAt = state.grossCapturedAt;
+        final previous = state.previousWeighment!;
+        final refKg = previous.referenceWeightKg ?? 0;
+        final refCapturedAt = previous.referenceCapturedAt;
         final now = event.capturedAt ?? state.tareCapturedAt ?? DateTime.now();
         final isTon = _normalizeUnit(state.weightUnit) == 'ton';
         final enteredText = isTon
@@ -194,27 +183,28 @@ extension _BillBlocWeights on BillBloc {
             ? (refKg / 1000).toStringAsFixed(3)
             : refKg.toStringAsFixed(0);
 
-        if (kgValue <= refKg) {
+        final pairing = _pairing.pair(previousKg: refKg, currentKg: kgValue);
+        if (pairing is WeightPairingRejected) {
           emit(
             state.copyWith(
               status: BillScreenStatus.error,
-              errorMessage:
-                  'Current weight must be greater than the previous Gross '
-                  'weight (${refKg.toStringAsFixed(0)} kg).',
+              errorMessage: pairing.message,
             ),
           );
           return;
         }
+        final paired = pairing as WeightPairingPaired;
+        final currentIsGross = kgValue >= refKg;
 
         emit(
           state.copyWith(
-            grossWeightKg: kgValue,
-            grossWeightText: enteredText,
-            grossCapturedAt: now,
-            tareWeightKg: refKg,
-            tareWeightText: refText,
-            tareCapturedAt: refCapturedAt ?? now,
-            firstWeightType: 'TARE',
+            grossWeightKg: paired.grossKg,
+            grossWeightText: currentIsGross ? enteredText : refText,
+            grossCapturedAt: currentIsGross ? now : (refCapturedAt ?? now),
+            tareWeightKg: paired.tareKg,
+            tareWeightText: currentIsGross ? refText : enteredText,
+            tareCapturedAt: currentIsGross ? (refCapturedAt ?? now) : now,
+            firstWeightType: currentIsGross ? 'TARE' : 'GROSS',
             status: BillScreenStatus.loaded,
             clearError: true,
           ),
@@ -391,38 +381,38 @@ extension _BillBlocWeights on BillBloc {
     // GROSS/TARE automatically (higher = gross, lower = tare), regardless of
     // which side the truck arrived on first.
     if (state.isSecondWeightMode && state.previousWeighment != null) {
-      final refIsTare = state.firstWeightType == 'TARE';
-      final refKg = refIsTare ? state.tareWeightKg : state.grossWeightKg;
-      final refCapturedAt = refIsTare
-          ? state.tareCapturedAt
-          : state.grossCapturedAt;
-
+      final previous = state.previousWeighment!;
+      final refKg = previous.referenceWeightKg ?? 0;
+      final refCapturedAt = previous.referenceCapturedAt;
       final refText = isTon
           ? (refKg / 1000).toStringAsFixed(3)
           : refKg.toStringAsFixed(0);
 
-      if (liveKg <= refKg) {
+      final capturePairing = _pairing.pair(
+        previousKg: refKg,
+        currentKg: liveKg,
+      );
+      if (capturePairing is WeightPairingRejected) {
         emit(
           state.copyWith(
             status: BillScreenStatus.error,
-            errorMessage:
-                'Current weight must be greater than the previous Gross '
-                'weight (${refKg.toStringAsFixed(0)} kg).',
+            errorMessage: capturePairing.message,
           ),
         );
         return;
       }
 
-      // The captured weight is the new gross; the reference becomes the tare.
+      final paired = capturePairing as WeightPairingPaired;
+      final currentIsGross = liveKg >= refKg;
       emit(
         state.copyWith(
-          grossWeightKg: liveKg,
-          grossWeightText: weightStr,
-          grossCapturedAt: now,
-          tareWeightKg: refKg,
-          tareWeightText: refText,
-          tareCapturedAt: refCapturedAt ?? now,
-          firstWeightType: 'TARE',
+          grossWeightKg: paired.grossKg,
+          grossWeightText: currentIsGross ? weightStr : refText,
+          grossCapturedAt: currentIsGross ? now : (refCapturedAt ?? now),
+          tareWeightKg: paired.tareKg,
+          tareWeightText: currentIsGross ? refText : weightStr,
+          tareCapturedAt: currentIsGross ? (refCapturedAt ?? now) : now,
+          firstWeightType: currentIsGross ? 'TARE' : 'GROSS',
           status: BillScreenStatus.loaded,
           clearError: true,
         ),
@@ -478,8 +468,4 @@ extension _BillBlocWeights on BillBloc {
   ) {
     emit(state.copyWith(selectedWeightType: event.type));
   }
-
-  /// Validates all fields in a defined order before saving.
-  ///
-  /// Returns a map of field errors (field key -> error message).
 }

@@ -84,6 +84,13 @@ class Weighment extends Equatable {
     return firstWeightType.toUpperCase() == 'TARE' ? 'TARE' : 'GROSS';
   }
 
+  /// Capture timestamp of [referenceWeightKg].
+  DateTime? get referenceCapturedAt {
+    if (hasBothWeights) return grossCapturedAt;
+    if (firstWeightType.toUpperCase() == 'TARE') return tareCapturedAt;
+    return grossCapturedAt;
+  }
+
   /// A saved weighment is completed once at least one valid weight exists.
   static bool isCompletedForWeights(
     double? grossWeightKg,

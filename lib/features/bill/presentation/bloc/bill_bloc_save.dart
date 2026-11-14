@@ -1,25 +1,15 @@
 part of 'bill_bloc.dart';
 
 extension _BillBlocSave on BillBloc {
-  bool get _isDuplicateSaveRequest {
-    final saved = _formJustSaved;
-    if (saved == null) return false;
-    return saved.vehicleNumber == state.vehicleNumber &&
-        saved.grossWeightKg == state.grossWeightKg &&
-        saved.tareWeightKg == state.tareWeightKg &&
-        saved.firstWeightType == state.firstWeightType &&
-        saved.materialText == state.materialText &&
-        saved.chargesText == state.chargesText &&
-        saved.remarksText == state.remarksText;
-  }
-
   Future<void> _onSaveBillRequested(
     SaveBillRequested event,
     Emitter<BillState> emit,
   ) async {
     // Ignore the duplicate half of a single save request; see [_formJustSaved].
-    if (_isDuplicateSaveRequest) return;
-
+    if (state.status == BillScreenStatus.saving ||
+        state.status == BillScreenStatus.printing) {
+      return;
+    }
     final errors = _validateAll();
     if (errors.isNotEmpty) {
       emit(
@@ -42,7 +32,6 @@ extension _BillBlocSave on BillBloc {
       final bills = await _loadBillsFor(state.effectiveBillsDate);
       if (emit.isDone) return;
       emit(state.copyWith(status: BillScreenStatus.saved, recentBills: bills));
-      _formJustSaved = state;
     } catch (e) {
       if (emit.isDone) return;
       emit(
@@ -59,8 +48,10 @@ extension _BillBlocSave on BillBloc {
     Emitter<BillState> emit,
   ) async {
     // Ignore the duplicate half of a single Ctrl+S; see [_formJustSaved].
-    if (_isDuplicateSaveRequest) return;
-
+    if (state.status == BillScreenStatus.saving ||
+        state.status == BillScreenStatus.printing) {
+      return;
+    }
     final errors = _validateAll();
     if (errors.isNotEmpty) {
       emit(
@@ -89,7 +80,6 @@ extension _BillBlocSave on BillBloc {
           printReceiptBill: savedBill,
         ),
       );
-      _formJustSaved = state;
     } catch (e) {
       if (emit.isDone) return;
       emit(

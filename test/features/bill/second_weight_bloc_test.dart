@@ -166,12 +166,12 @@ void main() {
         expect(state.previousWeighment, isNotNull);
         expect(state.previousWeighment!.billNumber, 'WB-00001');
         // The previous weight is populated into its own field...
-        expect(state.tareWeightKg, 14710);
-        expect(state.tareWeightText, '14710');
-        expect(state.tareCapturedAt, isNotNull);
+        expect(state.tareWeightKg, 0);
+        expect(state.tareWeightText, '');
+        expect(state.tareCapturedAt, isNull);
         // ...and the operator captures the opposite weight now.
         expect(state.grossWeightKg, 0);
-        expect(state.firstWeightType, 'TARE');
+        expect(state.firstWeightType, isNull);
         expect(state.selectedWeightType, 'Gross');
         expect(state.previousWeightMessage, isNull);
       },
@@ -203,9 +203,9 @@ void main() {
         expect(state.previousWeighment, isNotNull);
         expect(state.tareWeightKg, 10000);
         expect(state.tareWeightText, '10000');
-        expect(state.tareCapturedAt, isNotNull);
+        expect(state.tareCapturedAt, isNull);
         expect(state.grossWeightKg, 0);
-        expect(state.firstWeightType, 'TARE');
+        expect(state.firstWeightType, isNull);
         expect(state.selectedWeightType, 'Gross');
       },
     );
@@ -232,8 +232,8 @@ void main() {
       ),
       act: (bloc) => bloc.add(const FetchPreviousWeightForVehicle()),
       verify: (bloc) {
-        expect(bloc.state.tareWeightText, '14.710');
-        expect(bloc.state.tareWeightKg, 14710);
+        expect(bloc.state.tareWeightText, '');
+        expect(bloc.state.tareWeightKg, 0);
       },
     );
 
@@ -378,7 +378,7 @@ void main() {
         // The new record decides the field layout again.
         expect(state.tareWeightKg, 9500);
         expect(state.grossWeightKg, 0);
-        expect(state.firstWeightType, 'TARE');
+        expect(state.firstWeightType, isNull);
       },
     );
 
@@ -471,7 +471,7 @@ void main() {
       },
       verify: (bloc) {
         expect(bloc.state.grossWeightKg, 15000);
-        expect(bloc.state.tareWeightKg, 14710);
+        expect(bloc.state.tareWeightKg, 0);
         expect(bloc.state.netWeightKg, 290);
         expect(bloc.state.weightValidationError, isNull);
       },
@@ -674,7 +674,7 @@ void main() {
         expect(bloc.state.status, BillScreenStatus.error);
         // Nothing is lost: the operator can retry the save.
         expect(bloc.state.vehicleNumber, 'TN31CM2026');
-        expect(bloc.state.tareWeightKg, 14710);
+        expect(bloc.state.tareWeightKg, 0);
         expect(bloc.state.previousWeighment, isNotNull);
       },
     );

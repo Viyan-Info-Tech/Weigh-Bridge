@@ -78,7 +78,7 @@ extension _HomePageDrawer on _HomePageState {
                   isDestructive: true,
                   onTap: () {
                     _closeNavMenu();
-                    _confirmLogout(context);
+                    _exitApplication();
                   },
                 ),
               ];

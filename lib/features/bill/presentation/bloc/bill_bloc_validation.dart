@@ -45,17 +45,8 @@ extension _BillBlocValidation on BillBloc {
       } else if (!hasGross || !hasTare) {
         errors['weight'] =
             'Capture the current weight to complete the second weighing.';
-      } else {
-        final refIsTare = state.firstWeightType == 'TARE';
-        final refKg = refIsTare ? state.tareWeightKg : state.grossWeightKg;
-        final captureKg = refIsTare ? state.grossWeightKg : state.tareWeightKg;
-        if (refKg > 0 && captureKg <= refKg) {
-          errors['weight'] =
-              'Current weight must be greater than the previous Gross '
-              'weight (${refKg.toStringAsFixed(0)} kg).';
-        } else if (state.weightValidationError != null) {
-          errors['weight'] = state.weightValidationError!;
-        }
+      } else if (state.weightValidationError != null) {
+        errors['weight'] = state.weightValidationError!;
       }
     }
 
