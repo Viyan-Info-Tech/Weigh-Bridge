@@ -676,8 +676,9 @@ class BillPageState extends State<BillPage> {
       return true;
     }
     if (key == LogicalKeyboardKey.f10) {
-      if (!isSaving)
+      if (!isSaving) {
         _saveAndPrintTicket(context, context.read<BillBloc>().state);
+      }
       return true;
     }
     return false;

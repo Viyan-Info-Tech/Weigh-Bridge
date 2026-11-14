@@ -806,10 +806,10 @@ class _BillFormState extends State<BillForm> {
 
   /// 3. MATERIAL (database-backed dropdown of `Name - Type` options).
   ///
-  /// The field is selection-only (`enableSearch: false`): the operator picks a
-  /// saved material and can never type an arbitrary name. When no materials
-  /// exist yet, the popup explains where to add them. Legacy free-text values
-  /// already saved on a weighment still display here via [BillForm.materialText].
+  /// The field supports search (`enableSearch: true`): the operator can type to
+  /// filter saved materials and then select one. When no materials exist yet,
+  /// the popup explains where to add them. Legacy free-text values already
+  /// saved on a weighment still display here via [BillForm.materialText].
   Widget _buildMaterialField() {
     return BillFormFieldShell(
       prefixIcon: Icons.inventory_2_outlined,
@@ -819,7 +819,7 @@ class _BillFormState extends State<BillForm> {
         label: 'MATERIAL',
         showLabel: false,
         borderless: true,
-        enableSearch: false,
+        enableSearch: true,
         emptyItemsMessage:
             'No materials available. Add a material in Material Management.',
         items: widget.materialOptions,
