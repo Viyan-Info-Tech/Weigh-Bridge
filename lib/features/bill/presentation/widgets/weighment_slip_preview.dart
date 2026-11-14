@@ -1,28 +1,12 @@
-import 'dart:io';
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
 import '../../../settings/domain/entities/billing_settings.dart';
 import '../../domain/entities/weighment.dart';
 import '../../domain/services/preprinted_ticket_layout.dart';
 
-/// On-screen preview of the weighment slip: a single, centered white receipt
-/// card styled for the screen - red business branding, red title banner, an
-/// aligned weighment-details block with dashed separators, a light red
-/// advisory note and a red footer strip.
-///
-/// This widget is presentation only. The print job is still built by
-/// `PrePrintedTicketPdfGenerator` from `PrePrintedTicketLayout` and keeps
-/// placing two identical copies on one sheet, so nothing drawn here can change
-/// what reaches the paper. Every value is resolved by [PrePrintedTicketData] -
-/// the same object the printer uses - so the preview can never disagree with
-/// the printed ticket.
-///
-/// Fields follow the configured character grid (Settings ▸ Continuous Form
-/// Printing): printable fields are grouped by grid line and drawn in column
-/// order, which on the default grid reads - SERIAL NO. / DATE / TIME, VEHICLE
-/// NO., WT. CHARGES (Rs.), MATERIAL, GROSS, TARE, Nett, CUSTOMER.
+/// On-screen preview of the weighment slip: a single, centered receipt card
+/// with a modern, professional layout. The printed ticket is still built by
+/// `PrePrintedTicketPdfGenerator` and is unaffected by anything drawn here.
 class WeighmentSlipPreview extends StatelessWidget {
   const WeighmentSlipPreview({
     super.key,
@@ -33,45 +17,23 @@ class WeighmentSlipPreview extends StatelessWidget {
   final Weighment bill;
   final BillingSettings settings;
 
-  /// Design width of the single receipt card in logical pixels.
-  ///
-  /// The card keeps the square proportion of one copy on the 11 x 5.5 in
-  /// continuous form (5.5 x 5.5 in), so scaling it with the window preserves
-  /// the ticket's aspect ratio.
-  static const double ticketDesignWidth = 440;
-
-  /// The sheet is never scaled below this fraction of its design width; past
-  /// it the preview scrolls horizontally instead of shrinking the text into
-  /// something unreadable.
-  static const double minReadableScale = 0.8;
+  static const double ticketDesignWidth = 620;
 
   @override
   Widget build(BuildContext context) {
     final data = PrePrintedTicketData(bill: bill, settings: settings);
-    final page = PrePrintedTicketLayout.initialPaperFormat(settings);
-    // The same layout the print job uses, so the preview shows each field's
-    // configured font size and weight exactly as they reach the paper.
-    final layout = PrePrintedTicketLayout(pageFormat: page, settings: settings);
-    final lines = _fieldLines(layout.placements);
-
-    // One receipt = half the sheet: 5.5 x 5.5 in on the 11 x 5.5 in form, so
-    // the preview keeps the printed copy's square proportion.
-    final minHeight = ticketDesignWidth * 2 * page.height / page.width;
 
     return LayoutBuilder(
       builder: (context, constraints) {
         final available = constraints.maxWidth.isFinite
             ? constraints.maxWidth
             : ticketDesignWidth;
-        final receipt = _buildReceipt(data, layout, lines, minHeight);
+        final receipt = _ReceiptCard(data: data);
 
-        // The receipt stays centered and keeps its aspect ratio; it scales
-        // down with the window until the readable floor, then the preview
-        // area scrolls instead of shrinking the text further.
         if (available >= ticketDesignWidth) {
           return Center(child: receipt);
         }
-        if (available >= ticketDesignWidth * minReadableScale) {
+        if (available >= ticketDesignWidth * 0.75) {
           return Center(
             child: FittedBox(
               fit: BoxFit.scaleDown,
@@ -87,394 +49,315 @@ class WeighmentSlipPreview extends StatelessWidget {
       },
     );
   }
+}
 
-  /// Printable fields grouped into the ticket's rows: one row per grid line,
-  /// fields inside a row ordered by their configured column.
-  static List<List<PrePrintedField>> _fieldLines(
-    Map<PrePrintedField, PrePrintedFieldPlacement> placements,
-  ) {
-    final byLine = <int, List<PrePrintedField>>{};
-    for (final field in PrePrintedField.values) {
-      final placement = placements[field];
-      if (placement == null || !placement.isPrintable) continue;
-      byLine.putIfAbsent(placement.line, () => <PrePrintedField>[]).add(field);
+class _ReceiptCard extends StatelessWidget {
+  static const double ticketDesignWidth = WeighmentSlipPreview.ticketDesignWidth;
+
+  const _ReceiptCard({required this.data});
+
+  final PrePrintedTicketData data;
+
+  @override
+  Widget build(BuildContext context) {
+    final weights = data.weights;
+    final settings = data.settings;
+    final businessName = settings.businessName.trim().isEmpty
+        ? 'VIYAN WEIGHBRIDGE'
+        : settings.businessName.trim().toUpperCase();
+    final subtitle = (settings.businessSubtitle?.trim().isNotEmpty ?? false)
+        ? settings.businessSubtitle!.trim()
+        : 'Computer Weigh Bridge';
+    final serviceText = (settings.serviceText?.trim().isNotEmpty ?? false)
+        ? settings.serviceText!.trim()
+        : '24 HOURS SERVICE';
+    final title = settings.receiptTitle.trim().isEmpty
+        ? 'WEIGHMENT RECEIPT'
+        : settings.receiptTitle.trim().toUpperCase();
+
+    String weightText(double? kg) {
+      if (kg == null) return '—';
+      return '${kg.toStringAsFixed(0)} Kg';
     }
 
-    final lines = <List<PrePrintedField>>[];
-    for (final line in byLine.keys.toList()..sort()) {
-      final fields = byLine[line]!
-        ..sort(
-          (a, b) => placements[a]!.column.compareTo(placements[b]!.column),
-        );
-      lines.add(fields);
+    String chargesText() {
+      final v = data.valueFor(PrePrintedField.charges);
+      return v.isEmpty ? '—' : '$v Rs.';
     }
-    return lines;
-  }
 
-  /// The single receipt: paper edge, border and shadow drawn around one copy
-  /// of the ticket - no duplicate copy, no cut line between copies.
-  Widget _buildReceipt(
-    PrePrintedTicketData data,
-    PrePrintedTicketLayout layout,
-    List<List<PrePrintedField>> lines,
-    double minHeight,
-  ) {
+    String materialText() {
+      final v = data.valueFor(PrePrintedField.material);
+      return v.isEmpty ? '—' : v;
+    }
+
+    String customerText() {
+      final v = data.valueFor(PrePrintedField.customer);
+      return v.isEmpty ? '—' : v;
+    }
+
     return Container(
       width: ticketDesignWidth,
-      constraints: BoxConstraints(minHeight: minHeight),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: const Color(0xFF94A3B8), width: 1.2),
-        boxShadow: [
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: const [
           BoxShadow(
-            color: const Color(0xFF0F172A).withValues(alpha: 0.10),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
+            color: Color(0x1A0F172A),
+            blurRadius: 24,
+            offset: Offset(0, 10),
           ),
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      // IntrinsicHeight gives the ticket column a definite height (the sheet's
-      // half-sheet proportion, floored by minHeight), which is what lets the
-      // footer Spacer fill the spare height inside a vertically scrolling
-      // dialog, exactly as the two-up sheet did.
-      child: IntrinsicHeight(
-        child: _TicketCopy(data: data, layout: layout, lines: lines),
-      ),
-    );
-  }
-}
-
-/// On-screen receipt card: one receipt, styled for the preview (red
-/// branding, red title banner, advisory note and footer strip) while still
-/// rendering the same [PrePrintedTicketData] the print job uses for each of
-/// its two printed copies.
-class _TicketCopy extends StatelessWidget {
-  const _TicketCopy({
-    required this.data,
-    required this.layout,
-    required this.lines,
-  });
-
-  final PrePrintedTicketData data;
-  final PrePrintedTicketLayout layout;
-  final List<List<PrePrintedField>> lines;
-
-  /// Brand red used for the business name, the title banner and the footer
-  /// strip, matching the reference preview design.
-  static const Color _brandRed = Color(0xFFDC2626);
-
-  static const TextStyle _body = TextStyle(
-    fontFamily: 'PlusJakartaSans',
-    fontSize: 11,
-    height: 1.35,
-    color: Color(0xFF111827),
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    final settings = data.settings;
-    final labelStyle = _body.copyWith(fontWeight: FontWeight.w700);
-    final valueStyle = _body;
-    final labelWidth = _labelColumnWidth(labelStyle);
-    final title = settings.receiptTitle.trim();
-    final footerNote = _footerNote(settings);
-
-    // Horizontal inset shared by every section except the edge-to-edge
-    // footer strip.
-    const inset = EdgeInsets.symmetric(horizontal: 16);
-
-    return Container(
-      color: Colors.white,
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 0),
-            // ── Letterhead: phones, red branding, tagline, service ──
-            child: _letterhead(settings),
-          ),
-
-          // ── Red title banner: WEIGHMENT RECEIPT ──
-          if (title.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 6),
-                decoration: const BoxDecoration(
-                  color: _brandRed,
-                  borderRadius: BorderRadius.all(Radius.circular(4)),
-                ),
-                child: Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  style: _body.copyWith(
-                    color: Colors.white,
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: 1.0,
-                  ),
-                ),
+          // ── Company identity ─────────────────────────────
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF0D3B82), Color(0xFF1E6FD9)],
               ),
             ),
-
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const _DashedRule(),
+                Text(
+                  businessName,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: 0.6,
+                  ),
+                ),
                 const SizedBox(height: 4),
-
-                // ── Weighment details, aligned label column ──────
-                for (final fields in lines)
-                  if (fields.length == 1)
-                    _labelValueRow(
-                      fields.single,
-                      labelWidth: labelWidth,
-                      labelStyle: labelStyle,
-                      valueStyle: valueStyle,
-                    )
-                  else
-                    _inlineRow(
-                      fields,
-                      labelStyle: labelStyle,
-                      valueStyle: valueStyle,
+                Text(
+                  subtitle,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white.withValues(alpha: 0.9),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  serviceText,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white.withValues(alpha: 0.85),
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
+                  ),
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                      letterSpacing: 1.0,
                     ),
-
-                const SizedBox(height: 6),
-                const _DashedRule(),
+                  ),
+                ),
               ],
             ),
           ),
 
-          // Any spare sheet height becomes one gap above the footer, so the
-          // card keeps its proportions without rows drifting apart.
-          const Spacer(),
+          // ── Bill information ─────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+            child: Column(
+              children: [
+                _infoRow('Serial Number', data.valueFor(PrePrintedField.serial)),
+                _infoRow('Date', data.dateText),
+                _infoRow('Time', data.timeText),
+                _infoRow('Vehicle Number', data.valueFor(PrePrintedField.vehicle)),
+                _infoRow('Customer', customerText()),
+                _infoRow('Material', materialText()),
+              ],
+            ),
+          ),
 
-          // ── Light red advisory section ───────────────────────
-          if (footerNote.isNotEmpty)
-            Padding(
-              padding: inset.copyWith(bottom: 10),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 7,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFEE2E2),
-                  borderRadius: BorderRadius.circular(4),
-                  border: Border.all(color: const Color(0xFFFECACA)),
-                ),
-                child: Text(
-                  'Note: $footerNote',
-                  textAlign: TextAlign.center,
-                  style: _body.copyWith(
-                    fontSize: 9.5,
-                    height: 1.3,
-                    color: const Color(0xFF991B1B),
+          const Divider(height: 1, color: Color(0xFFE2E8F0), indent: 24, endIndent: 24),
+
+          // ── Weight information ───────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _weightCard(
+                    label: 'GROSS WEIGHT',
+                    value: weightText(weights.grossKg),
+                    color: const Color(0xFF0284C7),
+                    bg: const Color(0xFFF0F9FF),
                   ),
                 ),
-              ),
-            ),
-
-          // ── Red footer strip: THANK YOU! / 24x7 SERVICE / DRIVE SAFE! ──
-          footerStrip(),
-        ],
-      ),
-    );
-  }
-
-  /// Red footer strip closing the receipt card, edge to edge.
-  static Widget footerStrip() {
-    const textStyle = TextStyle(
-      fontFamily: 'PlusJakartaSans',
-      fontSize: 9.5,
-      fontWeight: FontWeight.w800,
-      letterSpacing: 0.6,
-      color: Colors.white,
-    );
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 14),
-      decoration: const BoxDecoration(
-        color: _brandRed,
-        borderRadius: BorderRadius.vertical(bottom: Radius.circular(4)),
-      ),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text('THANK YOU!', style: textStyle),
-          Text('24x7 SERVICE', style: textStyle),
-          Text('DRIVE SAFE!', style: textStyle),
-        ],
-      ),
-    );
-  }
-
-  /// Letterhead from the configured business branding: phone numbers first,
-  /// then the logo (when configured), the business name in brand red, the
-  /// tagline, the service line and the address/contact details.
-  Widget _letterhead(BillingSettings settings) {
-    final logoPath = settings.logoPath?.trim() ?? '';
-    final phone = settings.phoneNumber?.trim() ?? '';
-    final contact = [
-      if (phone.isNotEmpty) 'Tel: $phone',
-      if (settings.email != null && settings.email!.trim().isNotEmpty)
-        'E-Mail: ${settings.email!.trim()}',
-      if (settings.gstin != null && settings.gstin!.trim().isNotEmpty)
-        'GSTIN: ${settings.gstin!.trim()}',
-    ].join('   ');
-
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (phone.isNotEmpty)
-            Text(
-              phone,
-              textAlign: TextAlign.center,
-              style: _body.copyWith(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w700,
-                color: const Color(0xFF374151),
-              ),
-            ),
-          if (logoPath.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 6, bottom: 4),
-              child: Image.file(
-                File(logoPath),
-                height: 40,
-                fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => const SizedBox.shrink(),
-              ),
-            )
-          else
-            const SizedBox(height: 6),
-          Text(
-            settings.businessName.toUpperCase(),
-            textAlign: TextAlign.center,
-            style: _body.copyWith(
-              fontSize: 17,
-              fontWeight: FontWeight.w800,
-              letterSpacing: 0.8,
-              color: _brandRed,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _weightCard(
+                    label: 'TARE WEIGHT',
+                    value: weightText(weights.tareKg),
+                    color: const Color(0xFF64748B),
+                    bg: const Color(0xFFF8FAFC),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _weightCard(
+                    label: 'NET WEIGHT',
+                    value: weightText(weights.netKg),
+                    color: const Color(0xFF16A34A),
+                    bg: const Color(0xFFECFDF5),
+                    emphasize: true,
+                  ),
+                ),
+              ],
             ),
           ),
-          if (settings.businessSubtitle != null &&
-              settings.businessSubtitle!.trim().isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                settings.businessSubtitle!.trim(),
-                textAlign: TextAlign.center,
-                style: _body.copyWith(fontSize: 10.5),
+
+          // ── Charges ─────────────────────────────────────
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFE2E8F0)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Weight Charges',
+                    style: TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF475569),
+                    ),
+                  ),
+                  Text(
+                    chargesText(),
+                    style: const TextStyle(
+                      fontFamily: 'PlusJakartaSans',
+                      fontSize: 16,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                    ),
+                  ),
+                ],
               ),
             ),
-          if (settings.serviceText != null &&
-              settings.serviceText!.trim().isNotEmpty)
-            Text(
-              settings.serviceText!.trim(),
-              textAlign: TextAlign.center,
-              style: _body.copyWith(
-                fontSize: 10.5,
-                fontWeight: FontWeight.w800,
-                letterSpacing: 0.4,
-                color: const Color(0xFF374151),
-              ),
+          ),
+
+          // ── Footer ──────────────────────────────────────
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+            decoration: const BoxDecoration(
+              color: Color(0xFFF8FAFC),
+              border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
             ),
-          if (settings.address != null && settings.address!.trim().isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 2),
-              child: Text(
-                settings.address!.trim(),
-                textAlign: TextAlign.center,
-                style: _body.copyWith(
-                  fontSize: 9.5,
-                  color: const Color(0xFF475569),
+            child: Column(
+              children: [
+                const Text(
+                  'Thank you for using Viyan Weighbridge',
+                  style: TextStyle(
+                    fontFamily: 'PlusJakartaSans',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF475569),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 4),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Text(
+                      '24x7 SERVICE',
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0D3B82),
+                        letterSpacing: 0.6,
+                      ),
+                    ),
+                    SizedBox(width: 16),
+                    Text(
+                      'DRIVE SAFE!',
+                      style: TextStyle(
+                        fontFamily: 'PlusJakartaSans',
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF0D3B82),
+                        letterSpacing: 0.6,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          if (contact.isNotEmpty)
-            Text(
-              contact,
-              textAlign: TextAlign.center,
-              style: _body.copyWith(
-                fontSize: 9.5,
-                color: const Color(0xFF475569),
-              ),
-            ),
+          ),
         ],
       ),
     );
   }
 
-  String _footerNote(BillingSettings settings) {
-    if (!settings.showFooterNote) return '';
-    final configured = settings.footerNote?.trim();
-    if (configured != null && configured.isNotEmpty) return configured;
-    return 'Please check the weight before leaving the weighbridge.';
-  }
-
-  /// Widest single label, so every colon in the ticket lines up on one
-  /// column no matter which font the platform resolves for Courier.
-  double _labelColumnWidth(TextStyle labelStyle) {
-    final painter = TextPainter(textDirection: TextDirection.ltr);
-    var widest = 0.0;
-    for (final fields in lines) {
-      if (fields.length != 1) continue;
-      painter.text = TextSpan(
-        text: fields.single.prePrintedLabel,
-        style: labelStyle,
-      );
-      painter.layout();
-      if (painter.width > widest) widest = painter.width;
+  Widget _infoRow(String label, String value) {
+    if (value.trim().isEmpty || value == '—') {
+      // Still show a dash for empty values to keep layout stable.
     }
-    return widest + 8;
-  }
-
-  /// Value style for one field, mirroring the print job: the field grid's
-  /// bold toggle picks the weight, and its configured size scales the screen
-  /// font relative to the job's pitch-derived size so the card keeps its
-  /// design while still showing which fields print larger or smaller.
-  TextStyle _valueStyleFor(PrePrintedField field, TextStyle base) {
-    final placement = layout.placements[field];
-    if (placement == null) return base;
-    final ratio = layout.fontSizeFor(placement) / layout.fontSize;
-    return base.copyWith(
-      fontSize: (base.fontSize ?? 11) * ratio,
-      fontWeight: placement.isBold ? FontWeight.w700 : FontWeight.w400,
-    );
-  }
-
-  /// A row of its own: fixed label column, colon, then the value. The value
-  /// is clipped with an ellipsis rather than wrapping, matching how the print
-  /// job clips a value at its configured character width.
-  Widget _labelValueRow(
-    PrePrintedField field, {
-    required double labelWidth,
-    required TextStyle labelStyle,
-    required TextStyle valueStyle,
-  }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1.5),
+      padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: labelWidth,
-            child: Text(field.prePrintedLabel, style: labelStyle),
+            width: 130,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF64748B),
+              ),
+            ),
           ),
-          Text(': ', style: labelStyle),
           Expanded(
             child: Text(
-              data.valueFor(field),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: _valueStyleFor(field, valueStyle),
+              value.isEmpty ? '—' : value,
+              style: const TextStyle(
+                fontFamily: 'PlusJakartaSans',
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF0F172A),
+              ),
             ),
           ),
         ],
@@ -482,82 +365,44 @@ class _TicketCopy extends StatelessWidget {
     );
   }
 
-  /// Several fields sharing one grid line (SERIAL NO. / DATE / TIME): drawn
-  /// side by side and scaled down as a whole when the row is wider than the
-  /// ticket, so the row can never overflow the copy.
-  Widget _inlineRow(
-    List<PrePrintedField> fields, {
-    required TextStyle labelStyle,
-    required TextStyle valueStyle,
+  Widget _weightCard({
+    required String label,
+    required String value,
+    required Color color,
+    required Color bg,
+    bool emphasize = false,
   }) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1.5),
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        alignment: Alignment.centerLeft,
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (var i = 0; i < fields.length; i++) ...[
-              if (i > 0) const SizedBox(width: 16),
-              Text(fields[i].prePrintedLabel, style: labelStyle),
-              Text(': ', style: labelStyle),
-              Text(
-                data.valueFor(fields[i]),
-                style: _valueStyleFor(fields[i], valueStyle),
-              ),
-            ],
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+              color: color,
+              letterSpacing: 0.6,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: TextStyle(
+              fontFamily: 'PlusJakartaSans',
+              fontSize: emphasize ? 20 : 16,
+              fontWeight: FontWeight.w800,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }
-}
-
-/// Dashed separator between the letterhead, the field block and the footer.
-class _DashedRule extends StatelessWidget {
-  const _DashedRule();
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 2,
-      child: CustomPaint(
-        painter: const _DashedLinePainter(color: Color(0xFF94A3B8)),
-      ),
-    );
-  }
-}
-
-class _DashedLinePainter extends CustomPainter {
-  const _DashedLinePainter({required this.color});
-
-  final Color color;
-
-  static const double _dash = 4.0;
-  static const double _gap = 3.0;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..strokeWidth = 1.0
-      ..style = PaintingStyle.stroke;
-
-    final y = size.height / 2;
-    double x = 0;
-    while (x < size.width) {
-      canvas.drawLine(
-        Offset(x, y),
-        Offset(math.min(x + _dash, size.width), y),
-        paint,
-      );
-      x += _dash + _gap;
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DashedLinePainter oldDelegate) =>
-      oldDelegate.color != color;
 }
