@@ -1,15 +1,22 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+import '../../../utils/app_storage_path.dart';
 
 class ClockRollbackDataSource {
   static const String _stateFileName = 'license_state.dat';
 
   Future<File> getStateFile() async {
-    final directory = await getApplicationSupportDirectory();
+    final directory = await AppStoragePath.getDataDirectory();
     final filePath = p.join(directory.path, _stateFileName);
-    return File(filePath);
+    final file = File(filePath);
+
+    await AppStoragePath.migrateLegacyFileIfNeeded(
+      legacySubPath: _stateFileName,
+      targetFile: file,
+    );
+
+    return file;
   }
 
   Future<Map<String, dynamic>?> loadState() async {

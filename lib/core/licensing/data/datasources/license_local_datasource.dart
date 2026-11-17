@@ -1,14 +1,21 @@
 import 'dart:io';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
+import '../../../utils/app_storage_path.dart';
 
 class LicenseLocalDataSource {
   static const String _licenseFileName = 'license.dat';
 
   Future<File> getLicenseFile() async {
-    final directory = await getApplicationSupportDirectory();
+    final directory = await AppStoragePath.getDataDirectory();
     final filePath = p.join(directory.path, _licenseFileName);
-    return File(filePath);
+    final file = File(filePath);
+
+    await AppStoragePath.migrateLegacyFileIfNeeded(
+      legacySubPath: _licenseFileName,
+      targetFile: file,
+    );
+
+    return file;
   }
 
   Future<bool> hasLicense() async {

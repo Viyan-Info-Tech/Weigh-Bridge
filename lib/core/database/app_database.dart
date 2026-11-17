@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
+import '../utils/app_storage_path.dart';
 import 'daos/user_dao.dart';
 import 'daos/bill_dao.dart';
 import 'daos/material_dao.dart';
@@ -1416,10 +1416,7 @@ class AppDatabase extends _$AppDatabase {
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
-    final directory = await getApplicationSupportDirectory();
-    final file = File(
-      p.join(directory.path, 'Weighbridge', 'weighbridge.sqlite'),
-    );
+    final file = await AppStoragePath.getDatabaseFile();
 
     // On macOS, preserve backward compatibility with legacy path if it exists
     if (Platform.isMacOS && !await file.exists()) {
